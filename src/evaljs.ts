@@ -1,5 +1,6 @@
 import ejs from './3rdparty/ejs.js';
-import Sandbox from '@nyariv/sandboxjs';
+// @ts-expect-error
+import vm from 'vm-browserify';
 import _ from 'lodash';
 import { eventSource, event_types, chat, chat_metadata, saveChatDebounced } from '../../../../../script.js';
 import { saveMetadataDebounced, extension_settings } from '../../../../extensions.js';
@@ -33,7 +34,7 @@ interface Metadata {
 }
 
 const CODE_TEMPLATE = `\
-    return await ejs.render(
+    ejs.render(
         content,
         { chat, chat_metadata, variables },
         { async: true }
@@ -121,7 +122,6 @@ function setVariables(vars : Record<string, unknown>, key : string, value : unkn
 function prepareGlobals() {
     let vars = allVariables();
     return {
-        ...Sandbox.SAFE_GLOBALS,
         chat,
         chat_metadata,
         ejs,
@@ -132,18 +132,15 @@ function prepareGlobals() {
 }
 
 async function updateChat(data : ChatData) {
-    const box = new Sandbox({
-        globals: prepareGlobals(),
-        prototypeWhitelist: Sandbox.SAFE_PROTOTYPES,
-    });
+    const globals = prepareGlobals();
 
     let err = false;
     for(const message of data.chat) {
         try {
-            const ctx = box.compileAsync<string>(CODE_TEMPLATE);
-            // console.log(`before: ${message.content}`);
-            message.content = await ctx({ content: message.content }).run();
-            // console.log(`after: ${message.content}`);
+            message.content = await vm.runInNewContext(CODE_TEMPLATE, {
+                ...globals,
+                content: message.content,
+            });
         } catch(err) {
             console.error(`error for chat message ${message.content}`);
             console.error(err);
@@ -163,16 +160,14 @@ async function updateMessage(message_id : string) {
         console.error(`message ${message_id} not found`);
         return;
     }
-    const box = new Sandbox({
-        globals: prepareGlobals(),
-        prototypeWhitelist: Sandbox.SAFE_PROTOTYPES,
-    });
+
+    const globals = prepareGlobals();
 
     try {
-        const ctx = box.compileAsync<string>(CODE_TEMPLATE);
-        // console.log(`before: ${message.mes}`);
-        message.mes = await ctx({ content: message.mes }).run();
-        // console.log(`after: ${message.mes}`);
+        message.mes = await vm.runInNewContext(CODE_TEMPLATE, {
+            ...globals,
+            content: message.mes,
+        });
     } catch(err) {
         console.error(`error for message ${message.mes}`);
         console.error(err);
