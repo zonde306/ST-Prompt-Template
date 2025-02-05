@@ -1,0 +1,30 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "outDir": "dist",
+        "strict": true,
+        "esModuleInterop": true,
+        "sourceMap": true,
+        "forceConsistentCasingInFileNames": true,
+        "allowJs": true,
+        "moduleDetection": "auto",
+        "moduleResolution": "bundler",
+        "allowUmdGlobalAccess": true,
+        "allowSyntheticDefaultImports": true,
+        "strictBindCallApply": true,
+        "checkJs": false,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+      },
+    "include": [
+        "src/**/*.ts",
+        "src/**/*.js",
+    ],
+    "exclude": [
+        "**/node_modules/**",
+        "**/dist/**",
+    ]
+}
