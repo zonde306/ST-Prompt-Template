@@ -16,11 +16,13 @@ interface Plugin {
 export async function init() {
     await finit();
     await vinit();
+    console.log('ST-Prompt-Template initialized');
 }
 
 export async function exit() {
     await fexit();
     await vexit();
+    console.log('ST-Prompt-Template exited');
 }
 
 export const info: PluginInfo = {
