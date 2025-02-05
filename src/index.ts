@@ -39,4 +39,6 @@ const plugin: Plugin = {
 
 export default plugin;
 
-init();
+jQuery(async () => {
+    await init();
+});
