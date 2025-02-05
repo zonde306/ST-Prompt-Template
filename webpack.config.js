@@ -53,8 +53,6 @@ const serverConfig = {
     externals: function({ context, request }, callback) {
         if (request.startsWith('../../')) {
             return callback(null, request);
-        } else if(request === 'ejs') {
-            return callback(null, 'https://cdn.jsdelivr.net/npm/ejs@3.1.10/ejs.min.js');
         }
         callback();
     },

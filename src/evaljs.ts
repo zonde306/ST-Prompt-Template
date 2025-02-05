@@ -33,10 +33,6 @@ interface Metadata {
 }
 
 const CODE_TEMPLATE = `\
-    console.log(chat);
-    console.log(chat_metadata);
-    console.log(variables);
-
     return await ejs.render(
         content,
         { chat, chat_metadata, variables },
