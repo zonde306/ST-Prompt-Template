@@ -33,12 +33,58 @@ interface Metadata {
     variables?: Record<string, unknown>;
 }
 
+const SHARE_CONTEXT : Record<string, unknown> = {
+    decodeURIComponent,
+    encodeURIComponent,
+    parseInt,
+    parseFloat,
+    isNaN,
+    isFinite,
+    console,
+    decodeURI,
+    encodeURI,
+    Boolean,
+    Number,
+    BigInt,
+    String,
+    Object,
+    Array,
+    Symbol,
+    Error,
+    EvalError,
+    RangeError,
+    ReferenceError,
+    SyntaxError,
+    TypeError,
+    URIError,
+    Int8Array,
+    Uint8Array,
+    Uint8ClampedArray,
+    Int16Array,
+    Uint16Array,
+    Int32Array,
+    Uint32Array,
+    Float32Array,
+    Float64Array,
+    Map,
+    Set,
+    WeakMap,
+    WeakSet,
+    Promise,
+    Intl,
+    JSON,
+    Math,
+    _,
+    $: jQuery,
+    eval: vm.runInThisContext,
+};
+
 const CODE_TEMPLATE = `\
     ejs.render(
         content,
-        { chat, chat_metadata, variables },
-        { async: true }
-    );
+        { ...global, SillyTavern, variables, setvar, execute },
+        { async: true },
+    );\
 `;
 
 function allVariables() {
@@ -122,12 +168,12 @@ function setVariables(vars : Record<string, unknown>, key : string, value : unkn
 function prepareGlobals() {
     let vars = allVariables();
     return {
-        chat,
-        chat_metadata,
+        global: { ...SHARE_CONTEXT },
         ejs,
         variables : vars,
         execute: async(cmd : string) => (await executeSlashCommandsWithOptions(cmd)).pipe,
         setvar : setVariables.bind(null, vars),
+        SillyTavern: SillyTavern.getContext(),
     };
 }
 
