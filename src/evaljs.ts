@@ -129,9 +129,6 @@ async function updateChat(data : ChatData) {
         prototypeWhitelist: Sandbox.SAFE_PROTOTYPES,
     });
     for(const message of data.chat) {
-        if(message.role === 'system')
-            continue;
-
         const ctx = box.compileAsync<string>(`
             return await ejs.render(
                 content,
@@ -155,9 +152,6 @@ async function updateMessage(message_id : string) {
         console.log(`message ${message_id} not found`);
         return;
     }
-    if(message.is_system)
-        return;
-
     const box = new Sandbox({
         globals: prepareGlobals(),
         prototypeWhitelist: Sandbox.SAFE_PROTOTYPES,
