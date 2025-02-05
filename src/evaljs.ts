@@ -76,7 +76,6 @@ const SHARE_CONTEXT : Record<string, unknown> = {
     Math,
     _,
     $: jQuery,
-    eval: vm.runInThisContext,
 };
 
 const CODE_TEMPLATE = `\
