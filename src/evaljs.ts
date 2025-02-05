@@ -128,19 +128,28 @@ async function updateChat(data : ChatData) {
         globals: prepareGlobals(),
         prototypeWhitelist: Sandbox.SAFE_PROTOTYPES,
     });
+
+    let err = false;
     for(const message of data.chat) {
-        const ctx = box.compileAsync<string>(`
-            return await ejs.render(
-                content,
-                { chat, chat_metadata, variables },
-                { async: true }
-            );
-        `);
-        console.log(`before: ${message.content}`);
-        message.content = await ctx({ content: message.content }).run();
-        console.log(`after: ${message.content}`);
+        try {
+            const ctx = box.compileAsync<string>(`
+                return await ejs.render(
+                    content,
+                    { chat, chat_metadata, variables },
+                    { async: true }
+                );
+            `);
+            // console.log(`before: ${message.content}`);
+            message.content = await ctx({ content: message.content }).run();
+            // console.log(`after: ${message.content}`);
+        } catch(err) {
+            console.error(`error for chat message ${message.content}`);
+            console.error(err);
+            err = true;
+        }
     }
 
+    if(err) return;
     saveMetadataDebounced();
     saveChatDebounced();
 }
@@ -149,7 +158,7 @@ async function updateMessage(message_id : string) {
     const message_idx = parseInt(message_id);
     const message : Message = chat[message_idx];
     if(!message) {
-        console.log(`message ${message_id} not found`);
+        console.error(`message ${message_id} not found`);
         return;
     }
     const box = new Sandbox({
@@ -157,17 +166,23 @@ async function updateMessage(message_id : string) {
         prototypeWhitelist: Sandbox.SAFE_PROTOTYPES,
     });
 
-    const ctx = box.compileAsync<string>(`
-        return await ejs.render(
-            content,
-            { chat, chat_metadata, variables },
-            { async: true }
-        );
-    `);
+    try {
+        const ctx = box.compileAsync<string>(`
+            return await ejs.render(
+                content,
+                { chat, chat_metadata, variables },
+                { async: true }
+            );
+        `);
 
-    console.log(`before: ${message.mes}`);
-    message.mes = await ctx({ content: message.mes }).run();
-    console.log(`after: ${message.mes}`);
+        // console.log(`before: ${message.mes}`);
+        message.mes = await ctx({ content: message.mes }).run();
+        // console.log(`after: ${message.mes}`);
+    } catch(err) {
+        console.error(`error for message ${message.mes}`);
+        console.error(err);
+        return;
+    }
 
     saveMetadataDebounced();
     saveChatDebounced();
