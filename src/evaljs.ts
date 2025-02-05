@@ -32,6 +32,18 @@ interface Metadata {
     variables?: Record<string, unknown>;
 }
 
+const CODE_TEMPLATE = `\
+    console.log(chat);
+    console.log(chat_metadata);
+    console.log(variables);
+
+    return await ejs.render(
+        content,
+        { chat, chat_metadata, variables },
+        { async: true }
+    );
+`;
+
 function allVariables() {
     let variables : Record<string, unknown> = {};
     variables = _.merge(variables, extension_settings.variables.global);
@@ -132,13 +144,7 @@ async function updateChat(data : ChatData) {
     let err = false;
     for(const message of data.chat) {
         try {
-            const ctx = box.compileAsync<string>(`
-                return await ejs.render(
-                    content,
-                    { chat, chat_metadata, variables },
-                    { async: true }
-                );
-            `);
+            const ctx = box.compileAsync<string>(CODE_TEMPLATE);
             // console.log(`before: ${message.content}`);
             message.content = await ctx({ content: message.content }).run();
             // console.log(`after: ${message.content}`);
@@ -167,14 +173,7 @@ async function updateMessage(message_id : string) {
     });
 
     try {
-        const ctx = box.compileAsync<string>(`
-            return await ejs.render(
-                content,
-                { chat, chat_metadata, variables },
-                { async: true }
-            );
-        `);
-
+        const ctx = box.compileAsync<string>(CODE_TEMPLATE);
         // console.log(`before: ${message.mes}`);
         message.mes = await ctx({ content: message.mes }).run();
         // console.log(`after: ${message.mes}`);
