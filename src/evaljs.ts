@@ -33,6 +33,21 @@ interface Metadata {
     variables?: Record<string, unknown>;
 }
 
+interface IncluderResult {
+    filename: string;
+    template: string;
+}
+
+function includer(originalPath : string, _parsedPath: string) : IncluderResult {
+    console.warn(`[Prompt Template] include not implemented`);
+    return { filename: originalPath, template: '' };
+}
+
+function escape(markup : string) : string {
+    // don't escape any XML tags
+    return markup;
+}
+
 const SHARE_CONTEXT : Record<string, unknown> = {
     decodeURIComponent,
     encodeURIComponent,
@@ -82,7 +97,7 @@ const CODE_TEMPLATE = `\
     ejs.render(
         content,
         { ...global, SillyTavern, variables, setvar, execute },
-        { async: true },
+        { async: true, client: true, strict: true, escape: escaper, includer: includer },
     );\
 `;
 
@@ -173,6 +188,8 @@ function prepareGlobals() {
         execute: async(cmd : string) => (await executeSlashCommandsWithOptions(cmd)).pipe,
         setvar : setVariables.bind(null, vars),
         SillyTavern: SillyTavern.getContext(),
+        escaper: escape,
+        includer: includer,
     };
 }
 
