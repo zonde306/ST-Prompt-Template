@@ -16,7 +16,7 @@ hi, <%- variables.name %>
 
 ```typescript
 // All variables, including global variables, local variables, message (and swipes) variables
-// Priority: message (and swipes) in desc -> local variables -> global variables
+// Priority: message (and swipes) in descending -> local variables -> global variables
 variables: Record<string, any>;
 
 // lodash
