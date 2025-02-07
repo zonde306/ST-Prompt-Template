@@ -97,7 +97,7 @@ const CODE_TEMPLATE = `\
     ejs.render(
         content,
         { ...global, SillyTavern, variables, setvar, execute },
-        { async: true, client: true, strict: true, escape: escaper, includer: includer },
+        { async: true, client: true, strict: true, escape: escaper, includer: includer, cache: false },
     );\
 `;
 
