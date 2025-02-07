@@ -28,8 +28,17 @@ $: JQueryStatic;
 // Execute slash commands
 execute: (cmd: string) => Promise<string>;
 
-// Setting variables
-setvar: (key: string, value: any, index?: number, scope : "global" | "local" | "message" = "message")
+// Setting variable
+setvar: (key: string, value: any, index?: number, scope : "global" | "local" | "message" = "message", flags : 'nx' | 'xx' | 'n' = 'n')
+
+// Read variable (from variables)
+getvar: (key: string, value: any, index?: number)
+
+// increase variable
+incvar: (key: string, value: any, index?: number, scope : "global" | "local" | "message" = "message", flags : 'nx' | 'xx' | 'n' = 'n')
+
+// decrease variable
+decvar: (key: string, value: any, index?: number, scope : "global" | "local" | "message" = "message", flags : 'nx' | 'xx' | 'n' = 'n')
 
 // SillyTavern context
 // @see SillyTavern.getContext()
