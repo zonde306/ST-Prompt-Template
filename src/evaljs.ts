@@ -72,24 +72,33 @@ const SHARE_CONTEXT : Record<string, unknown> = {
 const CODE_TEMPLATE = `\
     ejs.render(
         content,
-        { ...global, SillyTavern, variables, setvar, execute },
+        env,
         { async: true, client: true, strict: true, escape: escaper, includer: includer, cache: false },
     );\
 `;
 
-async function bindImport(globals: Record<string, unknown>, worldinfo: string, entry: string): Promise<unknown> {
-    return vm.runInNewContext(CODE_TEMPLATE, {
-        ...globals,
-        import: bindImport.bind(null, globals),
-        content: await getWorldInfoEntryContent(worldinfo, entry),
+async function evalTemplate(env: Record<string, unknown>, content: string) {
+    return await vm.runInNewContext(CODE_TEMPLATE, {
+        env,
+        content,
+        escaper: escape,
+        includer: includer,
     });
+}
+
+async function bindImport(env: Record<string, unknown>, worldinfo: string, entry: string): Promise<unknown> {
+    const content = await getWorldInfoEntryContent(worldinfo, entry);
+    if(content)
+        return await evalTemplate(env, content);
+
+    console.warn(`[Prompt Template] worldinfo ${worldinfo} or entry ${entry} not found`);
+    return undefined;
 }
 
 function prepareGlobals() {
     let vars = allVariables();
     let result = {
         ...SHARE_CONTEXT,
-        ejs,
         variables : vars,
         execute: async(cmd : string) => (await executeSlashCommandsWithOptions(cmd)).pipe,
         setvar : setVariable.bind(null, vars),
@@ -97,8 +106,6 @@ function prepareGlobals() {
         incvar : increaseVariable.bind(null, vars),
         decvar : decreaseVariable.bind(null, vars),
         SillyTavern: SillyTavern.getContext(),
-        escaper: escape,
-        includer: includer,
     };
 
     // @ts-expect-error
@@ -107,15 +114,12 @@ function prepareGlobals() {
 }
 
 async function updateChat(data : ChatData) {
-    const globals = prepareGlobals();
+    const env = prepareGlobals();
 
     let err = false;
     for(const message of data.chat) {
         try {
-            message.content = await vm.runInNewContext(CODE_TEMPLATE, {
-                ...globals,
-                content: message.content,
-            });
+            message.content = await evalTemplate(env, message.content);
         } catch(err) {
             console.error(`error for chat message ${message.content}`);
             console.error(err);
@@ -136,13 +140,10 @@ async function updateMessage(message_id : string) {
         return;
     }
 
-    const globals = prepareGlobals();
+    const env = prepareGlobals();
 
     try {
-        message.mes = await vm.runInNewContext(CODE_TEMPLATE, {
-            ...globals,
-            content: message.mes,
-        });
+        message.mes = await evalTemplate(env, message.mes);
     } catch(err) {
         console.error(`error for message ${message.mes}`);
         console.error(err);
