@@ -87,6 +87,7 @@ async function evalTemplate(env: Record<string, unknown>, content: string) {
 }
 
 async function bindImport(env: Record<string, unknown>, worldinfo: string, entry: string): Promise<unknown> {
+    env.import = bindImport.bind(null, env);
     const content = await getWorldInfoEntryContent(worldinfo, entry);
     if(content)
         return await evalTemplate(env, content);
