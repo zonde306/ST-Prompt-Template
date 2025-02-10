@@ -29,25 +29,28 @@ $: JQueryStatic;
 execute: (cmd: string) => Promise<string>;
 
 // Setting variable
-setvar: (key: string, value: any, index?: number, scope : "global" | "local" | "message" = "message", flags : 'nx' | 'xx' | 'n' = 'n')
+setvar: (key: string, value: any, index?: number, scope : "global" | "local" | "message" = "message", flags : 'nx' | 'xx' | 'n' = 'n') : Record<string, any>;
 
 // Read variable (from variables)
-getvar: (key: string, value: any, index?: number)
+getvar: (key: string, value: any, index?: number) : any;
 
 // increase variable
-incvar: (key: string, value: any, index?: number, scope : "global" | "local" | "message" = "message", flags : 'nx' | 'xx' | 'n' = 'n')
+incvar: (key: string, value: any, index?: number, scope : "global" | "local" | "message" = "message", flags : 'nx' | 'xx' | 'n' = 'n') : Record<string, any>;
 
 // decrease variable
-decvar: (key: string, value: any, index?: number, scope : "global" | "local" | "message" = "message", flags : 'nx' | 'xx' | 'n' = 'n')
+decvar: (key: string, value: any, index?: number, scope : "global" | "local" | "message" = "message", flags : 'nx' | 'xx' | 'n' = 'n') : Record<string, any>;
 
 // SillyTavern context
 // @see SillyTavern.getContext()
 SillyTavern = SillyTavern.getContext();
+
+// import worldinfo (read worldinfo entry)
+import: (worldinfo: string, title: string) : Promise<string>;
 ```
 
 ## Known Issues
 
-1. `<% include(...) %>`is not supported
+1. `<% include(...) %>`is not supported, use `<%- await import(...) %>`
 
 2. `<%= value %>`is just like`<%- value %>`
 

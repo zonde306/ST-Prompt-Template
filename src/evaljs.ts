@@ -2,36 +2,12 @@ import ejs from './3rdparty/ejs.js';
 // @ts-expect-error
 import vm from 'vm-browserify';
 import _ from 'lodash';
-import { eventSource, event_types, chat, chat_metadata, saveChatDebounced } from '../../../../../script.js';
-import { saveMetadataDebounced, extension_settings } from '../../../../extensions.js';
+import { ChatData, Message } from './defines';
+import { eventSource, event_types, chat, saveChatDebounced } from '../../../../../script.js';
+import { saveMetadataDebounced } from '../../../../extensions.js';
 import { executeSlashCommandsWithOptions } from '../../../../slash-commands.js';
-
-interface Chat {
-    role: string;
-    content: string;
-}
-
-interface ChatData {
-    chat: Chat[];
-    dryRun: boolean;
-}
-
-interface Message {
-    extra: Record<string, unknown>;
-    is_system: boolean;
-    is_user: boolean;
-    mes: string;
-    name: string;
-    send_date: string;
-    variables?: Record<number, Record<string, unknown>>;
-    swipe_id: number;
-    swipe_info: Array<unknown>;
-    swipes: Array<string>;
-}
-
-interface Metadata {
-    variables?: Record<string, unknown>;
-}
+import { getWorldInfoEntryContent } from './function/worldinfo';
+import { allVariables, getVariable, setVariable, increaseVariable, decreaseVariable } from './function/variables';
 
 interface IncluderResult {
     filename: string;
@@ -101,123 +77,18 @@ const CODE_TEMPLATE = `\
     );\
 `;
 
-function allVariables() {
-    let variables : Record<string, unknown> = {};
-    variables = _.merge(variables, extension_settings.variables.global);
-
-    const metadata : Metadata = chat_metadata;
-    variables = _.merge(variables, metadata.variables || {});
-
-    const messages : Array<Message> = chat;
-    for(const message of messages)
-        if(message.variables && message.variables[message.swipe_id])
-            variables = _.merge(variables, message.variables[message.swipe_id]);
-    return variables;
-}
-
-function setVariable(vars : Record<string, unknown>, key : string, value : unknown,
-                      index: number | null = null,
-                      scope : 'global' | 'local' | 'message' = 'message',
-                      flags: 'nx' | 'xx' | 'n' = 'n') {
-    let message : Message;
-    if (index !== null && index !== undefined) {
-        // @ts-expect-error: TS2322
-        let data = JSON.parse(_.get(vars, key, '{}'));
-        let idx = Number(index);
-        idx = Number.isNaN(idx) ? index : idx;
-
-        if(flags === 'nx' && _.has(data, idx)) return vars;
-        if(flags === 'xx' && !_.has(data, idx)) return vars;
-
-        _.set(vars, key, JSON.stringify(_.set(data, idx, value)));
-
-        switch(scope) {
-            case 'global':
-                data = JSON.parse(_.get(extension_settings.variables.global, key, '{}') || '{}');
-                _.set(extension_settings.variables.global, key, JSON.stringify(_.set(data, idx, value)));
-                break;
-            case 'local':
-                // @ts-expect-error: TS2322
-                if(!chat_metadata.variables) chat_metadata.variables = {};
-                // @ts-expect-error: TS2322
-                data = JSON.parse(_.get(chat_metadata.variables, key, '{}') || '{}');
-                // @ts-expect-error: TS2322
-                _.set(chat_metadata.variables, key, JSON.stringify(_.set(data, idx, value)));
-                break;
-            case 'message':
-                message = chat.findLast(msg => !msg.is_system);
-                if(!message.variables) message.variables = {};
-                if(!message.variables[message.swipe_id]) message.variables[message.swipe_id] = {};
-                // @ts-expect-error: TS2322
-                data = JSON.parse(_.get(message.variables[message.swipe_id], key, '{}') || '{}');
-                _.set(message.variables[message.swipe_id], key, JSON.stringify(_.set(data, idx, value)));
-                break;
-        }
-    } else {
-        if(flags === 'nx' && _.has(vars, key)) return vars;
-        if(flags === 'xx' && !_.has(vars, key)) return vars;
-
-        _.set(vars, key, value);
-
-        switch(scope) {
-            case 'global':
-                _.set(extension_settings.variables.global, key, value);
-                break;
-            case 'local':
-                // @ts-expect-error: TS2322
-                if(!chat_metadata.variables) chat_metadata.variables = {};
-                // @ts-expect-error: TS2322
-                _.set(chat_metadata.variables, key, value);
-                break;
-            case 'message':
-                message = chat.findLast(msg => !msg.is_system);
-                if(!message.variables) message.variables = {};
-                if(!message.variables[message.swipe_id]) message.variables[message.swipe_id] = {};
-                _.set(message.variables[message.swipe_id], key, value);
-                break;
-        }
-    }
-
-    return vars;
-}
-
-function getVariable(vars : Record<string, unknown>, key : string,
-                    index: number | null = null,
-                    defaults: unknown = undefined) {
-    if (index !== null && index !== undefined) {
-        // @ts-expect-error: TS2322
-        const data = JSON.parse(_.get(vars, key, '{}') || '{}');
-        const idx = Number(index);
-        return _.get(data, idx, defaults);
-    }
-
-    return _.get(vars, key, defaults);
-}
-
-function increaseVariable(vars : Record<string, unknown>, key : string,
-                          value : number = 1,
-                          index: number | null = null,
-                          scope : 'global' | 'local' | 'message' = 'message',
-                          flags: 'nx' | 'xx' | 'n' = 'n') {
-    if((flags === 'nx' && !_.has(vars, key)) ||
-      (flags === 'xx' && _.has(vars, key)) ||
-      flags === 'n')
-        return setVariable(vars, key, getVariable(vars, key, index, 0) + value, index, scope, 'n');
-    return vars;
-}
-
-function decreaseVariable(vars : Record<string, unknown>, key : string,
-                          value : number = 1,
-                          index: number | null = null,
-                          scope : 'global' | 'local' | 'message' = 'message',
-                          flags: 'nx' | 'xx' | 'n' = 'n') {
-    return increaseVariable(vars, key, -value, index, scope, flags);
+async function bindImport(globals: Record<string, unknown>, worldinfo: string, entry: string): Promise<unknown> {
+    return vm.runInNewContext(CODE_TEMPLATE, {
+        ...globals,
+        import: bindImport.bind(null, globals),
+        content: await getWorldInfoEntryContent(worldinfo, entry),
+    });
 }
 
 function prepareGlobals() {
     let vars = allVariables();
-    return {
-        global: { ...SHARE_CONTEXT },
+    let result = {
+        ...SHARE_CONTEXT,
         ejs,
         variables : vars,
         execute: async(cmd : string) => (await executeSlashCommandsWithOptions(cmd)).pipe,
@@ -229,6 +100,10 @@ function prepareGlobals() {
         escaper: escape,
         includer: includer,
     };
+
+    // @ts-expect-error
+    result.import = bindImport.bind(null, result);
+    return result;
 }
 
 async function updateChat(data : ChatData) {

@@ -1,0 +1,68 @@
+import { loadWorldInfo } from '../../../../../world-info.js';
+
+export interface WorldInfoData {
+    uid: number;
+    key: string[];
+    keysecondary: string[];
+    comment: string;
+    content: string;
+    constant: boolean;
+    vectorized: boolean;
+    selective: boolean;
+    selectiveLogic: number;
+    addMemo: boolean;
+    order: number;
+    position: number;
+    disable: boolean;
+    excludeRecursion: boolean;
+    preventRecursion: boolean;
+    delayUntilRecursion: boolean;
+    probability: number;
+    useProbability: boolean;
+    depth: number;
+    group: string;
+    groupOverride: boolean;
+    groupWeight: number;
+    scanDepth: number | null;
+    caseSensitive: boolean | null;
+    matchWholeWords: null | number;
+    useGroupScoring: boolean | null;
+    automationId: string;
+    role: null | number;
+    sticky: number;
+    cooldown: number;
+    delay: number;
+    displayIndex: number;
+}
+
+export interface WorldInfo {
+    entries: Record<string, WorldInfoData>;
+}
+
+export async function* getWorldInfoAll(name: string): AsyncGenerator<WorldInfoData> {
+    // @ts-expect-error
+    const lorebook : WorldInfo = await loadWorldInfo(name);
+    if(!lorebook)
+        return;
+
+    for(const [_, data] of Object.entries(lorebook.entries)) {
+        yield data;
+    }
+}
+
+export async function getWorldInfoEntry(name: string, title: string): Promise<WorldInfoData | null> {
+    for await (const data of getWorldInfoAll(name)) {
+        if(data.comment === title) {
+            return data;
+        }
+    }
+
+    return null;
+}
+
+export async function getWorldInfoEntryContent(name: string, title: string): Promise<string | null> {
+    const data = await getWorldInfoEntry(name, title);
+    if(!data) return null;
+
+    return data.content;
+}

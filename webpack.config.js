@@ -34,7 +34,7 @@ const serverConfig = {
             },
         ],
     },
-	experiments: {
+    experiments: {
         outputModule: true,
     },
     optimization: {

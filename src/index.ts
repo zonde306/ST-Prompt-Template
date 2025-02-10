@@ -1,5 +1,5 @@
 import { init as finit, exit as fexit } from './evaljs';
-import { init as vinit, exit as vexit } from './variables';
+import { init as vinit, exit as vexit } from './command';
 
 interface PluginInfo {
     id: string;
