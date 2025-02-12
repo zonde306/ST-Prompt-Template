@@ -10,7 +10,7 @@ hi, <%- variables.name %>
 <% } %>
 ```
 
-[EJS Syntax Tutorial](https://ejs.co/#docs)
+[EJS Syntax Reference](https://github.com/mde/ejs/blob/main/docs/syntax.md)
 
 ## Built-in variables/functions
 
