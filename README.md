@@ -12,6 +12,8 @@ hi, <%- variables.name %>
 
 [EJS Syntax Reference](https://github.com/mde/ejs/blob/main/docs/syntax.md)
 
+[Built-in functions reference](docs/reference.md)
+
 ## Built-in variables/functions
 
 ```typescript
@@ -26,7 +28,7 @@ _: LoDashStatic;
 $: JQueryStatic;
 
 // Execute slash commands
-execute: (cmd: string) => Promise<string>;
+execute: (cmd: string) : Promise<string>;
 
 // Setting variable
 setvar: (key: string, value: any, index?: number, scope : "global" | "local" | "message" = "message", flags : 'nx' | 'xx' | 'n' = 'n') : Record<string, any>;
