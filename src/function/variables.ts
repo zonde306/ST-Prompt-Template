@@ -2,7 +2,7 @@ import { chat, chat_metadata } from '../../../../../../script.js';
 import { extension_settings } from '../../../../../extensions.js';
 import { Message, Metadata } from '../defines.js';
 
-export function allVariables() {
+export function allVariables(end : number = 65535) {
     let variables : Record<string, unknown> = {};
     variables = _.merge(variables, extension_settings.variables.global);
 
@@ -10,9 +10,10 @@ export function allVariables() {
     variables = _.merge(variables, metadata.variables || {});
 
     const messages : Array<Message> = chat;
-    for(const message of messages)
+    for(const message of messages.slice(0, Math.max(end - 1, 0)))
         if(message.variables && message.variables[message.swipe_id])
             variables = _.merge(variables, message.variables[message.swipe_id]);
+
     return variables;
 }
 

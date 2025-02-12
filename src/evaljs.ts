@@ -3,7 +3,7 @@ import ejs from './3rdparty/ejs.js';
 import vm from 'vm-browserify';
 import _ from 'lodash';
 import { ChatData, Message } from './defines';
-import { eventSource, event_types, chat, saveChatDebounced } from '../../../../../script.js';
+import { eventSource, event_types, chat, saveChatDebounced, messageFormatting } from '../../../../../script.js';
 import { saveMetadataDebounced } from '../../../../extensions.js';
 import { executeSlashCommandsWithOptions } from '../../../../slash-commands.js';
 import { getWorldInfoEntryContent } from './function/worldinfo';
@@ -66,7 +66,7 @@ const SHARE_CONTEXT : Record<string, unknown> = {
     JSON,
     Math,
     _,
-    $: jQuery,
+    $,
 };
 
 const CODE_TEMPLATE = `\
@@ -102,8 +102,8 @@ async function bindImport(env: Record<string, unknown>,
     return "";
 }
 
-function prepareGlobals() {
-    let vars = allVariables();
+function prepareGlobals(end : number = 65535) {
+    let vars = allVariables(end);
     let result = {
         ...SHARE_CONTEXT,
         variables : vars,
@@ -141,13 +141,19 @@ async function updateChat(data : ChatData) {
 
 async function updateMessage(message_id : string) {
     const message_idx = parseInt(message_id);
+    if(isNaN(message_idx) || message_idx < 0 || message_idx >= chat.length) {
+        console.error(`message ${message_id} invalid`);
+        return;
+    }
+
     const message : Message = chat[message_idx];
     if(!message) {
         console.error(`message ${message_id} not found`);
         return;
     }
 
-    const env = prepareGlobals();
+    // without current message
+    const env = prepareGlobals(message_idx);
 
     try {
         message.mes = await evalTemplate(message.mes, env);
@@ -159,6 +165,13 @@ async function updateMessage(message_id : string) {
 
     saveMetadataDebounced();
     saveChatDebounced();
+
+    const div = $(`div.mes[mesid = "${message_id}"]`);
+    if(div) {
+        div.find('.mes_text').
+        empty().
+        append(messageFormatting(message.mes, message.name, message.is_system, message.is_user, message_idx));
+    }
 }
 
 export async function init() {
@@ -167,6 +180,7 @@ export async function init() {
     eventSource.on(event_types.USER_MESSAGE_RENDERED, updateMessage);
     eventSource.on(event_types.CHAT_CHANGED, updateMessage);
     eventSource.on(event_types.MESSAGE_SWIPED, updateMessage);
+    eventSource.on(event_types.MESSAGE_EDITED, updateMessage);
 
     try {
         await test();
@@ -181,6 +195,7 @@ export async function exit() {
     eventSource.removeListener(event_types.USER_MESSAGE_RENDERED, updateMessage);
     eventSource.removeListener(event_types.CHAT_CHANGED, updateMessage);
     eventSource.removeListener(event_types.MESSAGE_SWIPED, updateMessage);
+    eventSource.removeListener(event_types.MESSAGE_EDITED, updateMessage);
 }
 
 async function test() {
