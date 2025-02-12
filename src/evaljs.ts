@@ -70,18 +70,18 @@ const SHARE_CONTEXT : Record<string, unknown> = {
 };
 
 const CODE_TEMPLATE = `\
-    console.log(content, env) || ejs.render(
+    ejs.render(
         content,
-        env,
-        { async: true, client: true, strict: true, escape: escaper, includer: includer, cache: false },
+        data,
+        { async: true, escape: escaper, includer: includer, cache: false, context: data },
     );\
 `;
 
-async function evalTemplate(env: Record<string, unknown>, content: string) {
+async function evalTemplate(content: string, data: Record<string, unknown>) {
     return await vm.runInNewContext(CODE_TEMPLATE, {
         ejs,
-        env,
         content,
+        data,
         escaper: escape,
         includer: includer,
     });
@@ -91,7 +91,7 @@ async function bindImport(env: Record<string, unknown>, worldinfo: string, entry
     env.import = bindImport.bind(null, env);
     const content = await getWorldInfoEntryContent(worldinfo, entry);
     if(content)
-        return await evalTemplate(env, content);
+        return await evalTemplate(content, env);
 
     console.warn(`[Prompt Template] worldinfo ${worldinfo} or entry ${entry} not found`);
     return undefined;
@@ -121,7 +121,7 @@ async function updateChat(data : ChatData) {
     let err = false;
     for(const message of data.chat) {
         try {
-            message.content = await evalTemplate(env, message.content);
+            message.content = await evalTemplate(message.content, env);
         } catch(err) {
             console.error(`error for chat message ${message.content}`);
             console.error(err);
@@ -145,7 +145,7 @@ async function updateMessage(message_id : string) {
     const env = prepareGlobals();
 
     try {
-        message.mes = await evalTemplate(env, message.mes);
+        message.mes = await evalTemplate(message.mes, env);
     } catch(err) {
         console.error(`error for message ${message.mes}`);
         console.error(err);
@@ -162,6 +162,12 @@ export async function init() {
     eventSource.on(event_types.USER_MESSAGE_RENDERED, updateMessage);
     eventSource.on(event_types.CHAT_CHANGED, updateMessage);
     eventSource.on(event_types.MESSAGE_SWIPED, updateMessage);
+
+    try {
+        await test();
+    } catch(err) {
+        console.error('test fail: ', err);
+    }
 }
 
 export async function exit() {
@@ -170,5 +176,13 @@ export async function exit() {
     eventSource.removeListener(event_types.USER_MESSAGE_RENDERED, updateMessage);
     eventSource.removeListener(event_types.CHAT_CHANGED, updateMessage);
     eventSource.removeListener(event_types.MESSAGE_SWIPED, updateMessage);
+}
+
+async function test() {
+    console.log('ST-Prompt-Template start test.');
+    const env = prepareGlobals();
+    env.variables.name = 'world';
+    console.log(await evalTemplate('Hello, <%= variables.name %>!', env));
+    console.log('ST-Prompt-Template test end.');
 }
 
