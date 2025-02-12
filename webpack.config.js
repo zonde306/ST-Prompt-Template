@@ -52,6 +52,9 @@ const serverConfig = {
     plugins: [],
     externals: function({ context, request }, callback) {
         if (request.startsWith('../../')) {
+            if(context.search(/(\/|\\)src\1/) > 0)
+                return callback(null, request.substring(3));
+
             return callback(null, request);
         }
         callback();
