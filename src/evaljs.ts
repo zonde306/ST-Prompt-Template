@@ -70,7 +70,7 @@ const SHARE_CONTEXT : Record<string, unknown> = {
 };
 
 const CODE_TEMPLATE = `\
-    console.log(env) || ejs.render(
+    console.log(content, env) || ejs.render(
         content,
         env,
         { async: true, client: true, strict: true, escape: escaper, includer: includer, cache: false },
