@@ -45,7 +45,7 @@ decvar: (key: string, value: any, index?: number, scope : "global" | "local" | "
 SillyTavern = SillyTavern.getContext();
 
 // import worldinfo (read worldinfo entry)
-import: (worldinfo: string, title: string) : Promise<string>;
+import: (worldinfo: string, title: string, data: Record<string, any> = {}) : Promise<string>;
 ```
 
 ## Known Issues

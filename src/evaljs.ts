@@ -87,14 +87,16 @@ async function evalTemplate(content: string, data: Record<string, unknown>) {
     });
 }
 
-async function bindImport(env: Record<string, unknown>, worldinfo: string, entry: string): Promise<unknown> {
+async function bindImport(env: Record<string, unknown>,
+                          worldinfo: string, entry: string,
+                          data: Record<string, unknown> = {}): Promise<string> {
     env.import = bindImport.bind(null, env);
     const content = await getWorldInfoEntryContent(worldinfo, entry);
     if(content)
-        return await evalTemplate(content, env);
+        return await evalTemplate(content, { ...env, ...data });
 
     console.warn(`[Prompt Template] worldinfo ${worldinfo} or entry ${entry} not found`);
-    return undefined;
+    return "";
 }
 
 function prepareGlobals() {
