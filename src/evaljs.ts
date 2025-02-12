@@ -3,7 +3,7 @@ import ejs from './3rdparty/ejs.js';
 import vm from 'vm-browserify';
 import _ from 'lodash';
 import { ChatData, Message } from './defines';
-import { eventSource, event_types, chat, saveChatDebounced, messageFormatting } from '../../../../../script.js';
+import { eventSource, event_types, chat, saveChatDebounced, messageFormatting, substituteParams } from '../../../../../script.js';
 import { saveMetadataDebounced } from '../../../../extensions.js';
 import { executeSlashCommandsWithOptions } from '../../../../slash-commands.js';
 import { getWorldInfoEntryContent } from './function/worldinfo';
@@ -95,7 +95,7 @@ async function bindImport(env: Record<string, unknown>,
     const content = await getWorldInfoEntryContent(worldinfo, entry);
     if(content) {
         // or use _.merge?
-        return await evalTemplate(content, { ...env, ...data });
+        return await evalTemplate(substituteParams(content), { ...env, ...data });
     }
 
     console.warn(`[Prompt Template] worldinfo ${worldinfo} or entry ${entry} not found`);
