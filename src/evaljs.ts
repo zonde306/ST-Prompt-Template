@@ -88,7 +88,7 @@ async function evalTemplate(content: string, data: Record<string, unknown>) {
 }
 
 async function bindImport(env: Record<string, unknown>,
-                          worldinfo: string, entry: string,
+                          worldinfo: string, entry: string | RegExp | number,
                           data: Record<string, unknown> = {}): Promise<string> {
     // maybe not
     env.getwi = bindImport.bind(null, env);

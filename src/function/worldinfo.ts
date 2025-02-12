@@ -41,26 +41,24 @@ export interface WorldInfo {
 
 export async function* getWorldInfoAll(name: string): AsyncGenerator<WorldInfoData> {
     // @ts-expect-error
-    const lorebook : WorldInfo = await loadWorldInfo(name);
+    const lorebook : WorldInfo | null = await loadWorldInfo(name);
     if(!lorebook)
         return;
 
-    for(const [_, data] of Object.entries(lorebook.entries)) {
+    for(const [_uid, data] of Object.entries(lorebook.entries))
         yield data;
-    }
 }
 
-export async function getWorldInfoEntry(name: string, title: string): Promise<WorldInfoData | null> {
-    for await (const data of getWorldInfoAll(name)) {
-        if(data.comment === title) {
+export async function getWorldInfoEntry(name: string, title: string | RegExp | number): Promise<WorldInfoData | null> {
+    for await (const data of getWorldInfoAll(name))
+        // @ts-expect-error
+        if(data.comment === title || data.uid === title || data.comment.match(title))   // String.match(number) just returns null
             return data;
-        }
-    }
 
     return null;
 }
 
-export async function getWorldInfoEntryContent(name: string, title: string): Promise<string | null> {
+export async function getWorldInfoEntryContent(name: string, title: string | RegExp | number): Promise<string | null> {
     const data = await getWorldInfoEntry(name, title);
     if(!data) return null;
 

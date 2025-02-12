@@ -45,7 +45,7 @@ decvar: (key: string, value: any, index?: number, scope : "global" | "local" | "
 SillyTavern = SillyTavern.getContext();
 
 // get worldinfo entry
-getwi: (worldinfo: string, title: string, data: Record<string, any> = {}) : Promise<string>;
+getwi: (worldinfo: string, title: string | RegExp | number, data: Record<string, any> = {}) : Promise<string>;
 ```
 
 ## Known Issues
