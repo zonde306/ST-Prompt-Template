@@ -79,6 +79,7 @@ const CODE_TEMPLATE = `\
 
 async function evalTemplate(env: Record<string, unknown>, content: string) {
     return await vm.runInNewContext(CODE_TEMPLATE, {
+        ejs,
         env,
         content,
         escaper: escape,
