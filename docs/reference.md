@@ -83,10 +83,30 @@ function execute(cmd: string) : Promise<string>;
 /**
  * Import character defines
  * @param name The name for the character, which can be a string and regular expression.
+ * @param template character card formatting prompt template
  * @param data - An optional data object used for template substitution.
  * @returns Returns the processed template string.If not found, returns ''
  */
-function getchr(name: string | RegExp, data: Record<string, any> = {}) : Promise<string>;
+function getchr(name: string | RegExp, template: string = DEFAULT_CHAR_DEFINE, data: Record<string, any> = {}) : Promise<string>;
+
+// default character card formatting prompt template
+export const DEFAULT_CHAR_DEFINE = `\
+<% if (name) { %>
+<<%- name %>>
+<% if (system_prompt) { %>
+System: <%- system_prompt %>
+<% } %>
+name: <%- name %>
+<% if (personality) { %>
+personality: <%- personality %>
+<% } %>
+<% if (message_example) { %>
+example:
+<%- message_example %>
+<% } %>
+</<%- name %>>
+<% } %>\
+`;
 
 /**
  * Import preset prompt from current preset
@@ -95,5 +115,13 @@ function getchr(name: string | RegExp, data: Record<string, any> = {}) : Promise
  * @returns Returns the processed template string.If not found, returns ''
  */
 function getprp(name: string | RegExp, data: Record<string, any> = {}) : Promise<string>;
+```
+
+---
+
+# Built-in variables reference
+
+```
+// TODO
 ```
 

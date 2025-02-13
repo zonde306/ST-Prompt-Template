@@ -18,19 +18,12 @@ name: <%- name %>
 <% if (personality) { %>
 personality: <%- personality %>
 <% } %>
-<% if (scenario) { %>
-scenario: <%- scenario %>
-<% } %>
-<% if (creator_notes) { %>
-notes: <%- creator_notes %>
-<% } %>
 <% if (message_example) { %>
 example:
 <%- message_example %>
 <% } %>
 </<%- name %>>
-<% } %>
-\
+<% } %>\
 `;
 
 export function getCharDefs(name : string | RegExp) {

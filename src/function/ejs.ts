@@ -103,7 +103,7 @@ async function bindImport(env: Record<string, unknown>,
 }
 
 async function bindCharDef(env: Record<string, unknown>,
-                           name: string | RegExp,
+                           name: string | RegExp, template: string = DEFAULT_CHAR_DEFINE,
                            data: Record<string, unknown> = {}) : Promise<string> {
     // maybe not
     env.getchr = bindCharDef.bind(null, env);
@@ -113,7 +113,7 @@ async function bindCharDef(env: Record<string, unknown>,
         return "";
     }
 
-    return substituteParams(await evalTemplate(DEFAULT_CHAR_DEFINE, { ...env, ...data, ...defs }),
+    return substituteParams(await evalTemplate(template, { ...env, ...data, ...defs }),
                             undefined, defs.name, undefined, undefined, false);
 }
 

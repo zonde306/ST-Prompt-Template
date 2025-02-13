@@ -50,7 +50,7 @@ SillyTavern = SillyTavern.getContext();
 getwi: (worldinfo: string, title: string | RegExp | number, data: Record<string, any> = {}) : Promise<string>;
 
 // get character defines
-getchr: (name: string | RegExp, data: Record<string, any> = {}) : Promise<string>;
+getchr: (name: string | RegExp, template: string = DEFAULT_CHAR_DEFINE, data: Record<string, any> = {}) : Promise<string>;
 
 // get preset prompt
 getprp: (name: string | RegExp, data: Record<string, any> = {}) : Promise<string>;
