@@ -51,6 +51,9 @@ getwi: (worldinfo: string, title: string | RegExp | number, data: Record<string,
 
 // get character defines
 getchr: (name: string | RegExp) : Promise<string>;
+
+// get preset prompt
+getprp: (name: string | RegExp) : string;
 ```
 
 ## Known Issues

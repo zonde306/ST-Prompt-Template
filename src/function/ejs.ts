@@ -7,6 +7,7 @@ import { getWorldInfoEntryContent } from './worldinfo';
 import { allVariables, getVariable, setVariable, increaseVariable, decreaseVariable } from './variables';
 import { getCharDefs, DEFAULT_CHAR_DEFINE } from './characters';
 import { substituteParams } from '../../../../../../script.js';
+import { getPresetPromptsContent } from './presets';
 
 interface IncluderResult {
     filename: string;
@@ -125,6 +126,7 @@ export function prepareGlobals(end : number = 65535) {
         decvar: decreaseVariable.bind(null, vars),
         SillyTavern: SillyTavern.getContext(),
         getchr: formatCharDef,
+        getprp: (x : string | RegExp) => substituteParams(getPresetPromptsContent(x) || ''),
     };
 
     // @ts-expect-error

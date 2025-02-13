@@ -86,5 +86,12 @@ function execute(cmd: string) : Promise<string>;
  * @returns Returns the processed template string.If not found, returns ''
  */
 function getchr(name: string | RegExp) : Promise<string>;
+
+/**
+ * Import preset prompt
+ * @param name The name for the prompt, which can be a string and regular expression.
+ * @returns Returns the processed template string.If not found, returns ''
+ */
+function getprp(name: string | RegExp) : string;
 ```
 
