@@ -94,6 +94,6 @@ function getchr(name: string | RegExp, data: Record<string, any> = {}) : Promise
  * @param data - An optional data object used for template substitution.
  * @returns Returns the processed template string.If not found, returns ''
  */
-function getprp(name: string | RegExp, data: Record<string, any> = {}) : string;
+function getprp(name: string | RegExp, data: Record<string, any> = {}) : Promise<string>;
 ```
 

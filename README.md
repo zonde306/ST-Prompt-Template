@@ -53,7 +53,7 @@ getwi: (worldinfo: string, title: string | RegExp | number, data: Record<string,
 getchr: (name: string | RegExp, data: Record<string, any> = {}) : Promise<string>;
 
 // get preset prompt
-getprp: (name: string | RegExp, data: Record<string, any> = {}) : string;
+getprp: (name: string | RegExp, data: Record<string, any> = {}) : Promise<string>;
 ```
 
 ## Known Issues
