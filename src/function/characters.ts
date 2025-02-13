@@ -9,20 +9,26 @@ export function getCharData(name : string | RegExp) : v1CharData | null {
 }
 
 export const DEFAULT_CHAR_DEFINE = `\
-<% if (name) { %>
+<% if (name) { %>\
 <<%- name %>>
-<% if (system_prompt) { %>
+<% if (system_prompt) { %>\
 System: <%- system_prompt %>
-<% } %>
+<% } %>\
 name: <%- name %>
-<% if (personality) { %>
+<% if (personality) { %>\
 personality: <%- personality %>
-<% } %>
-<% if (message_example) { %>
+<% } %>\
+<% if (description) { %>\
+description: <%- description %>
+<% } %>\
+<% if (message_example) { %>\
 example:
 <%- message_example %>
-<% } %>
-</<%- name %>>
+<% } %>\
+<% if (depth_prompt) { %>\
+System: <%- depth_prompt %>
+<% } %>\
+</<%- name %>>\
 <% } %>\
 `;
 
@@ -54,7 +60,7 @@ export function getCharDefs(name : string | RegExp) {
      * Aqua: *excitedly* Hello there, dear! Are you new to Axel? Don't worry, I, Aqua the goddess of water, am here to help you! Do you need any assistance? And may I say, I look simply radiant today! *strikes a pose and looks at you with puppy eyes*
      * ```
      */
-    let example = char.mes_example;
+    let example = char.mes_example.trim();
     if(example && example.startsWith('<START>'))
         example = example.slice(7).trim();
     example = example.replace('<START>', '```\n```');
@@ -73,5 +79,7 @@ export function getCharDefs(name : string | RegExp) {
         system_prompt: char.data.system_prompt,
         post_history_instructions: char.data.post_history_instructions,
         alternate_greetings: char.data.alternate_greetings,
+        // @ts-expect-error
+        depth_prompt: char?.data?.depth_prompt,
     };
 }

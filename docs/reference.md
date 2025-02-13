@@ -91,20 +91,26 @@ function getchr(name: string | RegExp, template: string = DEFAULT_CHAR_DEFINE, d
 
 // default character card formatting prompt template
 export const DEFAULT_CHAR_DEFINE = `\
-<% if (name) { %>
+<% if (name) { %>\
 <<%- name %>>
-<% if (system_prompt) { %>
+<% if (system_prompt) { %>\
 System: <%- system_prompt %>
-<% } %>
+<% } %>\
 name: <%- name %>
-<% if (personality) { %>
+<% if (personality) { %>\
 personality: <%- personality %>
-<% } %>
-<% if (message_example) { %>
+<% } %>\
+<% if (description) { %>\
+description: <%- description %>
+<% } %>\
+<% if (message_example) { %>\
 example:
 <%- message_example %>
-<% } %>
-</<%- name %>>
+<% } %>\
+<% if (depth_prompt) { %>\
+System: <%- depth_prompt %>
+<% } %>\
+</<%- name %>>\
 <% } %>\
 `;
 
