@@ -121,7 +121,7 @@ async function bindPresetPrompt(env: Record<string, unknown>,
                                 name : string | RegExp,
                                 data : Record<string, unknown> = {}) : Promise<string> {
     // maybe not
-    env.getprmt = bindPresetPrompt.bind(null, env);
+    env.getprp = bindPresetPrompt.bind(null, env);
     const prompt = getPresetPromptsContent(name);
     if(!prompt) {
         console.warn(`[Prompt Template] preset prompt ${name} not found`);
@@ -149,7 +149,7 @@ export function prepareGlobals(end : number = 65535) {
     // @ts-expect-error
     result.getchr = bindCharDef.bind(null, result);
     // @ts-expect-error
-    result.getprmt = bindPresetPrompt.bind(null, result);
+    result.getprp = bindPresetPrompt.bind(null, result);
     return result;
 }
 
