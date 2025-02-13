@@ -102,17 +102,34 @@ async function bindImport(env: Record<string, unknown>,
     return "";
 }
 
-async function formatCharDef(name: string | RegExp) : Promise<string> {
+async function bindCharDef(env: Record<string, unknown>,
+                           name: string | RegExp,
+                           data: Record<string, unknown> = {}) : Promise<string> {
+    // maybe not
+    env.getchr = bindCharDef.bind(null, env);
     const defs = getCharDefs(name);
     if(!defs) {
         console.warn(`[Prompt Template] character ${name} not found`);
         return "";
     }
 
-    return substituteParams(await evalTemplate(DEFAULT_CHAR_DEFINE, defs),
+    return substituteParams(await evalTemplate(DEFAULT_CHAR_DEFINE, { ...env, ...data, ...defs }),
                             undefined, defs.name, undefined, undefined, false);
 }
 
+async function bindPresetPrompt(env: Record<string, unknown>,
+                                name : string | RegExp,
+                                data : Record<string, unknown> = {}) : Promise<string> {
+    // maybe not
+    env.getprmt = bindPresetPrompt.bind(null, env);
+    const prompt = getPresetPromptsContent(name);
+    if(!prompt) {
+        console.warn(`[Prompt Template] preset prompt ${name} not found`);
+        return "";
+    }
+
+    return substituteParams(await evalTemplate(prompt, { ...env, ...data }));
+}
 
 export function prepareGlobals(end : number = 65535) {
     let vars = allVariables(end);
@@ -125,12 +142,14 @@ export function prepareGlobals(end : number = 65535) {
         incvar: increaseVariable.bind(null, vars),
         decvar: decreaseVariable.bind(null, vars),
         SillyTavern: SillyTavern.getContext(),
-        getchr: formatCharDef,
-        getprp: (x : string | RegExp) => substituteParams(getPresetPromptsContent(x) || ''),
     };
 
     // @ts-expect-error
     result.getwi = bindImport.bind(null, result);
+    // @ts-expect-error
+    result.getchr = bindCharDef.bind(null, result);
+    // @ts-expect-error
+    result.getprmt = bindPresetPrompt.bind(null, result);
     return result;
 }
 

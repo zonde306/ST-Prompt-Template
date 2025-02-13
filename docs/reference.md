@@ -83,15 +83,17 @@ function execute(cmd: string) : Promise<string>;
 /**
  * Import character defines
  * @param name The name for the character, which can be a string and regular expression.
+ * @param data - An optional data object used for template substitution.
  * @returns Returns the processed template string.If not found, returns ''
  */
-function getchr(name: string | RegExp) : Promise<string>;
+function getchr(name: string | RegExp, data: Record<string, any> = {}) : Promise<string>;
 
 /**
- * Import preset prompt
+ * Import preset prompt from current preset
  * @param name The name for the prompt, which can be a string and regular expression.
+ * @param data - An optional data object used for template substitution.
  * @returns Returns the processed template string.If not found, returns ''
  */
-function getprp(name: string | RegExp) : string;
+function getprp(name: string | RegExp, data: Record<string, any> = {}) : string;
 ```
 
