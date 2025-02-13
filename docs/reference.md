@@ -3,7 +3,7 @@
 ```typescript
 /**
  * Import world info entry content
- * @param worldinfo - The identifier for the world information.
+ * @param worldinfo - The name for the lore book.
  * @param title - The identifier of the world info entry to be imported, which can be a string, regular expression, or number.
  * @param data - An optional data object used for template substitution.
  * @returns Returns the processed template string.If not found, returns ''
@@ -79,5 +79,12 @@ function decvar(key: string, value: any, index?: number, scope : "global" | "loc
  * @returns pipe output
  */
 function execute(cmd: string) : Promise<string>;
+
+/**
+ * Import character defines
+ * @param name The name for the character, which can be a string and regular expression.
+ * @returns Returns the processed template string.If not found, returns ''
+ */
+function getchr(name: string | RegExp) : Promise<string>;
 ```
 

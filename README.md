@@ -48,11 +48,14 @@ SillyTavern = SillyTavern.getContext();
 
 // get worldinfo entry
 getwi: (worldinfo: string, title: string | RegExp | number, data: Record<string, any> = {}) : Promise<string>;
+
+// get character defines
+getchr: (name: string | RegExp) : Promise<string>;
 ```
 
 ## Known Issues
 
-1. `<% include(...) %>`is not supported, use `<%- await import(...) %>`
+1. `<% include(...) %>`is not supported, use `<%- await getwi(...) %>` or `<%- await getchr(...) %>`
 
 2. `<%= value %>`is just like`<%- value %>`
 
