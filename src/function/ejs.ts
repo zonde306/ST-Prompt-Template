@@ -151,7 +151,7 @@ export async function prepareGlobals(end : number = 65535) {
     // @ts-expect-error
     result.getprp = bindPresetPrompt.bind(null, result);
 
-    await eventSource.emit('prompt_template_prepare', result);
+    await eventSource.emit('prompt_template_prepare_globals', result);
     return result;
 }
 
