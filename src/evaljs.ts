@@ -7,7 +7,7 @@ import { saveMetadataDebounced } from '../../../../extensions.js';
 import { prepareGlobals, evalTemplate } from './function/ejs';
 
 async function updateChat(data : ChatData) {
-    const env = prepareGlobals();
+    const env = await prepareGlobals();
 
     let err = false;
     for(const message of data.chat) {
@@ -39,7 +39,7 @@ async function updateMessage(message_id : string) {
     }
 
     // without current message
-    const env = prepareGlobals(message_idx);
+    const env = await prepareGlobals(message_idx);
 
     try {
         message.mes = await evalTemplate(message.mes, env);
@@ -86,7 +86,7 @@ export async function exit() {
 
 async function test() {
     console.log('ST-Prompt-Template start test.');
-    const env = prepareGlobals();
+    const env = await prepareGlobals();
     env.variables.name = 'world';
     console.log(await evalTemplate('Hello, <%= variables.name %>!', env));
     console.log('ST-Prompt-Template test end.');

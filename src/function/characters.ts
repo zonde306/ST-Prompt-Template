@@ -8,6 +8,20 @@ export function getCharData(name : string | RegExp) : v1CharData | null {
     return char;
 }
 
+function hasAny(tags: string[], matchs: Set<string>) {
+    for (const tag of tags)
+        if (matchs.has(tag))
+            return true;
+    return false;
+}
+
+export function* getChars(include: Set<string> = new Set<string>(),
+                          exclude: Set<string> = new Set<string>()) : Generator<string> {
+    for (const char of characters)
+        if ((!include.size || hasAny(char.tags, include)) && !hasAny(char.tags, exclude))
+            yield char.name;
+}
+
 export const DEFAULT_CHAR_DEFINE = `\
 <% if (name) { %>\
 <<%- name %>>

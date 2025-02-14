@@ -6,7 +6,7 @@ import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.j
 import { getWorldInfoEntryContent } from './worldinfo';
 import { allVariables, getVariable, setVariable, increaseVariable, decreaseVariable } from './variables';
 import { getCharDefs, DEFAULT_CHAR_DEFINE } from './characters';
-import { substituteParams } from '../../../../../../script.js';
+import { substituteParams, eventSource } from '../../../../../../script.js';
 import { getPresetPromptsContent } from './presets';
 
 interface IncluderResult {
@@ -131,7 +131,7 @@ async function bindPresetPrompt(env: Record<string, unknown>,
     return substituteParams(await evalTemplate(prompt, { ...env, ...data }));
 }
 
-export function prepareGlobals(end : number = 65535) {
+export async function prepareGlobals(end : number = 65535) {
     let vars = allVariables(end);
     let result = {
         ...SHARE_CONTEXT,
@@ -150,6 +150,8 @@ export function prepareGlobals(end : number = 65535) {
     result.getchr = bindCharDef.bind(null, result);
     // @ts-expect-error
     result.getprp = bindPresetPrompt.bind(null, result);
+
+    await eventSource.emit('prompt_template_prepare', result);
     return result;
 }
 

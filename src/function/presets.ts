@@ -8,3 +8,8 @@ export function getPresetPromptsContent(name: string | RegExp) : string | null {
     return preset?.content || null;
 }
 
+
+export function* getPresetPrompts() : Generator<string> {
+    for(const preset of oai_settings.prompts)
+        yield preset.name;
+}

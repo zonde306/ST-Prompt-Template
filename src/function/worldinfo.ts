@@ -49,6 +49,11 @@ export async function* getWorldInfoAll(name: string): AsyncGenerator<WorldInfoDa
         yield data;
 }
 
+export async function* getWorldInfoTitles(name: string): AsyncGenerator<string> {
+    for await (const data of getWorldInfoAll(name))
+        yield data.comment;
+}
+
 export async function getWorldInfoEntry(name: string, title: string | RegExp | number): Promise<WorldInfoData | null> {
     for await (const data of getWorldInfoAll(name))
         // @ts-expect-error
