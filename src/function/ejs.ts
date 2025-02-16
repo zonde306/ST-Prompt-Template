@@ -74,7 +74,7 @@ const CODE_TEMPLATE = `\
     ejs.render(
         content,
         data,
-        { async: true, escape: escaper, includer: includer, cache: false, context: data },
+        { async: true, escape: escaper, includer: includer, cache: false, context: data, client: true },
     );\
 `;
 
