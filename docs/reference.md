@@ -2,95 +2,120 @@
 
 ```typescript
 /**
- * Import world info entry content
- * @param worldinfo - The name for the lore book.
- * @param title - The identifier of the world info entry to be imported, which can be a string, regular expression, or number.
- * @param data - An optional data object used for template substitution.
- * @returns Returns the processed template string.If not found, returns ''
+ * @typedef {Object} SetVarOption
+ * @property {number} [index] - The index at which the variable should be set. Optional.
+ * @property {'global' | 'local' | 'message' | 'cache'} [scope='cache'] - The scope in which the variable should be set. Defaults to 'cache'.
+ * @property {'nx' | 'xx' | 'n'} [flags] - Flags that control the behavior of setting the variable. Defaults to 'n'.
  */
-function getwi(worldinfo: string, title: string | RegExp | number, data: Record<string, any> = {}) : Promise<string>;
 
 /**
- * Set the value of a variable.
- * 
- * @param key - The key name of the variable to be set.
- * @param value - The value to assign to the variable.
- * @param index - (Optional) list index.
- * @param scope - (Optional) The scope of the variable, which can be 'global', 'local', or 'message', defaulting to 'message'.
- * @param flags - (Optional) Flags for setting the variable, which can be 'nx' (set only if the key does not exist), 'xx' (set only if the key exists), or 'n' (set unconditionally), defaulting to 'n'.
- * 
- * Depending on the scope, the variable will be set in global settings, local metadata, or the variables of the last non-system message.
- * If an index is provided, the variable will be set to the value at the specified index in the array.
- * Depending on the flag, the function may return early under certain conditions without making any changes.
- * 
- * Returns the updated variable object.
+ * Sets a variable in the specified scope with optional flags and index.
+ *
+ * @param {string} key - The key under which the variable is stored.
+ * @param {unknown} value - The value to set for the variable.
+ * @param {SetVarOption} [options={}] - Optional settings for setting the variable.
+ * @returns {Record<string, unknown>} - The updated variables object.
  */
-function setvar(key: string, value: any, index?: number, scope : "global" | "local" | "message" = "message", flags : 'nx' | 'xx' | 'n' = 'n') : Record<string, any>;
+function setvar(key, value, options = {});
 
 /**
- * Get the value of a variable.
- * 
- * @param key - The key name of the variable to retrieve.
- * @param index - (Optional) list index.
- * @param defaults - (Optional) The default value, defaulting to undefined.
- * 
- * @returns Returns the value of the variable with the specified key. If an index is provided, it attempts to retrieve the value at the corresponding index from the array; otherwise, it directly retrieves the variable's value. If the variable does not exist, it returns the default value.
- * 
- * This function first checks if an index is provided. If an index is provided and is not null or undefined, it attempts to parse the variable's value as a JSON object and retrieves the value at the specified index.
- * If no index is provided or the index is null or undefined, it directly retrieves the value of the variable from the variable object.
- * If the variable does not exist, it returns the provided default value.
+ * @typedef {Object} GetVarOption
+ * @property {number} [index] - The index from which the variable should be retrieved. Optional.
+ * @property {'global' | 'local' | 'message' | 'cache'} [scope='cache'] - The scope from which the variable should be retrieved. Defaults to 'cache'.
+ * @property {unknown} [defaults] - The default value to return if the variable is not found. Optional.
  */
-function getvar(key: string, value: any, index?: number) : any;
 
 /**
- * Increment the value of a variable
- * 
- * @param key - The key of the variable to increment.
- * @param value - The amount to increment by, defaulting to 1.
- * @param index - (Optional) list index.
- * @param scope - The scope of the variable, which can be 'global', 'local', or 'message', defaulting to 'message'.
- * @param flags - Flags controlling the behavior of setting the variable, which can be 'nx', 'xx', or 'n', defaulting to 'n'.
- * 
- * @returns Returns the updated variable storage object.
- * 
- * Depending on the value of flags, the function behaves differently:
- * - 'nx': Sets the new value only if the variable does not exist.
- * - 'xx': Updates the value only if the variable already exists.
- * - 'n': Always sets the new value.
+ * Retrieves a variable from the specified scope with an optional index and default value.
+ *
+ * @param {string} key - The key under which the variable is stored.
+ * @param {GetVarOption} [options={}] - Optional settings for retrieving the variable.
+ * @returns {unknown} - The retrieved variable or the default value if not found.
  */
-function incvar(key: string, value: any, index?: number, scope : "global" | "local" | "message" = "message", flags : 'nx' | 'xx' | 'n' = 'n') : Record<string, any>;
+function getvar(key, options = {});
 
 /**
- * Decrease the value of a variable.
- * @param vars The variables object.
- * @param key The key name of the variable to decrease.
- * @param value The amount to decrease, defaulting to 1.
- * @param index (Optional) list index.
- * @param scope The scope of the variable, which can be 'global', 'local', or 'message', defaulting to 'message'.
- * @param flags Control flags, which can be 'nx' (set only if the key does not exist), 'xx' (set only if the key exists), or 'n' (always set), defaulting to 'n'.
- * @returns The result of the operation.
+ * @typedef {Object} GetSetVarOption
+ * @property {number} [index] - The index at which the variable should be accessed or modified. Optional.
+ * @property {unknown} [defaults] - The default value to use if the variable is not found. Defaults to 0.
+ * @property {'global' | 'local' | 'message' | 'cache'} [inscope='cache'] - The scope from which the variable should be retrieved. Defaults to 'cache'.
+ * @property {'global' | 'local' | 'message' | 'cache'} [outscope='cache'] - The scope in which the variable should be set. Defaults to 'cache'.
+ * @property {'nx' | 'xx' | 'n'} [flags] - Flags that control the behavior of setting or getting the variable. Defaults to 'n'.
  */
-
-function decvar(key: string, value: any, index?: number, scope : "global" | "local" | "message" = "message", flags : 'nx' | 'xx' | 'n' = 'n') : Record<string, any>;
 
 /**
- * Execute slash command
- * @param cmd the command(s)
- * @returns pipe output
+ * Increases the value of a variable by a specified amount, with options for scope and flags.
+ *
+ * @param {Record<string, unknown>} vars - The object containing the variables.
+ * @param {string} key - The key under which the variable is stored.
+ * @param {number} [value=1] - The amount by which to increase the variable. Defaults to 1.
+ * @param {GetSetVarOption} [options={}] - Optional settings for retrieving and setting the variable.
+ * @returns {Record<string, unknown>} - The updated variables object.
  */
-function execute(cmd: string) : Promise<string>;
+function incvar(key, value = 1, options = {});
 
 /**
- * Import character defines
- * @param name The name for the character, which can be a string and regular expression.
- * @param template character card formatting prompt template
- * @param data - An optional data object used for template substitution.
- * @returns Returns the processed template string.If not found, returns ''
+ * Decreases the value of a variable by a specified amount, with options for scope and flags.
+ *
+ * @param {Record<string, unknown>} vars - The object containing the variables.
+ * @param {string} key - The key under which the variable is stored.
+ * @param {number} [value=1] - The amount by which to decrease the variable. Defaults to 1.
+ * @param {GetSetVarOption} [options={}] - Optional settings for retrieving and setting the variable.
+ * @returns {Record<string, unknown>} - The updated variables object.
  */
-function getchr(name: string | RegExp, template: string = DEFAULT_CHAR_DEFINE, data: Record<string, any> = {}) : Promise<string>;
+function decvar(key, value = 1, options = {});
 
+/**
+ * Execute a slash command.
+ *
+ * @param {string} cmd - The command(s) to execute.
+ * @returns {Promise<string>} - A promise that resolves to the pipe output.
+ */
+function execute(cmd);
+
+/**
+ * Import world info entry content.
+ *
+ * @param {string} worldinfo - The name for the lore book.
+ * @param {string | RegExp | number} title - The identifier of the world info entry to be imported, which can be a string, regular expression, or number.
+ * @param {Record<string, any>} [data={}] - An optional data object used for template substitution.
+ * @returns {Promise<string>} - A promise that resolves to the processed template string. If not found, returns an empty string ('').
+ */
+function getwi(worldinfo, title, data = {});
+
+/**
+ * Import character definitions.
+ *
+ * @param {string | RegExp} name - The name for the character, which can be a string or regular expression.
+ * @param {string} [template=DEFAULT_CHAR_DEFINE] - The character card formatting prompt template.
+ * @param {Record<string, any>} [data={}] - An optional data object used for template substitution.
+ * @returns {Promise<string>} - A promise that resolves to the processed template string. If not found, returns an empty string ('').
+ */
+function getchr(name, template = DEFAULT_CHAR_DEFINE, data = {});
+
+/**
+ * Import preset prompt from the current preset.
+ *
+ * @param {string | RegExp} name - The name for the prompt, which can be a string or regular expression.
+ * @param {Record<string, any>} [data={}] - An optional data object used for template substitution.
+ * @returns {Promise<string>} - A promise that resolves to the processed template string. If not found, returns an empty string ('').
+ */
+function getprp(name, data = {});
+```
+
+> `flags` type:
+>
+> `nx`: execute if **not exists**
+>
+> `xx`: execute only if **exists**
+>
+> `n`: **always** execute
+
+---
+
+```javascript
 // default character card formatting prompt template
-export const DEFAULT_CHAR_DEFINE = `\
+const DEFAULT_CHAR_DEFINE = `\
 <% if (name) { %>\
 <<%- name %>>
 <% if (system_prompt) { %>\
@@ -113,14 +138,6 @@ System: <%- depth_prompt %>
 </<%- name %>>\
 <% } %>\
 `;
-
-/**
- * Import preset prompt from current preset
- * @param name The name for the prompt, which can be a string and regular expression.
- * @param data - An optional data object used for template substitution.
- * @returns Returns the processed template string.If not found, returns ''
- */
-function getprp(name: string | RegExp, data: Record<string, any> = {}) : Promise<string>;
 ```
 
 ---

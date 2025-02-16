@@ -17,10 +17,16 @@ export function allVariables(end : number = 65535) {
     return variables;
 }
 
+export interface SetVarOption {
+    index?: number;
+    scope?: 'global' | 'local' | 'message' | 'cache';
+    flags?: 'nx' | 'xx' | 'n';
+}
+
 export function setVariable(vars : Record<string, unknown>, key : string, value : unknown,
-                      index: number | null = null,
-                      scope : 'global' | 'local' | 'message' = 'message',
-                      flags: 'nx' | 'xx' | 'n' = 'n') {
+                            options : SetVarOption = {}) {
+    const { index, scope, flags } = options;
+
     let message : Message;
     if (index !== null && index !== undefined) {
         // @ts-expect-error: TS2322
@@ -33,7 +39,7 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
 
         _.set(vars, key, JSON.stringify(_.set(data, idx, value)));
 
-        switch(scope) {
+        switch(scope || 'cache') {
             case 'global':
                 data = JSON.parse(_.get(extension_settings.variables.global, key, '{}') || '{}');
                 _.set(extension_settings.variables.global, key, JSON.stringify(_.set(data, idx, value)));
@@ -61,7 +67,7 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
 
         _.set(vars, key, value);
 
-        switch(scope) {
+        switch(scope || 'cache') {
             case 'global':
                 _.set(extension_settings.variables.global, key, value);
                 break;
@@ -83,9 +89,16 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
     return vars;
 }
 
+export interface GetVarOption {
+    index?: number;
+    scope?: 'global' | 'local' | 'message' | 'cache';
+    defaults?: unknown;
+}
+
 export function getVariable(vars : Record<string, unknown>, key : string,
-                    index: number | null = null,
-                    defaults: unknown = undefined) {
+                            options : GetVarOption = {}) {
+    const { index, scope, defaults } = options;
+
     if (index !== null && index !== undefined) {
         // @ts-expect-error: TS2322
         const data = JSON.parse(_.get(vars, key, '{}') || '{}');
@@ -93,25 +106,62 @@ export function getVariable(vars : Record<string, unknown>, key : string,
         return _.get(data, idx, defaults);
     }
 
+    switch(scope || 'cache') {
+        case 'global':
+            if (index !== null && index !== undefined) {
+                const data = JSON.parse(_.get(extension_settings.variables.global, key, '{}') || '{}');
+                const idx = Number(index);
+                return _.get(data, idx, defaults);
+            }
+            return _.get(extension_settings.variables.global, key, defaults);
+        case 'local':
+            // @ts-expect-error: TS2322
+            if(!chat_metadata.variables)
+                return defaults;
+            if (index !== null && index !== undefined) {
+                // @ts-expect-error: TS2322
+                const data = JSON.parse(_.get(chat_metadata.variables, key, '{}') || '{}');
+                const idx = Number(index);
+                return _.get(data, idx, defaults);
+            }
+            // @ts-expect-error: TS2322
+            return _.get(chat_metadata.variables, key, defaults);
+        case 'message':
+            const message = chat.findLast(msg => !msg.is_system);
+            if(!message.variables) return defaults;
+            if(!message.variables[message.swipe_id]) return defaults;
+            if (index !== null && index !== undefined) {
+                const data = JSON.parse(_.get(message.variables[message.swipe_id], key, '{}') || '{}');
+                const idx = Number(index);
+                return _.get(data, idx, defaults);
+            }
+            return _.get(message.variables[message.swipe_id], key, defaults);
+    }
+
     return _.get(vars, key, defaults);
 }
 
+export interface GetSetVarOption {
+    index?: number;
+    defaults?: number;
+    inscope?: 'global' | 'local' | 'message' | 'cache';
+    outscope?: 'global' | 'local' | 'message' | 'cache';
+    flags?: 'nx' | 'xx' | 'n';
+}
+
 export function increaseVariable(vars : Record<string, unknown>, key : string,
-                          value : number = 1,
-                          index: number | null = null,
-                          scope : 'global' | 'local' | 'message' = 'message',
-                          flags: 'nx' | 'xx' | 'n' = 'n') {
+                                 value : number = 1, options : GetSetVarOption = {}) {
+    let { index, inscope, outscope, flags, defaults } = options;
     if((flags === 'nx' && !_.has(vars, key)) ||
       (flags === 'xx' && _.has(vars, key)) ||
-      flags === 'n')
-        return setVariable(vars, key, getVariable(vars, key, index, 0) + value, index, scope, 'n');
+      (flags === 'n' || flags === undefined)) {
+        const val = getVariable(vars, key, { index, scope: inscope, defaults: defaults || 0 });
+        return setVariable(vars, key, val + value, { index, scope: outscope, flags: 'n' });
+    }
     return vars;
 }
 
 export function decreaseVariable(vars : Record<string, unknown>, key : string,
-                          value : number = 1,
-                          index: number | null = null,
-                          scope : 'global' | 'local' | 'message' = 'message',
-                          flags: 'nx' | 'xx' | 'n' = 'n') {
-    return increaseVariable(vars, key, -value, index, scope, flags);
+                                 value : number = 1, options : GetSetVarOption = {}) {
+    return increaseVariable(vars, key, -value, options);
 }
