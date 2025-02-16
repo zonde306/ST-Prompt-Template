@@ -54,7 +54,8 @@ const serverConfig = {
         if (request.startsWith('../../')) {
             if(context.search(/(\/|\\)src\1/) > 0)
                 return callback(null, request.substring(3));
-
+            return callback(null, request);
+        } else if(request.startsWith('https://') || request.startsWith('http://')) {
             return callback(null, request);
         }
         callback();

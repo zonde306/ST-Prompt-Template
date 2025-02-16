@@ -54,6 +54,9 @@ getchr: (name: string | RegExp, template: string = DEFAULT_CHAR_DEFINE, data: Re
 
 // get preset prompt
 getprp: (name: string | RegExp, data: Record<string, any> = {}) : Promise<string>;
+
+// faker module, example: faker.fakerEN.person.fullName()
+faker: Module;
 ```
 
 ## Known Issues

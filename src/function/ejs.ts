@@ -8,6 +8,7 @@ import { allVariables, getVariable, setVariable, increaseVariable, decreaseVaria
 import { getCharDefs, DEFAULT_CHAR_DEFINE } from './characters';
 import { substituteParams, eventSource } from '../../../../../../script.js';
 import { getPresetPromptsContent } from './presets';
+import { fakerEnv } from './faker';
 
 interface IncluderResult {
     filename: string;
@@ -142,6 +143,7 @@ export async function prepareGlobals(end : number = 65535) {
         incvar: increaseVariable.bind(null, vars),
         decvar: decreaseVariable.bind(null, vars),
         SillyTavern: SillyTavern.getContext(),
+        faker: fakerEnv.faker,
     };
 
     // @ts-expect-error
