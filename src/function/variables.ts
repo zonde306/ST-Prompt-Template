@@ -39,7 +39,7 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
 
         _.set(vars, key, JSON.stringify(_.set(data, idx, value)));
 
-        switch(scope || 'cache') {
+        switch(scope || 'message') {
             case 'global':
                 data = JSON.parse(_.get(extension_settings.variables.global, key, '{}') || '{}');
                 _.set(extension_settings.variables.global, key, JSON.stringify(_.set(data, idx, value)));
@@ -67,7 +67,7 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
 
         _.set(vars, key, value);
 
-        switch(scope || 'cache') {
+        switch(scope || 'message') {
             case 'global':
                 _.set(extension_settings.variables.global, key, value);
                 break;
