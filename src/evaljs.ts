@@ -14,7 +14,7 @@ async function updateChat(data : ChatData) {
         try {
             message.content = await evalTemplate(message.content, env);
         } catch(err) {
-            console.error(`error for chat message ${message.content}`);
+            // console.error(`error for chat message ${message.content}`);
             console.error(err);
             err = true;
         }
@@ -44,7 +44,7 @@ async function updateMessage(message_id : string) {
     try {
         message.mes = await evalTemplate(message.mes, env);
     } catch(err) {
-        console.error(`error for message ${message.mes}`);
+        // console.error(`error for message ${message.mes}`);
         console.error(err);
         return;
     }

@@ -99,13 +99,6 @@ export function getVariable(vars : Record<string, unknown>, key : string,
                             options : GetVarOption = {}) {
     const { index, scope, defaults } = options;
 
-    if (index !== null && index !== undefined) {
-        // @ts-expect-error: TS2322
-        const data = JSON.parse(_.get(vars, key, '{}') || '{}');
-        const idx = Number(index);
-        return _.get(data, idx, defaults);
-    }
-
     switch(scope || 'cache') {
         case 'global':
             if (index !== null && index !== undefined) {
@@ -136,6 +129,13 @@ export function getVariable(vars : Record<string, unknown>, key : string,
                 return _.get(data, idx, defaults);
             }
             return _.get(message.variables[message.swipe_id], key, defaults);
+    }
+
+    if (index !== null && index !== undefined) {
+        // @ts-expect-error: TS2322
+        const data = JSON.parse(_.get(vars, key, '{}') || '{}');
+        const idx = Number(index);
+        return _.get(data, idx, defaults);
     }
 
     return _.get(vars, key, defaults);
