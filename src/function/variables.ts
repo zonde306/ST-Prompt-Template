@@ -151,7 +151,7 @@ export interface GetSetVarOption {
 
 export function increaseVariable(vars : Record<string, unknown>, key : string,
                                  value : number = 1, options : GetSetVarOption = {}) {
-    let { index, inscope, outscope, flags, defaults } = options;
+    const { index, inscope, outscope, flags, defaults } = options;
     if((flags === 'nx' && !_.has(vars, key)) ||
       (flags === 'xx' && _.has(vars, key)) ||
       (flags === 'n' || flags === undefined)) {
