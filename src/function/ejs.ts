@@ -135,6 +135,9 @@ async function bindPresetPrompt(env: Record<string, unknown>,
 let SharedDefines : Record<string, unknown> = {};
 
 function define(env: Record<string, unknown>, name : string, value : unknown) {
+    if(name in SharedDefines) 
+        console.warn(`[Prompt Template] global ${name} already defined`);
+    
     SharedDefines[name] = value;
     env[name] = value;
 }
