@@ -134,7 +134,7 @@ async function bindPresetPrompt(env: Record<string, unknown>,
 
 let SharedDefines : Record<string, unknown> = {};
 
-function define(env: Record<string, unknown>, name : string, value : unknown) {
+function bindDefine(env: Record<string, unknown>, name : string, value : unknown) {
     if(name in SharedDefines) 
         console.warn(`[Prompt Template] global ${name} already defined`);
     
@@ -164,7 +164,7 @@ export async function prepareGlobals(end : number = 65535) {
     // @ts-expect-error: 2339
     result.getprp = bindPresetPrompt.bind(null, result);
     // @ts-expect-error: 2339
-    result.define = define.bind(null, result);
+    result.define = bindDefine.bind(null, result);
 
     await eventSource.emit('prompt_template_prepare', result);
     return result;
