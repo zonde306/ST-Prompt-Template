@@ -1,10 +1,24 @@
 // @ts-expect-error
 import vm from 'vm-browserify';
 import _ from 'lodash';
+import { diffLines } from 'diff';
 import { ChatData, Message } from './defines';
 import { eventSource, event_types, chat, saveChatDebounced, messageFormatting } from '../../../../../script.js';
 import { saveMetadataDebounced } from '../../../../extensions.js';
 import { prepareGlobals, evalTemplate } from './function/ejs';
+
+function logDifference(a : string, b : string, unchanged : boolean = false) {
+    const diff = diffLines(a, b);
+    for(const part of diff) {
+        if(part.added) {
+            console.debug(`+ ${part.value}`);
+        } else if(part.removed) {
+            console.debug(`- ${part.value}`);
+        } else if(unchanged) {
+            console.debug(`  ${part.value}`);
+        }
+    }
+}
 
 async function updateChat(data : ChatData) {
     const env = await prepareGlobals();
@@ -12,7 +26,12 @@ async function updateChat(data : ChatData) {
     let err = false;
     for(const message of data.chat) {
         try {
-            message.content = await evalTemplate(message.content, env);
+            let newContent = await evalTemplate(message.content, env);
+            if(newContent !== message.content) {
+                console.debug('update chat message:');
+                logDifference(message.content, newContent);
+            }
+            message.content = newContent;
         } catch(err) {
             // console.error(`error for chat message ${message.content}`);
             console.error(err);
@@ -42,7 +61,12 @@ async function updateMessage(message_id : string) {
     const env = await prepareGlobals(message_idx);
 
     try {
-        message.mes = await evalTemplate(message.mes, env);
+        let newContent = await evalTemplate(message.mes, env);
+        if(newContent !== message.mes) {
+            console.debug('update message:');
+            logDifference(message.mes, newContent);
+        }
+        message.mes = newContent;
     } catch(err) {
         // console.error(`error for message ${message.mes}`);
         console.error(err);

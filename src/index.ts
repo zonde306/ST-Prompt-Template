@@ -1,4 +1,4 @@
-import { init as finit, exit as fexit } from './evaljs';
+import { init as finit, exit as fexit } from './handler';
 import { init as vinit, exit as vexit } from './command';
 
 interface PluginInfo {
