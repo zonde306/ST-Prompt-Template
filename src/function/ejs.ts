@@ -132,13 +132,17 @@ async function bindPresetPrompt(env: Record<string, unknown>,
     return substituteParams(await evalTemplate(prompt, { ...env, ...data }));
 }
 
+let SharedDefines : Record<string, unknown> = {};
+
 function define(env: Record<string, unknown>, name : string, value : unknown) {
+    SharedDefines[name] = value;
     env[name] = value;
 }
 
 export async function prepareGlobals(end : number = 65535) {
     let vars = allVariables(end);
     let result = {
+        ...SharedDefines,
         ...SHARE_CONTEXT,
         variables: vars,
         execute: async(cmd : string) => (await executeSlashCommandsWithOptions(cmd)).pipe,
