@@ -103,9 +103,9 @@ function getchr(name, template = DEFAULT_CHAR_DEFINE, data = {});
 function getprp(name, data = {});
 
 /**
- * Defines a specified value in the environment object.
+ * Defines a global variable or function.
  *
- * @param {string} name - The name of the value to be defined.
+ * @param {string} name - The name to be defined.
  * @param {unknown} value - The value to be defined, which can be of any type.
  */
 function define(name, value);
