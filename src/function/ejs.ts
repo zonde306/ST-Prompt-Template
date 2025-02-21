@@ -132,6 +132,10 @@ async function bindPresetPrompt(env: Record<string, unknown>,
     return substituteParams(await evalTemplate(prompt, { ...env, ...data }));
 }
 
+function define(env: Record<string, unknown>, name : string, value : unknown) {
+    env[name] = value;
+}
+
 export async function prepareGlobals(end : number = 65535) {
     let vars = allVariables(end);
     let result = {
@@ -146,12 +150,14 @@ export async function prepareGlobals(end : number = 65535) {
         faker: fakerEnv.faker,
     };
 
-    // @ts-expect-error
+    // @ts-expect-error: 2339
     result.getwi = bindImport.bind(null, result);
-    // @ts-expect-error
+    // @ts-expect-error: 2339
     result.getchr = bindCharDef.bind(null, result);
-    // @ts-expect-error
+    // @ts-expect-error: 2339
     result.getprp = bindPresetPrompt.bind(null, result);
+    // @ts-expect-error: 2339
+    result.define = define.bind(null, result);
 
     await eventSource.emit('prompt_template_prepare', result);
     return result;

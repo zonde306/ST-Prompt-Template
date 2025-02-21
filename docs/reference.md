@@ -101,6 +101,14 @@ function getchr(name, template = DEFAULT_CHAR_DEFINE, data = {});
  * @returns {Promise<string>} - A promise that resolves to the processed template string. If not found, returns an empty string ('').
  */
 function getprp(name, data = {});
+
+/**
+ * Defines a specified value in the environment object.
+ *
+ * @param {string} name - The name of the value to be defined.
+ * @param {unknown} value - The value to be defined, which can be of any type.
+ */
+function define(name, value);
 ```
 
 > `flags` type:
