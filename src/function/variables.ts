@@ -32,7 +32,7 @@ export interface SetVarOption {
 }
 
 function evalFilter(filter? : MessageFilter) {
-    let message_id = chat.length - 1;
+    let message_id = -1;
     if(filter?.id !== undefined) {
         message_id = filter.id > -1 ? filter.id : chat.length + filter.id;
     } else if(filter?.role !== undefined) {
@@ -42,7 +42,7 @@ function evalFilter(filter? : MessageFilter) {
             (!msg.is_system && !msg.is_user && (filter.role === 'assistant')) ||
             (filter.role === 'any')
         );
-    } else if(!filter) {
+    } else {
         message_id = chat.findLastIndex(msg => !msg.is_user && !msg.is_system);
     }
 
