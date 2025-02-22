@@ -45,7 +45,7 @@ export async function* getWorldInfoAll(name: string): AsyncGenerator<WorldInfoDa
     if(!lorebook)
         return;
 
-    for(const [_uid, data] of Object.entries(lorebook.entries))
+    for(const data of _.values(lorebook.entries))
         yield data;
 }
 
