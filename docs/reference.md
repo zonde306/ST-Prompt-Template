@@ -3,9 +3,9 @@
 ```typescript
 /**
  * @typedef {Object} SetVarOption
- * @property {number} [index] - The index at which the variable should be set. Optional.
- * @property {'global' | 'local' | 'message' | 'cache'} [scope='cache'] - The scope in which the variable should be set. Defaults to 'cache'.
- * @property {'nx' | 'xx' | 'n'} [flags] - Flags that control the behavior of setting the variable. Defaults to 'n'.
+ * @property {number} [index=undefined] - The index at which the variable should be set. Optional.
+ * @property {'global' | 'local' | 'message' | 'cache'} [scope='message'] - The scope in which the variable should be set.
+ * @property {'nx' | 'xx' | 'n'} [flags='n'] - Flags that control the behavior of setting the variable. Defaults to 'n'.
  */
 
 /**
@@ -20,9 +20,9 @@ function setvar(key, value, options = {});
 
 /**
  * @typedef {Object} GetVarOption
- * @property {number} [index] - The index from which the variable should be retrieved. Optional.
- * @property {'global' | 'local' | 'message' | 'cache'} [scope='cache'] - The scope from which the variable should be retrieved. Defaults to 'cache'.
- * @property {unknown} [defaults] - The default value to return if the variable is not found. Optional.
+ * @property {number} [index=undefined] - The index from which the variable should be retrieved. Optional.
+ * @property {'global' | 'local' | 'message' | 'cache'} [scope='cache'] - The scope from which the variable should be retrieved.
+ * @property {unknown} [defaults=undefined] - The default value to return if the variable is not found. Optional.
  */
 
 /**
@@ -38,15 +38,15 @@ function getvar(key, options = {});
  * @typedef {Object} GetSetVarOption
  * @property {number} [index] - The index at which the variable should be accessed or modified. Optional.
  * @property {unknown} [defaults] - The default value to use if the variable is not found. Defaults to 0.
- * @property {'global' | 'local' | 'message' | 'cache'} [inscope='cache'] - The scope from which the variable should be retrieved. Defaults to 'cache'.
- * @property {'global' | 'local' | 'message' | 'cache'} [outscope='cache'] - The scope in which the variable should be set. Defaults to 'cache'.
+ * @property {'global' | 'local' | 'message' | 'cache'} [inscope='cache'] - The scope from which the variable should be retrieved.
+ * @property {'global' | 'local' | 'message' | 'cache'} outscope='message'] - The scope in which the variable should be set.
  * @property {'nx' | 'xx' | 'n'} [flags] - Flags that control the behavior of setting or getting the variable. Defaults to 'n'.
  */
 
 /**
  * Increases the value of a variable by a specified amount, with options for scope and flags.
+ * inscope defaults to the default value of getvar, and outscope defaults to the default value of setvar
  *
- * @param {Record<string, unknown>} vars - The object containing the variables.
  * @param {string} key - The key under which the variable is stored.
  * @param {number} [value=1] - The amount by which to increase the variable. Defaults to 1.
  * @param {GetSetVarOption} [options={}] - Optional settings for retrieving and setting the variable.
@@ -57,7 +57,6 @@ function incvar(key, value = 1, options = {});
 /**
  * Decreases the value of a variable by a specified amount, with options for scope and flags.
  *
- * @param {Record<string, unknown>} vars - The object containing the variables.
  * @param {string} key - The key under which the variable is stored.
  * @param {number} [value=1] - The amount by which to decrease the variable. Defaults to 1.
  * @param {GetSetVarOption} [options={}] - Optional settings for retrieving and setting the variable.
@@ -111,13 +110,28 @@ function getprp(name, data = {});
 function define(name, value);
 ```
 
-> `flags` type:
+> `flags` types:
 >
 > `nx`: execute if **not exists**
 >
 > `xx`: execute only if **exists**
 >
 > `n`: **always** execute
+>
+> 
+>
+> `scope`/`inscope`/`scope` types:
+>
+> `global`: global variables (within `extension_settings.variables.global`)
+>
+> `local`: chat variables (within `chat_metadata.variables`)
+>
+> `message`: message (and swipe) variables (within `chat[msg_id].variables[swipe_id]`)
+>
+> `cache`: temporary variables (within templates `variables`, like `<% variables.myvar %>`)
+>
+> - The cache will **not be saved**
+> - When changing a variable, it will always be activated no matter what the `scope` is
 
 ---
 
@@ -153,6 +167,6 @@ System: <%- depth_prompt %>
 # Built-in variables reference
 
 ```
-// TODO
+TODO
 ```
 

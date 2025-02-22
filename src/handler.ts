@@ -2,7 +2,7 @@
 import vm from 'vm-browserify';
 import _ from 'lodash';
 import { diffLines } from 'diff';
-import { ChatData, Message } from './defines';
+import { GenerateData, Message } from './defines';
 import { eventSource, event_types, chat, saveChatDebounced, messageFormatting } from '../../../../../script.js';
 import { saveMetadataDebounced } from '../../../../extensions.js';
 import { prepareGlobals, evalTemplate } from './function/ejs';
@@ -20,11 +20,11 @@ function logDifference(a : string, b : string, unchanged : boolean = false) {
     }
 }
 
-async function updateChat(data : ChatData) {
+async function updateChat(data : GenerateData) {
     const env = await prepareGlobals();
 
     let err = false;
-    for(const [idx, message] of data.chat.entries()) {
+    for(const [idx, message] of data.messages.entries()) {
         try {
             let newContent = await evalTemplate(message.content, env);
             if(newContent !== message.content) {
@@ -100,7 +100,7 @@ async function updateMessageAll() {
 }
 
 export async function init() {
-    eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, updateChat);
+    eventSource.on(event_types.CHAT_COMPLETION_SETTINGS_READY, updateChat);
     eventSource.on(event_types.MESSAGE_RECEIVED, updateMessage);
     eventSource.on(event_types.MESSAGE_UPDATED, updateMessage);
     eventSource.on(event_types.CHAT_CHANGED, updateMessageAll);
@@ -113,7 +113,7 @@ export async function init() {
 }
 
 export async function exit() {
-    eventSource.removeListener(event_types.CHAT_COMPLETION_PROMPT_READY, updateChat);
+    eventSource.removeListener(event_types.CHAT_COMPLETION_SETTINGS_READY, updateChat);
     eventSource.removeListener(event_types.MESSAGE_RECEIVED, updateMessage);
     eventSource.removeListener(event_types.MESSAGE_UPDATED, updateMessage);
     eventSource.removeListener(event_types.CHAT_CHANGED, updateMessageAll);
