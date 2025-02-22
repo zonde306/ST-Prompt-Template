@@ -6,6 +6,7 @@
  * @property {number} [index=undefined] - The index at which the variable should be set. Optional.
  * @property {'global' | 'local' | 'message' | 'cache'} [scope='message'] - The scope in which the variable should be set.
  * @property {'nx' | 'xx' | 'n'} [flags='n'] - Flags that control the behavior of setting the variable. Defaults to 'n'.
+ * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - Return value type
  */
 
 /**
@@ -14,7 +15,7 @@
  * @param {string} key - The key under which the variable is stored.
  * @param {unknown} value - The value to set for the variable.
  * @param {SetVarOption} [options={}] - Optional settings for setting the variable.
- * @returns {Record<string, unknown>} - The updated variables object.
+ * @returns Determine based on results.
  */
 function setvar(key, value, options = {});
 
@@ -41,6 +42,7 @@ function getvar(key, options = {});
  * @property {'global' | 'local' | 'message' | 'cache'} [inscope='cache'] - The scope from which the variable should be retrieved.
  * @property {'global' | 'local' | 'message' | 'cache'} outscope='message'] - The scope in which the variable should be set.
  * @property {'nx' | 'xx' | 'n'} [flags] - Flags that control the behavior of setting or getting the variable. Defaults to 'n'.
+ * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - Return value type
  */
 
 /**
@@ -50,7 +52,7 @@ function getvar(key, options = {});
  * @param {string} key - The key under which the variable is stored.
  * @param {number} [value=1] - The amount by which to increase the variable. Defaults to 1.
  * @param {GetSetVarOption} [options={}] - Optional settings for retrieving and setting the variable.
- * @returns {Record<string, unknown>} - The updated variables object.
+ * @returns Determine based on results.
  */
 function incvar(key, value = 1, options = {});
 
@@ -60,7 +62,7 @@ function incvar(key, value = 1, options = {});
  * @param {string} key - The key under which the variable is stored.
  * @param {number} [value=1] - The amount by which to decrease the variable. Defaults to 1.
  * @param {GetSetVarOption} [options={}] - Optional settings for retrieving and setting the variable.
- * @returns {Record<string, unknown>} - The updated variables object.
+ * @returns Determine based on results.
  */
 function decvar(key, value = 1, options = {});
 
@@ -128,10 +130,20 @@ function define(name, value);
 >
 > `message`: message (and swipe) variables (within `chat[msg_id].variables[swipe_id]`)
 >
-> `cache`: temporary variables (within templates `variables`, like `<% variables.myvar %>`)
+> `cache`: temporary variables (within templates `variables`, like `<% variables %>`)
 >
 > - The cache will **not be saved**
 > - When changing a variable, it will always be activated no matter what the `scope` is
+>
+> 
+>
+> `results` types:
+>
+> `old`: The previous value, if it does not exist, returns undefined
+>
+> `new`: The new value after setting
+>
+> `fullcache`: The complete templates `variables` object
 
 ---
 

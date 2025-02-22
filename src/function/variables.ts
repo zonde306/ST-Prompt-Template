@@ -21,13 +21,15 @@ export interface SetVarOption {
     index?: number;
     scope?: 'global' | 'local' | 'message' | 'cache';
     flags?: 'nx' | 'xx' | 'n';
+    results?: 'old' | 'new' | 'fullcache';
 }
 
 export function setVariable(vars : Record<string, unknown>, key : string, value : unknown,
                             options : SetVarOption = {}) {
-    const { index, scope, flags } = options;
+    const { index, scope, flags, results } = options;
 
     let message : Message;
+    let oldValue;
     if (index !== null && index !== undefined) {
         // @ts-expect-error: TS2322
         let data = JSON.parse(_.get(vars, key, '{}'));
@@ -37,6 +39,7 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
         if(flags === 'nx' && _.has(data, idx)) return vars;
         if(flags === 'xx' && !_.has(data, idx)) return vars;
 
+        if(results === 'old') oldValue = _.get(data, idx, undefined);
         _.set(vars, key, JSON.stringify(_.set(data, idx, value)));
 
         switch(scope || 'message') {
@@ -65,6 +68,7 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
         if(flags === 'nx' && _.has(vars, key)) return vars;
         if(flags === 'xx' && !_.has(vars, key)) return vars;
 
+        if(results === 'old') oldValue = _.get(vars, key, undefined);
         _.set(vars, key, value);
 
         switch(scope || 'message') {
@@ -86,6 +90,10 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
         }
     }
 
+    if(results === 'old')
+        return oldValue;
+    if(results === 'new')
+        return value;
     return vars;
 }
 
@@ -147,16 +155,17 @@ export interface GetSetVarOption {
     inscope?: 'global' | 'local' | 'message' | 'cache';
     outscope?: 'global' | 'local' | 'message' | 'cache';
     flags?: 'nx' | 'xx' | 'n';
+    results?: 'old' | 'new' | 'fullcache';
 }
 
 export function increaseVariable(vars : Record<string, unknown>, key : string,
                                  value : number = 1, options : GetSetVarOption = {}) {
-    const { index, inscope, outscope, flags, defaults } = options;
+    const { index, inscope, outscope, flags, defaults, results } = options;
     if((flags === 'nx' && !_.has(vars, key)) ||
       (flags === 'xx' && _.has(vars, key)) ||
       (flags === 'n' || flags === undefined)) {
         const val = getVariable(vars, key, { index, scope: inscope, defaults: defaults || 0 });
-        return setVariable(vars, key, val + value, { index, scope: outscope, flags: 'n' });
+        return setVariable(vars, key, val + value, { index, results, scope: outscope, flags: 'n' });
     }
     return vars;
 }
