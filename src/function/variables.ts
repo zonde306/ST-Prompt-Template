@@ -29,6 +29,7 @@ export interface SetVarOption {
     flags?: 'nx' | 'xx' | 'n';
     results?: 'old' | 'new' | 'fullcache';
     withMsg?: MessageFilter;
+    merge?: boolean;
 }
 
 function evalFilter(filter? : MessageFilter) {
@@ -63,9 +64,10 @@ function evalFilter(filter? : MessageFilter) {
 
 export function setVariable(vars : Record<string, unknown>, key : string, value : unknown,
                             options : SetVarOption = {}) {
-    const { index, scope, flags, results, withMsg } = options;
+    const { index, scope, flags, results, withMsg, merge } = options;
 
     let oldValue;
+    let newValue = value;
     if (index !== null && index !== undefined) {
         // @ts-expect-error: TS2322
         let data = JSON.parse(_.get(vars, key, '{}'));
@@ -75,13 +77,14 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
         if(flags === 'nx' && _.has(data, idx)) return vars;
         if(flags === 'xx' && !_.has(data, idx)) return vars;
 
-        if(results === 'old') oldValue = _.get(data, idx, undefined);
-        _.set(vars, key, JSON.stringify(_.set(data, idx, value)));
+        if(results === 'old' || merge) oldValue = _.get(data, idx, undefined);
+        if(merge) newValue = _.merge(results === 'old' ? _.cloneDeep(oldValue) : oldValue, value);
+        _.set(vars, key, JSON.stringify(_.set(data, idx, newValue)));
 
         switch(scope || 'message') {
             case 'global':
                 data = JSON.parse(_.get(extension_settings.variables.global, key, '{}') || '{}');
-                _.set(extension_settings.variables.global, key, JSON.stringify(_.set(data, idx, value)));
+                _.set(extension_settings.variables.global, key, JSON.stringify(_.set(data, idx, newValue)));
                 break;
             case 'local':
                 // @ts-expect-error: TS2322
@@ -89,7 +92,7 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
                 // @ts-expect-error: TS2322
                 data = JSON.parse(_.get(chat_metadata.variables, key, '{}') || '{}');
                 // @ts-expect-error: TS2322
-                _.set(chat_metadata.variables, key, JSON.stringify(_.set(data, idx, value)));
+                _.set(chat_metadata.variables, key, JSON.stringify(_.set(data, idx, newValue)));
                 break;
             case 'message':
                 const [message_id, swipe_id] = evalFilter(withMsg);
@@ -97,7 +100,7 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
                     if(!chat[message_id].variables) chat[message_id].variables = {};
                     if(!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
                     data = JSON.parse(_.get(chat[message_id].variables[swipe_id], key, '{}') || '{}');
-                    _.set(chat[message_id].variables[swipe_id], key, JSON.stringify(_.set(data, idx, value)));
+                    _.set(chat[message_id].variables[swipe_id], key, JSON.stringify(_.set(data, idx, newValue)));
                 }
                 break;
         }
@@ -105,23 +108,24 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
         if(flags === 'nx' && _.has(vars, key)) return vars;
         if(flags === 'xx' && !_.has(vars, key)) return vars;
 
-        if(results === 'old') oldValue = _.get(vars, key, undefined);
-        _.set(vars, key, value);
+        if(results === 'old' || merge) oldValue = _.get(vars, key, undefined);
+        if(merge) newValue = _.merge(results === 'old' ? _.cloneDeep(oldValue) : oldValue, value);
+        _.set(vars, key, newValue);
 
         switch(scope || 'message') {
             case 'global':
-                _.set(extension_settings.variables.global, key, value);
+                _.set(extension_settings.variables.global, key, newValue);
                 break;
             case 'local':
                 // @ts-expect-error: TS2322
                 if(!chat_metadata.variables) chat_metadata.variables = {};
                 // @ts-expect-error: TS2322
-                _.set(chat_metadata.variables, key, value);
+                _.set(chat_metadata.variables, key, newValue);
                 break;
             case 'message':
                 const [message_id, swipe_id] = evalFilter(withMsg);
                 if(message_id !== undefined && swipe_id !== undefined) {
-                    _.set(chat[message_id].variables[swipe_id], key, value);
+                    _.set(chat[message_id].variables[swipe_id], key, newValue);
                 }
                 break;
         }
@@ -130,7 +134,7 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
     if(results === 'old')
         return oldValue;
     if(results === 'new')
-        return value;
+        return newValue;
     return vars;
 }
 

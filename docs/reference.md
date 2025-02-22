@@ -17,6 +17,7 @@
  * @property {'nx' | 'xx' | 'n'} [flags='n'] - Flags that control the behavior of setting the variable. Defaults to 'n'.
  * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - Return value type
  * @property {MessageFilter} [withMsg=undefined] - Message filter (if scope is 'message')
+ * @property {boolean} [merge=false] - Use _.merge(oldValue, value) instead of assignment
  */
 
 /**
