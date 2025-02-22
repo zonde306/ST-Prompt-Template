@@ -120,7 +120,7 @@ function define(name, value);
 >
 > `n`: **always** execute
 >
-> 
+> ---
 >
 > `scope`/`inscope`/`scope` types:
 >
@@ -135,7 +135,7 @@ function define(name, value);
 > - The cache will **not be saved**
 > - When changing a variable, it will always be activated no matter what the `scope` is
 >
-> 
+> ---
 >
 > `results` types:
 >
