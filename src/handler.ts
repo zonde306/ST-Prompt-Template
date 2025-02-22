@@ -28,12 +28,12 @@ async function updateChat(data : ChatData) {
         try {
             let newContent = await evalTemplate(message.content, env);
             if(newContent !== message.content) {
-                console.debug(`update chat message ${idx}:`);
+                console.debug(`update prompt #${idx}:`);
                 logDifference(message.content, newContent);
             }
             message.content = newContent;
         } catch(err) {
-            console.debug(`error for chat message ${idx}`);
+            console.debug(`handling prompt errors #${idx}`);
             console.error(err);
             err = true;
         }
@@ -46,18 +46,18 @@ async function updateChat(data : ChatData) {
 
 async function updateMessage(message_id : string, save: boolean = true, env? : Record<string, unknown>) {
     if(!message_id) {
-        console.warn(`message_id is empty`);
+        console.warn(`chat message message_id is empty`);
         return false;
     }
     const message_idx = parseInt(message_id);
     if(isNaN(message_idx) || message_idx < 0 || message_idx >= chat.length) {
-        console.warn(`message ${message_id} invalid`);
+        console.warn(`chat message #${message_id} invalid`);
         return false;
     }
 
     const message : Message = chat[message_idx];
     if(!message) {
-        console.error(`message ${message_id} not found`);
+        console.error(`chat message #${message_id} not found`);
         return false;
     }
 
@@ -67,12 +67,12 @@ async function updateMessage(message_id : string, save: boolean = true, env? : R
     try {
         let newContent = await evalTemplate(message.mes, env);
         if(newContent !== message.mes) {
-            console.debug(`update message ${message_idx}:`);
+            console.debug(`update chat message #${message_idx}:`);
             logDifference(message.mes, newContent);
         }
         message.mes = newContent;
     } catch(err) {
-        // console.error(`error for message ${message.mes}`);
+        console.debug(`handling chat message errors #${message.mes}`);
         console.error(err);
         return false;
     }
