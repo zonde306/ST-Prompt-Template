@@ -24,16 +24,16 @@ async function updateChat(data : ChatData) {
     const env = await prepareGlobals();
 
     let err = false;
-    for(const message of data.chat) {
+    for(const [idx, message] of data.chat.entries()) {
         try {
             let newContent = await evalTemplate(message.content, env);
             if(newContent !== message.content) {
-                console.debug('update chat message:');
+                console.debug(`update chat message ${idx}:`);
                 logDifference(message.content, newContent);
             }
             message.content = newContent;
         } catch(err) {
-            // console.error(`error for chat message ${message.content}`);
+            console.debug(`error for chat message ${idx}`);
             console.error(err);
             err = true;
         }
@@ -44,37 +44,43 @@ async function updateChat(data : ChatData) {
     saveChatDebounced();
 }
 
-async function updateMessage(message_id : string) {
+async function updateMessage(message_id : string, save: boolean = true, env? : Record<string, unknown>) {
+    if(!message_id) {
+        console.warn(`message_id is empty`);
+        return false;
+    }
     const message_idx = parseInt(message_id);
     if(isNaN(message_idx) || message_idx < 0 || message_idx >= chat.length) {
-        console.error(`message ${message_id} invalid`);
-        return;
+        console.warn(`message ${message_id} invalid`);
+        return false;
     }
 
     const message : Message = chat[message_idx];
     if(!message) {
         console.error(`message ${message_id} not found`);
-        return;
+        return false;
     }
 
     // without current message
-    const env = await prepareGlobals(message_idx);
+    env = env || await prepareGlobals(message_idx);
 
     try {
         let newContent = await evalTemplate(message.mes, env);
         if(newContent !== message.mes) {
-            console.debug('update message:');
+            console.debug(`update message ${message_idx}:`);
             logDifference(message.mes, newContent);
         }
         message.mes = newContent;
     } catch(err) {
         // console.error(`error for message ${message.mes}`);
         console.error(err);
-        return;
+        return false;
     }
 
-    saveMetadataDebounced();
-    saveChatDebounced();
+    if(save) {
+        saveMetadataDebounced();
+        saveChatDebounced();
+    }
 
     const div = $(`div.mes[mesid = "${message_id}"]`);
     if(div) {
@@ -82,13 +88,22 @@ async function updateMessage(message_id : string) {
         empty().
         append(messageFormatting(message.mes, message.name, message.is_system, message.is_user, message_idx));
     }
+
+    return true;
+}
+
+async function updateMessageAll() {
+    const env = await prepareGlobals(0);
+    for(const message_id in chat) {
+        await updateMessage(message_id, false, env);
+    }
 }
 
 export async function init() {
     eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, updateChat);
     eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, updateMessage);
     eventSource.on(event_types.USER_MESSAGE_RENDERED, updateMessage);
-    eventSource.on(event_types.CHAT_CHANGED, updateMessage);
+    eventSource.on(event_types.CHAT_CHANGED, updateMessageAll);
     eventSource.on(event_types.MESSAGE_SWIPED, updateMessage);
     eventSource.on(event_types.MESSAGE_EDITED, updateMessage);
 
@@ -103,7 +118,7 @@ export async function exit() {
     eventSource.removeListener(event_types.CHAT_COMPLETION_PROMPT_READY, updateChat);
     eventSource.removeListener(event_types.CHARACTER_MESSAGE_RENDERED, updateMessage);
     eventSource.removeListener(event_types.USER_MESSAGE_RENDERED, updateMessage);
-    eventSource.removeListener(event_types.CHAT_CHANGED, updateMessage);
+    eventSource.removeListener(event_types.CHAT_CHANGED, updateMessageAll);
     eventSource.removeListener(event_types.MESSAGE_SWIPED, updateMessage);
     eventSource.removeListener(event_types.MESSAGE_EDITED, updateMessage);
 }
