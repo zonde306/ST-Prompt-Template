@@ -2,11 +2,21 @@
 
 ```typescript
 /**
+ * Represents a filter for selecting specific messages based on certain criteria.
+ * @interface MessageFilter
+ * @property {('system' | 'user' | 'assistant' | 'any')} [role='assistant'] - The role of the message to filter by. 
+ *      Can be 'system', 'user', 'assistant', or 'any'. Search forward from the end. Ignored if id is specified.
+ * @property {number} [id=undefined] - The ID of the message to filter by. Can be a positive index or a negative index. (e.g., -1 for the last message).
+ * @property {number} [swipe_id=undefined] - The swipe ID of the message to filter by. Can be a positive index or a negative index. (e.g., -1 for the last swipe). Defaults to the current swipe_id.
+ */
+
+/**
  * @typedef {Object} SetVarOption
  * @property {number} [index=undefined] - The index at which the variable should be set. Optional.
  * @property {'global' | 'local' | 'message' | 'cache'} [scope='message'] - The scope in which the variable should be set.
  * @property {'nx' | 'xx' | 'n'} [flags='n'] - Flags that control the behavior of setting the variable. Defaults to 'n'.
  * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - Return value type
+ * @property {MessageFilter} [withMsg=undefined] - Message filter (if scope is 'message')
  */
 
 /**
@@ -24,6 +34,7 @@ function setvar(key, value, options = {});
  * @property {number} [index=undefined] - The index from which the variable should be retrieved. Optional.
  * @property {'global' | 'local' | 'message' | 'cache'} [scope='cache'] - The scope from which the variable should be retrieved.
  * @property {unknown} [defaults=undefined] - The default value to return if the variable is not found. Optional.
+ * @property {MessageFilter} [withMsg=undefined] - Message filter (if scope is 'message')
  */
 
 /**
@@ -43,6 +54,7 @@ function getvar(key, options = {});
  * @property {'global' | 'local' | 'message' | 'cache'} outscope='message'] - The scope in which the variable should be set.
  * @property {'nx' | 'xx' | 'n'} [flags] - Flags that control the behavior of setting or getting the variable. Defaults to 'n'.
  * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - Return value type
+ * @property {MessageFilter} [withMsg=undefined] - Message filter (if scope is 'message')
  */
 
 /**

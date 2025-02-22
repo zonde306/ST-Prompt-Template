@@ -17,18 +17,54 @@ export function allVariables(end : number = 65535) {
     return variables;
 }
 
+export interface MessageFilter {
+    role?: 'system' | 'user' | 'assistant' | 'any';
+    id?: number;
+    swipe_id?: number;
+}
+
 export interface SetVarOption {
     index?: number;
     scope?: 'global' | 'local' | 'message' | 'cache';
     flags?: 'nx' | 'xx' | 'n';
     results?: 'old' | 'new' | 'fullcache';
+    withMsg?: MessageFilter;
+}
+
+function evalFilter(filter? : MessageFilter) {
+    let message_id = chat.length - 1;
+    if(filter?.id !== undefined) {
+        message_id = filter.id > -1 ? filter.id : chat.length + filter.id;
+    } else if(filter?.role !== undefined) {
+        message_id = chat.findLastIndex(msg =>
+            (msg.is_system === (filter.role === 'system')) ||
+            (msg.is_user === (filter.role === 'user')) ||
+            (!msg.is_system && !msg.is_user && (filter.role === 'assistant')) ||
+            (filter.role === 'any')
+        );
+    } else if(!filter) {
+        message_id = chat.findLastIndex(msg => !msg.is_user && !msg.is_system);
+    }
+
+    if(message_id < 0 || message_id >= chat.length) {
+        console.error(`No message found for filter: ${filter}`);
+        return [undefined, undefined];
+    }
+
+    let swipe_id = filter?.swipe_id !== undefined ? filter.swipe_id : chat[message_id].swipe_id;
+    if(swipe_id < 0) swipe_id = chat[message_id].swipe_id + swipe_id;
+    if(!(swipe_id in chat[message_id].swipes)) {
+        console.error(`No swipe found for filter: ${filter}`);
+        return [message_id, undefined];
+    }
+
+    return [message_id, swipe_id];
 }
 
 export function setVariable(vars : Record<string, unknown>, key : string, value : unknown,
                             options : SetVarOption = {}) {
-    const { index, scope, flags, results } = options;
+    const { index, scope, flags, results, withMsg } = options;
 
-    let message : Message;
     let oldValue;
     if (index !== null && index !== undefined) {
         // @ts-expect-error: TS2322
@@ -56,12 +92,13 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
                 _.set(chat_metadata.variables, key, JSON.stringify(_.set(data, idx, value)));
                 break;
             case 'message':
-                message = chat.findLast(msg => !msg.is_system);
-                if(!message.variables) message.variables = {};
-                if(!message.variables[message.swipe_id]) message.variables[message.swipe_id] = {};
-                // @ts-expect-error: TS2322
-                data = JSON.parse(_.get(message.variables[message.swipe_id], key, '{}') || '{}');
-                _.set(message.variables[message.swipe_id], key, JSON.stringify(_.set(data, idx, value)));
+                const [message_id, swipe_id] = evalFilter(withMsg);
+                if(message_id !== undefined && swipe_id !== undefined) {
+                    if(!chat[message_id].variables) chat[message_id].variables = {};
+                    if(!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
+                    data = JSON.parse(_.get(chat[message_id].variables[swipe_id], key, '{}') || '{}');
+                    _.set(chat[message_id].variables[swipe_id], key, JSON.stringify(_.set(data, idx, value)));
+                }
                 break;
         }
     } else {
@@ -82,10 +119,10 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
                 _.set(chat_metadata.variables, key, value);
                 break;
             case 'message':
-                message = chat.findLast(msg => !msg.is_system);
-                if(!message.variables) message.variables = {};
-                if(!message.variables[message.swipe_id]) message.variables[message.swipe_id] = {};
-                _.set(message.variables[message.swipe_id], key, value);
+                const [message_id, swipe_id] = evalFilter(withMsg);
+                if(message_id !== undefined && swipe_id !== undefined) {
+                    _.set(chat[message_id].variables[swipe_id], key, value);
+                }
                 break;
         }
     }
@@ -101,18 +138,19 @@ export interface GetVarOption {
     index?: number;
     scope?: 'global' | 'local' | 'message' | 'cache';
     defaults?: unknown;
+    withMsg?: MessageFilter;
 }
 
 export function getVariable(vars : Record<string, unknown>, key : string,
                             options : GetVarOption = {}) {
-    const { index, scope, defaults } = options;
+    const { index, scope, defaults, withMsg } = options;
 
     switch(scope || 'cache') {
         case 'global':
             if (index !== null && index !== undefined) {
                 const data = JSON.parse(_.get(extension_settings.variables.global, key, '{}') || '{}');
                 const idx = Number(index);
-                return _.get(data, idx, defaults);
+                return _.get(data, Number.isNaN(idx) ? index : idx, defaults);
             }
             return _.get(extension_settings.variables.global, key, defaults);
         case 'local':
@@ -123,20 +161,22 @@ export function getVariable(vars : Record<string, unknown>, key : string,
                 // @ts-expect-error: TS2322
                 const data = JSON.parse(_.get(chat_metadata.variables, key, '{}') || '{}');
                 const idx = Number(index);
-                return _.get(data, idx, defaults);
+                return _.get(data, Number.isNaN(idx) ? index : idx, defaults);
             }
             // @ts-expect-error: TS2322
             return _.get(chat_metadata.variables, key, defaults);
         case 'message':
-            const message = chat.findLast(msg => !msg.is_system);
-            if(!message.variables) return defaults;
-            if(!message.variables[message.swipe_id]) return defaults;
-            if (index !== null && index !== undefined) {
-                const data = JSON.parse(_.get(message.variables[message.swipe_id], key, '{}') || '{}');
-                const idx = Number(index);
-                return _.get(data, idx, defaults);
+            const [message_id, swipe_id] = evalFilter(withMsg);
+            if(message_id !== undefined && swipe_id !== undefined) {
+                if(!chat[message_id].variables) return defaults;
+                if(!chat[message_id].variables[swipe_id]) return defaults;
+                if (index !== null && index !== undefined) {
+                    const data = JSON.parse(_.get(chat[message_id].variables[swipe_id], key, '{}') || '{}');
+                    const idx = Number(index);
+                    return _.get(data, Number.isNaN(idx) ? index : idx, defaults);
+                }
+                return _.get(chat[message_id].variables[swipe_id], key, defaults);
             }
-            return _.get(message.variables[message.swipe_id], key, defaults);
     }
 
     if (index !== null && index !== undefined) {
@@ -156,16 +196,17 @@ export interface GetSetVarOption {
     outscope?: 'global' | 'local' | 'message' | 'cache';
     flags?: 'nx' | 'xx' | 'n';
     results?: 'old' | 'new' | 'fullcache';
+    withMsg?: MessageFilter;
 }
 
 export function increaseVariable(vars : Record<string, unknown>, key : string,
                                  value : number = 1, options : GetSetVarOption = {}) {
-    const { index, inscope, outscope, flags, defaults, results } = options;
+    const { index, inscope, outscope, flags, defaults, results, withMsg } = options;
     if((flags === 'nx' && !_.has(vars, key)) ||
       (flags === 'xx' && _.has(vars, key)) ||
       (flags === 'n' || flags === undefined)) {
-        const val = getVariable(vars, key, { index, scope: inscope, defaults: defaults || 0 });
-        return setVariable(vars, key, val + value, { index, results, scope: outscope, flags: 'n' });
+        const val = getVariable(vars, key, { index, withMsg, scope: inscope, defaults: defaults || 0 });
+        return setVariable(vars, key, val + value, { index, results, withMsg, scope: outscope, flags: 'n' });
     }
     return vars;
 }
