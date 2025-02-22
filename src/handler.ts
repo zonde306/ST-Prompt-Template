@@ -3,7 +3,7 @@ import vm from 'vm-browserify';
 import _ from 'lodash';
 import { diffLines } from 'diff';
 import { GenerateData, Message } from './defines';
-import { eventSource, event_types, chat, saveChatDebounced, messageFormatting } from '../../../../../script.js';
+import { eventSource, event_types, chat, messageFormatting } from '../../../../../script.js';
 import { saveMetadataDebounced } from '../../../../extensions.js';
 import { prepareGlobals, evalTemplate } from './function/ejs';
 
@@ -23,7 +23,6 @@ function logDifference(a : string, b : string, unchanged : boolean = false) {
 async function updateChat(data : GenerateData) {
     const env = await prepareGlobals();
 
-    let err = false;
     for(const [idx, message] of data.messages.entries()) {
         try {
             let newContent = await evalTemplate(message.content, env);
@@ -35,16 +34,11 @@ async function updateChat(data : GenerateData) {
         } catch(err) {
             console.debug(`handling prompt errors #${idx}`);
             console.error(err);
-            err = true;
         }
     }
-
-    if(err) return;
-    saveMetadataDebounced();
-    saveChatDebounced();
 }
 
-async function updateMessage(message_id : string, save: boolean = true, env? : Record<string, unknown>) {
+async function updateMessage(message_id : string, env? : Record<string, unknown>) {
     if(!message_id) {
         console.warn(`chat message message_id is empty`);
         return false;
@@ -61,7 +55,6 @@ async function updateMessage(message_id : string, save: boolean = true, env? : R
         return false;
     }
 
-    // without current message
     env = env || await prepareGlobals(message_idx);
 
     try {
@@ -77,11 +70,6 @@ async function updateMessage(message_id : string, save: boolean = true, env? : R
         return false;
     }
 
-    if(save) {
-        saveMetadataDebounced();
-        saveChatDebounced();
-    }
-
     const div = $(`div.mes[mesid = "${message_id}"]`);
     if(div) {
         div.find('.mes_text').
@@ -95,7 +83,7 @@ async function updateMessage(message_id : string, save: boolean = true, env? : R
 async function updateMessageAll() {
     const env = await prepareGlobals(0);
     for(const message_id in chat) {
-        await updateMessage(message_id, false, env);
+        await updateMessage(message_id, env);
     }
 }
 
@@ -103,7 +91,7 @@ export async function init() {
     eventSource.on(event_types.CHAT_COMPLETION_SETTINGS_READY, updateChat);
     eventSource.on(event_types.MESSAGE_RECEIVED, updateMessage);
     eventSource.on(event_types.MESSAGE_UPDATED, updateMessage);
-    eventSource.on(event_types.CHAT_CHANGED, updateMessageAll);
+    // eventSource.on(event_types.CHAT_CHANGED, updateMessageAll);
 
     try {
         await test();
@@ -116,7 +104,7 @@ export async function exit() {
     eventSource.removeListener(event_types.CHAT_COMPLETION_SETTINGS_READY, updateChat);
     eventSource.removeListener(event_types.MESSAGE_RECEIVED, updateMessage);
     eventSource.removeListener(event_types.MESSAGE_UPDATED, updateMessage);
-    eventSource.removeListener(event_types.CHAT_CHANGED, updateMessageAll);
+    // eventSource.removeListener(event_types.CHAT_CHANGED, updateMessageAll);
 }
 
 async function test() {
