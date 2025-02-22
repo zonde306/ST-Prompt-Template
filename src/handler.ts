@@ -101,11 +101,8 @@ async function updateMessageAll() {
 
 export async function init() {
     eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, updateChat);
-    eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, updateMessage);
-    eventSource.on(event_types.USER_MESSAGE_RENDERED, updateMessage);
+    eventSource.on(event_types.MESSAGE_RECEIVED, updateMessage);
     eventSource.on(event_types.CHAT_CHANGED, updateMessageAll);
-    eventSource.on(event_types.MESSAGE_SWIPED, updateMessage);
-    eventSource.on(event_types.MESSAGE_EDITED, updateMessage);
 
     try {
         await test();
@@ -116,11 +113,8 @@ export async function init() {
 
 export async function exit() {
     eventSource.removeListener(event_types.CHAT_COMPLETION_PROMPT_READY, updateChat);
-    eventSource.removeListener(event_types.CHARACTER_MESSAGE_RENDERED, updateMessage);
-    eventSource.removeListener(event_types.USER_MESSAGE_RENDERED, updateMessage);
+    eventSource.removeListener(event_types.MESSAGE_RECEIVED, updateMessage);
     eventSource.removeListener(event_types.CHAT_CHANGED, updateMessageAll);
-    eventSource.removeListener(event_types.MESSAGE_SWIPED, updateMessage);
-    eventSource.removeListener(event_types.MESSAGE_EDITED, updateMessage);
 }
 
 async function test() {
