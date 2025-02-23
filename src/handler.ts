@@ -62,7 +62,7 @@ async function updateMessageRender(message_id : string, env? : Record<string, un
     }
 
     env = env || await prepareGlobals(message_idx);
-    const content = html.replace('&lt;%', '<%').replace('%&gt;', '%>');
+    const content = html.replaceAll('&lt;%', '<%').replaceAll('%&gt;', '%>');
     let newContent = '';
     
     try {
