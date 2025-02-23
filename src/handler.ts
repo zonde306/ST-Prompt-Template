@@ -7,6 +7,8 @@ import { eventSource, event_types, chat } from '../../../../../script.js';
 import { prepareGlobals, evalTemplate } from './function/ejs';
 import { STATE } from './function/variables';
 
+let fullChanged = false;
+
 function logDifference(a : string, b : string, unchanged : boolean = false) {
     const diff = diffChars(a, b);
     for(const part of diff) {
@@ -56,9 +58,19 @@ async function updatePromptPreparation(data: ChatData) {
             console.error(err);
         }
     }
+
+    if(fullChanged) {
+        fullChanged = false;
+        console.log('* UPDATE ALL MESSAGES *');
+        for(const mes of $('div.mes[mesid]')) {
+            const message_id = $(mes).attr('mesid');
+            if(message_id)
+                await updateMessageRender(message_id);
+        }
+    }
 }
 
-async function updateMessageRender(message_id : string, env? : Record<string, unknown>) {
+async function updateMessageRender(message_id : string) {
     STATE.isDryRun = false;
 
     if(!message_id) {
@@ -85,7 +97,7 @@ async function updateMessageRender(message_id : string, env? : Record<string, un
         return false;
     }
 
-    env = env || await prepareGlobals(message_idx, { runType: 'render', message_id: message_idx, swipe_id: message.swipe_id });
+    const env = await prepareGlobals(message_idx, { runType: 'render', message_id: message_idx, swipe_id: message.swipe_id });
     const content = html.replaceAll('&lt;%', '<%').replaceAll('%&gt;', '%>');
     let newContent = '';
     
@@ -117,6 +129,7 @@ const MESSAGE_RENDER_EVENTS = [
 export async function init() {
     eventSource.on(event_types.CHAT_COMPLETION_SETTINGS_READY, updateGenerate);
     eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, updatePromptPreparation);
+    eventSource.on(event_types.CHAT_CHANGED, () => fullChanged = true);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.on(e, updateMessageRender));
 }
 
