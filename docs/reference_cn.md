@@ -267,7 +267,7 @@ _ = require("lodash")
  * JQuery 库
  * 使用方法: $()
  * 例如 $('.mes_text') 获取文本框
- * @see: https://www.runoob.com/manual/jquery/
+ * @see: https://api.jquery.com/
  */
 $ = require("JQuery")
 

@@ -263,7 +263,7 @@ _ = require("lodash")
  * JQuery library
  * Usage: $()
  * Example: $('.mes_text') to get the text box.
- * @see: https://www.runoob.com/manual/jquery/
+ * @see: https://api.jquery.com/
  */
 $ = require("JQuery")
 
