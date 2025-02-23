@@ -72,7 +72,7 @@ async function updateMessageRender(message_id : string, env? : Record<string, un
             logDifference(content, newContent);
         }
     } catch(err) {
-        console.debug(`handling chat message errors #${message.mes}`);
+        console.debug(`handling chat message errors #${content}`);
         console.error(err);
         return false;
     }

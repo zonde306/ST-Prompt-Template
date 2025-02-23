@@ -26,7 +26,7 @@ export interface MessageFilter {
 export interface SetVarOption {
     index?: number;
     scope?: 'global' | 'local' | 'message' | 'cache';
-    flags?: 'nx' | 'xx' | 'n';
+    flags?: 'nx' | 'xx' | 'n' | 'nxs' | 'xxs';
     results?: 'old' | 'new' | 'fullcache';
     withMsg?: MessageFilter;
     merge?: boolean;
@@ -76,6 +76,8 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
 
         if(flags === 'nx' && _.has(data, idx)) return vars;
         if(flags === 'xx' && !_.has(data, idx)) return vars;
+        if(flags === 'nxs' && getVariable(vars, key, options) !== undefined) return vars;
+        if(flags === 'xxs' && getVariable(vars, key, options) === undefined) return vars;
 
         if(results === 'old' || merge) oldValue = _.get(data, idx, undefined);
         if(merge) newValue = _.merge(results === 'old' ? _.cloneDeep(oldValue) : oldValue, value);
@@ -107,6 +109,8 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
     } else {
         if(flags === 'nx' && _.has(vars, key)) return vars;
         if(flags === 'xx' && !_.has(vars, key)) return vars;
+        if(flags === 'nxs' && getVariable(vars, key, options) !== undefined) return vars;
+        if(flags === 'xxs' && getVariable(vars, key, options) === undefined) return vars;
 
         if(results === 'old' || merge) oldValue = _.get(vars, key, undefined);
         if(merge) newValue = _.merge(results === 'old' ? _.cloneDeep(oldValue) : oldValue, value);
@@ -181,6 +185,7 @@ export function getVariable(vars : Record<string, unknown>, key : string,
                 }
                 return _.get(chat[message_id].variables[swipe_id], key, defaults);
             }
+            return defaults;
     }
 
     if (index !== null && index !== undefined) {
@@ -198,7 +203,7 @@ export interface GetSetVarOption {
     defaults?: number;
     inscope?: 'global' | 'local' | 'message' | 'cache';
     outscope?: 'global' | 'local' | 'message' | 'cache';
-    flags?: 'nx' | 'xx' | 'n';
+    flags?: 'nx' | 'xx' | 'n' | 'nxs' | 'xxs';
     results?: 'old' | 'new' | 'fullcache';
     withMsg?: MessageFilter;
 }
@@ -208,6 +213,8 @@ export function increaseVariable(vars : Record<string, unknown>, key : string,
     const { index, inscope, outscope, flags, defaults, results, withMsg } = options;
     if((flags === 'nx' && !_.has(vars, key)) ||
       (flags === 'xx' && _.has(vars, key)) ||
+      (flags === 'nxs' && getVariable(vars, key, { index, withMsg, scope: inscope }) === undefined) ||
+      (flags === 'xxs' && getVariable(vars, key, { index, withMsg, scope: inscope }) !== undefined) ||
       (flags === 'n' || flags === undefined)) {
         const val = getVariable(vars, key, { index, withMsg, scope: inscope, defaults: defaults || 0 });
         return setVariable(vars, key, val + value, { index, results, withMsg, scope: outscope, flags: 'n' });

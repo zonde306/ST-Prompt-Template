@@ -14,7 +14,7 @@
  * @typedef {Object} SetVarOption
  * @property {number} [index=undefined] - The index at which the variable should be set. Optional.
  * @property {'global' | 'local' | 'message' | 'cache'} [scope='message'] - The scope in which the variable should be set.
- * @property {'nx' | 'xx' | 'n'} [flags='n'] - Flags that control the behavior of setting the variable. Defaults to 'n'.
+ * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - Flags that control the behavior of setting the variable. Defaults to 'n'.
  * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - Return value type
  * @property {MessageFilter} [withMsg=undefined] - Message filter (if scope is 'message')
  * @property {boolean} [merge=false] - Use _.merge(oldValue, value) instead of assignment
@@ -53,7 +53,7 @@ function getvar(key, options = {});
  * @property {unknown} [defaults] - The default value to use if the variable is not found. Defaults to 0.
  * @property {'global' | 'local' | 'message' | 'cache'} [inscope='cache'] - The scope from which the variable should be retrieved.
  * @property {'global' | 'local' | 'message' | 'cache'} outscope='message'] - The scope in which the variable should be set.
- * @property {'nx' | 'xx' | 'n'} [flags] - Flags that control the behavior of setting or getting the variable. Defaults to 'n'.
+ * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags] - Flags that control the behavior of setting or getting the variable. Defaults to 'n'.
  * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - Return value type
  * @property {MessageFilter} [withMsg=undefined] - Message filter (if scope is 'message')
  */
@@ -127,36 +127,40 @@ function define(name, value);
 
 > `flags` types:
 >
-> `nx`: execute if **not exists**
+> `nx`: assign if **not exists** (from `cache` scope).
 >
-> `xx`: execute only if **exists**
+> `xx`: assign only if **exists** (from `cache` scope).
 >
-> `n`: **always** execute
+> `n`: **always** assign.
+>
+> `nxs`: assign if **not exists** (from the specified `scope`).
+>
+> `xxs`: assign only if **exists** (from the specified `scope`).
 >
 > ---
 >
 > `scope`/`inscope`/`scope` types:
 >
-> `global`: global variables (within `extension_settings.variables.global`)
+> `global`: global variables (within `extension_settings.variables.global`).
 >
-> `local`: chat variables (within `chat_metadata.variables`)
+> `local`: chat variables (within `chat_metadata.variables`).
 >
-> `message`: message (and swipe) variables (within `chat[msg_id].variables[swipe_id]`)
+> `message`: message (and swipe) variables (within `chat[msg_id].variables[swipe_id]`).
 >
-> `cache`: temporary variables (within templates `variables`, like `<% variables %>`)
+> `cache`: temporary variables (within templates `variables`, like `<% variables %>`).
 >
-> - The cache will **not be saved**
-> - When changing a variable, it will always be activated no matter what the `scope` is
+> - The cache will **not be saved**.
+> - When changing a variable, it will always be activated no matter what the `scope` is.
 >
 > ---
 >
 > `results` types:
 >
-> `old`: The previous value, if it does not exist, returns undefined
+> `old`: The previous value, if it does not exist, returns undefined.
 >
-> `new`: The new value after setting
+> `new`: The new value after setting.
 >
-> `fullcache`: The complete templates `variables` object
+> `fullcache`: The complete templates `variables` object.
 
 ---
 
