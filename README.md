@@ -12,7 +12,7 @@ hi, <%- variables.name %>
 
 [EJS Syntax Reference](https://github.com/mde/ejs/blob/main/docs/syntax.md)
 
-[Built-in functions reference](docs/reference.md)
+[Built-in functions reference](docs/reference.md)|[中文文档](docs/reference_cn.md)
 
 ## Built-in constant/modules
 

@@ -1,171 +1,181 @@
-# Built-in functions reference
+# Built-in Functions
 
-```typescript
+```javascript
 /**
- * Represents a filter for selecting specific messages based on certain criteria.
+ * Message selection filter
  * @interface MessageFilter
- * @property {('system' | 'user' | 'assistant' | 'any')} [role='assistant'] - The role of the message to filter by. 
- *      Can be 'system', 'user', 'assistant', or 'any'. Search forward from the end. Ignored if id is specified.
- * @property {number} [id=undefined] - The ID of the message to filter by. Can be a positive index or a negative index. (e.g., -1 for the last message).
- * @property {number} [swipe_id=undefined] - The swipe ID of the message to filter by. Can be a positive index or a negative index. (e.g., -1 for the last swipe). Defaults to the current swipe_id.
+ * @property {('system' | 'user' | 'assistant' | 'any')} [role='assistant'] - Select the specified role.
+ *      Can be 'system', 'user', 'assistant', or 'any'. Searches from the end. If id is set, this will be invalid.
+ * @property {number} [id=undefined] - Select the specified message floor, can be negative (negative numbers start from the end).
+ * @property {number} [swipe_id=undefined] - Select the specified message's swipe ID.
  */
 
 /**
+ * Set variable options
  * @typedef {Object} SetVarOption
- * @property {number} [index=undefined] - The index at which the variable should be set. Optional.
- * @property {'global' | 'local' | 'message' | 'cache'} [scope='message'] - The scope in which the variable should be set.
- * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - Flags that control the behavior of setting the variable. Defaults to 'n'.
- * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - Return value type
- * @property {MessageFilter} [withMsg=undefined] - Message filter (if scope is 'message')
- * @property {boolean} [merge=false] - Use _.merge(oldValue, value) instead of assignment
+ * @property {number} [index=undefined] - The index of the variable, same as the index in /setvar.
+ * @property {'global' | 'local' | 'message' | 'cache'} [scope='message'] - Variable type (scope), see below for details.
+ * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - Set conditions, if not met, the variable will not be set, see below for details.
+ * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - Return value type, see below for details.
+ * @property {MessageFilter} [withMsg=undefined] - Message filter (if setting message variables).
+ * @property {boolean} [merge=false] - Whether to use merge to set variables (_.merge).
+ * @property {boolean} [dryRun=false] - Whether to allow setting variables during the preparation phase.
  */
 
 /**
- * Sets a variable in the specified scope with optional flags and index.
+ * Set variable
  *
- * @param {string} key - The key under which the variable is stored.
- * @param {unknown} value - The value to set for the variable.
- * @param {SetVarOption} [options={}] - Optional settings for setting the variable.
- * @returns Determine based on results.
+ * @param {string} key - Variable name
+ * @param {any} value - Variable value
+ * @param {SetVarOption} [options={}] - Set variable options.
+ * @returns Success determined by options.results, failure returns undefined.
  */
 function setvar(key, value, options = {});
 
 /**
+ * Get variable options
  * @typedef {Object} GetVarOption
- * @property {number} [index=undefined] - The index from which the variable should be retrieved. Optional.
- * @property {'global' | 'local' | 'message' | 'cache'} [scope='cache'] - The scope from which the variable should be retrieved.
- * @property {unknown} [defaults=undefined] - The default value to return if the variable is not found. Optional.
- * @property {MessageFilter} [withMsg=undefined] - Message filter (if scope is 'message')
+ * @property {number} [index=undefined] - The index of the variable, same as the index in /getvar.
+ * @property {'global' | 'local' | 'message' | 'cache'} [scope='cache'] - Variable type (scope), see below for details.
+ * @property {any} [defaults=undefined] - Default value (returned if the variable does not exist).
+ * @property {MessageFilter} [withMsg=undefined] - Message selection filter.
  */
 
 /**
- * Retrieves a variable from the specified scope with an optional index and default value.
+ * Get variable
  *
- * @param {string} key - The key under which the variable is stored.
- * @param {GetVarOption} [options={}] - Optional settings for retrieving the variable.
- * @returns {unknown} - The retrieved variable or the default value if not found.
+ * @param {string} key - Variable name
+ * @param {GetVarOption} [options={}] - Get variable options
+ * @returns {any} - Variable value, returns options.defaults if not found.
  */
 function getvar(key, options = {});
 
 /**
+ * Update variable options
  * @typedef {Object} GetSetVarOption
- * @property {number} [index] - The index at which the variable should be accessed or modified. Optional.
- * @property {unknown} [defaults] - The default value to use if the variable is not found. Defaults to 0.
- * @property {'global' | 'local' | 'message' | 'cache'} [inscope='cache'] - The scope from which the variable should be retrieved.
- * @property {'global' | 'local' | 'message' | 'cache'} outscope='message'] - The scope in which the variable should be set.
- * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags] - Flags that control the behavior of setting or getting the variable. Defaults to 'n'.
- * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - Return value type
- * @property {MessageFilter} [withMsg=undefined] - Message filter (if scope is 'message')
+ * @property {number} [index] - The index of the variable, same as the index in /getvar.
+ * @property {unknown} [defaults=0] - Default value to use if the variable does not exist.
+ * @property {'global' | 'local' | 'message' | 'cache'} [inscope='cache'] - Variable type (scope) to read, see below for details.
+ * @property {'global' | 'local' | 'message' | 'cache'} outscope='message'] - Variable type (scope) to set, see below for details.
+ * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags] - Update conditions, if not met, the variable will not be updated, see below for details.
+ * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - Return value type, see below for details.
+ * @property {MessageFilter} [withMsg=undefined] - Message filter (if setting message variables).
+ * @property {boolean} [dryRun=false] - Whether to allow updating variables during the preparation phase.
  */
 
 /**
- * Increases the value of a variable by a specified amount, with options for scope and flags.
- * inscope defaults to the default value of getvar, and outscope defaults to the default value of setvar
+ * Increment variable value
  *
- * @param {string} key - The key under which the variable is stored.
- * @param {number} [value=1] - The amount by which to increase the variable. Defaults to 1.
- * @param {GetSetVarOption} [options={}] - Optional settings for retrieving and setting the variable.
- * @returns Determine based on results.
+ * @param {string} key - Variable name
+ * @param {number} [value=1] - Variable value
+ * @param {GetSetVarOption} [options={}] - Update variable options
+ * @returns Determined by options.results, failure returns undefined.
  */
 function incvar(key, value = 1, options = {});
 
 /**
- * Decreases the value of a variable by a specified amount, with options for scope and flags.
+ * Decrement variable value
  *
- * @param {string} key - The key under which the variable is stored.
- * @param {number} [value=1] - The amount by which to decrease the variable. Defaults to 1.
- * @param {GetSetVarOption} [options={}] - Optional settings for retrieving and setting the variable.
- * @returns Determine based on results.
+ * @param {string} key - Variable name
+ * @param {number} [value=1] - Variable value
+ * @param {GetSetVarOption} [options={}] - Update variable options
+ * @returns Determined by options.results, failure returns undefined.
  */
 function decvar(key, value = 1, options = {});
 
 /**
- * Execute a slash command.
+ * Execute command, e.g., /setvar
  *
- * @param {string} cmd - The command(s) to execute.
- * @returns {Promise<string>} - A promise that resolves to the pipe output.
+ * @param {string} cmd - Command
+ * @returns {Promise<string>} - Command return value
  */
-function execute(cmd);
+async function execute(cmd);
 
 /**
- * Import world info entry content.
+ * Read world book entry content
  *
- * @param {string} worldinfo - The name for the lore book.
- * @param {string | RegExp | number} title - The identifier of the world info entry to be imported, which can be a string, regular expression, or number.
- * @param {Record<string, any>} [data={}] - An optional data object used for template substitution.
- * @returns {Promise<string>} - A promise that resolves to the processed template string. If not found, returns an empty string ('').
+ * @param {string} worldinfo - World book name
+ * @param {string | RegExp | number} title - Entry uid/title
+ * @param {Record<string, any>} [data={}] - Data to pass
+ * @returns {Promise<string>} - World book entry content
  */
-function getwi(worldinfo, title, data = {});
+async function getwi(worldinfo, title, data = {});
 
 /**
- * Import character definitions.
+ * Read character card definition
  *
- * @param {string | RegExp} name - The name for the character, which can be a string or regular expression.
- * @param {string} [template=DEFAULT_CHAR_DEFINE] - The character card formatting prompt template.
- * @param {Record<string, any>} [data={}] - An optional data object used for template substitution.
- * @returns {Promise<string>} - A promise that resolves to the processed template string. If not found, returns an empty string ('').
+ * @param {string | RegExp} name - Character card name
+ * @param {string} [template=DEFAULT_CHAR_DEFINE] - Output format
+ * @param {Record<string, any>} [data={}] - Data to pass
+ * @returns {Promise<string>} - Character card definition content
  */
-function getchr(name, template = DEFAULT_CHAR_DEFINE, data = {});
+async function getchr(name, template = DEFAULT_CHAR_DEFINE, data = {});
 
 /**
- * Import preset prompt from the current preset.
+ * Read preset prompt content
  *
- * @param {string | RegExp} name - The name for the prompt, which can be a string or regular expression.
- * @param {Record<string, any>} [data={}] - An optional data object used for template substitution.
- * @returns {Promise<string>} - A promise that resolves to the processed template string. If not found, returns an empty string ('').
+ * @param {string | RegExp} name - Prompt name
+ * @param {Record<string, any>} [data={}] - Data to pass
+ * @returns {Promise<string>} - Preset prompt content
  */
-function getprp(name, data = {});
+async function getprp(name, data = {});
 
 /**
- * Defines a global variable or function.
+ * Define global variable/function
  *
- * @param {string} name - The name to be defined.
- * @param {unknown} value - The value to be defined, which can be of any type.
+ * @param {string} name - Variable/function name
+ * @param {any} value - Variable/function content
  */
 function define(name, value);
 ```
 
 > `flags` types:
 >
-> `nx`: assign if **not exists** (from `cache` scope).
+> - `nx`: Set if **not exists** (based on `scope=cache`).
+> - `xx`: Set if **exists** (based on `scope=cache`).
+> - `n`: Set directly (no check).
+> - `nxs`: Set if **not exists** (based on the corresponding `scope`).
+> - `xxs`: Set if **exists** (based on the corresponding `scope`).
 >
-> `xx`: assign only if **exists** (from `cache` scope).
->
-> `n`: **always** assign.
->
-> `nxs`: assign if **not exists** (from the specified `scope`).
->
-> `xxs`: assign only if **exists** (from the specified `scope`).
->
-> ---
+> ------
 >
 > `scope`/`inscope`/`scope` types:
 >
-> `global`: global variables (within `extension_settings.variables.global`).
+> `global`: Global variable (SillyTavern's `extension_settings.variables.global`).
 >
-> `local`: chat variables (within `chat_metadata.variables`).
+> `local`: Local (chat) variable (SillyTavern's `chat_metadata.variables`).
 >
-> `message`: message (and swipe) variables (within `chat[msg_id].variables[swipe_id]`).
+> `message`: Message variable (extension-added `chat[msg_id].variables[swipe_id]`).
 >
-> `cache`: temporary variables (within templates `variables`, like `<% variables %>`).
+> `cache`: Temporary variable (template's `variables`, e.g., `<% variables.variable_name %>`).
 >
-> - The cache will **not be saved**.
-> - When changing a variable, it will always be activated no matter what the `scope` is.
+> - Temporary variables **are not saved** and will expire after generation.
+> - Regardless of `scope`, temporary variables will be updated.
 >
-> ---
+> ------
 >
 > `results` types:
 >
-> `old`: The previous value, if it does not exist, returns undefined.
+> `old`: Return the old value (returns `undefined` if it doesn't exist).
 >
-> `new`: The new value after setting.
+> `new`: Return the new value (i.e., the passed `value`).
 >
-> `fullcache`: The complete templates `variables` object.
+> `fullcache`: Return the entire updated cache `variables` content.
+>
+> ------
+>
+> `dryRun`:
+>
+> SillyTavern performs multiple world book/preset/character card calculations during the preparation phase. Allowing variable setting during this phase may result in variables being set multiple times.
+>
+> If there is no special requirement, it does not need to be set to `true`.
+>
+> **Updating floor messages is not considered part of the preparation phase.**
 
 ---
 
 ```javascript
-// default character card formatting prompt template
+// Default character card definition output format
 const DEFAULT_CHAR_DEFINE = `\
 <% if (name) { %>\
 <<%- name %>>
@@ -191,11 +201,98 @@ System: <%- depth_prompt %>
 `;
 ```
 
+> `name`: Character name
+>
+> `system_prompt`: Prompt override
+>
+> `personality`: Character summary
+>
+> `description`: Character description
+>
+> `scenario`: Scenario
+>
+> `first_message`: First message
+>
+> `message_example`: Dialogue example
+>
+> `creatorcomment`: Creator's comment
+>
+> `alternate_greetings[]`: Additional messages list
+>
+> `depth_prompt`: Character notes
+
 ---
 
-# Built-in variables reference
+# Built-in Variables/Libraries
 
+```javascript
+/**
+ * Collection of all variables
+ * Merged in the following order (priority):
+ * 1. Message variables (from end to start)
+ * 2. Local (chat) variables
+ * 3. Global variables
+ * 
+ * Note: When processing floor message variables, this value does not include the current and subsequent floor variables.
+ */
+variables = {}
+
+/**
+ * SillyTavern's SillyTavern.getContext() return content
+ * Detailed content can be viewed by entering SillyTavern.getContext() in the console.
+ */
+SillyTavern = SillyTavern.getContext()
+
+/**
+ * faker library content, used to generate random content
+ * Usage: faker.fakerEN, faker.fakerCN, etc.
+ * Example: faker.fakerEN.lastName() to get a random English last name.
+ * @see: https://fakerjs.dev/api/
+ */
+faker = require("faker")
+
+/*
+ * Lodash library
+ * Usage: _.get, _.set, etc.
+ * Example: _.toArray('abc') outputs ['a','b','c'].
+ * @see: https://lodash.com/docs/4.17.15
+ */
+_ = require("lodash")
+
+/*
+ * JQuery library
+ * Usage: $()
+ * Example: $('.mes_text') to get the text box.
+ * @see: https://www.runoob.com/manual/jquery/
+ */
+$ = require("JQuery")
+
+/**
+ * Phase during template calculation
+ * generate: Generation phase
+ * preparation: Preparation phase
+ * render: Rendering (floor message) phase
+ */
+runType = 'generate' | 'preparation' | 'render'
+
+/*
+ * Floor message ID (i.e., floor number)
+ * Only exists when runType is 'render'
+ */
+message_id = 0
+
+/*
+ * Floor message page ID
+ * Only exists when runType is 'render'
+ */
+swipe_id = 0
 ```
-TODO
-```
+
+---
+
+# Notes
+
+1.  Both the preparation phase and the generation phase trigger world book calculations.
+2.  The rendering phase does not trigger world book calculations.
+3.  After `define` is executed, it remains valid until the page is refreshed or closed.
 

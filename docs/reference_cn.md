@@ -1,0 +1,304 @@
+# 内置函数
+
+```typescript
+/**
+ * 消息选择过滤器
+ * @interface MessageFilter
+ * @property {('system' | 'user' | 'assistant' | 'any')} [role='assistant'] - 选取指定角色. 
+ *      可以是 'system', 'user', 'assistant', or 'any'. 从末尾开始搜索. 如果设置了id则此项会无效.
+ * @property {number} [id=undefined] - 选取指定的消息楼层,可以是负数(负数为末尾开始).
+ * @property {number} [swipe_id=undefined] - 选取指定消息的切换ID.
+ */
+
+/**
+ * 设置变量选项
+ * @typedef {Object} SetVarOption
+ * @property {number} [index=undefined] - 变量的索引,与/setvar的index相同.
+ * @property {'global' | 'local' | 'message' | 'cache'} [scope='message'] - 变量类型(作用域),详见下方
+ * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - 设置条件,不满足则不设置,详见下方
+ * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - 返回值类型,详见下方
+ * @property {MessageFilter} [withMsg=undefined] - 消息过滤器(如果要设置消息变量)
+ * @property {boolean} [merge=false] - 是否使用合并来设置(_.merge)变量
+ * @property {boolean} [dryRun=false] - 是否允许在准备阶段设置变量
+ */
+
+/**
+ * 设置变量
+ *
+ * @param {string} key - 变量名
+ * @param {any} value - 变量值
+ * @param {SetVarOption} [options={}] - 设置变量选项.
+ * @returns 成功根据options.results决定，失败返回undefined
+ */
+function setvar(key, value, options = {});
+
+/**
+ * 获取变量选项
+ * @typedef {Object} GetVarOption
+ * @property {number} [index=undefined] - 变量的索引,与/getvar的index相同
+ * @property {'global' | 'local' | 'message' | 'cache'} [scope='cache'] - 变量类型(作用域),详见下方
+ * @property {any} [defaults=undefined] - 默认值(如果变量不存在时返回)
+ * @property {MessageFilter} [withMsg=undefined] - 消息选择过滤器
+ */
+
+/**
+ * 读取变量
+ *
+ * @param {string} key - 变量名
+ * @param {GetVarOption} [options={}] - 获取变量选项
+ * @returns {any} - 变量值,找不到返回options.defaults的值
+ */
+function getvar(key, options = {});
+
+/**
+ * 更新变量选项
+ * @typedef {Object} GetSetVarOption
+ * @property {number} [index] - 变量的索引,与/getvar的index相同
+ * @property {unknown} [defaults=0] - 如果变量不存在时使用的默认值
+ * @property {'global' | 'local' | 'message' | 'cache'} [inscope='cache'] - 读取的变量类型(作用域),详见下方
+ * @property {'global' | 'local' | 'message' | 'cache'} outscope='message'] - 设置的变量类型(作用域),详见下方
+ * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - 更新条件,不满足则不更新,详见下方
+ * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - 返回值类型,详见下方
+ * @property {MessageFilter} [withMsg=undefined] - 消息过滤器(如果要设置消息变量)
+ * @property {boolean} [dryRun=false] - 是否允许在准备阶段更新变量
+ */
+
+/**
+ * 增加变量的值
+ *
+ * @param {string} key - 变量名
+ * @param {number} [value=1] - 变量值
+ * @param {GetSetVarOption} [options={}] - 更新变量选项
+ * @returns 根据options.results决定,失败返回undefined.
+ */
+function incvar(key, value = 1, options = {});
+
+/**
+ * 减少变量的值
+ *
+ * @param {string} key - 变量名
+ * @param {number} [value=1] - 变量值
+ * @param {GetSetVarOption} [options={}] - 更新变量选项
+ * @returns 根据options.results决定,失败返回undefined.
+ */
+function decvar(key, value = 1, options = {});
+
+/**
+ * 执行命令,例如/setvar
+ *
+ * @param {string} cmd - 命令
+ * @returns {Promise<string>} - 命令返回值
+ */
+async function execute(cmd);
+
+/**
+ * 读取世界书条目内容
+ *
+ * @param {string} worldinfo - 世界书名
+ * @param {string | RegExp | number} title - 条目uid/标题
+ * @param {Record<string, any>} [data={}] - 传递的数据
+ * @returns {Promise<string>} - 世界书条目的内容
+ */
+async function getwi(worldinfo, title, data = {});
+
+/**
+ * 读取角色卡定义
+ *
+ * @param {string | RegExp} name - 角色卡名字
+ * @param {string} [template=DEFAULT_CHAR_DEFINE] - 输出格式
+ * @param {Record<string, any>} [data={}] - 传递的数据
+ * @returns {Promise<string>} - 角色卡定义的内容
+ */
+async function getchr(name, template = DEFAULT_CHAR_DEFINE, data = {});
+
+/**
+ * 读取预设的提示词内容
+ *
+ * @param {string | RegExp} name - 提示词的名字
+ * @param {Record<string, any>} [data={}] - 传递的数据
+ * @returns {Promise<string>} - 预设的提示词的内容
+ */
+async function getprp(name, data = {});
+
+/**
+ * 定义全局变量/函数
+ *
+ * @param {string} name - 变量/函数名
+ * @param {any} value - 变量/函数的内容
+ */
+function define(name, value);
+```
+
+> `flags` 类型:
+>
+> - `nx`: **不存在**时设置 (以 `scope=cache`为准)
+>
+> - `xx`: **存在**时设置  (以 `scope=cache`为准)
+>
+> - `n`: 直接设置 (不做检查)
+>
+> - `nxs`: **不存在**时设置 (以对应的 `scope`为准)
+>
+> - `xxs`: **存在**时设置 (以对应的 `scope`为准)
+>
+> ---
+>
+> `scope`/`inscope`/`scope` 类型:
+>
+> `global`: 全局变量 (酒馆的 `extension_settings.variables.global`).
+>
+> `local`: 局部(聊天)变量 (酒馆的 `chat_metadata.variables`).
+>
+> `message`: 消息变量 (扩展添加的 `chat[msg_id].variables[swipe_id]`).
+>
+> `cache`: 临时变量 (模板的 `variables`, 例如 `<% variables.变量名 %>`).
+>
+> - 临时变量**不会保存**，结束后生成会失效
+> - 无论`scope`选择哪个都会更新临时变量
+>
+> ---
+>
+> `results` 类型:
+>
+> `old`: 返回旧的值(没有就返回 `undefined`)
+>
+> `new`: 返回新的值(也就是传入的 `value`)
+>
+> `fullcache`: 返回更新后的整个缓存`variables`的内容
+>
+> ---
+>
+> `dryRun`:
+>
+> 酒馆在准备阶段会多次进行世界书/预设/角色卡计算，如果允许在准备阶段进行设置变量，会导致变量被设置多次
+>
+> 如果无特殊需求，则不需要将其设置为`true`
+>
+> **更新楼层消息时不会被视为准备阶段**
+
+---
+
+```javascript
+// 默认的角色卡定义输出格式
+const DEFAULT_CHAR_DEFINE = `\
+<% if (name) { %>\
+<<%- name %>>
+<% if (system_prompt) { %>\
+System: <%- system_prompt %>
+<% } %>\
+name: <%- name %>
+<% if (personality) { %>\
+personality: <%- personality %>
+<% } %>\
+<% if (description) { %>\
+description: <%- description %>
+<% } %>\
+<% if (message_example) { %>\
+example:
+<%- message_example %>
+<% } %>\
+<% if (depth_prompt) { %>\
+System: <%- depth_prompt %>
+<% } %>\
+</<%- name %>>\
+<% } %>\
+`;
+```
+
+> `name`: 角色名
+>
+> `system_prompt`: 提示词覆盖
+>
+> `personality`: 角色设定摘要
+>
+> `description`: 角色描述
+>
+> `scenario`: 情景
+>
+> `first_message`: 第一条消息
+>
+> `message_example`: 对话示例
+>
+> `creatorcomment`: 创作者的注释
+>
+> `alternate_greetings[]`: 额外的消息列表
+>
+> `depth_prompt`: 角色备注
+
+---
+
+# 内置变量/库
+
+```javascript
+/**
+ * 全部变量合集
+ * 根据以下顺序(优先级)合并变量:
+ * 1.消息变量(从末尾到开头)
+ * 2.局部(聊天)变量
+ * 3.全局变量
+ * 
+ * 注: 处理楼层消息变量时此值不包含当前以及之后的楼层变量
+ */
+variables = {}
+
+/**
+ * 酒馆的 SillyTavern.getContext() 返回内容
+ * 详细内容可在控制台里输入 SillyTavern.getContext() 查看
+ */
+SillyTavern = SillyTavern.getContext()
+
+/**
+ * faker 库的内容,用于生成随机内容
+ * 使用方式: faker.fakerEN, faker.fakerCN 等
+ * 例如: faker.fakerEN.lastName() 获取一个随机英文名
+ * @see: https://fakerjs.dev/api/
+ */
+faker = require("faker")
+
+/*
+ * Lodash 库
+ * 使用方式: _.get, _.set 等
+ * 例如: _.toArray('abc') 输出 ['a','b','c']
+ * @see: https://lodash.com/docs/4.17.15
+ */
+_ = require("lodash")
+
+/*
+ * JQuery 库
+ * 使用方法: $()
+ * 例如 $('.mes_text') 获取文本框
+ * @see: https://www.runoob.com/manual/jquery/
+ */
+$ = require("JQuery")
+
+/**
+ * 模板计算时的阶段
+ * generate: 生成阶段
+ * preparation: 准备阶段
+ * render: 渲染(楼层消息)阶段
+ */
+runType = 'generate' | 'preparation' | 'render'
+
+/*
+ * 楼层消息ID(即楼层号)
+ * 只有在 runType 为 'render' 才存在
+ */
+message_id = 0
+
+/*
+ * 楼层消息页码ID
+ * 只有在 runType 为 'render' 才存在
+ */
+swipe_id = 0
+```
+
+---
+
+# 备注
+
+1. 准备阶段和生成阶段都会触发世界书计算
+2. 渲染阶段不会触发世界书计算
+3. `define`执行后会在刷新/关闭页面前一直有效
+
+
+

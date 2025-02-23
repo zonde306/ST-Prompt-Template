@@ -2,6 +2,10 @@ import { chat, chat_metadata } from '../../../../../../script.js';
 import { extension_settings } from '../../../../../extensions.js';
 import { Message, Metadata } from '../defines';
 
+export let STATE = {
+    isDryRun: false,
+};
+
 export function allVariables(end : number = 65535) {
     let variables : Record<string, unknown> = {};
     variables = _.merge(variables, extension_settings.variables.global);
@@ -30,6 +34,7 @@ export interface SetVarOption {
     results?: 'old' | 'new' | 'fullcache';
     withMsg?: MessageFilter;
     merge?: boolean;
+    dryRun?: boolean;
 }
 
 function evalFilter(filter? : MessageFilter) {
@@ -65,8 +70,9 @@ function evalFilter(filter? : MessageFilter) {
 
 export function setVariable(vars : Record<string, unknown>, key : string, value : unknown,
                             options : SetVarOption = {}) {
-    const { index, scope, flags, results, withMsg, merge } = options;
-
+    const { index, scope, flags, results, withMsg, merge, dryRun } = options;
+    if(!dryRun && STATE.isDryRun) return undefined;
+    
     let oldValue;
     let newValue = value;
     if (index !== null && index !== undefined) {
@@ -75,10 +81,10 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
         let idx = Number(index);
         idx = Number.isNaN(idx) ? index : idx;
 
-        if(flags === 'nx' && _.has(data, idx)) return vars;
-        if(flags === 'xx' && !_.has(data, idx)) return vars;
-        if(flags === 'nxs' && getVariable(vars, key, options) !== undefined) return vars;
-        if(flags === 'xxs' && getVariable(vars, key, options) === undefined) return vars;
+        if(flags === 'nx' && _.has(data, idx)) return undefined;
+        if(flags === 'xx' && !_.has(data, idx)) return undefined;
+        if(flags === 'nxs' && getVariable(vars, key, options) !== undefined) return undefined;
+        if(flags === 'xxs' && getVariable(vars, key, options) === undefined) return undefined;
 
         if(results === 'old' || merge) oldValue = _.get(data, idx, undefined);
         if(merge) newValue = _.merge(results === 'old' ? _.cloneDeep(oldValue) : oldValue, value);
@@ -111,10 +117,10 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
                 break;
         }
     } else {
-        if(flags === 'nx' && _.has(vars, key)) return vars;
-        if(flags === 'xx' && !_.has(vars, key)) return vars;
-        if(flags === 'nxs' && getVariable(vars, key, options) !== undefined) return vars;
-        if(flags === 'xxs' && getVariable(vars, key, options) === undefined) return vars;
+        if(flags === 'nx' && _.has(vars, key)) return undefined;
+        if(flags === 'xx' && !_.has(vars, key)) return undefined;
+        if(flags === 'nxs' && getVariable(vars, key, options) !== undefined) return undefined;
+        if(flags === 'xxs' && getVariable(vars, key, options) === undefined) return undefined;
 
         if(results === 'old' || merge) oldValue = _.get(vars, key, undefined);
         if(merge) newValue = _.merge(results === 'old' ? _.cloneDeep(oldValue) : oldValue, value);
@@ -215,20 +221,21 @@ export interface GetSetVarOption {
     flags?: 'nx' | 'xx' | 'n' | 'nxs' | 'xxs';
     results?: 'old' | 'new' | 'fullcache';
     withMsg?: MessageFilter;
+    dryRun?: boolean;
 }
 
 export function increaseVariable(vars : Record<string, unknown>, key : string,
                                  value : number = 1, options : GetSetVarOption = {}) {
-    const { index, inscope, outscope, flags, defaults, results, withMsg } = options;
+    const { index, inscope, outscope, flags, defaults, results, withMsg, dryRun } = options;
     if((flags === 'nx' && !_.has(vars, key)) ||
       (flags === 'xx' && _.has(vars, key)) ||
       (flags === 'nxs' && getVariable(vars, key, { index, withMsg, scope: inscope }) === undefined) ||
       (flags === 'xxs' && getVariable(vars, key, { index, withMsg, scope: inscope }) !== undefined) ||
       (flags === 'n' || flags === undefined)) {
         const val = getVariable(vars, key, { index, withMsg, scope: inscope, defaults: defaults || 0 });
-        return setVariable(vars, key, val + value, { index, results, withMsg, scope: outscope, flags: 'n' });
+        return setVariable(vars, key, val + value, { index, results, withMsg, dryRun, scope: outscope, flags: 'n' });
     }
-    return vars;
+    return undefined;
 }
 
 export function decreaseVariable(vars : Record<string, unknown>, key : string,

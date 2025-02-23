@@ -2,9 +2,10 @@
 import vm from 'vm-browserify';
 import _ from 'lodash';
 import { diffChars } from 'diff';
-import { GenerateData, Message } from './defines';
+import { ChatData, GenerateData, Message } from './defines';
 import { eventSource, event_types, chat } from '../../../../../script.js';
 import { prepareGlobals, evalTemplate } from './function/ejs';
+import { STATE } from './function/variables';
 
 function logDifference(a : string, b : string, unchanged : boolean = false) {
     const diff = diffChars(a, b);
@@ -19,10 +20,30 @@ function logDifference(a : string, b : string, unchanged : boolean = false) {
     }
 }
 
-async function updateChatPrompt(data : GenerateData) {
-    const env = await prepareGlobals();
+async function updateGenerate(data : GenerateData) {
+    STATE.isDryRun = false;
 
+    const env = await prepareGlobals(65535, { runType: 'generate' });
     for(const [idx, message] of data.messages.entries()) {
+        try {
+            let newContent = await evalTemplate(message.content, env);
+            if(newContent !== message.content) {
+                console.debug(`update generate prompt #${idx}:`);
+                logDifference(message.content, newContent);
+            }
+            message.content = newContent;
+        } catch(err) {
+            console.debug(`handling prompt errors #${idx}`);
+            console.error(err);
+        }
+    }
+}
+
+async function updatePromptPreparation(data: ChatData) {
+    STATE.isDryRun = true;
+
+    const env = await prepareGlobals(65535, { runType: 'preparation' });
+    for(const [idx, message] of data.chat.entries()) {
         try {
             let newContent = await evalTemplate(message.content, env);
             if(newContent !== message.content) {
@@ -38,10 +59,13 @@ async function updateChatPrompt(data : GenerateData) {
 }
 
 async function updateMessageRender(message_id : string, env? : Record<string, unknown>) {
+    STATE.isDryRun = false;
+
     if(!message_id) {
         console.warn(`chat message message_id is empty`);
         return false;
     }
+
     const message_idx = parseInt(message_id);
     if(isNaN(message_idx) || message_idx < 0 || message_idx >= chat.length) {
         console.warn(`chat message #${message_id} invalid`);
@@ -61,7 +85,7 @@ async function updateMessageRender(message_id : string, env? : Record<string, un
         return false;
     }
 
-    env = env || await prepareGlobals(message_idx);
+    env = env || await prepareGlobals(message_idx, { runType: 'render', message_id: message_idx, swipe_id: message.swipe_id });
     const content = html.replaceAll('&lt;%', '<%').replaceAll('%&gt;', '%>');
     let newContent = '';
     
@@ -91,11 +115,13 @@ const MESSAGE_RENDER_EVENTS = [
 ];
 
 export async function init() {
-    eventSource.on(event_types.CHAT_COMPLETION_SETTINGS_READY, updateChatPrompt);
+    eventSource.on(event_types.CHAT_COMPLETION_SETTINGS_READY, updateGenerate);
+    eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, updatePromptPreparation);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.on(e, updateMessageRender));
 }
 
 export async function exit() {
-    eventSource.removeListener(event_types.CHAT_COMPLETION_SETTINGS_READY, updateChatPrompt);
+    eventSource.removeListener(event_types.CHAT_COMPLETION_SETTINGS_READY, updateGenerate);
+    eventSource.removeListener(event_types.CHAT_COMPLETION_PROMPT_READY, updatePromptPreparation);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.removeListener(e, updateMessageRender));
 }

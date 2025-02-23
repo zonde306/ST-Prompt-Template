@@ -95,5 +95,6 @@ export function getCharDefs(name : string | RegExp) {
         alternate_greetings: char.data.alternate_greetings,
         // @ts-expect-error
         depth_prompt: char?.data?.depth_prompt,
+        creator: char?.data?.creator,
     };
 }

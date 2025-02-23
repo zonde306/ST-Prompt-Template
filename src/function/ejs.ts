@@ -10,6 +10,7 @@ import { substituteParams, eventSource } from '../../../../../../script.js';
 import { getPresetPromptsContent } from './presets';
 import { fakerEnv } from './faker';
 
+
 interface IncluderResult {
     filename: string;
     template: string;
@@ -140,7 +141,7 @@ function bindDefine(env: Record<string, unknown>, name : string, value : unknown
     env[name] = value;
 }
 
-export async function prepareGlobals(end : number = 65535) {
+export async function prepareGlobals(end : number = 65535, env : Record<string, unknown> = {}) : Promise<Record<string, unknown>> {
     let vars = allVariables(end);
     let result = {
         ...SharedDefines,
@@ -153,6 +154,7 @@ export async function prepareGlobals(end : number = 65535) {
         decvar: decreaseVariable.bind(null, vars),
         SillyTavern: SillyTavern.getContext(),
         faker: fakerEnv.faker,
+        ...env,
     };
 
     // @ts-expect-error: 2339
