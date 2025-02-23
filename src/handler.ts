@@ -55,7 +55,7 @@ async function updateMessageRender(message_id : string, env? : Record<string, un
     }
 
     const container = $(`div.mes[mesid="${message_id}"]`)?.find('.mes_text');
-    const html = container?.text();
+    const html = container?.html();
     if(!html) {
         console.warn(`chat message #${message_id} container not found`);
         return false;
