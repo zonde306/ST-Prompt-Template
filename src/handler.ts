@@ -1,13 +1,13 @@
 // @ts-expect-error
 import vm from 'vm-browserify';
 import _ from 'lodash';
-import { diffLines } from 'diff';
+import { diffChars } from 'diff';
 import { GenerateData, Message } from './defines';
-import { eventSource, event_types, chat, messageFormatting } from '../../../../../script.js';
+import { eventSource, event_types, chat } from '../../../../../script.js';
 import { prepareGlobals, evalTemplate } from './function/ejs';
 
 function logDifference(a : string, b : string, unchanged : boolean = false) {
-    const diff = diffLines(a, b);
+    const diff = diffChars(a, b);
     for(const part of diff) {
         if(part.added) {
             console.debug(`+ ${part.value}`);
@@ -19,7 +19,7 @@ function logDifference(a : string, b : string, unchanged : boolean = false) {
     }
 }
 
-async function updateChat(data : GenerateData) {
+async function updateChatPrompt(data : GenerateData) {
     const env = await prepareGlobals();
 
     for(const [idx, message] of data.messages.entries()) {
@@ -37,7 +37,7 @@ async function updateChat(data : GenerateData) {
     }
 }
 
-async function updateMessage(message_id : string, env? : Record<string, unknown>) {
+async function updateMessageRender(message_id : string, env? : Record<string, unknown>) {
     if(!message_id) {
         console.warn(`chat message message_id is empty`);
         return false;
@@ -54,65 +54,48 @@ async function updateMessage(message_id : string, env? : Record<string, unknown>
         return false;
     }
 
-    env = env || await prepareGlobals(message_idx);
+    const container = $(`div.mes[mesid="${message_id}"]`)?.find('.mes_text');
+    const html = container?.text();
+    if(!html) {
+        console.warn(`chat message #${message_id} container not found`);
+        return false;
+    }
 
+    env = env || await prepareGlobals(message_idx);
+    const content = html.replace('&lt;%', '<%').replace('%&gt;', '%>');
+    let newContent = '';
+    
     try {
-        let newContent = await evalTemplate(message.mes, env);
-        if(newContent !== message.mes) {
+        newContent = await evalTemplate(content, env);
+        if(newContent !== content) {
             console.debug(`update chat message #${message_idx}:`);
-            logDifference(message.mes, newContent);
+            logDifference(content, newContent);
         }
-        message.mes = newContent;
     } catch(err) {
         console.debug(`handling chat message errors #${message.mes}`);
         console.error(err);
         return false;
     }
 
-    const div = $(`div.mes[mesid = "${message_id}"]`);
-    if(div) {
-        div.find('.mes_text').
-        empty().
-        append(messageFormatting(message.mes, message.name, message.is_system, message.is_user, message_idx));
-    }
+    if(newContent !== content)
+        container.empty().append(newContent);
 
     return true;
 }
 
-/*
-async function updateMessageAll() {
-    const env = await prepareGlobals(0);
-    for(const message_id in chat) {
-        await updateMessage(message_id, env);
-    }
-}
-*/
+const MESSAGE_RENDER_EVENTS = [
+    event_types.MESSAGE_SWIPED,
+    event_types.MESSAGE_UPDATED,
+    event_types.CHARACTER_MESSAGE_RENDERED,
+    event_types.USER_MESSAGE_RENDERED,
+];
 
 export async function init() {
-    eventSource.on(event_types.CHAT_COMPLETION_SETTINGS_READY, updateChat);
-    eventSource.on(event_types.MESSAGE_RECEIVED, updateMessage);
-    eventSource.on(event_types.MESSAGE_UPDATED, updateMessage);
-    // eventSource.on(event_types.CHAT_CHANGED, updateMessageAll);
-
-    try {
-        await test();
-    } catch(err) {
-        console.error('test fail: ', err);
-    }
+    eventSource.on(event_types.CHAT_COMPLETION_SETTINGS_READY, updateChatPrompt);
+    MESSAGE_RENDER_EVENTS.forEach(e => eventSource.on(e, updateMessageRender));
 }
 
 export async function exit() {
-    eventSource.removeListener(event_types.CHAT_COMPLETION_SETTINGS_READY, updateChat);
-    eventSource.removeListener(event_types.MESSAGE_RECEIVED, updateMessage);
-    eventSource.removeListener(event_types.MESSAGE_UPDATED, updateMessage);
-    // eventSource.removeListener(event_types.CHAT_CHANGED, updateMessageAll);
+    eventSource.removeListener(event_types.CHAT_COMPLETION_SETTINGS_READY, updateChatPrompt);
+    MESSAGE_RENDER_EVENTS.forEach(e => eventSource.removeListener(e, updateMessageRender));
 }
-
-async function test() {
-    console.log('ST-Prompt-Template start test.');
-    const env = await prepareGlobals();
-    env.variables.name = 'world';
-    console.log(await evalTemplate('Hello, <%= variables.name %>!', env));
-    console.log('ST-Prompt-Template test end.');
-}
-
