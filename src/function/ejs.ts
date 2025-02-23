@@ -165,6 +165,10 @@ export async function prepareGlobals(end : number = 65535) {
     result.define = bindDefine.bind(null, result);
 
     await eventSource.emit('prompt_template_prepare', result);
+
+    console.debug(`[Prompt Template] global variables prepared:`);
+    console.debug(result);
+
     return result;
 }
 
