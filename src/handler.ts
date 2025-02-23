@@ -3,7 +3,7 @@ import vm from 'vm-browserify';
 import _ from 'lodash';
 import { diffChars } from 'diff';
 import { ChatData, GenerateData, Message } from './defines';
-import { eventSource, event_types, chat } from '../../../../../script.js';
+import { eventSource, event_types, chat, saveChatConditional } from '../../../../../script.js';
 import { prepareGlobals, evalTemplate } from './function/ejs';
 import { STATE } from './function/variables';
 
@@ -20,6 +20,15 @@ function logDifference(a : string, b : string, unchanged : boolean = false) {
             console.debug(`  ${part.value}`);
         }
     }
+}
+
+async function checkAndSave() {
+    if(STATE.isGlobalUpdated || STATE.isLocalUpdated || STATE.isMessageUpdated)
+        await saveChatConditional();
+
+    STATE.isGlobalUpdated = false;
+    STATE.isLocalUpdated = false;
+    STATE.isMessageUpdated = false;
 }
 
 async function updateGenerate(data : GenerateData) {
@@ -39,6 +48,8 @@ async function updateGenerate(data : GenerateData) {
             console.error(err);
         }
     }
+
+    await checkAndSave();
 }
 
 async function updatePromptPreparation(data: ChatData) {
@@ -68,6 +79,8 @@ async function updatePromptPreparation(data: ChatData) {
                 await updateMessageRender(message_id);
         }
     }
+
+    await checkAndSave();
 }
 
 async function updateMessageRender(message_id : string) {
@@ -116,6 +129,7 @@ async function updateMessageRender(message_id : string) {
     if(newContent !== content)
         container.empty().append(newContent);
 
+    await checkAndSave();
     return true;
 }
 
