@@ -59,6 +59,7 @@ function evalFilter(filter? : MessageFilter) {
         return [message_id, undefined];
     }
 
+    console.debug(`Found message ${message_id} with swipe ${swipe_id} for filter: ${filter}`);
     return [message_id, swipe_id];
 }
 
@@ -87,6 +88,7 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
             case 'global':
                 data = JSON.parse(_.get(extension_settings.variables.global, key, '{}') || '{}');
                 _.set(extension_settings.variables.global, key, JSON.stringify(_.set(data, idx, newValue)));
+                console.debug(`Set global variable ${key} to ${newValue} (index ${idx})`);
                 break;
             case 'local':
                 // @ts-expect-error: TS2322
@@ -95,6 +97,7 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
                 data = JSON.parse(_.get(chat_metadata.variables, key, '{}') || '{}');
                 // @ts-expect-error: TS2322
                 _.set(chat_metadata.variables, key, JSON.stringify(_.set(data, idx, newValue)));
+                console.debug(`Set local variable ${key} to ${newValue} (index ${idx})`);
                 break;
             case 'message':
                 const [message_id, swipe_id] = evalFilter(withMsg);
@@ -103,6 +106,7 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
                     if(!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
                     data = JSON.parse(_.get(chat[message_id].variables[swipe_id], key, '{}') || '{}');
                     _.set(chat[message_id].variables[swipe_id], key, JSON.stringify(_.set(data, idx, newValue)));
+                    console.debug(`Set message variable ${key} to ${newValue} (index ${idx})`);
                 }
                 break;
         }
@@ -119,12 +123,14 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
         switch(scope || 'message') {
             case 'global':
                 _.set(extension_settings.variables.global, key, newValue);
+                console.debug(`Set global variable ${key} to ${newValue}`);
                 break;
             case 'local':
                 // @ts-expect-error: TS2322
                 if(!chat_metadata.variables) chat_metadata.variables = {};
                 // @ts-expect-error: TS2322
                 _.set(chat_metadata.variables, key, newValue);
+                console.debug(`Set local variable ${key} to ${newValue}`);
                 break;
             case 'message':
                 const [message_id, swipe_id] = evalFilter(withMsg);
@@ -132,6 +138,7 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
                     if(!chat[message_id].variables) chat[message_id].variables = {};
                     if(!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
                     _.set(chat[message_id].variables[swipe_id], key, newValue);
+                    console.debug(`Set message variable ${key} to ${newValue}`);
                 }
                 break;
         }
