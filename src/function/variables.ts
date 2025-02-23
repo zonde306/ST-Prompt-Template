@@ -1,6 +1,6 @@
 import { chat, chat_metadata } from '../../../../../../script.js';
 import { extension_settings } from '../../../../../extensions.js';
-import { Message, Metadata } from '../defines.js';
+import { Message, Metadata } from '../defines';
 
 export function allVariables(end : number = 65535) {
     let variables : Record<string, unknown> = {};
@@ -129,6 +129,8 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
             case 'message':
                 const [message_id, swipe_id] = evalFilter(withMsg);
                 if(message_id !== undefined && swipe_id !== undefined) {
+                    if(!chat[message_id].variables) chat[message_id].variables = {};
+                    if(!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
                     _.set(chat[message_id].variables[swipe_id], key, newValue);
                 }
                 break;
