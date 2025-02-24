@@ -8,6 +8,7 @@ import { prepareGlobals, evalTemplate } from './function/ejs';
 import { STATE } from './function/variables';
 
 let fullChanged = false;
+let runID = 0;
 
 function logDifference(a : string, b : string, unchanged : boolean = false) {
     const diff = diffChars(a, b);
@@ -23,18 +24,16 @@ function logDifference(a : string, b : string, unchanged : boolean = false) {
 }
 
 async function checkAndSave() {
-    if(STATE.isGlobalUpdated || STATE.isLocalUpdated || STATE.isMessageUpdated)
+    if(STATE.isUpdated)
         await saveChatConditional();
 
-    STATE.isGlobalUpdated = false;
-    STATE.isLocalUpdated = false;
-    STATE.isMessageUpdated = false;
+    STATE.isUpdated = false;
 }
 
 async function updateGenerate(data : GenerateData) {
     STATE.isDryRun = false;
 
-    const env = await prepareGlobals(65535, { runType: 'generate' });
+    const env = await prepareGlobals(65535, { runType: 'generate', runID: runID++ });
     for(const [idx, message] of data.messages.entries()) {
         try {
             let newContent = await evalTemplate(message.content, env);
@@ -55,7 +54,7 @@ async function updateGenerate(data : GenerateData) {
 async function updatePromptPreparation(data: ChatData) {
     STATE.isDryRun = true;
 
-    const env = await prepareGlobals(65535, { runType: 'preparation' });
+    const env = await prepareGlobals(65535, { runType: 'preparation', runID: runID++ });
     for(const [idx, message] of data.chat.entries()) {
         try {
             let newContent = await evalTemplate(message.content, env);
@@ -110,7 +109,12 @@ async function updateMessageRender(message_id : string) {
         return false;
     }
 
-    const env = await prepareGlobals(message_idx, { runType: 'render', message_id: message_idx, swipe_id: message.swipe_id });
+    const env = await prepareGlobals(message_idx, {
+        runType: 'render',
+        message_id: message_idx,
+        swipe_id: message.swipe_id,
+        runID: runID++,
+    });
     const content = html.replaceAll('&lt;%', '<%').replaceAll('%&gt;', '%>');
     let newContent = '';
     

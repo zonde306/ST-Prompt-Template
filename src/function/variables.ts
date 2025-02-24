@@ -1,12 +1,9 @@
 import { chat, chat_metadata } from '../../../../../../script.js';
 import { extension_settings } from '../../../../../extensions.js';
-import { Message, Metadata } from '../defines';
 
 export let STATE = {
     isDryRun: false,
-    isGlobalUpdated: false,
-    isLocalUpdated: false,
-    isMessageUpdated: false,
+    isUpdated: false,
 };
 
 export function allVariables(end : number = 65535) {
@@ -105,7 +102,7 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
                 data = JSON.parse(_.get(extension_settings.variables.global, key, '{}') || '{}');
                 _.set(extension_settings.variables.global, key, JSON.stringify(_.set(data, idx, newValue)));
                 console.debug(`Set global variable ${key} to ${newValue} (index ${idx})`);
-                STATE.isGlobalUpdated = true;
+                STATE.isUpdated = true;
                 break;
             case 'local':
                 // @ts-expect-error: TS2322
@@ -115,7 +112,7 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
                 // @ts-expect-error: TS2322
                 _.set(chat_metadata.variables, key, JSON.stringify(_.set(data, idx, newValue)));
                 console.debug(`Set local variable ${key} to ${newValue} (index ${idx})`);
-                STATE.isLocalUpdated = true;
+                STATE.isUpdated = true;
                 break;
             case 'message':
                 const [message_id, swipe_id] = evalFilter(withMsg);
@@ -125,7 +122,7 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
                     data = JSON.parse(_.get(chat[message_id].variables[swipe_id], key, '{}') || '{}');
                     _.set(chat[message_id].variables[swipe_id], key, JSON.stringify(_.set(data, idx, newValue)));
                     console.debug(`Set message #${message_id}.${swipe_id} variable ${key} to ${newValue} (index ${idx})`);
-                    STATE.isMessageUpdated = true;
+                    STATE.isUpdated = true;
                 }
                 break;
         }
@@ -143,7 +140,7 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
             case 'global':
                 _.set(extension_settings.variables.global, key, newValue);
                 console.debug(`Set global variable ${key} to ${newValue}`);
-                STATE.isGlobalUpdated = true;
+                STATE.isUpdated = true;
                 break;
             case 'local':
                 // @ts-expect-error: TS2322
@@ -151,7 +148,7 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
                 // @ts-expect-error: TS2322
                 _.set(chat_metadata.variables, key, newValue);
                 console.debug(`Set local variable ${key} to ${newValue}`);
-                STATE.isLocalUpdated = true;
+                STATE.isUpdated = true;
                 break;
             case 'message':
                 const [message_id, swipe_id] = evalFilter(withMsg);
@@ -160,7 +157,7 @@ export function setVariable(vars : Record<string, unknown>, key : string, value 
                     if(!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
                     _.set(chat[message_id].variables[swipe_id], key, newValue);
                     console.debug(`Set message #${message_id}.${swipe_id} variable ${key} to ${newValue}`);
-                    STATE.isMessageUpdated = true;
+                    STATE.isUpdated = true;
                 }
                 break;
         }
