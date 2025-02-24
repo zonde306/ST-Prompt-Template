@@ -4,22 +4,10 @@ import { extension_settings } from '../../../../../extensions.js';
 export let STATE = {
     isDryRun: false,
     isUpdated: false,
+    context: {},
 };
 
 export function allVariables(end : number = 65535) {
-    /*
-    let variables : Record<string, unknown> = {};
-    variables = _.merge(variables, extension_settings.variables.global);
-
-    const metadata : Metadata = chat_metadata;
-    variables = _.merge(variables, metadata.variables || {});
-
-    const messages : Array<Message> = chat;
-    for(const message of messages.slice(0, Math.max(end - 1, 0)))
-        if(message.variables && message.variables[message.swipe_id])
-            variables = _.merge(variables, message.variables[message.swipe_id]);
-    */
-    
     return _.merge({},
                    extension_settings.variables.global,
                    // @ts-expect-error: 2339
@@ -90,12 +78,8 @@ function evalFilter(filter? : MessageFilter, msgid? : number, swipeid?: number) 
 export function setVariable(this : Record<string, unknown>, key : string, value : unknown,
                             options : SetVarOption = {}) {
     const { noCache } = options;
-    // @ts-expect-error: TS2322
-    let self : Record<string, unknown> = this?.variables;
-    if(this?.runID === undefined || self === undefined)
-        console.warn(`setVariable called with invalid context ${this}`);
-    if(noCache || STATE.isUpdated || this?.runID === undefined || self === undefined)
-        self = allVariables();
+    if(noCache || this?.runID === undefined)
+        STATE.context = allVariables();
     
     const { index, scope, flags, results, withMsg, merge, dryRun } = options;
     if(!dryRun && STATE.isDryRun) return undefined;
@@ -103,19 +87,18 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
     let oldValue;
     let newValue = value;
     if (index !== null && index !== undefined) {
-        // @ts-expect-error: TS2322
-        let data = JSON.parse(_.get(self, key, '{}'));
+        let data = JSON.parse(_.get(STATE.context, key, '{}'));
         let idx = Number(index);
         idx = Number.isNaN(idx) ? index : idx;
 
         if(flags === 'nx' && _.has(data, idx)) return undefined;
         if(flags === 'xx' && !_.has(data, idx)) return undefined;
-        if(flags === 'nxs' && getVariable.call(self, key, options) !== undefined) return undefined;
-        if(flags === 'xxs' && getVariable.call(self, key, options) === undefined) return undefined;
+        if(flags === 'nxs' && getVariable.call(this, key, options) !== undefined) return undefined;
+        if(flags === 'xxs' && getVariable.call(this, key, options) === undefined) return undefined;
 
         if(results === 'old' || merge) oldValue = _.get(data, idx, undefined);
         if(merge) newValue = _.merge(results === 'old' ? _.cloneDeep(oldValue) : oldValue, value);
-        _.set(self, key, JSON.stringify(_.set(data, idx, newValue)));
+        _.set(STATE.context, key, JSON.stringify(_.set(data, idx, newValue)));
 
         switch(scope || 'message') {
             case 'global':
@@ -148,14 +131,14 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                 break;
         }
     } else {
-        if(flags === 'nx' && _.has(self, key)) return undefined;
-        if(flags === 'xx' && !_.has(self, key)) return undefined;
-        if(flags === 'nxs' && getVariable.call(self, key, options) !== undefined) return undefined;
-        if(flags === 'xxs' && getVariable.call(self, key, options) === undefined) return undefined;
+        if(flags === 'nx' && _.has(STATE.context, key)) return undefined;
+        if(flags === 'xx' && !_.has(STATE.context, key)) return undefined;
+        if(flags === 'nxs' && getVariable.call(this, key, options) !== undefined) return undefined;
+        if(flags === 'xxs' && getVariable.call(this, key, options) === undefined) return undefined;
 
-        if(results === 'old' || merge) oldValue = _.get(self, key, undefined);
+        if(results === 'old' || merge) oldValue = _.get(STATE.context, key, undefined);
         if(merge) newValue = _.merge(results === 'old' ? _.cloneDeep(oldValue) : oldValue, value);
-        _.set(self, key, newValue);
+        _.set(STATE.context, key, newValue);
 
         switch(scope || 'message') {
             case 'global':
@@ -189,7 +172,7 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
         return oldValue;
     if(results === 'new')
         return newValue;
-    return self;
+    return STATE.context;
 }
 
 export interface GetVarOption {
@@ -203,12 +186,8 @@ export interface GetVarOption {
 export function getVariable(this : Record<string, unknown>, key : string,
                             options : GetVarOption = {}) {
     const { noCache } = options;
-    // @ts-expect-error: TS2322
-    let self : Record<string, unknown> = this?.variables;
-    if(this?.runID === undefined || self === undefined)
-        console.warn(`getVariable called with invalid context ${this}`);
-    if(noCache || STATE.isUpdated || this?.runID === undefined || self === undefined)
-        self = allVariables();
+    if(noCache || this?.runID === undefined)
+        STATE.context = allVariables();
 
     const { index, scope, defaults, withMsg } = options;
 
@@ -249,13 +228,12 @@ export function getVariable(this : Record<string, unknown>, key : string,
     }
 
     if (index !== null && index !== undefined) {
-        // @ts-expect-error: TS2322
-        const data = JSON.parse(_.get(self, key, '{}') || '{}');
+        const data = JSON.parse(_.get(STATE.context, key, '{}') || '{}');
         const idx = Number(index);
         return _.get(data, idx, defaults);
     }
 
-    return _.get(self, key, defaults);
+    return _.get(STATE.context, key, defaults);
 }
 
 export interface GetSetVarOption {
@@ -273,31 +251,24 @@ export interface GetSetVarOption {
 export function increaseVariable(this : Record<string, unknown>, key : string,
                                  value : number = 1, options : GetSetVarOption = {}) {
     const { noCache } = options;
-    // @ts-expect-error: TS2322
-    let self : Record<string, unknown> = this?.variables;
-    if(this?.runID === undefined || self === undefined)
-        console.warn(`getVariable called with invalid context ${this}`);
-    if(noCache || STATE.isUpdated || this?.runID === undefined || self === undefined)
-        self = allVariables();
+    if(noCache || this?.runID === undefined)
+        STATE.context = allVariables();
 
     const { index, inscope, outscope, flags, defaults, results, withMsg, dryRun } = options;
-    if((flags === 'nx' && !_.has(self, key)) ||
-      (flags === 'xx' && _.has(self, key)) ||
-      (flags === 'nxs' && getVariable.call(self, key, { index, withMsg, scope: inscope }) === undefined) ||
-      (flags === 'xxs' && getVariable.call(self, key, { index, withMsg, scope: inscope }) !== undefined) ||
+    if((flags === 'nx' && !_.has(STATE.context, key)) ||
+      (flags === 'xx' && _.has(STATE.context, key)) ||
+      (flags === 'nxs' && getVariable.call(this, key, { index, withMsg, scope: inscope }) === undefined) ||
+      (flags === 'xxs' && getVariable.call(this, key, { index, withMsg, scope: inscope }) !== undefined) ||
       (flags === 'n' || flags === undefined)) {
-        const val = getVariable.call(self, key, { index, withMsg, scope: inscope, defaults: defaults || 0 });
-        return setVariable.call(self, key, val + value, { index, results, withMsg, dryRun, scope: outscope, flags: 'n' });
+        const val = getVariable.call(this, key, { index, withMsg, scope: inscope, defaults: defaults || 0 });
+        return setVariable.call(this, key, val + value, { index, results, withMsg, dryRun, scope: outscope, flags: 'n' });
     }
     return undefined;
 }
 
 export function decreaseVariable(this : Record<string, unknown>, key : string,
                                  value : number = 1, options : GetSetVarOption = {}) {
-    let self = this;
-    if(this?.runID === undefined) {
+    if(this?.runID === undefined)
         console.warn(`setVariable called with invalid context ${this}`);
-        self = allVariables();
-    }
-    return increaseVariable.call(self, key, -value, options);
+    return increaseVariable.call(this, key, -value, options);
 }

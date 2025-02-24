@@ -34,6 +34,10 @@ async function updateGenerate(data : GenerateData) {
     STATE.isDryRun = false;
 
     const env = await prepareContext(65535, { runType: 'generate', runID: runID++ });
+
+    // @ts-expect-error
+    STATE.context = env.variables;
+
     for(const [idx, message] of data.messages.entries()) {
         try {
             let newContent = await evalTemplate(message.content, env);
@@ -55,6 +59,10 @@ async function updatePromptPreparation(data: ChatData) {
     STATE.isDryRun = true;
 
     const env = await prepareContext(65535, { runType: 'preparation', runID: runID++ });
+
+    // @ts-expect-error
+    STATE.context = env.variables;
+
     for(const [idx, message] of data.chat.entries()) {
         try {
             let newContent = await evalTemplate(message.content, env);
@@ -117,6 +125,9 @@ async function updateMessageRender(message_id : string) {
     });
     const content = html.replaceAll('&lt;%', '<%').replaceAll('%&gt;', '%>');
     let newContent = '';
+
+    // @ts-expect-error
+    STATE.context = env.variables;
     
     try {
         newContent = await evalTemplate(content, env);
