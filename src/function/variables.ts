@@ -10,6 +10,7 @@ export let STATE = {
 };
 
 export function allVariables(end : number = 65535) {
+    /*
     let variables : Record<string, unknown> = {};
     variables = _.merge(variables, extension_settings.variables.global);
 
@@ -20,8 +21,14 @@ export function allVariables(end : number = 65535) {
     for(const message of messages.slice(0, Math.max(end - 1, 0)))
         if(message.variables && message.variables[message.swipe_id])
             variables = _.merge(variables, message.variables[message.swipe_id]);
-
-    return variables;
+    */
+    
+    return _.merge({},
+                   extension_settings.variables.global,
+                   // @ts-expect-error: 2339
+                   chat_metadata.variables || {},
+                   ...chat.slice(0, Math.max(end - 1, 0)).map(msg => msg.variables?.[msg.swipe_id] || {}),
+    );
 }
 
 export interface MessageFilter {
