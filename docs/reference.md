@@ -125,7 +125,7 @@ async function getprp(name, data = {});
  *
  * @param {string} name - Variable/function name
  * @param {any} value - Variable/function content
- * @note When defining a function, use `locals` to access the context, for example: `locals.variables`, `locals.getvar`, `locals.setvar`
+ * @note When defining a function, use `this` to access the context, for example: `this.variables`, `this.getvar`, `this.setvar`
  */
 function define(name, value);
 ```
@@ -179,9 +179,7 @@ function define(name, value);
 >
 > When using `define`, the outer layer already includes a closure, so directly accessing functions and variables such as `getvar`, `setvar`, and `variables` ~~in certain cases~~ will result in incorrect values.
 >
-> Therefore, you must access these introduced variables/functions through `locals`, for example, `locals.getvar`, `locals.setvar`, `locals.variables`.
->
-> ~~If the function is defined using the `function` statement (rather than `lambda`), you can also use `this` to access them, for example, `this.getvar`, `this.setvar`, `this.variables`.~~
+> If the function is defined using the `function` statement (rather than `lambda`), use `this` to access them, for example, `this.getvar`, `this.setvar`, `this.variables`.
 
 ---
 

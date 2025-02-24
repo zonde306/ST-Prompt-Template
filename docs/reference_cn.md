@@ -125,7 +125,7 @@ async function getprp(name, data = {});
  *
  * @param {string} name - 变量/函数名
  * @param {any} value - 变量/函数的内容
- * @note 定义函数时应该使用 locals 访问上下文, 例如: locals.variables, locals.getvar, locals.setvar
+ * @note 定义函数时应该使用 this 访问上下文, 例如: this.variables, this.getvar, this.setvar
  */
 function define(name, value);
 ```
@@ -183,9 +183,7 @@ function define(name, value);
 >
 > 使用 `define`时外层已经包含了闭包，所以直接访问 `getvar`, `setvar`, `variables`等函数和变量~~在某些情况下~~得到的结果将会是错误的值
 >
-> 因此，必须通过 `locals`来访问这些引入的变量/函数，例如 `locals.getvar`, `locals.setvar`, `locals.variables`
->
-> ~~如果函数使用 `function` 语句定义（而非 `lambda`），也可以使用`this`来进行访问，例如`this.getvar`, `this.setvar`, `this.variables`~~
+> 如果函数使用 `function` 语句定义（而非 `lambda`），可以使用`this`来进行访问，例如`this.getvar`, `this.setvar`, `this.variables`
 
 ---
 

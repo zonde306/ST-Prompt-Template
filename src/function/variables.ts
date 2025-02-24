@@ -44,7 +44,7 @@ export interface SetVarOption {
     dryRun?: boolean;
 }
 
-function evalFilter(filter? : MessageFilter) {
+function evalFilter(filter? : MessageFilter, msgid? : number, swipeid?: number) {
     let message_id = -1;
     if(filter?.id !== undefined) {
         message_id = filter.id > -1 ? filter.id : chat.length + filter.id;
@@ -55,8 +55,10 @@ function evalFilter(filter? : MessageFilter) {
             (!msg.is_system && !msg.is_user && (filter.role === 'assistant')) ||
             (filter.role === 'any')
         );
-    } else {
+    } else if(msgid === undefined) {
         message_id = chat.findLastIndex(msg => !msg.is_user && !msg.is_system);
+    } else {
+        message_id = msgid;
     }
 
     if(message_id < 0 || message_id >= chat.length) {
@@ -64,8 +66,17 @@ function evalFilter(filter? : MessageFilter) {
         return [undefined, undefined];
     }
 
-    let swipe_id = filter?.swipe_id !== undefined ? filter.swipe_id : chat[message_id].swipe_id;
-    if(swipe_id < 0) swipe_id = chat[message_id].swipe_id + swipe_id;
+    let swipe_id = 0;
+    if(filter?.swipe_id !== undefined)
+        swipe_id = filter.swipe_id;
+    else if(swipeid !== undefined)
+        swipe_id = swipeid;
+    else
+        swipe_id = chat[message_id].swipe_id;
+
+    if(swipe_id < 0)
+        swipe_id = chat[message_id].swipe_id + swipe_id;
+
     if(!(swipe_id in chat[message_id].swipes)) {
         console.error(`No swipe found for filter: ${filter}`);
         return [message_id, undefined];
@@ -77,8 +88,9 @@ function evalFilter(filter? : MessageFilter) {
 
 export function setVariable(this : Record<string, unknown>, key : string, value : unknown,
                             options : SetVarOption = {}) {
-    let self = this;
-    if(this?.runID === undefined) {
+    // @ts-expect-error: TS2322
+    let self : Record<string, unknown> = this?.variables;
+    if(this?.runID === undefined || self === undefined) {
         console.warn(`setVariable called with invalid context ${this}`);
         self = allVariables();
     }
@@ -121,7 +133,8 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                 STATE.isUpdated = true;
                 break;
             case 'message':
-                const [message_id, swipe_id] = evalFilter(withMsg);
+                // @ts-expect-error
+                const [message_id, swipe_id] = evalFilter(withMsg, this?.message_id, this?.swipe_id);
                 if(message_id !== undefined && swipe_id !== undefined) {
                     if(!chat[message_id].variables) chat[message_id].variables = {};
                     if(!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
@@ -157,7 +170,8 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                 STATE.isUpdated = true;
                 break;
             case 'message':
-                const [message_id, swipe_id] = evalFilter(withMsg);
+                // @ts-expect-error
+                const [message_id, swipe_id] = evalFilter(withMsg, this?.message_id, this?.swipe_id);
                 if(message_id !== undefined && swipe_id !== undefined) {
                     if(!chat[message_id].variables) chat[message_id].variables = {};
                     if(!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
@@ -185,8 +199,9 @@ export interface GetVarOption {
 
 export function getVariable(this : Record<string, unknown>, key : string,
                             options : GetVarOption = {}) {
-    let self = this;
-    if(this?.runID === undefined) {
+    // @ts-expect-error: TS2322
+    let self : Record<string, unknown> = this?.variables;
+    if(this?.runID === undefined || self === undefined) {
         console.warn(`setVariable called with invalid context ${this}`);
         self = allVariables();
     }
@@ -214,7 +229,8 @@ export function getVariable(this : Record<string, unknown>, key : string,
             // @ts-expect-error: TS2322
             return _.get(chat_metadata.variables, key, defaults);
         case 'message':
-            const [message_id, swipe_id] = evalFilter(withMsg);
+            // @ts-expect-error
+            const [message_id, swipe_id] = evalFilter(withMsg, this?.message_id, this?.swipe_id);
             if(message_id !== undefined && swipe_id !== undefined) {
                 if(!chat[message_id].variables) return defaults;
                 if(!chat[message_id].variables[swipe_id]) return defaults;
@@ -251,8 +267,9 @@ export interface GetSetVarOption {
 
 export function increaseVariable(this : Record<string, unknown>, key : string,
                                  value : number = 1, options : GetSetVarOption = {}) {
-    let self = this;
-    if(this?.runID === undefined) {
+    // @ts-expect-error: TS2322
+    let self : Record<string, unknown> = this?.variables;
+    if(this?.runID === undefined || self === undefined) {
         console.warn(`setVariable called with invalid context ${this}`);
         self = allVariables();
     }
