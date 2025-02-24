@@ -37,6 +37,7 @@ async function updateGenerate(data : GenerateData) {
 
     // @ts-expect-error
     STATE.context = env.variables;
+    STATE.isContextLoaded = true;
 
     for(const [idx, message] of data.messages.entries()) {
         try {
@@ -62,6 +63,7 @@ async function updatePromptPreparation(data: ChatData) {
 
     // @ts-expect-error
     STATE.context = env.variables;
+    STATE.isContextLoaded = true;
 
     for(const [idx, message] of data.chat.entries()) {
         try {
@@ -128,6 +130,7 @@ async function updateMessageRender(message_id : string) {
 
     // @ts-expect-error
     STATE.context = env.variables;
+    STATE.isContextLoaded = true;
     
     try {
         newContent = await evalTemplate(content, env);
