@@ -125,6 +125,7 @@ async function getprp(name, data = {});
  *
  * @param {string} name - 变量/函数名
  * @param {any} value - 变量/函数的内容
+ * @note 定义函数时应该使用 locals 访问上下文, 例如: locals.variables, locals.getvar, locals.setvar
  */
 function define(name, value);
 ```
@@ -175,6 +176,16 @@ function define(name, value);
 > 如果无特殊需求，则不需要将其设置为`true`
 >
 > **更新楼层消息时不会被视为准备阶段**
+>
+> ---
+>
+> `define`:
+>
+> 使用 `define`时外层已经包含了闭包，所以直接访问 `getvar`, `setvar`, `variables`等函数和变量~~在某些情况下~~得到的结果将会是错误的值
+>
+> 因此，必须通过 `locals`来访问这些引入的变量/函数，例如 `locals.getvar`, `locals.setvar`, `locals.variables`
+>
+> ~~如果函数使用 `function` 语句定义（而非 `lambda`），也可以使用`this`来进行访问，例如`this.getvar`, `this.setvar`, `this.variables`~~
 
 ---
 
@@ -232,12 +243,14 @@ System: <%- depth_prompt %>
 ```javascript
 /**
  * 全部变量合集
- * 根据以下顺序(优先级)合并变量:
- * 1.消息变量(从末尾到开头)
+ * 根据以下顺序(优先级)合并变量, 高优先级覆盖低优先级的同名变量:
+ * 1.消息变量(楼层号从末尾到开头)
  * 2.局部(聊天)变量
  * 3.全局变量
  * 
- * 注: 处理楼层消息变量时此值不包含当前以及之后的楼层变量
+ * @note: 处理楼层消息变量时此值不包含当前以及之后的楼层变量
+ *        冲突处理: 类型同为 [] 或者 {} 则合并，否则替换
+ * @see: https://lodash.com/docs/4.17.15#merge
  */
 variables = {}
 
@@ -298,7 +311,7 @@ swipe_id = 0
 
 1. 准备阶段和生成阶段都会触发世界书计算
 2. 渲染阶段不会触发世界书计算
-3. `define`执行后会在刷新/关闭页面前一直有效
+3. `define`执行后会在刷新/关闭页面前一直有效，但是需要注意外层闭包的影响
 
 
 

@@ -121,10 +121,11 @@ async function getchr(name, template = DEFAULT_CHAR_DEFINE, data = {});
 async function getprp(name, data = {});
 
 /**
- * Define global variable/function
+ * Define a global variable/function
  *
  * @param {string} name - Variable/function name
  * @param {any} value - Variable/function content
+ * @note When defining a function, use `locals` to access the context, for example: `locals.variables`, `locals.getvar`, `locals.setvar`
  */
 function define(name, value);
 ```
@@ -171,6 +172,16 @@ function define(name, value);
 > If there is no special requirement, it does not need to be set to `true`.
 >
 > **Updating floor messages is not considered part of the preparation phase.**
+>
+> ---
+>
+> `define`:
+>
+> When using `define`, the outer layer already includes a closure, so directly accessing functions and variables such as `getvar`, `setvar`, and `variables` ~~in certain cases~~ will result in incorrect values.
+>
+> Therefore, you must access these introduced variables/functions through `locals`, for example, `locals.getvar`, `locals.setvar`, `locals.variables`.
+>
+> ~~If the function is defined using the `function` statement (rather than `lambda`), you can also use `this` to access them, for example, `this.getvar`, `this.setvar`, `this.variables`.~~
 
 ---
 
@@ -228,12 +239,14 @@ System: <%- depth_prompt %>
 ```javascript
 /**
  * Collection of all variables
- * Merged in the following order (priority):
- * 1. Message variables (from end to start)
+ * Variables are merged in the following order (priority), with higher priority overwriting lower priority variables of the same name:
+ * 1. Message variables (floor numbers from end to start)
  * 2. Local (chat) variables
  * 3. Global variables
  * 
- * Note: When processing floor message variables, this value does not include the current and subsequent floor variables.
+ * @note: When processing floor message variables, this value does not include the current and subsequent floor variables.
+ *        Conflict handling: If the types are both [] or {}, they are merged; otherwise, they are replaced.
+ * @see: https://lodash.com/docs/4.17.15#merge
  */
 variables = {}
 
@@ -294,5 +307,5 @@ swipe_id = 0
 
 1.  Both the preparation phase and the generation phase trigger world book calculations.
 2.  The rendering phase does not trigger world book calculations.
-3.  After `define` is executed, it remains valid until the page is refreshed or closed.
+3.  After `define` is executed, it remains valid until the page is refreshed or closed, but be mindful of the impact of the outer closure.
 

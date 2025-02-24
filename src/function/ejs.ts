@@ -89,88 +89,108 @@ export async function evalTemplate(content: string, data: Record<string, unknown
     });
 }
 
-async function bindImport(env: Record<string, unknown>,
+async function boundedImport(this: Record<string, unknown>,
                           worldinfo: string, entry: string | RegExp | number,
                           data: Record<string, unknown> = {}): Promise<string> {
     // maybe not
-    env.getwi = bindImport.bind(null, env);
+    this.getwi = boundedImport.bind(this);
     const content = await getWorldInfoEntryContent(worldinfo, entry);
     if(content) {
         // or use _.merge?
-        return await evalTemplate(substituteParams(content), { ...env, ...data });
+        return await evalTemplate(substituteParams(content), { ...this, ...data });
     }
 
     console.warn(`[Prompt Template] worldinfo ${worldinfo} or entry ${entry} not found`);
     return "";
 }
 
-async function bindCharDef(env: Record<string, unknown>,
+async function boundedCharDef(this: Record<string, unknown>,
                            name: string | RegExp, template: string = DEFAULT_CHAR_DEFINE,
                            data: Record<string, unknown> = {}) : Promise<string> {
     // maybe not
-    env.getchr = bindCharDef.bind(null, env);
+    this.getchr = boundedCharDef.bind(this);
     const defs = getCharDefs(name);
     if(!defs) {
         console.warn(`[Prompt Template] character ${name} not found`);
         return "";
     }
 
-    return substituteParams(await evalTemplate(template, { ...env, ...data, ...defs }),
+    return substituteParams(await evalTemplate(template, { ...this, ...data, ...defs }),
                             undefined, defs.name, undefined, undefined, false);
 }
 
-async function bindPresetPrompt(env: Record<string, unknown>,
+async function boundedPresetPrompt(this: Record<string, unknown>,
                                 name : string | RegExp,
                                 data : Record<string, unknown> = {}) : Promise<string> {
     // maybe not
-    env.getprp = bindPresetPrompt.bind(null, env);
+    this.getprp = boundedPresetPrompt.bind(this);
     const prompt = getPresetPromptsContent(name);
     if(!prompt) {
         console.warn(`[Prompt Template] preset prompt ${name} not found`);
         return "";
     }
 
-    return substituteParams(await evalTemplate(prompt, { ...env, ...data }));
+    return substituteParams(await evalTemplate(prompt, { ...this, ...data }));
 }
 
 let SharedDefines : Record<string, unknown> = {};
 
-function bindDefine(env: Record<string, unknown>, name : string, value : unknown) {
+function boundedDefine(this: Record<string, unknown>, name : string, value : unknown) {
     console.debug(`[Prompt Template] global ${name} defined: ${value}`);
     SharedDefines[name] = value;
-    env[name] = value;
+    this[name] = value;
 }
 
-export async function prepareGlobals(end : number = 65535, env : Record<string, unknown> = {}) : Promise<Record<string, unknown>> {
+function boundCloneDefines(self: Record<string, unknown>, defines : Record<string, unknown> | unknown[]) {
+    let result : Record<string, unknown> | unknown[] = {};
+    if(defines instanceof Array)
+        result = [];
+
+    for(const name in defines) {
+        // @ts-expect-error
+        const value = defines[name];
+        if(typeof value === 'function') {
+            // @ts-expect-error
+            result[name] = value.bind(self);
+        } else if(typeof value === 'object' && value !== null) {
+            // @ts-expect-error
+            result[name] = boundCloneDefines.call(self, value);
+        } else {
+            // @ts-expect-error
+            result[name] = value;
+        }
+    }
+    return result;
+}
+
+export async function prepareContext(end : number = 65535, env : Record<string, unknown> = {}) : Promise<Record<string, unknown>> {
     let vars = allVariables(end);
-    let result = {
-        ...SharedDefines,
+    let context = {
         ...SHARE_CONTEXT,
         variables: vars,
         execute: async(cmd : string) => (await executeSlashCommandsWithOptions(cmd)).pipe,
-        setvar: setVariable.bind(null, vars),
-        getvar: getVariable.bind(null, vars),
-        incvar: increaseVariable.bind(null, vars),
-        decvar: decreaseVariable.bind(null, vars),
         SillyTavern: SillyTavern.getContext(),
         faker: fakerEnv.faker,
         ...env,
     };
 
-    // @ts-expect-error: 2339
-    result.getwi = bindImport.bind(null, result);
-    // @ts-expect-error: 2339
-    result.getchr = bindCharDef.bind(null, result);
-    // @ts-expect-error: 2339
-    result.getprp = bindPresetPrompt.bind(null, result);
-    // @ts-expect-error: 2339
-    result.define = bindDefine.bind(null, result);
+    _.merge(context, {
+        getwi: boundedImport.bind(context),
+        getchr: boundedCharDef.bind(context),
+        getprp: boundedPresetPrompt.bind(context),
+        define: boundedDefine.bind(context),
+        setvar: setVariable.bind(context),
+        getvar: getVariable.bind(context),
+        incvar: increaseVariable.bind(context),
+        decvar: decreaseVariable.bind(context),
+        ...boundCloneDefines(context, SharedDefines),
+    });
 
-    await eventSource.emit('prompt_template_prepare', result);
+    await eventSource.emit('prompt_template_prepare', context);
 
-    console.debug(`[Prompt Template] global variables prepared:`);
-    console.debug(result);
+    console.debug(`[Prompt Template] context prepared:`);
+    console.debug(context);
 
-    return result;
+    return context;
 }
 

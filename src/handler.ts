@@ -4,7 +4,7 @@ import _ from 'lodash';
 import { diffChars } from 'diff';
 import { ChatData, GenerateData, Message } from './defines';
 import { eventSource, event_types, chat, saveChatConditional } from '../../../../../script.js';
-import { prepareGlobals, evalTemplate } from './function/ejs';
+import { prepareContext, evalTemplate } from './function/ejs';
 import { STATE } from './function/variables';
 
 let fullChanged = false;
@@ -33,7 +33,7 @@ async function checkAndSave() {
 async function updateGenerate(data : GenerateData) {
     STATE.isDryRun = false;
 
-    const env = await prepareGlobals(65535, { runType: 'generate', runID: runID++ });
+    const env = await prepareContext(65535, { runType: 'generate', runID: runID++ });
     for(const [idx, message] of data.messages.entries()) {
         try {
             let newContent = await evalTemplate(message.content, env);
@@ -54,7 +54,7 @@ async function updateGenerate(data : GenerateData) {
 async function updatePromptPreparation(data: ChatData) {
     STATE.isDryRun = true;
 
-    const env = await prepareGlobals(65535, { runType: 'preparation', runID: runID++ });
+    const env = await prepareContext(65535, { runType: 'preparation', runID: runID++ });
     for(const [idx, message] of data.chat.entries()) {
         try {
             let newContent = await evalTemplate(message.content, env);
@@ -109,7 +109,7 @@ async function updateMessageRender(message_id : string) {
         return false;
     }
 
-    const env = await prepareGlobals(message_idx, {
+    const env = await prepareContext(message_idx, {
         runType: 'render',
         message_id: message_idx,
         swipe_id: message.swipe_id,
