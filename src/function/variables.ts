@@ -5,7 +5,6 @@ export let STATE = {
     isDryRun: false,
     isUpdated: false,
     context: {},
-    isContextLoaded: true,
 };
 
 export function allVariables(end : number = 65535) {
@@ -79,10 +78,9 @@ function evalFilter(filter? : MessageFilter, msgid? : number, swipeid?: number) 
 export function setVariable(this : Record<string, unknown>, key : string, value : unknown,
                             options : SetVarOption = {}) {
     const { noCache } = options;
-    if(noCache || !STATE.isContextLoaded || this?.runID === undefined) {
+    if(noCache || this?.runID === undefined) {
         // @ts-expect-error: TS2322
         STATE.context = allVariables(this?.message_id || 65535);
-        STATE.isContextLoaded = true;
         console.debug(`[Prompt Template] reload context:`);
         console.debug(STATE.context);
     }
@@ -112,7 +110,6 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                 _.set(extension_settings.variables.global, key, JSON.stringify(_.set(data, idx, newValue)));
                 console.debug(`Set global variable ${key} to ${newValue} (index ${idx})`);
                 STATE.isUpdated = true;
-                STATE.isContextLoaded = false;
                 break;
             case 'local':
                 // @ts-expect-error: TS2322
@@ -123,7 +120,6 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                 _.set(chat_metadata.variables, key, JSON.stringify(_.set(data, idx, newValue)));
                 console.debug(`Set local variable ${key} to ${newValue} (index ${idx})`);
                 STATE.isUpdated = true;
-                STATE.isContextLoaded = false;
                 break;
             case 'message':
                 // @ts-expect-error
@@ -135,7 +131,6 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                     _.set(chat[message_id].variables[swipe_id], key, JSON.stringify(_.set(data, idx, newValue)));
                     console.debug(`Set message #${message_id}.${swipe_id} variable ${key} to ${newValue} (index ${idx})`);
                     STATE.isUpdated = true;
-                    STATE.isContextLoaded = false;
                 }
                 break;
         }
@@ -154,7 +149,6 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                 _.set(extension_settings.variables.global, key, newValue);
                 console.debug(`Set global variable ${key} to ${newValue}`);
                 STATE.isUpdated = true;
-                STATE.isContextLoaded = false;
                 break;
             case 'local':
                 // @ts-expect-error: TS2322
@@ -163,7 +157,6 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                 _.set(chat_metadata.variables, key, newValue);
                 console.debug(`Set local variable ${key} to ${newValue}`);
                 STATE.isUpdated = true;
-                STATE.isContextLoaded = false;
                 break;
             case 'message':
                 // @ts-expect-error
@@ -174,7 +167,6 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                     _.set(chat[message_id].variables[swipe_id], key, newValue);
                     console.debug(`Set message #${message_id}.${swipe_id} variable ${key} to ${newValue}`);
                     STATE.isUpdated = true;
-                    STATE.isContextLoaded = false;
                 }
                 break;
         }
@@ -198,10 +190,9 @@ export interface GetVarOption {
 export function getVariable(this : Record<string, unknown>, key : string,
                             options : GetVarOption = {}) {
     const { noCache } = options;
-    if(noCache || !STATE.isContextLoaded || this?.runID === undefined) {
+    if(noCache || this?.runID === undefined) {
         // @ts-expect-error: TS2322
         STATE.context = allVariables(this?.message_id || 65535);
-        STATE.isContextLoaded = true;
         console.debug(`[Prompt Template] reload context:`);
         console.debug(STATE.context);
     }
@@ -268,10 +259,9 @@ export interface GetSetVarOption {
 export function increaseVariable(this : Record<string, unknown>, key : string,
                                  value : number = 1, options : GetSetVarOption = {}) {
     const { noCache } = options;
-    if(noCache || !STATE.isContextLoaded || this?.runID === undefined) {
+    if(noCache || this?.runID === undefined) {
         // @ts-expect-error: TS2322
         STATE.context = allVariables(this?.message_id || 65535);
-        STATE.isContextLoaded = true;
         console.debug(`[Prompt Template] reload context:`);
         console.debug(STATE.context);
     }

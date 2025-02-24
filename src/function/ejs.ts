@@ -4,7 +4,7 @@ import vm from 'vm-browserify';
 import _ from 'lodash';
 import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.js';
 import { getWorldInfoEntryContent } from './worldinfo';
-import { allVariables, getVariable, setVariable, increaseVariable, decreaseVariable } from './variables';
+import { allVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE } from './variables';
 import { getCharDefs, DEFAULT_CHAR_DEFINE } from './characters';
 import { substituteParams, eventSource } from '../../../../../../script.js';
 import { getPresetPromptsContent } from './presets';
@@ -165,6 +165,7 @@ function boundCloneDefines(self: Record<string, unknown>, defines : Record<strin
 
 export async function prepareContext(end : number = 65535, env : Record<string, unknown> = {}) : Promise<Record<string, unknown>> {
     let vars = allVariables(end);
+    STATE.context = vars;
     let context = {
         ...SHARE_CONTEXT,
         variables: vars,
@@ -172,6 +173,10 @@ export async function prepareContext(end : number = 65535, env : Record<string, 
         SillyTavern: SillyTavern.getContext(),
         faker: fakerEnv.faker,
         ...env,
+
+        get vars() {
+            return new WeakRef(STATE.context);
+        }
     };
 
     _.merge(context, {
@@ -184,6 +189,7 @@ export async function prepareContext(end : number = 65535, env : Record<string, 
         incvar: increaseVariable.bind(context),
         decvar: decreaseVariable.bind(context),
         ...boundCloneDefines(context, SharedDefines),
+        ref: new WeakRef(context),
     });
 
     await eventSource.emit('prompt_template_prepare', context);

@@ -180,9 +180,11 @@ function define(name, value);
 >
 > `define`:
 >
-> When using `define`, the outer layer already includes a closure, so directly accessing functions and variables such as `getvar`, `setvar`, and `variables` ~~in certain cases~~ will result in incorrect values.
+> If defining a function, the following rules must be followed:
 >
-> If the function is defined using the `function` statement (rather than `lambda`), use `this` to access them, for example, `this.getvar`, `this.setvar`, `this.variables`.
+> - You must use the `function` statement to define it, for example: `define('myfunc', function() { ... })`
+> - When accessing variables and properties like `getvar`, `setvar`, etc., you must use `this`, for example: `this.getvar(...)`, `this.setvar(...)`
+> - ~~Avoid directly using `variables`, as it will not be updated within the function (e.g., after calling `setvar`). Instead, use `this.getvar(...)`~~
 >
 > ---
 >

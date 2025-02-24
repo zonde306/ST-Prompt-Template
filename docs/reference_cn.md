@@ -184,9 +184,11 @@ function define(name, value);
 >
 > `define`:
 >
-> 使用 `define`时外层已经包含了闭包，所以直接访问 `getvar`, `setvar`, `variables`等函数和变量~~在某些情况下~~得到的结果将会是错误的值
+> 如果定义的是函数，需要遵循以下规则：
 >
-> 如果函数使用 `function` 语句定义（而非 `lambda`），可以使用`this`来进行访问，例如`this.getvar`, `this.setvar`, `this.variables`
+> - 必须使用`function`语句来定义，例如`define('myfunc', function() { ... })`
+> - 访问`getvar`、`setvar`等变量和属性时必须使用`this`，例如`this.getvar(...)`、`this.setvar(...)`
+> - ~~不建直接使用`variables`，因为它在函数内不会被更新(例如在调用`setvar`之后)，而是使用`this.getvar(...)~~
 >
 > ---
 >

@@ -35,10 +35,6 @@ async function updateGenerate(data : GenerateData) {
 
     const env = await prepareContext(65535, { runType: 'generate', runID: runID++ });
 
-    // @ts-expect-error
-    STATE.context = env.variables;
-    STATE.isContextLoaded = true;
-
     for(const [idx, message] of data.messages.entries()) {
         try {
             let newContent = await evalTemplate(message.content, env);
@@ -60,10 +56,6 @@ async function updatePromptPreparation(data: ChatData) {
     STATE.isDryRun = true;
 
     const env = await prepareContext(65535, { runType: 'preparation', runID: runID++ });
-
-    // @ts-expect-error
-    STATE.context = env.variables;
-    STATE.isContextLoaded = true;
 
     for(const [idx, message] of data.chat.entries()) {
         try {
@@ -128,10 +120,6 @@ async function updateMessageRender(message_id : string) {
     const content = html.replaceAll('&lt;%', '<%').replaceAll('%&gt;', '%>');
     let newContent = '';
 
-    // @ts-expect-error
-    STATE.context = env.variables;
-    STATE.isContextLoaded = true;
-    
     try {
         newContent = await evalTemplate(content, env);
         if(newContent !== content) {
