@@ -20,6 +20,7 @@
  * @property {MessageFilter} [withMsg=undefined] - 消息过滤器(如果要设置消息变量)
  * @property {boolean} [merge=false] - 是否使用合并来设置(_.merge)变量
  * @property {boolean} [dryRun=false] - 是否允许在准备阶段设置变量
+ * @property {boolean} [noCache=false] - 禁用缓存(例如在设置变量后立即读取)
  */
 
 /**
@@ -39,6 +40,7 @@ function setvar(key, value, options = {});
  * @property {'global' | 'local' | 'message' | 'cache'} [scope='cache'] - 变量类型(作用域),详见下方
  * @property {any} [defaults=undefined] - 默认值(如果变量不存在时返回)
  * @property {MessageFilter} [withMsg=undefined] - 消息选择过滤器
+ * @property {boolean} [noCache=false] - 禁用缓存(例如在设置变量后立即读取)
  */
 
 /**
@@ -61,6 +63,7 @@ function getvar(key, options = {});
  * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - 返回值类型,详见下方
  * @property {MessageFilter} [withMsg=undefined] - 消息过滤器(如果要设置消息变量)
  * @property {boolean} [dryRun=false] - 是否允许在准备阶段更新变量
+ * @property {boolean} [noCache=false] - 禁用缓存(例如在设置变量后立即读取)
  */
 
 /**
@@ -184,6 +187,14 @@ function define(name, value);
 > 使用 `define`时外层已经包含了闭包，所以直接访问 `getvar`, `setvar`, `variables`等函数和变量~~在某些情况下~~得到的结果将会是错误的值
 >
 > 如果函数使用 `function` 语句定义（而非 `lambda`），可以使用`this`来进行访问，例如`this.getvar`, `this.setvar`, `this.variables`
+>
+> ---
+>
+> `noCache`:
+>
+> 在设置变量后，如果需要立即访问新的值，则需要禁用缓存(`noCache=true`)
+>
+> 缓存并不会立即更新，只会在开始时加载，中途不会更新
 
 ---
 

@@ -20,6 +20,7 @@
  * @property {MessageFilter} [withMsg=undefined] - Message filter (if setting message variables).
  * @property {boolean} [merge=false] - Whether to use merge to set variables (_.merge).
  * @property {boolean} [dryRun=false] - Whether to allow setting variables during the preparation phase.
+ * @property {boolean} [noCache=false] - Disable caching (e.g., when reading immediately after setting a variable).
  */
 
 /**
@@ -39,6 +40,7 @@ function setvar(key, value, options = {});
  * @property {'global' | 'local' | 'message' | 'cache'} [scope='cache'] - Variable type (scope), see below for details.
  * @property {any} [defaults=undefined] - Default value (returned if the variable does not exist).
  * @property {MessageFilter} [withMsg=undefined] - Message selection filter.
+ * @property {boolean} [noCache=false] - Disable caching (e.g., when reading immediately after setting a variable).
  */
 
 /**
@@ -61,6 +63,7 @@ function getvar(key, options = {});
  * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - Return value type, see below for details.
  * @property {MessageFilter} [withMsg=undefined] - Message filter (if setting message variables).
  * @property {boolean} [dryRun=false] - Whether to allow updating variables during the preparation phase.
+ * @property {boolean} [noCache=false] - Disable caching (e.g., when reading immediately after setting a variable).
  */
 
 /**
@@ -180,6 +183,14 @@ function define(name, value);
 > When using `define`, the outer layer already includes a closure, so directly accessing functions and variables such as `getvar`, `setvar`, and `variables` ~~in certain cases~~ will result in incorrect values.
 >
 > If the function is defined using the `function` statement (rather than `lambda`), use `this` to access them, for example, `this.getvar`, `this.setvar`, `this.variables`.
+>
+> ---
+>
+> `noCache`:
+>
+> If you need to access the new value immediately after setting a variable, you must disable caching (`noCache=true`).
+>
+> The cache is not updated immediately; it is only loaded at the beginning and does not update midway.
 
 ---
 

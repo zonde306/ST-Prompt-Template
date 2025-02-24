@@ -42,6 +42,7 @@ export interface SetVarOption {
     withMsg?: MessageFilter;
     merge?: boolean;
     dryRun?: boolean;
+    noCache?: boolean;
 }
 
 function evalFilter(filter? : MessageFilter, msgid? : number, swipeid?: number) {
@@ -88,12 +89,13 @@ function evalFilter(filter? : MessageFilter, msgid? : number, swipeid?: number) 
 
 export function setVariable(this : Record<string, unknown>, key : string, value : unknown,
                             options : SetVarOption = {}) {
+    const { noCache } = options;
     // @ts-expect-error: TS2322
     let self : Record<string, unknown> = this?.variables;
-    if(this?.runID === undefined || self === undefined) {
+    if(this?.runID === undefined || self === undefined)
         console.warn(`setVariable called with invalid context ${this}`);
+    if(noCache || STATE.isUpdated || this?.runID === undefined || self === undefined)
         self = allVariables();
-    }
     
     const { index, scope, flags, results, withMsg, merge, dryRun } = options;
     if(!dryRun && STATE.isDryRun) return undefined;
@@ -195,16 +197,18 @@ export interface GetVarOption {
     scope?: 'global' | 'local' | 'message' | 'cache';
     defaults?: unknown;
     withMsg?: MessageFilter;
+    noCache?: boolean;
 }
 
 export function getVariable(this : Record<string, unknown>, key : string,
                             options : GetVarOption = {}) {
+    const { noCache } = options;
     // @ts-expect-error: TS2322
     let self : Record<string, unknown> = this?.variables;
-    if(this?.runID === undefined || self === undefined) {
-        console.warn(`setVariable called with invalid context ${this}`);
+    if(this?.runID === undefined || self === undefined)
+        console.warn(`getVariable called with invalid context ${this}`);
+    if(noCache || STATE.isUpdated || this?.runID === undefined || self === undefined)
         self = allVariables();
-    }
 
     const { index, scope, defaults, withMsg } = options;
 
@@ -263,16 +267,19 @@ export interface GetSetVarOption {
     results?: 'old' | 'new' | 'fullcache';
     withMsg?: MessageFilter;
     dryRun?: boolean;
+    noCache?: boolean;
 }
 
 export function increaseVariable(this : Record<string, unknown>, key : string,
                                  value : number = 1, options : GetSetVarOption = {}) {
+    const { noCache } = options;
     // @ts-expect-error: TS2322
     let self : Record<string, unknown> = this?.variables;
-    if(this?.runID === undefined || self === undefined) {
-        console.warn(`setVariable called with invalid context ${this}`);
+    if(this?.runID === undefined || self === undefined)
+        console.warn(`getVariable called with invalid context ${this}`);
+    if(noCache || STATE.isUpdated || this?.runID === undefined || self === undefined)
         self = allVariables();
-    }
+
     const { index, inscope, outscope, flags, defaults, results, withMsg, dryRun } = options;
     if((flags === 'nx' && !_.has(self, key)) ||
       (flags === 'xx' && _.has(self, key)) ||
