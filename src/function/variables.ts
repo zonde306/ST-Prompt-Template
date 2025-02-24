@@ -80,7 +80,7 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
     const { noCache } = options;
     if(noCache || this?.runID === undefined) {
         // @ts-expect-error: TS2322
-        STATE.context = allVariables(this?.message_id || 65535);
+        STATE.context = allVariables(this?.message_id !== undefined ? this.message_id : 65535);
         console.debug(`[Prompt Template] reload context:`);
         console.debug(STATE.context);
     }
@@ -192,7 +192,7 @@ export function getVariable(this : Record<string, unknown>, key : string,
     const { noCache } = options;
     if(noCache || this?.runID === undefined) {
         // @ts-expect-error: TS2322
-        STATE.context = allVariables(this?.message_id || 65535);
+        STATE.context = allVariables(this?.message_id !== undefined ? this.message_id : 65535);
         console.debug(`[Prompt Template] reload context:`);
         console.debug(STATE.context);
     }
@@ -261,7 +261,7 @@ export function increaseVariable(this : Record<string, unknown>, key : string,
     const { noCache } = options;
     if(noCache || this?.runID === undefined) {
         // @ts-expect-error: TS2322
-        STATE.context = allVariables(this?.message_id || 65535);
+        STATE.context = allVariables(this?.message_id !== undefined ? this.message_id : 65535);
         console.debug(`[Prompt Template] reload context:`);
         console.debug(STATE.context);
     }
