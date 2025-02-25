@@ -44,7 +44,7 @@ async function updateGenerate(data : GenerateData) {
             }
             message.content = newContent;
         } catch(err) {
-            console.debug(`handling prompt errors #${idx}`);
+            console.debug(`handling prompt errors #${idx}:\n${message.content}`);
             console.error(err);
         }
     }
@@ -53,6 +53,7 @@ async function updateGenerate(data : GenerateData) {
 }
 
 async function updatePromptPreparation(data: ChatData) {
+    if(!fullChanged) return;
     STATE.isDryRun = true;
 
     const env = await prepareContext(65535, { runType: 'preparation', runID: runID++ });
@@ -66,19 +67,17 @@ async function updatePromptPreparation(data: ChatData) {
             }
             message.content = newContent;
         } catch(err) {
-            console.debug(`handling prompt errors #${idx}`);
+            console.debug(`handling prompt errors #${idx}:\n${message.content}`);
             console.error(err);
         }
     }
 
-    if(fullChanged) {
-        fullChanged = false;
-        console.log('* UPDATE ALL MESSAGES *');
-        for(const mes of $('div.mes[mesid]')) {
-            const message_id = $(mes).attr('mesid');
-            if(message_id)
-                await updateMessageRender(message_id);
-        }
+    fullChanged = false;
+    console.log('* UPDATE ALL MESSAGES *');
+    for(const mes of $('div.mes[mesid]')) {
+        const message_id = $(mes).attr('mesid');
+        if(message_id)
+            await updateMessageRender(message_id);
     }
 
     await checkAndSave();
@@ -127,7 +126,7 @@ async function updateMessageRender(message_id : string) {
             logDifference(content, newContent);
         }
     } catch(err) {
-        console.debug(`handling chat message errors #${content}`);
+        console.debug(`handling chat message errors #${content}:\n${content}`);
         console.error(err);
         return false;
     }
