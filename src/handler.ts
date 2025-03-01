@@ -32,6 +32,7 @@ async function checkAndSave() {
 
 async function updateGenerate(data : GenerateData) {
     STATE.isDryRun = false;
+    let start = Date.now();
 
     const env = await prepareContext(65535, { runType: 'generate', runID: runID++ });
 
@@ -49,12 +50,16 @@ async function updateGenerate(data : GenerateData) {
         }
     }
 
+    let end = Date.now() - start;
+    console.log(`[Prompt Template] processing ${data.messages.length} messages in ${end}ms`);
+
     await checkAndSave();
 }
 
 async function updatePromptPreparation(data: ChatData) {
     if(!fullChanged) return;
     STATE.isDryRun = true;
+    let start = Date.now();
 
     const env = await prepareContext(65535, { runType: 'preparation', runID: runID++ });
 
@@ -80,11 +85,16 @@ async function updatePromptPreparation(data: ChatData) {
             await updateMessageRender(message_id);
     }
 
+    let end = Date.now() - start;
+    console.log(`[Prompt Template] processing ${data.chat.length} messages in ${end}ms`);
+
     await checkAndSave();
 }
 
 async function updateMessageRender(message_id : string) {
     STATE.isDryRun = false;
+
+    let start = Date.now();
 
     if(!message_id) {
         console.warn(`chat message message_id is empty`);
@@ -133,6 +143,9 @@ async function updateMessageRender(message_id : string) {
 
     if(newContent !== content)
         container.empty().append(newContent);
+
+    let end = Date.now() - start;
+    console.log(`[Prompt Template] processing #${message_idx} messages in ${end}ms`);
 
     await checkAndSave();
     return true;
