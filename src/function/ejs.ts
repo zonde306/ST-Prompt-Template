@@ -9,7 +9,7 @@ import { getCharDefs, DEFAULT_CHAR_DEFINE } from './characters';
 import { substituteParams, eventSource } from '../../../../../../script.js';
 import { getPresetPromptsContent } from './presets';
 import { fakerEnv } from './faker';
-
+import { hash } from 'fnv-plus';
 
 interface IncluderResult {
     filename: string;
@@ -71,21 +71,31 @@ const SHARE_CONTEXT : Record<string, unknown> = {
     $,
 };
 
-const CODE_TEMPLATE = `\
+const CODE_TEMPLATE = `
     ejs.render(
         content,
         data,
-        { async: true, escape: escaper, includer: includer, cache: false, context: data, client: true },
-    );\
+        {
+            async: true,
+            escape: escaper,
+            includer: includer,
+            cache: !!filename,
+            context: data,
+            client: true,
+            filename: filename,
+        },
+    );
 `;
 
 export async function evalTemplate(content: string, data: Record<string, unknown>) {
+    const checksum = hash(content);
     return await vm.runInNewContext(CODE_TEMPLATE, {
         ejs,
         content,
         data,
         escaper: escape,
         includer: includer,
+        filename: checksum.hex(),
     });
 }
 
