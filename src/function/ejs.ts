@@ -79,23 +79,20 @@ const CODE_TEMPLATE = `
             async: true,
             escape: escaper,
             includer: includer,
-            cache: !!filename,
+            cache: false,
             context: data,
             client: true,
-            filename: filename,
         },
     );
 `;
 
 export async function evalTemplate(content: string, data: Record<string, unknown>) {
-    const checksum = hash(content);
     return await vm.runInNewContext(CODE_TEMPLATE, {
         ejs,
         content,
         data,
         escaper: escape,
         includer: includer,
-        filename: checksum.hex(),
     });
 }
 
