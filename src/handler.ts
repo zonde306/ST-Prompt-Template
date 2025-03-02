@@ -1,7 +1,6 @@
 // @ts-expect-error
 import vm from 'vm-browserify';
 import _ from 'lodash';
-import { diffChars } from 'diff';
 import { ChatData, GenerateData, Message } from './defines';
 import { eventSource, event_types, chat, saveChatConditional } from '../../../../../script.js';
 import { prepareContext, evalTemplate } from './function/ejs';
@@ -9,19 +8,6 @@ import { STATE } from './function/variables';
 
 let fullChanged = false;
 let runID = 0;
-
-function logDifference(a : string, b : string, unchanged : boolean = false) {
-    const diff = diffChars(a, b);
-    for(const part of diff) {
-        if(part.added) {
-            console.debug(`+ ${part.value}`);
-        } else if(part.removed) {
-            console.debug(`- ${part.value}`);
-        } else if(unchanged) {
-            console.debug(`  ${part.value}`);
-        }
-    }
-}
 
 async function checkAndSave() {
     if(STATE.isUpdated)
@@ -38,14 +24,7 @@ async function updateGenerate(data : GenerateData) {
 
     for(const [idx, message] of data.messages.entries()) {
         try {
-            let newContent = await evalTemplate(message.content, env);
-            /*
-            if(newContent !== message.content) {
-                console.debug(`update generate prompt #${idx}:`);
-                logDifference(message.content, newContent);
-            }
-            */
-            message.content = newContent;
+            message.content = await evalTemplate(message.content, env);
         } catch(err) {
             console.debug(`handling prompt errors #${idx}:\n${message.content}`);
             console.error(err);
@@ -67,14 +46,7 @@ async function updatePromptPreparation(data: ChatData) {
 
     for(const [idx, message] of data.chat.entries()) {
         try {
-            let newContent = await evalTemplate(message.content, env);
-            /*
-            if(newContent !== message.content) {
-                console.debug(`update prompt #${idx}:`);
-                logDifference(message.content, newContent);
-            }
-            */
-            message.content = newContent;
+            message.content = await evalTemplate(message.content, env);
         } catch(err) {
             console.debug(`handling prompt errors #${idx}:\n${message.content}`);
             console.error(err);
@@ -135,18 +107,13 @@ async function updateMessageRender(message_id : string) {
 
     try {
         newContent = await evalTemplate(content, env);
-        /*
-        if(newContent !== content) {
-            console.debug(`update chat message #${message_idx}:`);
-            logDifference(content, newContent);
-        }
-        */
     } catch(err) {
         console.debug(`handling chat message errors #${content}:\n${content}`);
         console.error(err);
         return false;
     }
 
+    // update if changed
     if(newContent !== content)
         container.empty().append(newContent);
 

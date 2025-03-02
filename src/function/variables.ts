@@ -4,7 +4,8 @@ import { extension_settings } from '../../../../../extensions.js';
 export let STATE = {
     isDryRun: false,
     isUpdated: false,
-    context: {},
+    cache: {},
+    traceId: 0,
 };
 
 export function allVariables(end : number = 65535) {
@@ -13,6 +14,7 @@ export function allVariables(end : number = 65535) {
                    // @ts-expect-error: 2339
                    chat_metadata.variables || {},
                    ...chat.slice(0, Math.max(end - 1, 0)).map(msg => msg.variables?.[msg.swipe_id] || {}),
+                   { _trace_id : (STATE.traceId)++, _modify_id: 0 },
     );
 }
 
@@ -80,9 +82,9 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
     const { noCache } = options;
     if(noCache || this?.runID === undefined) {
         // @ts-expect-error: TS2322
-        STATE.context = allVariables(this?.message_id !== undefined ? this.message_id : 65535);
-        console.debug(`[Prompt Template] reload context:`);
-        console.debug(STATE.context);
+        STATE.cache = allVariables(this?.message_id !== undefined ? this.message_id : 65535);
+        console.debug(`[Prompt Template] reload variables cache:`);
+        console.debug(STATE.cache);
     }
     
     const { index, scope, flags, results, withMsg, merge, dryRun } = options;
@@ -91,7 +93,7 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
     let oldValue;
     let newValue = value;
     if (index !== null && index !== undefined) {
-        let data = JSON.parse(_.get(STATE.context, key, '{}'));
+        let data = JSON.parse(_.get(STATE.cache, key, '{}'));
         let idx = Number(index);
         idx = Number.isNaN(idx) ? index : idx;
 
@@ -102,7 +104,7 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
 
         if(results === 'old' || merge) oldValue = _.get(data, idx, undefined);
         if(merge) newValue = _.merge(results === 'old' ? _.cloneDeep(oldValue) : oldValue, value);
-        _.set(STATE.context, key, JSON.stringify(_.set(data, idx, newValue)));
+        _.set(STATE.cache, key, JSON.stringify(_.set(data, idx, newValue)));
 
         switch(scope || 'message') {
             case 'global':
@@ -134,15 +136,18 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                 }
                 break;
         }
+
+        // @ts-expect-error: TS2322
+        STATE.cache._modify_id = STATE.cache._modify_id + 1 || 1;
     } else {
-        if(flags === 'nx' && _.has(STATE.context, key)) return undefined;
-        if(flags === 'xx' && !_.has(STATE.context, key)) return undefined;
+        if(flags === 'nx' && _.has(STATE.cache, key)) return undefined;
+        if(flags === 'xx' && !_.has(STATE.cache, key)) return undefined;
         if(flags === 'nxs' && getVariable.call(this, key, options) !== undefined) return undefined;
         if(flags === 'xxs' && getVariable.call(this, key, options) === undefined) return undefined;
 
-        if(results === 'old' || merge) oldValue = _.get(STATE.context, key, undefined);
+        if(results === 'old' || merge) oldValue = _.get(STATE.cache, key, undefined);
         if(merge) newValue = _.merge(results === 'old' ? _.cloneDeep(oldValue) : oldValue, value);
-        _.set(STATE.context, key, newValue);
+        _.set(STATE.cache, key, newValue);
 
         switch(scope || 'message') {
             case 'global':
@@ -170,13 +175,16 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                 }
                 break;
         }
+
+        // @ts-expect-error: TS2322
+        STATE.cache._modify_id = STATE.cache._modify_id + 1 || 1;
     }
 
     if(results === 'old')
         return oldValue;
     if(results === 'new')
         return newValue;
-    return STATE.context;
+    return STATE.cache;
 }
 
 export interface GetVarOption {
@@ -192,9 +200,9 @@ export function getVariable(this : Record<string, unknown>, key : string,
     const { noCache } = options;
     if(noCache || this?.runID === undefined) {
         // @ts-expect-error: TS2322
-        STATE.context = allVariables(this?.message_id !== undefined ? this.message_id : 65535);
-        console.debug(`[Prompt Template] reload context:`);
-        console.debug(STATE.context);
+        STATE.cache = allVariables(this?.message_id !== undefined ? this.message_id : 65535);
+        console.debug(`[Prompt Template] reload variables cache:`);
+        console.debug(STATE.cache);
     }
 
     const { index, scope, defaults, withMsg } = options;
@@ -236,12 +244,12 @@ export function getVariable(this : Record<string, unknown>, key : string,
     }
 
     if (index !== null && index !== undefined) {
-        const data = JSON.parse(_.get(STATE.context, key, '{}') || '{}');
+        const data = JSON.parse(_.get(STATE.cache, key, '{}') || '{}');
         const idx = Number(index);
         return _.get(data, idx, defaults);
     }
 
-    return _.get(STATE.context, key, defaults);
+    return _.get(STATE.cache, key, defaults);
 }
 
 export interface GetSetVarOption {
@@ -261,14 +269,14 @@ export function increaseVariable(this : Record<string, unknown>, key : string,
     const { noCache } = options;
     if(noCache || this?.runID === undefined) {
         // @ts-expect-error: TS2322
-        STATE.context = allVariables(this?.message_id !== undefined ? this.message_id : 65535);
-        console.debug(`[Prompt Template] reload context:`);
-        console.debug(STATE.context);
+        STATE.cache = allVariables(this?.message_id !== undefined ? this.message_id : 65535);
+        console.debug(`[Prompt Template] reload variables cache:`);
+        console.debug(STATE.cache);
     }
 
     const { index, inscope, outscope, flags, defaults, results, withMsg, dryRun } = options;
-    if((flags === 'nx' && !_.has(STATE.context, key)) ||
-      (flags === 'xx' && _.has(STATE.context, key)) ||
+    if((flags === 'nx' && !_.has(STATE.cache, key)) ||
+      (flags === 'xx' && _.has(STATE.cache, key)) ||
       (flags === 'nxs' && getVariable.call(this, key, { index, withMsg, scope: inscope }) === undefined) ||
       (flags === 'xxs' && getVariable.call(this, key, { index, withMsg, scope: inscope }) !== undefined) ||
       (flags === 'n' || flags === undefined)) {

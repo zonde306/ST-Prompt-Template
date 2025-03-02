@@ -9,7 +9,6 @@ import { getCharDefs, DEFAULT_CHAR_DEFINE } from './characters';
 import { substituteParams, eventSource } from '../../../../../../script.js';
 import { getPresetPromptsContent } from './presets';
 import { fakerEnv } from './faker';
-import { hash } from 'fnv-plus';
 
 interface IncluderResult {
     filename: string;
@@ -172,7 +171,7 @@ function boundCloneDefines(self: Record<string, unknown>, defines : Record<strin
 
 export async function prepareContext(end : number = 65535, env : Record<string, unknown> = {}) : Promise<Record<string, unknown>> {
     let vars = allVariables(end);
-    STATE.context = vars;
+    STATE.cache = vars;
     let context = {
         ...SHARE_CONTEXT,
         variables: vars,
@@ -182,7 +181,7 @@ export async function prepareContext(end : number = 65535, env : Record<string, 
         ...env,
 
         get vars() {
-            return new WeakRef(STATE.context);
+            return new WeakRef(STATE.cache);
         }
     };
 
