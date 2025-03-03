@@ -53,7 +53,7 @@ function evalFilter(filter? : MessageFilter, msgid? : number, swipeid?: number) 
     }
 
     if(message_id < 0 || message_id >= chat.length) {
-        console.error(`No message found for filter: ${filter}`);
+        console.warn(`No message found for filter: ${filter}`);
         return [undefined, undefined];
     }
 
@@ -66,10 +66,10 @@ function evalFilter(filter? : MessageFilter, msgid? : number, swipeid?: number) 
         swipe_id = chat[message_id].swipe_id;
 
     if(swipe_id < 0)
-        swipe_id = chat[message_id].swipe_id + swipe_id;
+        swipe_id = chat[message_id].swipes.length + swipe_id;
 
-    if(!(swipe_id in chat[message_id].swipes)) {
-        console.error(`No swipe found for filter: ${filter}`);
+    if(chat[message_id].swipes[swipe_id] === undefined) {
+        console.warn(`No swipe found for filter: ${filter}`);
         return [message_id, undefined];
     }
 
