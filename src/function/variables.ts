@@ -70,7 +70,7 @@ function evalFilter(filter? : MessageFilter, msgid? : number, swipeid?: number) 
 
     if(chat[message_id].swipes[swipe_id] === undefined) {
         console.warn(`No swipe found for filter: ${filter}`);
-        return [message_id, undefined];
+        return [message_id, swipe_id];
     }
 
     console.debug(`Found message ${message_id} with swipe ${swipe_id} for filter: ${filter}`);
