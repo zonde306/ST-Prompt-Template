@@ -15,7 +15,7 @@ interface IncluderResult {
     template: string;
 }
 
-function includer(originalPath : string, _parsedPath: string) : IncluderResult {
+function include(originalPath : string, _parsedPath: string) : IncluderResult {
     console.warn(`[Prompt Template] include not implemented`);
     return { filename: originalPath, template: '' };
 }
@@ -45,12 +45,14 @@ const CODE_TEMPLATE = `
     );
 `;
 
-export async function evalTemplate(content: string, data: Record<string, unknown>) {
+export async function evalTemplate(content: string, data: Record<string, unknown>,
+                                   escaper : (markup : string) => string = escape,
+                                   includer : (originalPath : string, parsedPath : string) => IncluderResult = include) {
     return await vm.runInNewContext(CODE_TEMPLATE, {
         ejs,
         content,
         data,
-        escaper: escape,
+        escaper: escaper,
         includer: includer,
     });
 }

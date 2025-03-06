@@ -36,5 +36,5 @@ faker: Module;
 
 1. `<% include(...) %>`is not supported, use `<%- await getwi(...) %>` or `<%- await getchr(...) %>`
 
-2. `<%= value %>`is just like`<%- value %>`
+2. `<%= value %>` will be converted to HTML code output when rendering the message (use `messageFormatting`), otherwise it will be output directly
 
