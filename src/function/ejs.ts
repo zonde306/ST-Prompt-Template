@@ -6,7 +6,7 @@ import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.j
 import { getWorldInfoEntryContent } from './worldinfo';
 import { allVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE } from './variables';
 import { getCharDefs, DEFAULT_CHAR_DEFINE } from './characters';
-import { substituteParams, eventSource } from '../../../../../../script.js';
+import { substituteParams, eventSource, messageFormatting } from '../../../../../../script.js';
 import { getPresetPromptsContent } from './presets';
 import { fakerEnv } from './faker';
 
@@ -28,6 +28,7 @@ function escape(markup : string) : string {
 const SHARE_CONTEXT : Record<string, unknown> = {
     _,
     $,
+    messageFormatting,
 };
 
 const CODE_TEMPLATE = `
@@ -36,7 +37,7 @@ const CODE_TEMPLATE = `
         data,
         {
             async: true,
-            escape: escaper,
+            escape: data.runType === 'render' ? data._.bind(data.messageFormatting, null, data._, data.name, data.is_system, data.is_user, data.message_id) : escaper,
             includer: includer,
             cache: false,
             context: data,

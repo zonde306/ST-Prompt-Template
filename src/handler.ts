@@ -2,7 +2,7 @@
 import vm from 'vm-browserify';
 import _ from 'lodash';
 import { ChatData, GenerateData, Message } from './defines';
-import { eventSource, event_types, chat, saveChatConditional, messageFormatting } from '../../../../../script.js';
+import { eventSource, event_types, chat, saveChatConditional } from '../../../../../script.js';
 import { prepareContext, evalTemplate } from './function/ejs';
 import { STATE } from './function/variables';
 
@@ -104,27 +104,19 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
 
     const env = await prepareContext(message_idx, {
         runType: 'render',
+        runID: runID++,
         message_id: message_idx,
         swipe_id: message.swipe_id,
-        runID: runID++,
-        isLast: message_idx === chat.length - 1,
+        is_last: message_idx === chat.length - 1,
+        is_user: message.is_user,
+        is_system: message.is_system,
+        name: message.name,
     });
     const content = html.replaceAll('&lt;%', '<%').replaceAll('%&gt;', '%>');
     let newContent = '';
 
     try {
-        newContent = await evalTemplate(
-            content,
-            env,
-            _.bind(messageFormatting,
-                null,
-                _,
-                message.name,
-                message.is_system,
-                message.is_user,
-                message_idx,
-            ),
-        );
+        newContent = await evalTemplate(content, env);
     } catch (err) {
         console.debug(`handling chat message errors #${content}:\n${content}`);
         console.error(err);
