@@ -107,7 +107,10 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         message_id: message_idx,
         swipe_id: message.swipe_id,
         runID: runID++,
-        isLast: message_idx === chat.length - 1,
+        is_last: message_idx === chat.length - 1,
+        is_user: message.is_user,
+        is_system: message.is_system,
+        name: message.name,
     });
     const content = html.replaceAll('&lt;%', '<%').replaceAll('%&gt;', '%>');
     let newContent = '';

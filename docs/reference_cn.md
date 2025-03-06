@@ -303,17 +303,45 @@ $ = require("JQuery")
  */
 runType = 'generate' | 'preparation' | 'render'
 
+```
+
+只有在 `runType` 为 `render` 时才会出现的字段
+
+```javascript
 /*
- * 楼层消息ID(即楼层号)
- * 只有在 runType 为 'render' 才存在
+ * 消息ID(即楼层号)
  */
 message_id = 0
 
 /*
- * 楼层消息页码ID
- * 只有在 runType 为 'render' 才存在
+ * 消息页码ID
  */
 swipe_id = 0
+
+/*
+ * 消息角色名
+ */
+name = 'User'
+
+/*
+ * 消息是否为最后一条
+ */
+is_last = false
+
+/*
+ * 消息是否为最后一条
+ */
+is_last = false
+
+/*
+ * 消息是否为用户
+ */
+is_user = false
+
+/*
+ * 消息是否为系统
+ */
+is_system = false
 ```
 
 ---
@@ -323,6 +351,3 @@ swipe_id = 0
 1. 准备阶段和生成阶段都会触发世界书计算
 2. 渲染阶段不会触发世界书计算
 3. `define`执行后会在刷新/关闭页面前一直有效，但是需要注意外层闭包的影响
-
-
-

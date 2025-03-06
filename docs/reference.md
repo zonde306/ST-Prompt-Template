@@ -298,18 +298,40 @@ $ = require("JQuery")
  * render: Rendering (floor message) phase
  */
 runType = 'generate' | 'preparation' | 'render'
+```
 
+Available only during `render` phase:
+
+```javascript
 /*
- * Floor message ID (i.e., floor number)
- * Only exists when runType is 'render'
+ * Message ID
  */
 message_id = 0
 
 /*
- * Floor message page ID
- * Only exists when runType is 'render'
+ * Swipe ID
  */
 swipe_id = 0
+
+/*
+ * Message role name
+ */
+name = 'User'
+
+/*
+ * Whether this is the last message
+ */
+is_last = false
+
+/*
+ * Whether message is from user
+ */
+is_user = false
+
+/*
+ * Whether message is system message
+ */
+is_system = false
 ```
 
 ---
