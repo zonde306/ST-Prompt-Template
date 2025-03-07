@@ -356,7 +356,7 @@ is_system = false
  * 上次生成时输入的(处理后的) token 数量
  * @note 计费的实际数量
  */
- LAST_SEND_TOKENS = 0
+LAST_SEND_TOKENS = 0
 
 /*
  * 上次生成时输出的(处理后的) token 数量
