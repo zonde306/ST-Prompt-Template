@@ -336,6 +336,28 @@ is_system = false
 
 ---
 
+# Special Variables
+
+> These variables should not be modified manually
+
+After prompt processing completes, the following global variables will be set:
+
+```javascript
+/*
+ * Input token count (processed) from last generation
+ * @note Actual count used for billing
+ */
+LAST_SEND_TOKENS = 0
+
+/*
+ * Output token count (processed) from last generation
+ * @note May not match actual billing count
+ */
+LAST_RECEIVE_TOKENS = 0
+```
+
+---
+
 # Notes
 
 1.  Both the preparation phase and the generation phase trigger world book calculations.

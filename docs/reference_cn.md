@@ -302,7 +302,6 @@ $ = require("JQuery")
  * render: 渲染(楼层消息)阶段
  */
 runType = 'generate' | 'preparation' | 'render'
-
 ```
 
 只有在 `runType` 为 `render` 时才会出现的字段
@@ -342,6 +341,28 @@ is_user = false
  * 消息是否为系统
  */
 is_system = false
+```
+
+---
+
+# 特殊变量
+
+> 这里的变量不应该自行修改
+
+当提示词处理完毕后，将会设置以下全局变量
+
+```javascript
+/*
+ * 上次生成时输入的(处理后的) token 数量
+ * @note 计费的实际数量
+ */
+ LAST_SEND_TOKENS = 0
+
+/*
+ * 上次生成时输出的(处理后的) token 数量
+ * @note 并非计费的实际数量
+ */
+LAST_RECEIVE_TOKENS = 0
 ```
 
 ---
