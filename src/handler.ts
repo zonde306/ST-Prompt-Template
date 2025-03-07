@@ -182,7 +182,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
     await checkAndSave();
 
     if(!isDryRun)
-        updateTokens(container.empty().text(), 'receive');
+        updateTokens(container.text(), 'receive');
 }
 
 const MESSAGE_RENDER_EVENTS = [
