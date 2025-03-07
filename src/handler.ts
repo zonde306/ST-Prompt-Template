@@ -143,9 +143,9 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         isFakeRun = true;
         console.debug(`[HTML] rendering #${message_idx} messages`);
         if(message.is_user) {
-            eventSource.emit(event_types.USER_MESSAGE_RENDERED, message_idx);
+            await eventSource.emit(event_types.USER_MESSAGE_RENDERED, message_idx);
         } else if(!message.is_system) {
-            eventSource.emit(event_types.CHARACTER_MESSAGE_RENDERED, message_idx);
+            await eventSource.emit(event_types.CHARACTER_MESSAGE_RENDERED, message_idx);
         }
         isFakeRun = false;
     }
