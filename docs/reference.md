@@ -344,16 +344,26 @@ After prompt processing completes, the following global variables will be set:
 
 ```javascript
 /*
- * Input token count (processed) from last generation
- * @note Actual count used for billing
+ * Number of processed input tokens from last generation
+ * @note Actual amount billed for input
  */
 LAST_SEND_TOKENS = 0
 
 /*
- * Output token count (processed) from last generation
- * @note May not match actual billing count
+ * Number of input characters from last generation
+ */
+LAST_SEND_CHARS = 0
+
+/*
+ * Number of processed output tokens from last generation
+ * @note This may not match the actual billed amount
  */
 LAST_RECEIVE_TOKENS = 0
+
+/*
+ * Number of output characters from last generation
+ */
+LAST_RECEIVE_CHARS = 0
 ```
 
 ---
@@ -363,4 +373,3 @@ LAST_RECEIVE_TOKENS = 0
 1.  Both the preparation phase and the generation phase trigger world book calculations.
 2.  The rendering phase does not trigger world book calculations.
 3.  After `define` is executed, it remains valid until the page is refreshed or closed, but be mindful of the impact of the outer closure.
-

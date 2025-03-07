@@ -22,15 +22,19 @@ async function checkAndSave() {
 function updateTokens(prompts : string, type: 'send' | 'receive') {
     window.setTimeout(() => {
         getTokenCountAsync(prompts).then(count => {
-            console.log(`[Prompt Template] processing ${type} result: ${count} tokens`);
+            console.log(`[Prompt Template] processing ${type} result: ${count} tokens and ${prompts.length} chars`);
             switch (type) {
                 case 'send':
                     // @ts-expect-error
                     extension_settings.variables.global.LAST_SEND_TOKENS = count;
+                    // @ts-expect-error
+                    extension_settings.variables.global.LAST_SEND_CHARS = prompts.length;
                     break;
                 case 'receive':
                     // @ts-expect-error
                     extension_settings.variables.global.LAST_RECEIVE_TOKENS = count;
+                    // @ts-expect-error
+                    extension_settings.variables.global.LAST_RECEIVE_CHARS = prompts.length;
                     break;
             }
         });

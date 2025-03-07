@@ -359,10 +359,20 @@ is_system = false
 LAST_SEND_TOKENS = 0
 
 /*
+ * 上次生成时输入的(处理后的) 提示词 字符数
+ */
+LAST_SEND_CHARS = 0
+
+/*
  * 上次生成时输出的(处理后的) token 数量
  * @note 并非计费的实际数量
  */
 LAST_RECEIVE_TOKENS = 0
+
+/*
+ * 上次生成时输出的(处理后的) 提示词 字符数
+ */
+LAST_RECEIVE_CHARS = 0
 ```
 
 ---
