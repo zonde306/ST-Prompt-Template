@@ -14,24 +14,6 @@ hi, <%- variables.name %>
 
 [Built-in functions reference](docs/reference.md)|[中文文档](docs/reference_cn.md)
 
-## Built-in constant/modules
-
-```typescript
-// All variables, including global variables, local variables, message (and swipes) variables
-// Priority: message (and swipes) in descending -> local variables -> global variables
-// example: variables.myvar
-variables: Record<string, any>;
-
-// lodash, example: _.add(1, 2)
-_: LoDashStatic;
-
-// JQuery, example: $('#mes_text').text()
-$: JQueryStatic;
-
-// faker module, example: faker.fakerEN.person.fullName()
-faker: Module;
-```
-
 ## Known Issues
 
 1. `<% include(...) %>`is not supported, use `<%- await getwi(...) %>` or `<%- await getchr(...) %>`

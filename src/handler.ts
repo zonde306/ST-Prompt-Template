@@ -5,6 +5,8 @@ import { ChatData, GenerateData, Message } from './defines';
 import { eventSource, event_types, chat, saveChatConditional, messageFormatting } from '../../../../../script.js';
 import { prepareContext, evalTemplate } from './function/ejs';
 import { STATE } from './function/variables';
+import { getTokenCountAsync } from '../../../../tokenizers.js';
+import { extension_settings } from '../../../../extensions.js';
 
 let fullChanged = false;
 let runID = 0;
@@ -17,6 +19,24 @@ async function checkAndSave() {
     STATE.isUpdated = false;
 }
 
+function updateTokens(prompts : string, type: 'send' | 'receive') {
+    window.setTimeout(() => {
+        getTokenCountAsync(prompts).then(count => {
+            console.log(`[Prompt Template] processing ${type} result: ${count} tokens`);
+            switch (type) {
+                case 'send':
+                    // @ts-expect-error
+                    extension_settings.variables.global.LAST_SEND_TOKENS = count;
+                    break;
+                case 'receive':
+                    // @ts-expect-error
+                    extension_settings.variables.global.LAST_RECEIVE_TOKENS = count;
+                    break;
+            }
+        });
+    });
+}
+
 async function updateGenerate(data: GenerateData) {
     STATE.isDryRun = false;
     let start = Date.now();
@@ -26,9 +46,11 @@ async function updateGenerate(data: GenerateData) {
         runID: runID++
     });
 
+    let prompts = '';
     for (const [idx, message] of data.messages.entries()) {
         try {
             message.content = await evalTemplate(message.content, env);
+            prompts += message.content;
         } catch (err) {
             console.debug(`[Prompt Template] handling prompt errors #${idx}:\n${message.content}`);
             console.error(err);
@@ -39,6 +61,7 @@ async function updateGenerate(data: GenerateData) {
     console.log(`[Prompt Template] processing ${data.messages.length} messages in ${end}ms`);
 
     await checkAndSave();
+    updateTokens(prompts, 'send');
 }
 
 async function updatePromptPreparation(data: ChatData) {
@@ -51,9 +74,11 @@ async function updatePromptPreparation(data: ChatData) {
         runID: runID++
     });
 
+    let prompts = '';
     for (const [idx, message] of data.chat.entries()) {
         try {
             message.content = await evalTemplate(message.content, env);
+            prompts += message.content;
         } catch (err) {
             console.debug(`[Prompt Template] handling prompt errors #${idx}:\n${message.content}`);
             console.error(err);
@@ -72,6 +97,7 @@ async function updatePromptPreparation(data: ChatData) {
     console.log(`[Prompt Template] processing ${data.chat.length} messages in ${end}ms`);
 
     await checkAndSave();
+    updateTokens(prompts, 'send');
 }
 
 async function updateMessageRender(message_id: string, isDryRun?: boolean) {
@@ -83,26 +109,26 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
 
     if (!message_id) {
         console.warn(`chat message message_id is empty`);
-        return false;
+        return;
     }
 
     const message_idx = parseInt(message_id);
     if (isNaN(message_idx) || message_idx < 0 || message_idx >= chat.length) {
         console.warn(`chat message #${message_id} invalid`);
-        return false;
+        return;
     }
 
     const message: Message = chat[message_idx];
     if (!message) {
         console.error(`chat message #${message_id} not found`);
-        return false;
+        return;
     }
 
     const container = $(`div.mes[mesid="${message_id}"]`)?.find('.mes_text');
     const html = container?.html();
     if (!html) {
         console.warn(`chat message #${message_id} container not found`);
-        return false;
+        return;
     }
 
     // allows access to current variables without updating them
@@ -132,7 +158,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
     } catch (err) {
         console.debug(`[Prompt Template] handling chat message errors #${content}:\n${content}`);
         console.error(err);
-        return false;
+        return;
     }
 
     // update if changed
@@ -154,7 +180,9 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
     console.log(`[Prompt Template] processing #${message_idx} messages in ${end}ms`);
 
     await checkAndSave();
-    return true;
+
+    if(!isDryRun)
+        updateTokens(container.empty().text(), 'receive');
 }
 
 const MESSAGE_RENDER_EVENTS = [
