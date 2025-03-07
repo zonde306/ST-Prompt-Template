@@ -102,7 +102,8 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         return false;
     }
 
-    const env = await prepareContext(message_idx, {
+    // allows access to current variables without updating them
+    const env = await prepareContext(message_idx + Number(!!isDryRun), {
         runType: 'render',
         message_id: message_idx,
         swipe_id: message.swipe_id,
