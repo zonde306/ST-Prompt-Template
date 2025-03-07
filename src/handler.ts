@@ -8,6 +8,7 @@ import { STATE } from './function/variables';
 
 let fullChanged = false;
 let runID = 0;
+let isFakeRun = false;
 
 async function checkAndSave() {
     if (STATE.isUpdated)
@@ -29,7 +30,7 @@ async function updateGenerate(data: GenerateData) {
         try {
             message.content = await evalTemplate(message.content, env);
         } catch (err) {
-            console.debug(`handling prompt errors #${idx}:\n${message.content}`);
+            console.debug(`[Prompt Template] handling prompt errors #${idx}:\n${message.content}`);
             console.error(err);
         }
     }
@@ -54,13 +55,13 @@ async function updatePromptPreparation(data: ChatData) {
         try {
             message.content = await evalTemplate(message.content, env);
         } catch (err) {
-            console.debug(`handling prompt errors #${idx}:\n${message.content}`);
+            console.debug(`[Prompt Template] handling prompt errors #${idx}:\n${message.content}`);
             console.error(err);
         }
     }
 
     fullChanged = false;
-    console.log('* UPDATE ALL MESSAGES *');
+    console.log('[Prompt Template] * UPDATE ALL MESSAGES *');
     for (const mes of $('div.mes[mesid]')) {
         const message_id = $(mes).attr('mesid');
         if (message_id)
@@ -74,6 +75,8 @@ async function updatePromptPreparation(data: ChatData) {
 }
 
 async function updateMessageRender(message_id: string, isDryRun?: boolean) {
+    if(isFakeRun) return;
+
     STATE.isDryRun = !!isDryRun;
 
     let start = Date.now();
@@ -115,22 +118,19 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
     });
     const content = html.replaceAll('&lt;%', '<%').replaceAll('%&gt;', '%>');
     let newContent = '';
+    let hasHTML = false;
 
     try {
         newContent = await evalTemplate(
             content,
             env,
-            _.bind(messageFormatting,
-                null,
-                _,
-                message.name,
-                message.is_system,
-                message.is_user,
-                message_idx,
-            ),
+            (markup : string) => {
+                hasHTML = true;
+                return messageFormatting(markup, message.name, message.is_system, message.is_user, message_idx);
+            },
         );
     } catch (err) {
-        console.debug(`handling chat message errors #${content}:\n${content}`);
+        console.debug(`[Prompt Template] handling chat message errors #${content}:\n${content}`);
         console.error(err);
         return false;
     }
@@ -138,6 +138,17 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
     // update if changed
     if (newContent !== content)
         container.empty().append(newContent);
+
+    if(hasHTML && isDryRun) {
+        isFakeRun = true;
+        console.debug(`[HTML] rendering #${message_idx} messages`);
+        if(message.is_user) {
+            eventSource.emit(event_types.USER_MESSAGE_RENDERED, message_idx);
+        } else if(!message.is_system) {
+            eventSource.emit(event_types.CHARACTER_MESSAGE_RENDERED, message_idx);
+        }
+        isFakeRun = false;
+    }
 
     let end = Date.now() - start;
     console.log(`[Prompt Template] processing #${message_idx} messages in ${end}ms`);
