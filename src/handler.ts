@@ -103,8 +103,10 @@ async function updatePromptPreparation(data: ChatData) {
     console.log('[Prompt Template] * UPDATE ALL MESSAGES *');
     for (const mes of $('div.mes[mesid]')) {
         const message_id = $(mes).attr('mesid');
-        if (message_id)
-            await updateMessageRender(message_id, true);
+        if (message_id) {
+            // Temporary fix for unable to initialize variables
+            await updateMessageRender(message_id, message_id !== '0');
+        }
     }
 
     let end = Date.now() - start;
