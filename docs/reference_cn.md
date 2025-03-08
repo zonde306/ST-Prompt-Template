@@ -1,6 +1,6 @@
 # 内置函数
 
-```typescript
+```javascript
 /**
  * 消息选择过滤器
  * @interface MessageFilter
