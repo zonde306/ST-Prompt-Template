@@ -215,7 +215,12 @@ export function lint(text: string, opts: Record<string, unknown> = {}) {
         allowAwaitOutsideFunction: !!opts.await,
         locations: true,
     };
-    return check(js, undefined, checkOptions);
+    let err = check(js, undefined, checkOptions);
+    if(err) {
+        err.message += ` at ${text.split('\n')[err.line - 1]}`;
+    }
+
+    return err;
 }
 
 function padWhitespace(text: string) {
@@ -229,3 +234,14 @@ function padWhitespace(text: string) {
     return res;
 }
 
+export function getErrorLines(code : string, count : number = 4) : string {
+    const error = lint(code);
+    if(!error) return '';
+
+    const lines = code.split('\n');
+    const line = error.line - 1;
+    return lines.slice(line - count, line).join('\n') + '\n' +
+           '[E] ' + lines[line] + '\n' +
+           lines.slice(line + 1, line + count + 1) + '\n\n' +
+           `    at line: ${line}, column: ${error.column}`;
+}

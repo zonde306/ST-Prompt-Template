@@ -3,7 +3,7 @@ import vm from 'vm-browserify';
 import _ from 'lodash';
 import { ChatData, GenerateData, Message } from './defines';
 import { eventSource, event_types, chat, saveChatConditional, messageFormatting } from '../../../../../script.js';
-import { prepareContext, evalTemplate, lint } from './function/ejs';
+import { prepareContext, evalTemplate, getErrorLines } from './function/ejs';
 import { STATE } from './function/variables';
 import { getTokenCountAsync } from '../../../../tokenizers.js';
 import { extension_settings } from '../../../../extensions.js';
@@ -57,9 +57,11 @@ async function updateGenerate(data: GenerateData) {
             prompts += message.content;
         } catch (err) {
             console.debug(`[Prompt Template] handling prompt errors #${idx}:\n${message.content}`);
-            console.error(err);
+
             if(err instanceof SyntaxError)
-                console.error(err.cause = lint(message.content));
+                err.message += '\n' + getErrorLines(message.content);
+
+            console.error(err);
         }
     }
 
@@ -87,10 +89,11 @@ async function updatePromptPreparation(data: ChatData) {
             prompts += message.content;
         } catch (err) {
             console.debug(`[Prompt Template] handling prompt errors #${idx}:\n${message.content}`);
-            console.error(err);
 
             if(err instanceof SyntaxError)
-                console.error(err.cause = lint(message.content));
+                err.message += '\n' + getErrorLines(message.content);
+
+            console.error(err);
         }
     }
 
@@ -166,9 +169,11 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         );
     } catch (err) {
         console.debug(`[Prompt Template] handling chat message errors #${content}:\n${content}`);
-        console.error(err);
+
         if(err instanceof SyntaxError)
-            console.error(err.cause = lint(content));
+            err.message += '\n' + getErrorLines(content);
+
+        console.error(err);
         return;
     }
 
