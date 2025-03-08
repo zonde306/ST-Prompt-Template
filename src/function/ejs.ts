@@ -240,9 +240,5 @@ export function getErrorLines(code : string, count : number = 4) : string {
 
     const lines = code.split('\n');
     const line = error.line - 1;
-    return lines.slice(line - count, line).join('\n') + '\n' +
-           + String(lines[line]) + '\n' +
-           ' '.repeat(error.column - 2) + '^\n' +
-           lines.slice(line + 1, line + count + 1).join('\n') + '\n\n' +
-           `    at line: ${line}, column: ${error.column - 1}`;
+    return `${lines.slice(line - count, line).join('\n')}\n${lines[line]}\n${' '.repeat(error.column - 1)}^\n${lines.slice(line + 1, line + count + 1).join('\n')}\n\nat line: ${line}, column: ${error.column}`;
 }
