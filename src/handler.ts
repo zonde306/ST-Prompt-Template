@@ -56,7 +56,8 @@ async function updateGenerate(data: GenerateData) {
             message.content = await evalTemplate(message.content, env);
             prompts += message.content;
         } catch (err) {
-            console.debug(`[Prompt Template] handling prompt errors #${idx}:\n${message.content}`);
+            const contentWithLines = message.content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
+            console.debug(`[Prompt Template] handling prompt errors #${idx}:\n${contentWithLines}`);
 
             if(err instanceof SyntaxError)
                 err.message += '\n' + getErrorLines(message.content);
@@ -88,7 +89,8 @@ async function updatePromptPreparation(data: ChatData) {
             message.content = await evalTemplate(message.content, env);
             prompts += message.content;
         } catch (err) {
-            console.debug(`[Prompt Template] handling prompt errors #${idx}:\n${message.content}`);
+            const contentWithLines = message.content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
+            console.debug(`[Prompt Template] handling prompt errors #${idx}:\n${contentWithLines}`);
 
             if(err instanceof SyntaxError)
                 err.message += '\n' + getErrorLines(message.content);
@@ -168,7 +170,8 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
             },
         );
     } catch (err) {
-        console.debug(`[Prompt Template] handling chat message errors #${content}:\n${content}`);
+        const contentWithLines = content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
+        console.debug(`[Prompt Template] handling chat message errors #${message_idx}:\n${contentWithLines}`);
 
         if(err instanceof SyntaxError)
             err.message += '\n' + getErrorLines(content);
