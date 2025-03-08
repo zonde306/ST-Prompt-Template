@@ -20,6 +20,7 @@ export interface Message {
     swipe_id: number;
     swipe_info: Array<unknown>;
     swipes: Array<string>;
+    is_initial?: Array<boolean>;
 }
 
 export interface ScriptInject {

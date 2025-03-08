@@ -105,7 +105,7 @@ async function updatePromptPreparation(data: ChatData) {
         const message_id = $(mes).attr('mesid');
         if (message_id) {
             // Temporary fix for unable to initialize variables
-            await updateMessageRender(message_id, message_id !== '0');
+            await updateMessageRender(message_id, true);
         }
     }
 
@@ -145,6 +145,14 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
     if (!html) {
         console.warn(`chat message #${message_id} container not found`);
         return;
+    }
+
+    if(isDryRun) {
+        if(message?.is_initial?.[message_idx]) {
+            console.info(`chat message #${message_id} is initialized, skipping`);
+            return;
+        }
+        STATE.isDryRun = isDryRun = false;
     }
 
     // allows access to current variables without updating them
@@ -197,6 +205,10 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         isFakeRun = false;
     }
 
+    if(!message.is_initial)
+        message.is_initial = [];
+    message.is_initial[message.swipe_id || 0] = true;
+    
     let end = Date.now() - start;
     console.log(`[Prompt Template] processing #${message_idx} messages in ${end}ms`);
 
