@@ -377,6 +377,41 @@ LAST_RECEIVE_CHARS = 0
 
 ---
 
+# STscript命令
+
+## /ejs
+
+```
+/ejs [ctx=object]? [block=boolean]? code
+```
+
+执行 `ejs` 代码
+
+命名参数：
+
+- `ctx` 执行上下文(传入参数)，例如：`ctx={ a: 1, b: 2 }`然后就能在代码里面访问：`a的值为: <%= a %>, b的值为:<%= b %>`
+
+- `block`是否视为整个代码块，如果为`true`时自动为`code`参数在外侧补上`<%= ... %>`符号，例如：`block=true`时`variables.a`会被视为`<%= variables.a %>`
+
+未命名参数：
+
+- `code`即为代码内容
+
+### 示例
+
+```
+// 输出 "hello world"
+/ejs <%= hello world %>
+
+// 输出 a=1
+/ejs ctx="{ a : 1 }" "a=<%= a %>"
+
+// 输出 b=2
+/ejs ctx="{ b : 2 }" "`b=${b}`"
+```
+
+---
+
 # 备注
 
 1. 准备阶段和生成阶段都会触发世界书计算

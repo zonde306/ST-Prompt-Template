@@ -3,7 +3,7 @@ import vm from 'vm-browserify';
 import _ from 'lodash';
 import { ChatData, GenerateData, Message } from './defines';
 import { eventSource, event_types, chat, saveChatConditional, messageFormatting } from '../../../../../script.js';
-import { prepareContext, evalTemplate } from './function/ejs';
+import { prepareContext, evalTemplate, lint } from './function/ejs';
 import { STATE } from './function/variables';
 import { getTokenCountAsync } from '../../../../tokenizers.js';
 import { extension_settings } from '../../../../extensions.js';
@@ -58,6 +58,8 @@ async function updateGenerate(data: GenerateData) {
         } catch (err) {
             console.debug(`[Prompt Template] handling prompt errors #${idx}:\n${message.content}`);
             console.error(err);
+            if(err instanceof SyntaxError)
+                console.error(err.cause = lint(message.content));
         }
     }
 
@@ -86,6 +88,9 @@ async function updatePromptPreparation(data: ChatData) {
         } catch (err) {
             console.debug(`[Prompt Template] handling prompt errors #${idx}:\n${message.content}`);
             console.error(err);
+
+            if(err instanceof SyntaxError)
+                console.error(err.cause = lint(message.content));
         }
     }
 
@@ -162,6 +167,8 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
     } catch (err) {
         console.debug(`[Prompt Template] handling chat message errors #${content}:\n${content}`);
         console.error(err);
+        if(err instanceof SyntaxError)
+            console.error(err.cause = lint(content));
         return;
     }
 

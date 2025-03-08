@@ -1,8 +1,9 @@
 {
   "name": "extension-prompt-template",
-  "version": "1.4.9",
+  "version": "1.4.10",
   "private": true,
   "dependencies": {
+    "syntax-error": "^1.4.0",
     "tsc": "^2.0.4",
     "vm-browserify": "^1.1.2"
   },
@@ -29,6 +30,7 @@
     "@babel/preset-env": "^7.26.7",
     "@babel/preset-typescript": "^7.26.0",
     "@types/ejs": "^3.1.5",
+    "@types/syntax-error": "^1.4.5",
     "babel-loader": "^9.2.1",
     "core-js": "^3.40.0",
     "eslint-config-react-app": "^7.0.1",

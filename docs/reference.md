@@ -368,6 +368,40 @@ LAST_RECEIVE_CHARS = 0
 
 ---
 
+# STscript Commands
+
+## /ejs
+
+```
+/ejs [ctx=object]? [block=boolean]? code
+```
+
+Executes EJS (Embedded JavaScript) code
+
+Named parameters:
+
+- `ctx` Execution context (input parameters). Example: `ctx={ a: 1, b: 2 }` allows accessing `a` and `b` in code like `<%= a %>`
+- `block` If true, automatically wraps the code in `<%= ... %>` tags. When `block=true`, `variables.a` becomes `<%= variables.a %>`
+
+Unnamed parameters:
+
+- `code` The actual EJS code content
+
+### Examples
+
+```
+// Outputs "hello world"
+/ejs <%= "hello world" %>
+
+// Outputs a=1
+/ejs ctx="{ a : 1 }" "a=<%= a %>"
+
+// Outputs b=2 using template literals
+/ejs ctx="{ b : 2 }" "`b=${b}`"
+```
+
+---
+
 # Notes
 
 1.  Both the preparation phase and the generation phase trigger world book calculations.
