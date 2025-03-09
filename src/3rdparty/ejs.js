@@ -680,12 +680,14 @@ Template.prototype = {
           e.message += ' in ' + opts.filename;
         }
         e.message += ' while compiling ejs\n\n';
+        /*
         e.message += 'If the above error is not helpful, you may want to try EJS-Lint:\n';
         e.message += 'https://github.com/RyanZim/EJS-Lint';
         if (!opts.async) {
           e.message += '\n';
           e.message += 'Or, if you meant to create an async function, pass `async: true` as an option.';
         }
+        */
       }
       throw e;
     }

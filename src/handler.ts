@@ -60,9 +60,12 @@ async function updateGenerate(data: GenerateData) {
             console.debug(`[Prompt Template] handling prompt errors #${idx}:\n${contentWithLines}`);
 
             if(err instanceof SyntaxError)
-                err.message += '\n' + getErrorLines(message.content);
+                err.message += getErrorLines(message.content);
 
             console.error(err);
+
+            // @ts-expect-error
+            toastr.error(err.message, `EJS Error #${idx}`);
         }
     }
 
@@ -93,9 +96,12 @@ async function updatePromptPreparation(data: ChatData) {
             console.debug(`[Prompt Template] handling prompt errors #${idx}:\n${contentWithLines}`);
 
             if(err instanceof SyntaxError)
-                err.message += '\n' + getErrorLines(message.content);
+                err.message += getErrorLines(message.content);
 
             console.error(err);
+
+            // @ts-expect-error
+            toastr.error(err.message, `EJS Error #${idx}`);
         }
     }
 
@@ -184,9 +190,12 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         console.debug(`[Prompt Template] handling chat message errors #${message_idx}:\n${contentWithLines}`);
 
         if(err instanceof SyntaxError)
-            err.message += '\n' + getErrorLines(content);
+            err.message += getErrorLines(content);
 
         console.error(err);
+
+        // @ts-expect-error
+        toastr.error(err.message, `EJS Error #${message_idx}`);
         return;
     }
 
