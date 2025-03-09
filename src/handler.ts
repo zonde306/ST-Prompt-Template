@@ -65,7 +65,7 @@ async function updateGenerate(data: GenerateData) {
             console.error(err);
 
             // @ts-expect-error
-            toastr.error(err.message.replaceAll('\n', '<br\\>'), `EJS Error #${idx}`);
+            toastr.error(err.message, `EJS Error #${idx}`);
         }
     }
 
@@ -101,7 +101,7 @@ async function updatePromptPreparation(data: ChatData) {
             console.error(err);
 
             // @ts-expect-error
-            toastr.error(err.message.replaceAll('\n', '<br\\>'), `EJS Error #${idx}`);
+            toastr.error(err.message, `EJS Error #${idx}`);
         }
     }
 
@@ -195,7 +195,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         console.error(err);
 
         // @ts-expect-error
-        toastr.error(err.message.replaceAll('\n', '<br\\>'), `EJS Error #${message_idx}`);
+        toastr.error(err.message, `EJS Error #${message_idx}`);
         return;
     }
 
