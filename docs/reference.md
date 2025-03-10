@@ -151,6 +151,16 @@ async function getPresetPrompt(name, data = {});
  * @note Use 'this' to access context in functions (e.g., this.variables, this.getvar, this.setvar)
  */
 function define(name, value);
+
+/**
+ * Get the content of a quick response entry
+ *
+ * @param {string | RegExp} name - Quick response set name
+ * @param {string | RegExp} label - Quick response entry name
+ * @returns {string} - Content of the quick response
+ */
+function getqr(name, label);
+function getQuickResponse(name, label);
 ```
 
 > `flags` types:
@@ -434,7 +444,7 @@ Functions exported by the extension, accessible to other extensions
  * @param {object} data - Execution context (data environment)
  * @returns {string} Processed content after template evaluation
  */
-async function evalTemplate(code, context = {})
+async function evalTemplate(code, context = {});
 
 /**
  * Create execution context for template processing
@@ -443,7 +453,7 @@ async function evalTemplate(code, context = {})
  * @param {object} context - Additional execution context
  * @returns {object} Prepared execution context
  */
-async function prepareContext(last_message_id = 65535, context = {})
+async function prepareContext(last_message_id = 65535, context = {});
 
 /**
  * Check for template syntax errors without execution
@@ -452,7 +462,7 @@ async function prepareContext(last_message_id = 65535, context = {})
  * @param {number} max_lines - Number of surrounding lines to show for errors
  * @returns {string} Syntax error message, or empty string if valid
  */
-async function getSyntaxErrorInfo(code, max_lines = 4)
+async function getSyntaxErrorInfo(code, max_lines = 4);
 ```
 
 > These functions can be accessed via `window` (i.e., `globalThis`*)* 

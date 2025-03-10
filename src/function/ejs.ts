@@ -1,13 +1,14 @@
 import ejs from '../3rdparty/ejs.js';
 // @ts-expect-error
 import vm from 'vm-browserify';
-import _ from 'lodash';
+import _, { get } from 'lodash';
 import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.js';
 import { getWorldInfoEntryContent } from './worldinfo';
 import { allVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption } from './variables';
 import { getCharDefs, DEFAULT_CHAR_DEFINE } from './characters';
 import { substituteParams, eventSource } from '../../../../../../script.js';
 import { getPresetPromptsContent } from './presets';
+import { getQuickResponse } from './quickresponse';
 import { fakerEnv } from './faker';
 import check from 'syntax-error';
 
@@ -172,6 +173,8 @@ export async function prepareContext(end: number = 65535, env: Record<string, un
         decLocalVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'local' }),
         decGlobalVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'global' }),
         decMessageVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'message' }),
+        getqr: getQuickResponse.bind(context),
+        getQuickResponse: getQuickResponse.bind(context),
         ...boundCloneDefines(context, SharedDefines),
         ref: new WeakRef(context),
     });

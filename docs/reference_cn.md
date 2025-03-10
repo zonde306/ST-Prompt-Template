@@ -151,6 +151,16 @@ async function getPresetPrompt(name, data = {});
  * @note 定义函数时应该使用 this 访问上下文, 例如: this.variables, this.getvar, this.setvar
  */
 function define(name, value);
+
+/**
+ * 读取快速回复的内容
+ *
+ * @param {string | RegExp} name - 快速回复集名字
+ * @param {string | RegExp} label - 快速回复条目名字
+ * @returns {string} - 快速回复的内容
+ */
+function getqr(name, label);
+function getQuickResponse(name, label);
 ```
 
 > `flags` 类型:
@@ -444,7 +454,7 @@ LAST_RECEIVE_CHARS = 0
  * @param {object} data - 执行环境(上下文)
  * @returns {string} 对模板进行计算后的内容
  */
-async function evalTemplate(code, context = {})
+async function evalTemplate(code, context = {});
 
 /**
  * 生成模板语法处理使用的执行环境(上下文)
@@ -453,7 +463,7 @@ async function evalTemplate(code, context = {})
  * @param {object} context - 附加的执行环境(上下文)
  * @returns {object} 执行环境(上下文)
  */
-async function prepareContext(last_message_id = 65535, context = {})
+async function prepareContext(last_message_id = 65535, context = {});
 
 /**
  * 检查模板是否存在语法错误
@@ -463,7 +473,7 @@ async function prepareContext(last_message_id = 65535, context = {})
  * @param {number} max_lines - 发生错误时输出的附近行数
  * @returns {string} 语法错误信息，无错误返回空字符串
  */
-async function getSyntaxErrorInfo(code, max_lines = 4)
+async function getSyntaxErrorInfo(code, max_lines = 4);
 ```
 
 > 可通过 `window`访问这些函数（即`globalThis`）
