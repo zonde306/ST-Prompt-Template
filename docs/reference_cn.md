@@ -32,6 +32,11 @@
  * @returns 成功根据options.results决定，失败返回undefined
  */
 function setvar(key, value, options = {});
+// 特定 options.scope 的别名
+function setLocalVar(key, value, options = {});
+function setGlobalVar(key, value, options = {});
+function setMessageVar(key, value, options = {});
+
 
 /**
  * 获取变量选项
@@ -51,6 +56,10 @@ function setvar(key, value, options = {});
  * @returns {any} - 变量值,找不到返回options.defaults的值
  */
 function getvar(key, options = {});
+// 特定 options.scope 的别名
+function getLocalVar(key, options = {});
+function getGlobalVar(key, options = {});
+function getMessageVar(key, options = {});
 
 /**
  * 更新变量选项
@@ -75,6 +84,10 @@ function getvar(key, options = {});
  * @returns 根据options.results决定,失败返回undefined.
  */
 function incvar(key, value = 1, options = {});
+// 特定 options.outscope 的别名
+function incLocalVar(key, value = 1, options = {});
+function incGlobalVar(key, value = 1, options = {});
+function incMessageVar(key, value = 1, options = {});
 
 /**
  * 减少变量的值
@@ -85,6 +98,10 @@ function incvar(key, value = 1, options = {});
  * @returns 根据options.results决定,失败返回undefined.
  */
 function decvar(key, value = 1, options = {});
+// 特定 options.outscope 的别名
+function decLocalVar(key, value = 1, options = {});
+function decGlobalVar(key, value = 1, options = {});
+function decMessageVar(key, value = 1, options = {});
 
 /**
  * 执行命令,例如/setvar
@@ -103,6 +120,7 @@ async function execute(cmd);
  * @returns {Promise<string>} - 世界书条目的内容
  */
 async function getwi(worldinfo, title, data = {});
+async function getWorldInfo(worldinfo, title, data = {});
 
 /**
  * 读取角色卡定义
@@ -113,6 +131,7 @@ async function getwi(worldinfo, title, data = {});
  * @returns {Promise<string>} - 角色卡定义的内容
  */
 async function getchr(name, template = DEFAULT_CHAR_DEFINE, data = {});
+async function getChara(name, template = DEFAULT_CHAR_DEFINE, data = {});
 
 /**
  * 读取预设的提示词内容
@@ -122,6 +141,7 @@ async function getchr(name, template = DEFAULT_CHAR_DEFINE, data = {});
  * @returns {Promise<string>} - 预设的提示词的内容
  */
 async function getprp(name, data = {});
+async function getPresetPrompt(name, data = {});
 
 /**
  * 定义全局变量/函数
@@ -409,6 +429,44 @@ LAST_RECEIVE_CHARS = 0
 // 输出 b=2
 /ejs ctx="{ b : 2 }" "`b=${b}`"
 ```
+
+---
+
+# 导出函数
+
+扩展导出的函数，可在其他扩展中访问
+
+```javascript
+/**
+ * 对文本进行模板语法处理
+ *
+ * @param {string} content - 模板代码
+ * @param {object} data - 执行环境(上下文)
+ * @returns {string} 对模板进行计算后的内容
+ */
+async function evalTemplate(code, context = {})
+
+/**
+ * 生成模板语法处理使用的执行环境(上下文)
+ *
+ * @param {last_message_id} number - 合并消息变量的最大ID
+ * @param {object} context - 附加的执行环境(上下文)
+ * @returns {object} 执行环境(上下文)
+ */
+async function prepareContext(last_message_id = 65535, context = {})
+
+/**
+ * 检查模板是否存在语法错误
+ * 并不会实际执行
+ *
+ * @param {string} content - 模板代码
+ * @param {number} max_lines - 发生错误时输出的附近行数
+ * @returns {string} 语法错误信息，无错误返回空字符串
+ */
+async function getSyntaxErrorInfo(code, max_lines = 4)
+```
+
+> 可通过 `window`访问这些函数（即`globalThis`）
 
 ---
 

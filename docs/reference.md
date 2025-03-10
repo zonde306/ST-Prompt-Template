@@ -2,133 +2,153 @@
 
 ```javascript
 /**
- * Message selection filter
+ * Message Selection Filter
  * @interface MessageFilter
- * @property {('system' | 'user' | 'assistant' | 'any')} [role='assistant'] - Select the specified role.
- *      Can be 'system', 'user', 'assistant', or 'any'. Searches from the end. If id is set, this will be invalid.
- * @property {number} [id=undefined] - Select the specified message floor, can be negative (negative numbers start from the end).
- * @property {number} [swipe_id=undefined] - Select the specified message's swipe ID.
+ * @property {('system' | 'user' | 'assistant' | 'any')} [role='assistant'] - Select messages by role. 
+ *      Can be 'system', 'user', 'assistant', or 'any'. Searches from the end. This is ignored if id is set.
+ * @property {number} [id=undefined] - Select message by index (supports negative values for reverse indexing).
+ * @property {number} [swipe_id=undefined] - Select message by swipe ID.
  */
 
 /**
- * Set variable options
+ * Set Variable Options
  * @typedef {Object} SetVarOption
- * @property {number} [index=undefined] - The index of the variable, same as the index in /setvar.
- * @property {'global' | 'local' | 'message' | 'cache'} [scope='message'] - Variable type (scope), see below for details.
- * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - Set conditions, if not met, the variable will not be set, see below for details.
- * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - Return value type, see below for details.
- * @property {MessageFilter} [withMsg=undefined] - Message filter (if setting message variables).
- * @property {boolean} [merge=false] - Whether to use merge to set variables (_.merge).
- * @property {boolean} [dryRun=false] - Whether to allow setting variables during the preparation phase.
- * @property {boolean} [noCache=false] - Disable caching (e.g., when reading immediately after setting a variable).
+ * @property {number} [index=undefined] - Variable index (same as /setvar's index)
+ * @property {'global' | 'local' | 'message' | 'cache'} [scope='message'] - Variable scope, see details below
+ * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - Set conditions (no-op if not met), see details below
+ * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - Return type, see details below
+ * @property {MessageFilter} [withMsg=undefined] - Message filter (for message-scoped variables)
+ * @property {boolean} [merge=false] - Use _.merge to set the variable
+ * @property {boolean} [dryRun=false] - Allow setting variables during preparation phase
+ * @property {boolean} [noCache=false] - Bypass cache (e.g., when reading immediately after setting)
  */
 
 /**
- * Set variable
+ * Set a variable
  *
  * @param {string} key - Variable name
  * @param {any} value - Variable value
- * @param {SetVarOption} [options={}] - Set variable options.
- * @returns Success determined by options.results, failure returns undefined.
+ * @param {SetVarOption} [options={}] - Set variable options
+ * @returns Returns based on options.results on success, undefined on failure
  */
 function setvar(key, value, options = {});
+// Scope-specific aliases
+function setLocalVar(key, value, options = {});
+function setGlobalVar(key, value, options = {});
+function setMessageVar(key, value, options = {});
+
 
 /**
- * Get variable options
+ * Get Variable Options
  * @typedef {Object} GetVarOption
- * @property {number} [index=undefined] - The index of the variable, same as the index in /getvar.
- * @property {'global' | 'local' | 'message' | 'cache'} [scope='cache'] - Variable type (scope), see below for details.
- * @property {any} [defaults=undefined] - Default value (returned if the variable does not exist).
- * @property {MessageFilter} [withMsg=undefined] - Message selection filter.
- * @property {boolean} [noCache=false] - Disable caching (e.g., when reading immediately after setting a variable).
+ * @property {number} [index=undefined] - Variable index (same as /getvar's index)
+ * @property {'global' | 'local' | 'message' | 'cache'} [scope='cache'] - Variable scope, see details below
+ * @property {any} [defaults=undefined] - Default value if variable not found
+ * @property {MessageFilter} [withMsg=undefined] - Message selection filter
+ * @property {boolean} [noCache=false] - Bypass cache (e.g., when reading immediately after setting)
  */
 
 /**
- * Get variable
+ * Retrieve a variable
  *
  * @param {string} key - Variable name
  * @param {GetVarOption} [options={}] - Get variable options
- * @returns {any} - Variable value, returns options.defaults if not found.
+ * @returns {any} - Variable value or options.defaults if not found
  */
 function getvar(key, options = {});
+// Scope-specific aliases
+function getLocalVar(key, options = {});
+function getGlobalVar(key, options = {});
+function getMessageVar(key, options = {});
 
 /**
- * Update variable options
+ * Update Variable Options
  * @typedef {Object} GetSetVarOption
- * @property {number} [index] - The index of the variable, same as the index in /getvar.
- * @property {unknown} [defaults=0] - Default value to use if the variable does not exist.
- * @property {'global' | 'local' | 'message' | 'cache'} [inscope='cache'] - Variable type (scope) to read, see below for details.
- * @property {'global' | 'local' | 'message' | 'cache'} outscope='message'] - Variable type (scope) to set, see below for details.
- * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags] - Update conditions, if not met, the variable will not be updated, see below for details.
- * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - Return value type, see below for details.
- * @property {MessageFilter} [withMsg=undefined] - Message filter (if setting message variables).
- * @property {boolean} [dryRun=false] - Whether to allow updating variables during the preparation phase.
- * @property {boolean} [noCache=false] - Disable caching (e.g., when reading immediately after setting a variable).
+ * @property {number} [index] - Variable index (same as /getvar's index)
+ * @property {unknown} [defaults=0] - Default value if variable not found
+ * @property {'global' | 'local' | 'message' | 'cache'} [inscope='cache'] - Input scope (read from)
+ * @property {'global' | 'local' | 'message' | 'cache'} [outscope='message'] - Output scope (write to)
+ * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - Update conditions (no-op if not met)
+ * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - Return type
+ * @property {MessageFilter} [withMsg=undefined] - Message filter for message-scoped variables
+ * @property {boolean} [dryRun=false] - Allow updates during preparation phase
+ * @property {boolean} [noCache=false] - Bypass cache
  */
 
 /**
- * Increment variable value
+ * Increment a variable's value
  *
  * @param {string} key - Variable name
- * @param {number} [value=1] - Variable value
- * @param {GetSetVarOption} [options={}] - Update variable options
- * @returns Determined by options.results, failure returns undefined.
+ * @param {number} [value=1] - Increment amount
+ * @param {GetSetVarOption} [options={}] - Update options
+ * @returns Based on options.results, undefined on failure
  */
 function incvar(key, value = 1, options = {});
+// Scope-specific aliases
+function incLocalVar(key, value = 1, options = {});
+function incGlobalVar(key, value = 1, options = {});
+function incMessageVar(key, value = 1, options = {});
 
 /**
- * Decrement variable value
+ * Decrement a variable's value
  *
  * @param {string} key - Variable name
- * @param {number} [value=1] - Variable value
- * @param {GetSetVarOption} [options={}] - Update variable options
- * @returns Determined by options.results, failure returns undefined.
+ * @param {number} [value=1] - Decrement amount
+ * @param {GetSetVarOption} [options={}] - Update options
+ * @returns Based on options.results, undefined on failure
  */
 function decvar(key, value = 1, options = {});
+// Scope-specific aliases
+function decLocalVar(key, value = 1, options = {});
+function decGlobalVar(key, value = 1, options = {});
+function decMessageVar(key, value = 1, options = {});
 
 /**
- * Execute command, e.g., /setvar
+ * Execute a command (e.g., /setvar)
  *
- * @param {string} cmd - Command
- * @returns {Promise<string>} - Command return value
+ * @param {string} cmd - Command to execute
+ * @returns {Promise<string>} - Command output
  */
 async function execute(cmd);
 
 /**
- * Read world book entry content
+ * Get World Info entry content
  *
- * @param {string} worldinfo - World book name
- * @param {string | RegExp | number} title - Entry uid/title
- * @param {Record<string, any>} [data={}] - Data to pass
- * @returns {Promise<string>} - World book entry content
+ * @param {string} worldinfo - World Info name
+ * @param {string | RegExp | number} title - Entry UID/title
+ * @param {Record<string, any>} [data={}] - Context data
+ * @returns {Promise<string>} - Entry content
  */
 async function getwi(worldinfo, title, data = {});
+async function getWorldInfo(worldinfo, title, data = {});
 
 /**
- * Read character card definition
+ * Get character definition
  *
- * @param {string | RegExp} name - Character card name
+ * @param {string | RegExp} name - Character name
  * @param {string} [template=DEFAULT_CHAR_DEFINE] - Output format
- * @param {Record<string, any>} [data={}] - Data to pass
- * @returns {Promise<string>} - Character card definition content
+ * @param {Record<string, any>} [data={}] - Context data
+ * @returns {Promise<string>} - Character definition
  */
 async function getchr(name, template = DEFAULT_CHAR_DEFINE, data = {});
+async function getChara(name, template = DEFAULT_CHAR_DEFINE, data = {});
 
 /**
- * Read preset prompt content
+ * Get preset prompt content
  *
- * @param {string | RegExp} name - Prompt name
- * @param {Record<string, any>} [data={}] - Data to pass
+ * @param {string | RegExp} name - Preset name
+ * @param {Record<string, any>} [data={}] - Context data
  * @returns {Promise<string>} - Preset prompt content
  */
 async function getprp(name, data = {});
+async function getPresetPrompt(name, data = {});
 
 /**
- * Define a global variable/function
+ * Define global variables/functions
  *
  * @param {string} name - Variable/function name
- * @param {any} value - Variable/function content
- * @note When defining a function, use `this` to access the context, for example: `this.variables`, `this.getvar`, `this.setvar`
+ * @param {any} value - Content/value
+ * @note Use 'this' to access context in functions (e.g., this.variables, this.getvar, this.setvar)
  */
 function define(name, value);
 ```
@@ -399,6 +419,43 @@ Unnamed parameters:
 // Outputs b=2 using template literals
 /ejs ctx="{ b : 2 }" "`b=${b}`"
 ```
+
+---
+
+# Exported Functions
+
+Functions exported by the extension, accessible to other extensions
+
+```javascript
+/**
+ * Process text with template syntax
+ *
+ * @param {string} content - Template code
+ * @param {object} data - Execution context (data environment)
+ * @returns {string} Processed content after template evaluation
+ */
+async function evalTemplate(code, context = {})
+
+/**
+ * Create execution context for template processing
+ *
+ * @param {number} last_message_id - Maximum message ID for variable merging
+ * @param {object} context - Additional execution context
+ * @returns {object} Prepared execution context
+ */
+async function prepareContext(last_message_id = 65535, context = {})
+
+/**
+ * Check for template syntax errors without execution
+ *
+ * @param {string} content - Template code to validate
+ * @param {number} max_lines - Number of surrounding lines to show for errors
+ * @returns {string} Syntax error message, or empty string if valid
+ */
+async function getSyntaxErrorInfo(code, max_lines = 4)
+```
+
+> These functions can be accessed via `window` (i.e., `globalThis`*)* 
 
 ---
 
