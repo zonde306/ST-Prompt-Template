@@ -160,8 +160,32 @@ function define(name, value);
  * @param {string | RegExp} label - 快速回复条目名字
  * @returns {string} - 快速回复的内容
  */
-function getqr(name, label);
-function getQuickReply(name, label);
+async function getqr(name, label);
+async function getQuickReply(name, label);
+
+/**
+ * 读取角色卡数据
+ *
+ * @param {string | RegExp} name - 角色卡名字
+ * @returns {Promise<v1CharData | null>} - 角色卡的数据
+ */
+async function getCharaData(name);
+
+/**
+ * 读取世界书数据
+ *
+ * @param {string | RegExp} name - 世界书的名字/uid
+ * @returns {Promise<WorldInfoData | null>} - 世界书的数据
+ */
+async function getWorldInfoData(name);
+
+/**
+ * 读取快速回复数据
+ *
+ * @param {string | RegExp} name - 世界书的名字/uid
+ * @returns {QuickReplySetLink | null} - 世界书的数据
+ */
+function getQuickReplyData(name);
 ```
 
 > `flags` 类型:

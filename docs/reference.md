@@ -153,15 +153,39 @@ async function getPresetPrompt(name, data = {});
 function define(name, value);
 
 /**
- * Retrieve Quick Reply content
- * Can only read from enabled Quick Reply sets
+ * Get content of a quick reply entry
+ * Only enabled quick reply sets can be accessed
  *
- * @param {string | RegExp} name - Quick Reply set name
- * @param {string | RegExp} label - Quick Reply entry name
- * @returns {string} Content of the Quick Reply
+ * @param {string | RegExp} name - Quick reply set name
+ * @param {string | RegExp} label - Quick reply entry label
+ * @returns {string} Content of the quick reply
  */
-function getqr(name, label);
-function getQuickReply(name, label);
+async function getqr(name, label);
+async function getQuickReply(name, label);
+
+/**
+ * Get character card data
+ *
+ * @param {string | RegExp} name - Character card name
+ * @returns {Promise<v1CharData | null>} Character data object
+ */
+async function getCharaData(name);
+
+/**
+ * Get World Info data
+ *
+ * @param {string | RegExp} name - World Info name/UID
+ * @returns {Promise<WorldInfoData | null>} World Info data object
+ */
+async function getWorldInfoData(name);
+
+/**
+ * Get quick reply set data
+ *
+ * @param {string | RegExp} name - Quick reply set name
+ * @returns {QuickReplySetLink | null} Quick reply set data
+ */
+function getQuickReplyData(name);
 ```
 
 > `flags` types:

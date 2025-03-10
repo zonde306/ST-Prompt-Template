@@ -1,7 +1,7 @@
 import { characters } from '../../../../../../script.js';
 import { v1CharData } from '../../../../../char-data.js';
 
-export function getCharData(name : string | RegExp) : v1CharData | null {
+export function getCharaData(name : string | RegExp) : v1CharData | null {
     const char = characters.find(c => c.name === name || c.name.match(name));
     if (!char)
         return null;
@@ -46,8 +46,8 @@ System: <%- depth_prompt %>
 <% } %>\
 `;
 
-export function getCharDefs(name : string | RegExp) {
-    const char = getCharData(name);
+export function getCharaDefs(name : string | RegExp) {
+    const char = getCharaData(name);
     if (!char)
         return null;
 

@@ -29,3 +29,16 @@ export function getQuickReply(name: string | RegExp, label: string | RegExp): st
 
     return '';
 }
+
+export function getQuickReplyData(name: string | RegExp) {
+    // @ts-expect-error
+    const config = extension_settings.quickReplyV2?.config;
+    if(!config)
+        return null;
+
+    for(const link of config.setList)
+        if(link.set.name === name || link.set.name.match(name))
+            return link;
+
+    return null;
+}

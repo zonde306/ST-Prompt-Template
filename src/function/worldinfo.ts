@@ -39,25 +39,23 @@ export interface WorldInfo {
     entries: Record<string, WorldInfoData>;
 }
 
-export async function* getWorldInfoAll(name: string): AsyncGenerator<WorldInfoData> {
+export async function getWorldInfoData(name: string): Promise<WorldInfoData[]> {
     // @ts-expect-error
     const lorebook : WorldInfo | null = await loadWorldInfo(name);
     if(!lorebook)
-        return;
+        return [];
 
-    for(const data of _.values(lorebook.entries))
-        yield data;
+    return _.values(lorebook.entries)
 }
 
-export async function* getWorldInfoTitles(name: string): AsyncGenerator<string> {
-    for await (const data of getWorldInfoAll(name))
-        yield data.comment;
+export async function getWorldInfoTitles(name: string): Promise<string[]> {
+    return (await getWorldInfoData(name)).map(data => data.comment);
 }
 
 export async function getWorldInfoEntry(name: string, title: string | RegExp | number): Promise<WorldInfoData | null> {
-    for await (const data of getWorldInfoAll(name))
+    for (const data of await getWorldInfoData(name))
         // @ts-expect-error
-        if(data.comment === title || data.uid === title || data.comment.match(title))   // String.match(number) just returns null
+        if(data.comment === title || data.uid === title || data.comment.match(title))   // String.match(number) will returns null
             return data;
 
     return null;

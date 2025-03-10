@@ -3,12 +3,12 @@ import ejs from '../3rdparty/ejs.js';
 import vm from 'vm-browserify';
 import _ from 'lodash';
 import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.js';
-import { getWorldInfoEntryContent } from './worldinfo';
+import { getWorldInfoEntryContent, getWorldInfoData } from './worldinfo';
 import { allVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption } from './variables';
-import { getCharDefs, DEFAULT_CHAR_DEFINE } from './characters';
+import { getCharaDefs, DEFAULT_CHAR_DEFINE, getCharaData } from './characters';
 import { substituteParams, eventSource } from '../../../../../../script.js';
 import { getPresetPromptsContent } from './presets';
-import { getQuickReply } from './quickreply';
+import { getQuickReply, getQuickReplyData } from './quickreply';
 import { fakerEnv } from './faker';
 import check from 'syntax-error';
 
@@ -62,8 +62,6 @@ export async function evalTemplate(content: string, data: Record<string, unknown
 async function boundedImport(this: Record<string, unknown>,
     worldinfo: string, entry: string | RegExp | number,
     data: Record<string, unknown> = {}): Promise<string> {
-    // maybe not
-    this.getwi = boundedImport.bind(this);
     const content = await getWorldInfoEntryContent(worldinfo, entry);
     if (content) {
         // or use _.merge?
@@ -77,9 +75,7 @@ async function boundedImport(this: Record<string, unknown>,
 async function boundedCharDef(this: Record<string, unknown>,
     name: string | RegExp, template: string = DEFAULT_CHAR_DEFINE,
     data: Record<string, unknown> = {}): Promise<string> {
-    // maybe not
-    this.getchr = boundedCharDef.bind(this);
-    const defs = getCharDefs(name);
+    const defs = getCharaDefs(name);
     if (!defs) {
         console.warn(`[Prompt Template] character ${name} not found`);
         return "";
@@ -92,8 +88,6 @@ async function boundedCharDef(this: Record<string, unknown>,
 async function boundedPresetPrompt(this: Record<string, unknown>,
     name: string | RegExp,
     data: Record<string, unknown> = {}): Promise<string> {
-    // maybe not
-    this.getprp = boundedPresetPrompt.bind(this);
     const prompt = getPresetPromptsContent(name);
     if (!prompt) {
         console.warn(`[Prompt Template] preset prompt ${name} not found`);
@@ -131,6 +125,18 @@ function boundCloneDefines(self: Record<string, unknown>, defines: Record<string
         }
     }
     return result;
+}
+
+async function boundedQuickReply(this: Record<string, unknown>, name: string, label: string,
+                                 data: Record<string, unknown> = {}
+) {
+    const reply = getQuickReply(name, label);
+    if (!reply) {
+        console.warn(`[Prompt Template] quick reply ${name}.${label} not found`);
+        return '';
+    }
+
+    return substituteParams(await evalTemplate(reply, { ...this, ...data }));
 }
 
 export async function prepareContext(end: number = 65535, env: Record<string, unknown> = {}): Promise<Record<string, unknown>> {
@@ -173,8 +179,11 @@ export async function prepareContext(end: number = 65535, env: Record<string, un
         decLocalVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'local' }),
         decGlobalVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'global' }),
         decMessageVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'message' }),
-        getqr: getQuickReply.bind(context),
-        getQuickReply: getQuickReply.bind(context),
+        getqr: boundedQuickReply.bind(context),
+        getQuickReply: boundedQuickReply.bind(context),
+        getCharaData: getCharaData.bind(context),
+        getWorldInfoData: getWorldInfoData.bind(context),
+        getQuickReplyData: getQuickReplyData.bind(context),
         ...boundCloneDefines(context, SharedDefines),
         ref: new WeakRef(context),
     });
