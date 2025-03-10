@@ -154,7 +154,7 @@ export async function prepareContext(end: number = 65535, env: Record<string, un
         getchr: boundedCharDef.bind(context),
         getChara: boundedCharDef.bind(context),
         getprp: boundedPresetPrompt.bind(context),
-        getPreset: boundedPresetPrompt.bind(context),
+        getPresetPrompt: boundedPresetPrompt.bind(context),
         define: boundedDefine.bind(context),
         setvar: setVariable.bind(context),
         setLocalVar: (k: string, v: unknown, o : SetVarOption = {}) => setVariable.call(context, k, v, { ...o, scope: 'local' }),
