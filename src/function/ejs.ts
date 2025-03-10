@@ -8,7 +8,7 @@ import { allVariables, getVariable, setVariable, increaseVariable, decreaseVaria
 import { getCharDefs, DEFAULT_CHAR_DEFINE } from './characters';
 import { substituteParams, eventSource } from '../../../../../../script.js';
 import { getPresetPromptsContent } from './presets';
-import { getQuickReply } from './quickresponse';
+import { getQuickReply } from './quickreply';
 import { fakerEnv } from './faker';
 import check from 'syntax-error';
 
