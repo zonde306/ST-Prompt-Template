@@ -7,12 +7,14 @@ export interface QuickReplyV1 {
 };
 
 export function getQuickResponse(name: string | RegExp, label: string | RegExp): string {
+    /*
     // @ts-expect-error
     const quickResponseSet : QuickReplyV1[] = extension_settings.quickReply;
     let found = quickResponseSet.find(qr => qr.label === label);
     if (found) {
         return found.mes;
     }
+    */
 
     // @ts-expect-error
     const config = extension_settings.quickReplyV2?.config;
