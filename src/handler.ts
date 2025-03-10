@@ -3,7 +3,7 @@ import vm from 'vm-browserify';
 import _ from 'lodash';
 import { ChatData, GenerateData, Message } from './defines';
 import { eventSource, event_types, chat, saveChatConditional, messageFormatting } from '../../../../../script.js';
-import { prepareContext, evalTemplate, getErrorLines } from './function/ejs';
+import { prepareContext, evalTemplate, getSyntaxErrorInfo } from './function/ejs';
 import { STATE } from './function/variables';
 import { getTokenCountAsync } from '../../../../tokenizers.js';
 import { extension_settings } from '../../../../extensions.js';
@@ -60,7 +60,7 @@ async function updateGenerate(data: GenerateData) {
             console.debug(`[Prompt Template] handling prompt errors #${idx}:\n${contentWithLines}`);
 
             if(err instanceof SyntaxError)
-                err.message += getErrorLines(message.content);
+                err.message += getSyntaxErrorInfo(message.content);
 
             console.error(err);
 
@@ -96,7 +96,7 @@ async function updatePromptPreparation(data: ChatData) {
             console.debug(`[Prompt Template] handling prompt errors #${idx}:\n${contentWithLines}`);
 
             if(err instanceof SyntaxError)
-                err.message += getErrorLines(message.content);
+                err.message += getSyntaxErrorInfo(message.content);
 
             console.error(err);
 
@@ -190,7 +190,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         console.debug(`[Prompt Template] handling chat message errors #${message_idx}:\n${contentWithLines}`);
 
         if(err instanceof SyntaxError)
-            err.message += getErrorLines(content);
+            err.message += getSyntaxErrorInfo(content);
 
         console.error(err);
 

@@ -4,7 +4,7 @@ import vm from 'vm-browserify';
 import _ from 'lodash';
 import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.js';
 import { getWorldInfoEntryContent } from './worldinfo';
-import { allVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE } from './variables';
+import { allVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption } from './variables';
 import { getCharDefs, DEFAULT_CHAR_DEFINE } from './characters';
 import { substituteParams, eventSource } from '../../../../../../script.js';
 import { getPresetPromptsContent } from './presets';
@@ -150,13 +150,28 @@ export async function prepareContext(end: number = 65535, env: Record<string, un
 
     _.merge(context, {
         getwi: boundedImport.bind(context),
+        getWorldInfo: boundedImport.bind(context),
         getchr: boundedCharDef.bind(context),
+        getChara: boundedCharDef.bind(context),
         getprp: boundedPresetPrompt.bind(context),
+        getPreset: boundedPresetPrompt.bind(context),
         define: boundedDefine.bind(context),
         setvar: setVariable.bind(context),
+        setLocalVar: (k: string, v: unknown, o : SetVarOption = {}) => setVariable.call(context, k, v, { ...o, scope: 'local' }),
+        setGlobalVar: (k: string, v: unknown, o : SetVarOption = {}) => setVariable.call(context, k, v, { ...o, scope: 'global' }),
+        setMessageVar: (k: string, v: unknown, o : SetVarOption = {}) => setVariable.call(context, k, v, { ...o, scope: 'message' }),
         getvar: getVariable.bind(context),
+        getLocalVar: (k: string, o : GetVarOption = {}) => getVariable.call(context, k, { ...o, scope: 'local' }),
+        getGlobalVar: (k: string, o : GetVarOption = {}) => getVariable.call(context, k, { ...o, scope: 'global' }),
+        getMessageVar: (k: string, o : GetVarOption = {}) => getVariable.call(context, k, { ...o, scope: 'message' }),
         incvar: increaseVariable.bind(context),
+        incLocalVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => increaseVariable.call(context, k, v, { ...o, outscope: 'local' }),
+        incGlobalVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => increaseVariable.call(context, k, v, { ...o, outscope: 'global' }),
+        incMessageVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => increaseVariable.call(context, k, v, { ...o, outscope: 'message' }),
         decvar: decreaseVariable.bind(context),
+        decLocalVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'local' }),
+        decGlobalVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'global' }),
+        decMessageVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'message' }),
         ...boundCloneDefines(context, SharedDefines),
         ref: new WeakRef(context),
     });
@@ -234,7 +249,7 @@ function padWhitespace(text: string) {
     return res;
 }
 
-export function getErrorLines(code : string, count : number = 4) : string {
+export function getSyntaxErrorInfo(code : string, count : number = 4) : string {
     const error = lint(code);
     if(!error) return '';
 
@@ -242,3 +257,10 @@ export function getErrorLines(code : string, count : number = 4) : string {
     const line = error.line - 1;
     return `${lines.slice(line - count, line).join('\n')}\n${lines[line]}\n${' '.repeat(error.column - 1)}^\n${lines.slice(line + 1, line + count + 1).join('\n')}\n\nat line: ${line}, column: ${error.column}`;
 }
+
+// @ts-expect-error
+window.evalTemplate = evalTemplate;
+// @ts-expect-error
+window.prepareContext = prepareContext;
+// @ts-expect-error
+window.getSyntaxErrorInfo = getSyntaxErrorInfo;
