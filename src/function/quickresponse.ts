@@ -6,7 +6,7 @@ export interface QuickReplyV1 {
     mes: string;
 };
 
-export function getQuickResponse(name: string | RegExp, label: string | RegExp): string {
+export function getQuickReply(name: string | RegExp, label: string | RegExp): string {
     /*
     // @ts-expect-error
     const quickResponseSet : QuickReplyV1[] = extension_settings.quickReply;

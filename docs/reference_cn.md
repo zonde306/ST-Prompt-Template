@@ -154,13 +154,14 @@ function define(name, value);
 
 /**
  * 读取快速回复的内容
+ * 只能读取已启用的快速回复集
  *
  * @param {string | RegExp} name - 快速回复集名字
  * @param {string | RegExp} label - 快速回复条目名字
  * @returns {string} - 快速回复的内容
  */
 function getqr(name, label);
-function getQuickResponse(name, label);
+function getQuickReply(name, label);
 ```
 
 > `flags` 类型:

@@ -153,14 +153,15 @@ async function getPresetPrompt(name, data = {});
 function define(name, value);
 
 /**
- * Get the content of a quick response entry
+ * Retrieve Quick Reply content
+ * Can only read from enabled Quick Reply sets
  *
- * @param {string | RegExp} name - Quick response set name
- * @param {string | RegExp} label - Quick response entry name
- * @returns {string} - Content of the quick response
+ * @param {string | RegExp} name - Quick Reply set name
+ * @param {string | RegExp} label - Quick Reply entry name
+ * @returns {string} Content of the Quick Reply
  */
 function getqr(name, label);
-function getQuickResponse(name, label);
+function getQuickReply(name, label);
 ```
 
 > `flags` types:
