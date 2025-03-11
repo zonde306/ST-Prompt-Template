@@ -89,8 +89,13 @@ async function updatePromptPreparation(data: ChatData) {
     let prompts = '';
     for (const [idx, message] of data.chat.entries()) {
         try {
-            message.content = await evalTemplate(message.content, env);
-            prompts += message.content;
+            const newContent = await evalTemplate(message.content, env);
+            
+            // only update in dryRun to avoid duplicate updates
+            if(data.dryRun)
+                message.content = newContent
+            
+            prompts += newContent;
         } catch (err) {
             const contentWithLines = message.content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
             console.debug(`[Prompt Template] handling prompt errors #${idx}:\n${contentWithLines}`);
