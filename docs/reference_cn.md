@@ -501,7 +501,7 @@ async function prepareContext(last_message_id = 65535, context = {});
 async function getSyntaxErrorInfo(code, max_lines = 4);
 ```
 
-> 可通过 `window`访问这些函数（即`globalThis`）
+> 可通过 `globalThis.SillyTavern`访问这些函数（如 `SillyTavern.evalTemplate`）
 
 ---
 

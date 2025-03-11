@@ -490,7 +490,7 @@ async function prepareContext(last_message_id = 65535, context = {});
 async function getSyntaxErrorInfo(code, max_lines = 4);
 ```
 
-> These functions can be accessed via `window` (i.e., `globalThis`*)* 
+> These functions can be accessed via `globalThis.SillyTavern` (i.e., `SillyTavern.evalTemplate`*)* 
 
 ---
 

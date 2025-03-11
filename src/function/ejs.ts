@@ -272,12 +272,12 @@ export function getSyntaxErrorInfo(code : string, count : number = 4) : string {
 }
 
 // @ts-expect-error
-window.evalTemplate = async(code : string, context : Record<string, unknown> = {}) => {
+globalThis.SillyTavern.evalTemplate = async(code : string, context : Record<string, unknown> = {}) => {
     STATE.isDryRun = false;
     return await evalTemplate(code, context);
 };
 
 // @ts-expect-error
-window.prepareContext = prepareContext;
+globalThis.SillyTavern.prepareContext = prepareContext;
 // @ts-expect-error
-window.getSyntaxErrorInfo = getSyntaxErrorInfo;
+globalThis.SillyTavern.getSyntaxErrorInfo = getSyntaxErrorInfo;
