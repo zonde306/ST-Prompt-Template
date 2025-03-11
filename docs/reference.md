@@ -461,6 +461,8 @@ Unnamed parameters:
 
 Functions exported by the extension, accessible to other extensions
 
+These functions reside in the `globalThis.EjsTemplate` scope
+
 ```javascript
 /**
  * Process text with template syntax
@@ -490,7 +492,7 @@ async function prepareContext(last_message_id = 65535, context = {});
 async function getSyntaxErrorInfo(code, max_lines = 4);
 ```
 
-> These functions can be accessed via `globalThis.SillyTavern` (i.e., `SillyTavern.evalTemplate`*)* 
+> These functions can be accessed via `globalThis.EjsTemplate` (i.e., `EjsTemplate.evalTemplate`*)* 
 
 ---
 

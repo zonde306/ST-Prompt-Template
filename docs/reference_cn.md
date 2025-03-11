@@ -471,6 +471,8 @@ LAST_RECEIVE_CHARS = 0
 
 扩展导出的函数，可在其他扩展中访问
 
+这些函数在 `globalThis.EjsTemplate`作用域内
+
 ```javascript
 /**
  * 对文本进行模板语法处理
@@ -501,7 +503,7 @@ async function prepareContext(last_message_id = 65535, context = {});
 async function getSyntaxErrorInfo(code, max_lines = 4);
 ```
 
-> 可通过 `globalThis.SillyTavern`访问这些函数（如 `SillyTavern.evalTemplate`）
+> 可通过 `globalThis.EjsTemplate`访问这些函数（如 `EjsTemplate.evalTemplate`）
 
 ---
 
