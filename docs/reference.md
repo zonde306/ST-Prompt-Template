@@ -6,8 +6,8 @@
  * @interface MessageFilter
  * @property {('system' | 'user' | 'assistant' | 'any')} [role='assistant'] - Select messages by role. 
  *      Can be 'system', 'user', 'assistant', or 'any'. Searches from the end. This is ignored if id is set.
- * @property {number} [id=undefined] - Select message by index (supports negative values for reverse indexing).
- * @property {number} [swipe_id=undefined] - Select message by swipe ID.
+ * @property {number} [id=undefined] - Select message by floor number (negative numbers count from the end)
+ * @property {number} [swipe_id=undefined] - Select message by swipe ID
  */
 
 /**
@@ -15,24 +15,24 @@
  * @typedef {Object} SetVarOption
  * @property {number} [index=undefined] - Variable index (same as /setvar's index)
  * @property {'global' | 'local' | 'message' | 'cache'} [scope='message'] - Variable scope, see details below
- * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - Set conditions (no-op if not met), see details below
+ * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - Set conditions, see details below
  * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - Return type, see details below
- * @property {MessageFilter} [withMsg=undefined] - Message filter (for message-scoped variables)
- * @property {boolean} [merge=false] - Use _.merge to set the variable
+ * @property {MessageFilter} [withMsg=undefined] - Message filter (for message variables)
+ * @property {boolean} [merge=false] - Use _.merge to set variables
  * @property {boolean} [dryRun=false] - Allow setting variables during preparation phase
- * @property {boolean} [noCache=false] - Bypass cache (e.g., when reading immediately after setting)
+ * @property {boolean} [noCache=false] - Disable caching (when reading immediately after setting)
  */
 
 /**
- * Set a variable
+ * Set Variable
  *
  * @param {string} key - Variable name
  * @param {any} value - Variable value
  * @param {SetVarOption} [options={}] - Set variable options
- * @returns Returns based on options.results on success, undefined on failure
+ * @returns Returns based on options.results when successful, undefined on failure
  */
 function setvar(key, value, options = {});
-// Scope-specific aliases
+// Aliases for specific options.scope
 function setLocalVar(key, value, options = {});
 function setGlobalVar(key, value, options = {});
 function setMessageVar(key, value, options = {});
@@ -43,20 +43,20 @@ function setMessageVar(key, value, options = {});
  * @typedef {Object} GetVarOption
  * @property {number} [index=undefined] - Variable index (same as /getvar's index)
  * @property {'global' | 'local' | 'message' | 'cache'} [scope='cache'] - Variable scope, see details below
- * @property {any} [defaults=undefined] - Default value if variable not found
+ * @property {any} [defaults=undefined] - Default value when not found
  * @property {MessageFilter} [withMsg=undefined] - Message selection filter
- * @property {boolean} [noCache=false] - Bypass cache (e.g., when reading immediately after setting)
+ * @property {boolean} [noCache=false] - Disable caching (when reading immediately after setting)
  */
 
 /**
- * Retrieve a variable
+ * Read Variable
  *
  * @param {string} key - Variable name
  * @param {GetVarOption} [options={}] - Get variable options
- * @returns {any} - Variable value or options.defaults if not found
+ * @returns {any} - Variable value, returns options.defaults if not found
  */
 function getvar(key, options = {});
-// Scope-specific aliases
+// Aliases for specific options.scope
 function getLocalVar(key, options = {});
 function getGlobalVar(key, options = {});
 function getMessageVar(key, options = {});
@@ -65,46 +65,46 @@ function getMessageVar(key, options = {});
  * Update Variable Options
  * @typedef {Object} GetSetVarOption
  * @property {number} [index] - Variable index (same as /getvar's index)
- * @property {unknown} [defaults=0] - Default value if variable not found
- * @property {'global' | 'local' | 'message' | 'cache'} [inscope='cache'] - Input scope (read from)
- * @property {'global' | 'local' | 'message' | 'cache'} [outscope='message'] - Output scope (write to)
- * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - Update conditions (no-op if not met)
- * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - Return type
- * @property {MessageFilter} [withMsg=undefined] - Message filter for message-scoped variables
+ * @property {unknown} [defaults=0] - Default value when variable doesn't exist
+ * @property {'global' | 'local' | 'message' | 'cache'} [inscope='cache'] - Read scope, see details below
+ * @property {'global' | 'local' | 'message' | 'cache'} [outscope='message'] - Write scope, see details below
+ * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - Update conditions, see details below
+ * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - Return type, see details below
+ * @property {MessageFilter} [withMsg=undefined] - Message filter (for message variables)
  * @property {boolean} [dryRun=false] - Allow updates during preparation phase
- * @property {boolean} [noCache=false] - Bypass cache
+ * @property {boolean} [noCache=false] - Disable caching (when reading immediately after setting)
  */
 
 /**
- * Increment a variable's value
+ * Increment Variable
  *
  * @param {string} key - Variable name
- * @param {number} [value=1] - Increment amount
+ * @param {number} [value=1] - Increment value
  * @param {GetSetVarOption} [options={}] - Update options
- * @returns Based on options.results, undefined on failure
+ * @returns Returns based on options.results, undefined on failure
  */
 function incvar(key, value = 1, options = {});
-// Scope-specific aliases
+// Aliases for specific options.outscope
 function incLocalVar(key, value = 1, options = {});
 function incGlobalVar(key, value = 1, options = {});
 function incMessageVar(key, value = 1, options = {});
 
 /**
- * Decrement a variable's value
+ * Decrement Variable
  *
  * @param {string} key - Variable name
- * @param {number} [value=1] - Decrement amount
+ * @param {number} [value=1] - Decrement value
  * @param {GetSetVarOption} [options={}] - Update options
- * @returns Based on options.results, undefined on failure
+ * @returns Returns based on options.results, undefined on failure
  */
 function decvar(key, value = 1, options = {});
-// Scope-specific aliases
+// Aliases for specific options.outscope
 function decLocalVar(key, value = 1, options = {});
 function decGlobalVar(key, value = 1, options = {});
 function decMessageVar(key, value = 1, options = {});
 
 /**
- * Execute a command (e.g., /setvar)
+ * Execute command like /setvar
  *
  * @param {string} cmd - Command to execute
  * @returns {Promise<string>} - Command output
@@ -112,32 +112,32 @@ function decMessageVar(key, value = 1, options = {});
 async function execute(cmd);
 
 /**
- * Get World Info entry content
+ * Read World Book entry content
  *
- * @param {string} worldinfo - World Info name
+ * @param {string} worldinfo - World Book name
  * @param {string | RegExp | number} title - Entry UID/title
- * @param {Record<string, any>} [data={}] - Context data
- * @returns {Promise<string>} - Entry content
+ * @param {Record<string, any>} [data={}] - Additional data
+ * @returns {Promise<string>} - World Book entry content
  */
 async function getwi(worldinfo, title, data = {});
 async function getWorldInfo(worldinfo, title, data = {});
 
 /**
- * Get character definition
+ * Read character card definition
  *
- * @param {string | RegExp} name - Character name
+ * @param {string | RegExp} name - Character card name
  * @param {string} [template=DEFAULT_CHAR_DEFINE] - Output format
- * @param {Record<string, any>} [data={}] - Context data
- * @returns {Promise<string>} - Character definition
+ * @param {Object} [data={}] - Additional data
+ * @returns {Promise<string>} - Character card content
  */
 async function getchr(name, template = DEFAULT_CHAR_DEFINE, data = {});
 async function getChara(name, template = DEFAULT_CHAR_DEFINE, data = {});
 
 /**
- * Get preset prompt content
+ * Read preset prompt content
  *
  * @param {string | RegExp} name - Preset name
- * @param {Record<string, any>} [data={}] - Context data
+ * @param {Object} [data={}] - Additional data
  * @returns {Promise<string>} - Preset prompt content
  */
 async function getprp(name, data = {});
@@ -145,47 +145,71 @@ async function getPresetPrompt(name, data = {});
 
 /**
  * Define global variables/functions
+ * @note Typically used for pre-defining in World Books and calling during rendering
  *
  * @param {string} name - Variable/function name
- * @param {any} value - Content/value
- * @note Use 'this' to access context in functions (e.g., this.variables, this.getvar, this.setvar)
+ * @param {any} value - Content
+ * @note Use 'this' to access context in function definitions (e.g., this.variables, this.getvar)
  */
 function define(name, value);
 
 /**
- * Get content of a quick reply entry
- * Only enabled quick reply sets can be accessed
+ * Read Quick Reply content
+ * Only works for enabled quick reply sets
  *
  * @param {string | RegExp} name - Quick reply set name
- * @param {string | RegExp} label - Quick reply entry label
- * @returns {string} Content of the quick reply
+ * @param {string | RegExp} label - Quick reply entry name
+ * @param {Object} [data={}] - Additional data
+ * @returns {string} - Quick reply content
  */
-async function getqr(name, label);
-async function getQuickReply(name, label);
+async function getqr(name, label, data = {});
+async function getQuickReply(name, label, data = {});
 
 /**
- * Get character card data
+ * Read raw character card data
+ * @note Returns unprocessed template data
  *
  * @param {string | RegExp} name - Character card name
- * @returns {Promise<v1CharData | null>} Character data object
+ * @returns {Promise<v1CharData | null>} - Character card data
  */
 async function getCharaData(name);
 
 /**
- * Get World Info data
+ * Read raw World Book data
+ * @note Returns unprocessed template data
  *
- * @param {string | RegExp} name - World Info name/UID
- * @returns {Promise<WorldInfoData | null>} World Info data object
+ * @param {string} name - World Book name/UID
+ * @returns {Promise<WorldInfoData[]>} - World Book entries list
  */
 async function getWorldInfoData(name);
 
 /**
- * Get quick reply set data
+ * Read raw Quick Reply data
+ * @note Returns unprocessed template data
  *
- * @param {string | RegExp} name - Quick reply set name
- * @returns {QuickReplySetLink | null} Quick reply set data
+ * @param {string | RegExp} name - Quick reply set name/UID
+ * @returns {QuickReplySetLink | null} - Quick reply data
  */
 function getQuickReplyData(name);
+
+/**
+ * Read activated World Book data
+ * @note Returns unprocessed template data
+ *
+ * @param {string} name - World Book name/UID
+ * @param {string} keyword - Activation keyword/content
+ * @returns {Promise<WorldInfoData[]>} - Activated World Book entries
+ */
+async function getWorldInfoActivatedData(name, keyword);
+
+/**
+ * Process template string
+ *
+ * @param {string} content - Template content to process
+ * @param {Object} [data={}] - Additional data
+ * @returns {Promise<string>} - Processed content
+ */
+async function evalTemplate(content, data = {});
 ```
 
 > `flags` types:

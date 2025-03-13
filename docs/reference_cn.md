@@ -127,7 +127,7 @@ async function getWorldInfo(worldinfo, title, data = {});
  *
  * @param {string | RegExp} name - 角色卡名字
  * @param {string} [template=DEFAULT_CHAR_DEFINE] - 输出格式
- * @param {Record<string, any>} [data={}] - 传递的数据
+ * @param {Object} [data={}] - 传递的数据
  * @returns {Promise<string>} - 角色卡定义的内容
  */
 async function getchr(name, template = DEFAULT_CHAR_DEFINE, data = {});
@@ -137,7 +137,7 @@ async function getChara(name, template = DEFAULT_CHAR_DEFINE, data = {});
  * 读取预设的提示词内容
  *
  * @param {string | RegExp} name - 提示词的名字
- * @param {Record<string, any>} [data={}] - 传递的数据
+ * @param {Object} [data={}] - 传递的数据
  * @returns {Promise<string>} - 预设的提示词的内容
  */
 async function getprp(name, data = {});
@@ -145,6 +145,7 @@ async function getPresetPrompt(name, data = {});
 
 /**
  * 定义全局变量/函数
+ * @note 一般用于在世界书内前置定义，然后在渲染时调用
  *
  * @param {string} name - 变量/函数名
  * @param {any} value - 变量/函数的内容
@@ -158,13 +159,15 @@ function define(name, value);
  *
  * @param {string | RegExp} name - 快速回复集名字
  * @param {string | RegExp} label - 快速回复条目名字
+ * @param {Object} [data={}] - 传递的数据
  * @returns {string} - 快速回复的内容
  */
-async function getqr(name, label);
-async function getQuickReply(name, label);
+async function getqr(name, label, data = {});
+async function getQuickReply(name, label, data = {});
 
 /**
  * 读取角色卡数据
+ * @note 返回数据未进行模板处理
  *
  * @param {string | RegExp} name - 角色卡名字
  * @returns {Promise<v1CharData | null>} - 角色卡的数据
@@ -173,19 +176,40 @@ async function getCharaData(name);
 
 /**
  * 读取世界书数据
+ * @note 返回数据未进行模板处理
  *
- * @param {string | RegExp} name - 世界书的名字/uid
- * @returns {Promise<WorldInfoData | null>} - 世界书的数据
+ * @param {string} name - 世界书的名字/uid
+ * @returns {Promise<WorldInfoData[]>} - 世界书的条目列表
  */
 async function getWorldInfoData(name);
 
 /**
  * 读取快速回复数据
+ * @note 返回数据未进行模板处理
  *
  * @param {string | RegExp} name - 世界书的名字/uid
  * @returns {QuickReplySetLink | null} - 世界书的数据
  */
 function getQuickReplyData(name);
+
+/**
+ * 读取世界书数据，并仅包含激活部分
+ * @note 返回数据未进行模板处理
+ *
+ * @param {string} name - 世界书的名字/uid
+ * @param {string} keyword - 用于激活世界书的关键字(内容)
+ * @returns {Promise<WorldInfoData[]>} - 世界书的条目列表
+ */
+async function getWorldInfoActivatedData(name, keyword);
+
+/**
+ * 对字符串内容进行模板处理
+ *
+ * @param {string} content - 要处理的字符串内容
+ * @param {Object} [data={}] - 传递的数据
+ * @returns {Promise<string>} - 处理后的字符串内容
+ */
+async function evalTemplate(content, data = {});
 ```
 
 > `flags` 类型:

@@ -3,7 +3,7 @@ import ejs from '../3rdparty/ejs.js';
 import vm from 'vm-browserify';
 import _ from 'lodash';
 import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.js';
-import { getWorldInfoEntryContent, getWorldInfoData } from './worldinfo';
+import { getWorldInfoEntryContent, getWorldInfoData, getWorldInfoActivatedEntries } from './worldinfo';
 import { allVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption } from './variables';
 import { getCharaDefs, DEFAULT_CHAR_DEFINE, getCharaData } from './characters';
 import { substituteParams, eventSource } from '../../../../../../script.js';
@@ -139,6 +139,11 @@ async function boundedQuickReply(this: Record<string, unknown>, name: string, la
     return substituteParams(await evalTemplate(reply, { ...this, ...data }));
 }
 
+async function boundedEvalTemplate(this: Record<string, unknown>, content: string,
+                                   data: Record<string, unknown> = {}) {
+    return substituteParams(await evalTemplate(content, { ...this, ...data }));
+}
+
 export async function prepareContext(end: number = 65535, env: Record<string, unknown> = {}): Promise<Record<string, unknown>> {
     let vars = allVariables(end);
     STATE.cache = vars;
@@ -184,6 +189,8 @@ export async function prepareContext(end: number = 65535, env: Record<string, un
         getCharaData: getCharaData.bind(context),
         getWorldInfoData: getWorldInfoData.bind(context),
         getQuickReplyData: getQuickReplyData.bind(context),
+        getWorldInfoActivatedData: getWorldInfoActivatedEntries.bind(context),
+        evalTemplate: boundedEvalTemplate.bind(context),
         ...boundCloneDefines(context, SharedDefines),
         ref: new WeakRef(context),
     });
