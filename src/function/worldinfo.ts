@@ -126,7 +126,7 @@ export async function getWorldInfoActivatedEntries(name: string, keyword: string
     const ungrouped = grouped['_UNGROUPED'] || [];
     if (ungrouped.length > 0 && _.size(grouped) <= 1) {
         // No grouping required
-        return ungrouped;
+        return ungrouped.sort((a, b) => a.order - b.order);
     }
 
     let matched: WorldInfoData[] = [];
@@ -172,7 +172,7 @@ export async function getWorldInfoActivatedEntries(name: string, keyword: string
         }
     }
 
-    return _.concat(ungrouped, matched);
+    return _.concat(ungrouped, matched).sort((a, b) => a.order - b.order);
 }
 
 function transformString(str: string, entry: WorldInfoData) {
