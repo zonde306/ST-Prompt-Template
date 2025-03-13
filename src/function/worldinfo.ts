@@ -122,8 +122,8 @@ export async function getWorldInfoActivatedEntries(name: string, keyword: string
     if (activated.size === 0)
         return [];
 
-    const grouped = _.groupBy(Array.from(activated), data => data.useGroupScoring ? data.group : '_UNGROUPED');
-    const ungrouped = grouped['_UNGROUPED'] || [];
+    const grouped = _.groupBy(Array.from(activated), data => data.group);
+    const ungrouped = grouped[''] || [];
     if (ungrouped.length > 0 && _.size(grouped) <= 1) {
         // No grouping required
         return ungrouped.sort((a, b) => a.order - b.order);
