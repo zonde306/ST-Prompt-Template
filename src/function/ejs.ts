@@ -107,18 +107,16 @@ function boundedDefine(this: Record<string, unknown>, name: string, value: unkno
 
 function boundCloneDefines(self: Record<string, unknown>, defines: Record<string, unknown> | unknown[]) {
     let result: Record<string, unknown> | unknown[] = {};
-    if (defines instanceof Array)
+    if (_.isArray(defines))
         result = [];
 
-    for (const name in defines) {
-        // @ts-expect-error
-        const value = defines[name];
-        if (typeof value === 'function') {
+    for (const [name, value] of _.entries(defines)) {
+        if (_.isFunction(value)) {
             // @ts-expect-error
             result[name] = value.bind(self);
-        } else if (typeof value === 'object' && value !== null) {
+        } else if (_.isObject(value)) {
             // @ts-expect-error
-            result[name] = boundCloneDefines.call(self, value);
+            result[name] = boundCloneDefines(self, value);
         } else {
             // @ts-expect-error
             result[name] = value;
