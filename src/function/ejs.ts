@@ -114,7 +114,7 @@ function boundCloneDefines(self: Record<string, unknown>, defines: Record<string
         if (_.isFunction(value)) {
             // @ts-expect-error
             result[name] = value.bind(self);
-        } else if (_.isObject(value)) {
+        } else if (_.isArray(value) || _.isPlainObject(value)) {
             // @ts-expect-error
             result[name] = boundCloneDefines(self, value);
         } else {
