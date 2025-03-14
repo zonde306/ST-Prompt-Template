@@ -210,6 +210,18 @@ async function getWorldInfoActivatedData(name, keyword);
  * @returns {Promise<string>} - Processed content
  */
 async function evalTemplate(content, data = {});
+
+/**
+ * Get all possible entries of World Books that might be used.
+ * @note This includes entries that are disabled.
+ *
+ * @param {boolean} chara - Whether to include knowledge books embedded in character cards
+ * @param {boolean} global - Whether to include globally enabled World/Knowledge Books
+ * @param {boolean} persona - Whether to include World Books related to the user's persona
+ * @param {boolean} charaExtra - Whether to include additional knowledge books attached to character cards
+ * @returns {Promise<WorldInfoData[]>} - List of World Book entries
+ */
+async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true);
 ```
 
 > `flags` types:

@@ -1,14 +1,14 @@
 // @ts-expect-error
 import vm from 'vm-browserify';
 import _ from 'lodash';
-import { ChatData, GenerateData, Message } from './defines';
+import { GenerateData, Message } from './defines';
 import { eventSource, event_types, chat, saveChatConditional, messageFormatting } from '../../../../../script.js';
 import { prepareContext, evalTemplate, getSyntaxErrorInfo } from './function/ejs';
 import { STATE } from './function/variables';
 import { getTokenCountAsync } from '../../../../tokenizers.js';
 import { extension_settings } from '../../../../extensions.js';
+import { getEnabledWorldInfoEntries } from './function/worldinfo';
 
-let fullChanged = false;
 let runID = 0;
 let isFakeRun = false;
 
@@ -43,7 +43,7 @@ function updateTokens(prompts : string, type: 'send' | 'receive') {
 
 async function updateGenerate(data: GenerateData) {
     STATE.isDryRun = false;
-    let start = Date.now();
+    const start = Date.now();
 
     const env = await prepareContext(65535, {
         runType: 'generate',
@@ -69,59 +69,8 @@ async function updateGenerate(data: GenerateData) {
         }
     }
 
-    let end = Date.now() - start;
+    const end = Date.now() - start;
     console.log(`[Prompt Template] processing ${data.messages.length} messages in ${end}ms`);
-
-    await checkAndSave();
-    updateTokens(prompts, 'send');
-}
-
-async function updatePromptPreparation(data: ChatData) {
-    if (!fullChanged) return;
-    STATE.isDryRun = true;
-    let start = Date.now();
-
-    const env = await prepareContext(65535, {
-        runType: 'preparation',
-        runID: runID++
-    });
-
-    let prompts = '';
-    for (const [idx, message] of data.chat.entries()) {
-        try {
-            const newContent = await evalTemplate(message.content, env);
-            
-            // only update in dryRun to avoid duplicate updates
-            if(data.dryRun)
-                message.content = newContent
-            
-            prompts += newContent;
-        } catch (err) {
-            const contentWithLines = message.content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
-            console.debug(`[Prompt Template] handling prompt errors #${idx}:\n${contentWithLines}`);
-
-            if(err instanceof SyntaxError)
-                err.message += getSyntaxErrorInfo(message.content);
-
-            console.error(err);
-
-            // @ts-expect-error
-            toastr.error(err.message, `EJS Error #${idx}`);
-        }
-    }
-
-    fullChanged = false;
-    console.log('[Prompt Template] * UPDATE ALL MESSAGES *');
-    for (const mes of $('div.mes[mesid]')) {
-        const message_id = $(mes).attr('mesid');
-        if (message_id) {
-            // Temporary fix for unable to initialize variables
-            await updateMessageRender(message_id, true);
-        }
-    }
-
-    let end = Date.now() - start;
-    console.log(`[Prompt Template] processing ${data.chat.length} messages in ${end}ms`);
 
     await checkAndSave();
     updateTokens(prompts, 'send');
@@ -132,7 +81,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
 
     STATE.isDryRun = !!isDryRun;
 
-    let start = Date.now();
+    const start = Date.now();
 
     if (!message_id) {
         console.warn(`chat message message_id is empty`);
@@ -223,13 +172,54 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         message.is_initial = [];
     message.is_initial[message.swipe_id || 0] = true;
     
-    let end = Date.now() - start;
+    const end = Date.now() - start;
     console.log(`[Prompt Template] processing #${message_idx} messages in ${end}ms`);
 
     await checkAndSave();
 
     if(!isDryRun)
         updateTokens(container.text(), 'receive');
+}
+
+async function handlePreloadWorldInfo() {
+    STATE.isDryRun = true;
+    const start = Date.now();
+
+    const worldInfoData = (await getEnabledWorldInfoEntries()).filter(data => !data.disable);
+
+    const env = await prepareContext(65535, {
+        runType: 'preparation',
+        runID: runID++
+    });
+
+    for(const data of worldInfoData) {
+        try {
+            await evalTemplate(data.content, env);
+        } catch (err) {
+            const contentWithLines = data.content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
+            console.debug(`[Prompt Template] handling preload errors #${data.world}.${data.comment}:\n${contentWithLines}`);
+
+            if(err instanceof SyntaxError)
+                err.message += getSyntaxErrorInfo(data.content);
+
+            console.error(err);
+
+            // @ts-expect-error
+            toastr.error(err.message, `EJS Error #${data.world}.${data.comment}`);
+            return;
+        }
+    }
+
+    const end = Date.now() - start;
+    console.log(`[Prompt Template] processing ${worldInfoData.length} world info in ${end}ms`);
+
+    console.log('[Prompt Template] *** UPDATE ALL MESSAGES ***');
+    for (const mes of $('div.mes[mesid]')) {
+        const message_id = $(mes).attr('mesid');
+        if (message_id) {
+            await updateMessageRender(message_id, true);
+        }
+    }
 }
 
 const MESSAGE_RENDER_EVENTS = [
@@ -241,13 +231,12 @@ const MESSAGE_RENDER_EVENTS = [
 
 export async function init() {
     eventSource.on(event_types.CHAT_COMPLETION_SETTINGS_READY, updateGenerate);
-    eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, updatePromptPreparation);
-    eventSource.on(event_types.CHAT_CHANGED, () => fullChanged = true);
+    eventSource.on(event_types.CHAT_CHANGED, handlePreloadWorldInfo);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.on(e, updateMessageRender));
 }
 
 export async function exit() {
     eventSource.removeListener(event_types.CHAT_COMPLETION_SETTINGS_READY, updateGenerate);
-    eventSource.removeListener(event_types.CHAT_COMPLETION_PROMPT_READY, updatePromptPreparation);
+    eventSource.removeListener(event_types.CHAT_CHANGED, handlePreloadWorldInfo);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.removeListener(e, updateMessageRender));
 }

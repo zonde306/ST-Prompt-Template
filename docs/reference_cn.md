@@ -210,6 +210,18 @@ async function getWorldInfoActivatedData(name, keyword);
  * @returns {Promise<string>} - 处理后的字符串内容
  */
 async function evalTemplate(content, data = {});
+
+/**
+ * 获取所有可能会使用的世界书的全部条目
+ * @note 即使是已禁用的条目也会返回
+ *
+ * @param {boolean} chara - 是否包含角色卡内嵌的知识书
+ * @param {boolean} global - 是否包含全局启用的世界/知识书书
+ * @param {boolean} persona - 是否包含用户角色的世界书
+ * @param {boolean} charaExtra - 是否包含角色卡附加的知识书
+ * @returns {Promise<WorldInfoData[]>} - 世界书的条目列表
+ */
+async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true);
 ```
 
 > `flags` 类型:

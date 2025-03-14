@@ -1,5 +1,7 @@
-import { loadWorldInfo, parseRegexFromString, world_info_case_sensitive, world_info_match_whole_words, world_info_logic, world_info_use_group_scoring, DEFAULT_WEIGHT } from '../../../../../world-info.js';
-import { substituteParams } from '../../../../../../script.js';
+import { loadWorldInfo, parseRegexFromString, world_info_case_sensitive, world_info_match_whole_words, world_info_logic, world_info_use_group_scoring, DEFAULT_WEIGHT, METADATA_KEY, selected_world_info, world_info } from '../../../../../world-info.js';
+import { substituteParams, chat_metadata, this_chid } from '../../../../../../script.js';
+import { power_user } from '../../../../../power-user.js';
+import { getCharaFilename } from '../../../../../utils.js';
 
 export interface WorldInfoData {
     uid: number;
@@ -34,6 +36,7 @@ export interface WorldInfoData {
     cooldown: number;
     delay: number;
     displayIndex: number;
+    world: string;
 }
 
 export interface WorldInfo {
@@ -46,7 +49,7 @@ export async function getWorldInfoData(name: string): Promise<WorldInfoData[]> {
     if (!lorebook)
         return [];
 
-    return _.values(lorebook.entries)
+    return _.values(lorebook.entries).map(({ uid, ...rest }) => ({ ...rest, uid: Number(uid), world: name })).sort((a, b) => a.order - b.order);
 }
 
 export async function getWorldInfoTitles(name: string): Promise<string[]> {
@@ -248,4 +251,61 @@ function getScore(haystack: string, entry: WorldInfoData) {
     }
 
     return primaryScore;
+}
+
+export async function getEnabledWorldInfoEntries(chara : boolean = true, global : boolean = true, persona : boolean = true, charaExtra : boolean = true) {
+    let results : WorldInfoData[] = [];
+    if (chara) {
+        // @ts-expect-error
+        const chatWorld : string = chat_metadata[METADATA_KEY];
+        if (chatWorld && !selected_world_info.includes(chatWorld)) {
+            const worldInfo = await getWorldInfoData(chatWorld);
+            if (worldInfo.length > 0) {
+                results = results.concat(worldInfo);
+            }
+        }
+    }
+
+    if (global) {
+        for (const world of selected_world_info) {
+            const worldInfo = await getWorldInfoData(world);
+            if (worldInfo.length > 0) {
+                results = results.concat(worldInfo);
+            }
+        }
+    }
+
+    if (persona) {
+        // @ts-expect-error
+        const chatWorld : string = chat_metadata[METADATA_KEY];
+        const personaWorld : string = power_user.persona_description_lorebook;
+        if(personaWorld && personaWorld !== chatWorld && !selected_world_info.includes(personaWorld)) {
+            const worldInfo = await getWorldInfoData(personaWorld);
+            if (worldInfo.length > 0) {
+                results = results.concat(worldInfo);
+            }
+        }
+    }
+
+    if (charaExtra) {
+        const fileName = getCharaFilename(this_chid);
+        if (fileName) {
+            // @ts-expect-error
+            const extraCharLore = world_info.charLore?.find((e) => e.name === fileName);
+            if (extraCharLore && ~_.isArray(extraCharLore.extraBooks)) {
+                // @ts-expect-error
+                const primaryBook : string = chat_metadata[METADATA_KEY];
+                for(const book of extraCharLore.extraBooks) {
+                    if (book !== primaryBook && !selected_world_info.includes(book)) {
+                        const worldInfo = await getWorldInfoData(book);
+                        if (worldInfo.length > 0) {
+                            results = results.concat(worldInfo);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return results.sort((a, b) => a.order - b.order);
 }
