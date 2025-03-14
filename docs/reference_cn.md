@@ -125,13 +125,13 @@ async function getWorldInfo(worldinfo, title, data = {});
 /**
  * 读取角色卡定义
  *
- * @param {string | RegExp} name - 角色卡名字
+ * @param {string | RegExp | number} [name=this_chid] - 角色卡名字/ID
  * @param {string} [template=DEFAULT_CHAR_DEFINE] - 输出格式
  * @param {Object} [data={}] - 传递的数据
  * @returns {Promise<string>} - 角色卡定义的内容
  */
-async function getchr(name, template = DEFAULT_CHAR_DEFINE, data = {});
-async function getChara(name, template = DEFAULT_CHAR_DEFINE, data = {});
+async function getchr(name = this_chid, template = DEFAULT_CHAR_DEFINE, data = {});
+async function getChara(name = this_chid, template = DEFAULT_CHAR_DEFINE, data = {});
 
 /**
  * 读取预设的提示词内容
@@ -169,10 +169,10 @@ async function getQuickReply(name, label, data = {});
  * 读取角色卡数据
  * @note 返回数据未进行模板处理
  *
- * @param {string | RegExp} name - 角色卡名字
+ * @param {string | RegExp | number} [name=this_chid] - 角色卡名字/ID
  * @returns {Promise<v1CharData | null>} - 角色卡的数据
  */
-async function getCharaData(name);
+async function getCharaData(name = this_chid);
 
 /**
  * 读取世界书数据

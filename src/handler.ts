@@ -8,6 +8,7 @@ import { STATE } from './function/variables';
 import { getTokenCountAsync } from '../../../../tokenizers.js';
 import { extension_settings } from '../../../../extensions.js';
 import { getEnabledWorldInfoEntries } from './function/worldinfo';
+import { getCharaDefs } from './function/characters';
 
 let runID = 0;
 let isFakeRun = false;
@@ -206,6 +207,26 @@ async function handlePreloadWorldInfo() {
 
             // @ts-expect-error
             toastr.error(err.message, `EJS Error #${data.world}.${data.comment}`);
+            return;
+        }
+    }
+
+    const charaDef = getCharaDefs();
+    if (charaDef?.description || charaDef?.scenario) {
+        const content = (charaDef.description || '') + '\n---\n' + (charaDef.scenario || '');
+        try {
+            await evalTemplate(content, env);
+        } catch (err) {
+            const contentWithLines = content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
+            console.debug(`[Prompt Template] handling preload errors ${charaDef.name}:\n${contentWithLines}`);
+
+            if(err instanceof SyntaxError)
+                err.message += getSyntaxErrorInfo(content);
+
+            console.error(err);
+
+            // @ts-expect-error
+            toastr.error(err.message, `EJS Error ${charaDef.name}`);
             return;
         }
     }

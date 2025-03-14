@@ -125,13 +125,13 @@ async function getWorldInfo(worldinfo, title, data = {});
 /**
  * Read character card definition
  *
- * @param {string | RegExp} name - Character card name
+ * @param {string | RegExp | number} [name=this_chid] - Character card name/ID
  * @param {string} [template=DEFAULT_CHAR_DEFINE] - Output format
  * @param {Object} [data={}] - Additional data
  * @returns {Promise<string>} - Character card content
  */
-async function getchr(name, template = DEFAULT_CHAR_DEFINE, data = {});
-async function getChara(name, template = DEFAULT_CHAR_DEFINE, data = {});
+async function getchr(name = this_chid, template = DEFAULT_CHAR_DEFINE, data = {});
+async function getChara(name = this_chid, template = DEFAULT_CHAR_DEFINE, data = {});
 
 /**
  * Read preset prompt content
@@ -169,10 +169,10 @@ async function getQuickReply(name, label, data = {});
  * Read raw character card data
  * @note Returns unprocessed template data
  *
- * @param {string | RegExp} name - Character card name
+ * @param {string | RegExp | number} [name=this_chid] - Character card name/ID
  * @returns {Promise<v1CharData | null>} - Character card data
  */
-async function getCharaData(name);
+async function getCharaData(name = this_chid);
 
 /**
  * Read raw World Book data

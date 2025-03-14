@@ -1,8 +1,10 @@
-import { characters } from '../../../../../../script.js';
+import { characters, this_chid } from '../../../../../../script.js';
 import { v1CharData } from '../../../../../char-data.js';
 
-export function getCharaData(name : string | RegExp) : v1CharData | null {
-    const char = characters.find(c => c.name === name || c.name.match(name));
+export function getCharaData(name : string | RegExp | number = this_chid) : v1CharData | null {
+    name = name || this_chid;
+    // @ts-expect-error
+    const char = characters[name] || characters.find(c => c.name === name || c.name.match(name));
     if (!char)
         return null;
     return char;
@@ -46,7 +48,7 @@ System: <%- depth_prompt %>
 <% } %>\
 `;
 
-export function getCharaDefs(name : string | RegExp) {
+export function getCharaDefs(name : string | RegExp | number = this_chid) {
     const char = getCharaData(name);
     if (!char)
         return null;
