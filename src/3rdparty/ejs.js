@@ -588,7 +588,7 @@ Template.prototype = {
       this.generateSource();
       prepended +=
         '  var __output = "";\n' +
-        '  function __append(s) { if (s !== undefined && s !== null) __output += s }\n';
+        '  function __append(...args) { args.filter(x => x !== undefined && x !== null).forEach(s => __output += s) }\n';
       if (opts.outputFunctionName) {
         if (!_JS_IDENTIFIER.test(opts.outputFunctionName)) {
           throw new Error('outputFunctionName is not a valid JS identifier.');

@@ -222,6 +222,14 @@ async function evalTemplate(content, data = {});
  * @returns {Promise<WorldInfoData[]>} - 世界书的条目列表
  */
 async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true);
+
+/**
+ * 输出一个或更多字符串
+ * @note 不能在 <%- 或者 <%= 语句块内使用
+ *
+ * @param {string} args - 字符串内容
+ */
+function print(...args);
 ```
 
 > `flags` 类型:

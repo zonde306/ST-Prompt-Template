@@ -222,6 +222,14 @@ async function evalTemplate(content, data = {});
  * @returns {Promise<WorldInfoData[]>} - List of World Book entries
  */
 async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true);
+
+/**
+ * Output one or more strings
+ * @note Cannot be used inside <%- or <%= statement blocks
+ *
+ * @param {string} args - String content
+ */
+function print(...args);
 ```
 
 > `flags` types:
