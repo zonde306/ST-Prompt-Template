@@ -175,6 +175,43 @@ async function getQuickReply(name, label, data = {});
 async function getCharaData(name = this_chid);
 
 /**
+ * @typedef {Object} WorldInfoData
+ * @property {number} uid
+ * @property {Array<string>} key
+ * @property {Array<string>} keysecondary
+ * @property {string} comment
+ * @property {string} content
+ * @property {boolean} constant
+ * @property {boolean} vectorized
+ * @property {boolean} selective
+ * @property {number} selectiveLogic
+ * @property {boolean} addMemo
+ * @property {number} order
+ * @property {number} position
+ * @property {boolean} disable
+ * @property {boolean} excludeRecursion
+ * @property {boolean} preventRecursion
+ * @property {boolean} delayUntilRecursion
+ * @property {number} probability
+ * @property {boolean} useProbability
+ * @property {number} depth
+ * @property {string} group
+ * @property {boolean} groupOverride
+ * @property {number} groupWeight
+ * @property {(number|null)} scanDepth
+ * @property {(boolean|null)} caseSensitive
+ * @property {(number|null)} matchWholeWords
+ * @property {(boolean|null)} useGroupScoring
+ * @property {string} automationId
+ * @property {(number|null)} role
+ * @property {number} sticky
+ * @property {number} cooldown
+ * @property {number} delay
+ * @property {number} displayIndex
+ * @property {string} world
+ */
+
+/**
  * 读取世界书数据
  * @note 返回数据未进行模板处理
  *
