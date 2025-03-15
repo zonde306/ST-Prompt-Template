@@ -43,6 +43,7 @@ const CODE_TEMPLATE = `
             cache: false,
             context: data,
             client: false,
+            outputFunctionName: 'print',
         },
     );
 `;
