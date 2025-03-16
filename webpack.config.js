@@ -2,7 +2,7 @@ import { resolve as _resolve } from 'path';
 import TerserPlugin from 'terser-webpack-plugin';
 
 const serverConfig = {
-    devtool: false,
+    devtool: 'source-map',
     target: 'browserslist',
     entry: './src/index.ts',
     output: {
@@ -18,7 +18,14 @@ const serverConfig = {
         rules: [
             {
                 test: /\.ts$/,
-                use: 'babel-loader',
+                use: [
+                    {
+                        loader: 'babel-loader',
+                        options: {
+                            sourceMaps: true,
+                        },
+                    }
+                ],
                 exclude: /node_modules/,
             },
             {
@@ -29,6 +36,7 @@ const serverConfig = {
                     presets: [
                         ['@babel/preset-env', { "modules": false }],
                     ],
+                    sourceMaps: true,
                 },
                 loader: 'babel-loader',
             },
