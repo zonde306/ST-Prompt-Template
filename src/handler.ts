@@ -3,7 +3,7 @@ import vm from 'vm-browserify';
 import _ from 'lodash';
 import { GenerateData, Message } from './defines';
 import { eventSource, event_types, chat, saveChatConditional, messageFormatting } from '../../../../../script.js';
-import { prepareContext, evalTemplate, getSyntaxErrorInfo } from './function/ejs';
+import { prepareContext, evalTemplate, getSyntaxErrorInfo, escape } from './function/ejs';
 import { STATE } from './function/variables';
 import { getTokenCountAsync } from '../../../../tokenizers.js';
 import { extension_settings } from '../../../../extensions.js';
@@ -24,20 +24,10 @@ async function updateGenerate(data: GenerateData) {
 
     let prompts = '';
     for (const [idx, message] of data.messages.entries()) {
-        try {
-            message.content = await evalTemplate(message.content, env);
-            prompts += message.content;
-        } catch (err) {
-            const contentWithLines = message.content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
-            console.debug(`[Prompt Template] handling prompt errors #${idx}:\n${contentWithLines}`);
-
-            if(err instanceof SyntaxError)
-                err.message += getSyntaxErrorInfo(message.content);
-
-            console.error(err);
-
-            // @ts-expect-error
-            toastr.error(err.message, `EJS Error #${idx}`);
+        const prompt = await evalTemplateHandler(message.content, env, `message #${idx + 1}(${message.role})`);
+        if(prompt) {
+            message.content = prompt;
+            prompts += prompt;
         }
     }
 
@@ -98,35 +88,20 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         is_system: message.is_system,
         name: message.name,
     });
+
     const content = html.replaceAll('&lt;%', '<%').replaceAll('%&gt;', '%>');
-    let newContent = '';
+
     let hasHTML = false;
-
-    try {
-        newContent = await evalTemplate(
-            content,
-            env,
-            (markup : string) => {
-                hasHTML = true;
-                return messageFormatting(markup, message.name, message.is_system, message.is_user, message_idx);
-            },
-        );
-    } catch (err) {
-        const contentWithLines = content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
-        console.debug(`[Prompt Template] handling chat message errors #${message_idx}:\n${contentWithLines}`);
-
-        if(err instanceof SyntaxError)
-            err.message += getSyntaxErrorInfo(content);
-
-        console.error(err);
-
-        // @ts-expect-error
-        toastr.error(err.message, `EJS Error #${message_idx}`);
-        return;
-    }
+    let newContent = await evalTemplateHandler(content, env,
+        `chat #${message_idx}`,
+        (markup : string) => {
+            hasHTML = true;
+            return messageFormatting(markup, message.name, message.is_system, message.is_user, message_idx);
+        }
+    );
 
     // update if changed
-    if (newContent !== content)
+    if (newContent && newContent !== content)
         container.empty().append(newContent);
 
     if(hasHTML && isDryRun) {
@@ -165,41 +140,13 @@ async function handlePreloadWorldInfo() {
     });
 
     for(const data of worldInfoData) {
-        try {
-            await evalTemplate(data.content, env);
-        } catch (err) {
-            const contentWithLines = data.content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
-            console.debug(`[Prompt Template] handling preload errors #${data.world}.${data.comment}:\n${contentWithLines}`);
-
-            if(err instanceof SyntaxError)
-                err.message += getSyntaxErrorInfo(data.content);
-
-            console.error(err);
-
-            // @ts-expect-error
-            toastr.error(err.message, `EJS Error #${data.world}.${data.comment}`);
-            return;
-        }
+        await evalTemplateHandler(data.content, env, `worldinfo ${data.world}.${data.comment}`);
     }
 
     const charaDef = getCharaDefs();
     if (charaDef?.description || charaDef?.scenario) {
         const content = (charaDef.description || '') + '\n---\n' + (charaDef.scenario || '');
-        try {
-            await evalTemplate(content, env);
-        } catch (err) {
-            const contentWithLines = content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
-            console.debug(`[Prompt Template] handling preload errors ${charaDef.name}:\n${contentWithLines}`);
-
-            if(err instanceof SyntaxError)
-                err.message += getSyntaxErrorInfo(content);
-
-            console.error(err);
-
-            // @ts-expect-error
-            toastr.error(err.message, `EJS Error ${charaDef.name}`);
-            return;
-        }
+        await evalTemplateHandler(content, env, `character ${charaDef.name}`);
     }
 
     const end = Date.now() - start;
@@ -241,6 +188,29 @@ function updateTokens(prompts : string, type: 'send' | 'receive') {
             }
         });
     });
+}
+
+async function evalTemplateHandler(content: string,
+                                           env: Record<string, unknown>,
+                                           where : string = '',
+                                           escaper : ((markup: string) => string) = escape) :
+                                           Promise<string | null> {
+    try {
+        return await evalTemplate(content, env, escaper);
+    } catch (err) {
+        const contentWithLines = content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
+        console.debug(`[Prompt Template] handling ${where} errors:\n${contentWithLines}`);
+
+        if(err instanceof SyntaxError)
+            err.message += getSyntaxErrorInfo(content);
+
+        console.error(err);
+
+        // @ts-expect-error
+        toastr.error(err.message, `EJS Error`);
+    }
+
+    return null;
 }
 
 const MESSAGE_RENDER_EVENTS = [
