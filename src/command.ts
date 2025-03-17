@@ -1,7 +1,7 @@
 import { SlashCommand } from '../../../../slash-commands/SlashCommand.js';
 import { ARGUMENT_TYPE, SlashCommandArgument, SlashCommandNamedArgument } from '../../../../slash-commands/SlashCommandArgument.js';
 import { SlashCommandParser } from '../../../../slash-commands/SlashCommandParser.js';
-import { evalTemplate, prepareContext, lint } from './function/ejs';
+import { evalTemplate, prepareContext, getSyntaxErrorInfo } from './function/ejs';
 import { STATE } from './function/variables';
 
 SlashCommandParser.addCommandObject(SlashCommand.fromProps({
@@ -21,7 +21,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         } catch (err) {
             if (err instanceof SyntaxError) {
                 // @ts-expect-error: TS2322
-                throw lint(value);
+                err.message += getSyntaxErrorInfo(value);
             }
             throw err;
         }
