@@ -13,35 +13,6 @@ import { getCharaDefs } from './function/characters';
 let runID = 0;
 let isFakeRun = false;
 
-async function checkAndSave() {
-    if (STATE.isUpdated)
-        await saveChatConditional();
-
-    STATE.isUpdated = false;
-}
-
-function updateTokens(prompts : string, type: 'send' | 'receive') {
-    window.setTimeout(() => {
-        getTokenCountAsync(prompts).then(count => {
-            console.log(`[Prompt Template] processing ${type} result: ${count} tokens and ${prompts.length} chars`);
-            switch (type) {
-                case 'send':
-                    // @ts-expect-error
-                    extension_settings.variables.global.LAST_SEND_TOKENS = count;
-                    // @ts-expect-error
-                    extension_settings.variables.global.LAST_SEND_CHARS = prompts.length;
-                    break;
-                case 'receive':
-                    // @ts-expect-error
-                    extension_settings.variables.global.LAST_RECEIVE_TOKENS = count;
-                    // @ts-expect-error
-                    extension_settings.variables.global.LAST_RECEIVE_CHARS = prompts.length;
-                    break;
-            }
-        });
-    });
-}
-
 async function updateGenerate(data: GenerateData) {
     STATE.isDryRun = false;
     const start = Date.now();
@@ -241,6 +212,35 @@ async function handlePreloadWorldInfo() {
             await updateMessageRender(message_id, true);
         }
     }
+}
+
+async function checkAndSave() {
+    if (STATE.isUpdated)
+        await saveChatConditional();
+
+    STATE.isUpdated = false;
+}
+
+function updateTokens(prompts : string, type: 'send' | 'receive') {
+    window.setTimeout(() => {
+        getTokenCountAsync(prompts).then(count => {
+            console.log(`[Prompt Template] processing ${type} result: ${count} tokens and ${prompts.length} chars`);
+            switch (type) {
+                case 'send':
+                    // @ts-expect-error
+                    extension_settings.variables.global.LAST_SEND_TOKENS = count;
+                    // @ts-expect-error
+                    extension_settings.variables.global.LAST_SEND_CHARS = prompts.length;
+                    break;
+                case 'receive':
+                    // @ts-expect-error
+                    extension_settings.variables.global.LAST_RECEIVE_TOKENS = count;
+                    // @ts-expect-error
+                    extension_settings.variables.global.LAST_RECEIVE_CHARS = prompts.length;
+                    break;
+            }
+        });
+    });
 }
 
 const MESSAGE_RENDER_EVENTS = [

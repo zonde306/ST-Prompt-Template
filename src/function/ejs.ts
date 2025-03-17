@@ -17,12 +17,12 @@ interface IncluderResult {
     template: string;
 }
 
-function include(originalPath: string, _parsedPath: string): IncluderResult {
+export function include(originalPath: string, _parsedPath: string): IncluderResult {
     console.warn(`[Prompt Template] include not implemented`);
     return { filename: originalPath, template: '' };
 }
 
-function escape(markup: string): string {
+export function escape(markup: string): string {
     // don't escape any XML tags
     return markup;
 }
@@ -49,15 +49,18 @@ const CODE_TEMPLATE = `
 `;
 
 export async function evalTemplate(content: string, data: Record<string, unknown>,
-    escaper: (markup: string) => string = escape,
+    escaper: ((markup: string) => string) = escape,
     includer: (originalPath: string, parsedPath: string) => IncluderResult = include) {
-    return await vm.runInNewContext(CODE_TEMPLATE, {
+    await eventSource.emit('prompt_template_evaluation', { content, data });
+    let result = await vm.runInNewContext(CODE_TEMPLATE, {
         ejs,
         content,
         data,
-        escaper: escaper,
-        includer: includer,
+        escaper: escaper || escape,
+        includer: includer || include,
     });
+    await eventSource.emit('prompt_template_evaluation_post', { result, data });
+    return result;
 }
 
 async function boundedImport(this: Record<string, unknown>,
