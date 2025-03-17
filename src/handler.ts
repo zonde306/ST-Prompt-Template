@@ -22,14 +22,22 @@ async function updateGenerate(data: GenerateData) {
         runID: runID++
     });
 
-    let prompts = '';
+    const before = await processSpecialEntities(env, '[GENERATE:BEFORE]');
+
+    let prompts = before;
     for (const [idx, message] of data.messages.entries()) {
         const prompt = await evalTemplateHandler(message.content, env, `message #${idx + 1}(${message.role})`);
-        if(prompt) {
+        if (prompt) {
             message.content = prompt;
             prompts += prompt;
         }
     }
+
+    const after = await processSpecialEntities(env, '[GENERATE:AFTER]');
+    prompts += after;
+
+    data.messages[0].content = before + data.messages[0].content;
+    data.messages[data.messages.length - 1].content += after;
 
     const end = Date.now() - start;
     console.log(`[Prompt Template] processing ${data.messages.length} messages in ${end}ms`);
@@ -39,7 +47,7 @@ async function updateGenerate(data: GenerateData) {
 }
 
 async function updateMessageRender(message_id: string, isDryRun?: boolean) {
-    if(isFakeRun) return;
+    if (isFakeRun) return;
 
     STATE.isDryRun = !!isDryRun;
 
@@ -69,8 +77,8 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         return;
     }
 
-    if(isDryRun) {
-        if(message?.is_initial?.[message_idx]) {
+    if (isDryRun) {
+        if (message?.is_initial?.[message_idx]) {
             console.info(`chat message #${message_id} is initialized, skipping`);
             return;
         }
@@ -89,42 +97,47 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         name: message.name,
     });
 
+    const before = await processSpecialEntities(env, '[RENDER:BEFORE]');
     const content = html.replaceAll('&lt;%', '<%').replaceAll('%&gt;', '%>');
 
     let hasHTML = false;
     let newContent = await evalTemplateHandler(content, env,
         `chat #${message_idx}`,
-        (markup : string) => {
+        (markup: string) => {
             hasHTML = true;
             return messageFormatting(markup, message.name, message.is_system, message.is_user, message_idx);
         }
     );
 
+    const after = await processSpecialEntities(env, '[RENDER:AFTER]');
+    if(newContent)
+        newContent = before + newContent + after;
+
     // update if changed
     if (newContent && newContent !== content)
         container.empty().append(newContent);
 
-    if(hasHTML && isDryRun) {
+    if (hasHTML && isDryRun) {
         isFakeRun = true;
         console.debug(`[HTML] rendering #${message_idx} messages`);
-        if(message.is_user) {
+        if (message.is_user) {
             await eventSource.emit(event_types.USER_MESSAGE_RENDERED, message_idx);
-        } else if(!message.is_system) {
+        } else if (!message.is_system) {
             await eventSource.emit(event_types.CHARACTER_MESSAGE_RENDERED, message_idx);
         }
         isFakeRun = false;
     }
 
-    if(!message.is_initial)
+    if (!message.is_initial)
         message.is_initial = [];
     message.is_initial[message.swipe_id || 0] = true;
-    
+
     const end = Date.now() - start;
     console.log(`[Prompt Template] processing #${message_idx} messages in ${end}ms`);
 
     await checkAndSave();
 
-    if(!isDryRun)
+    if (!isDryRun)
         updateTokens(container.text(), 'receive');
 }
 
@@ -139,7 +152,7 @@ async function handlePreloadWorldInfo() {
         runID: runID++
     });
 
-    for(const data of worldInfoData) {
+    for (const data of worldInfoData) {
         await evalTemplateHandler(data.content, env, `worldinfo ${data.world}.${data.comment}`);
     }
 
@@ -168,7 +181,7 @@ async function checkAndSave() {
     STATE.isUpdated = false;
 }
 
-function updateTokens(prompts : string, type: 'send' | 'receive') {
+function updateTokens(prompts: string, type: 'send' | 'receive') {
     window.setTimeout(() => {
         getTokenCountAsync(prompts).then(count => {
             console.log(`[Prompt Template] processing ${type} result: ${count} tokens and ${prompts.length} chars`);
@@ -191,17 +204,17 @@ function updateTokens(prompts : string, type: 'send' | 'receive') {
 }
 
 async function evalTemplateHandler(content: string,
-                                           env: Record<string, unknown>,
-                                           where : string = '',
-                                           escaper : ((markup: string) => string) = escape) :
-                                           Promise<string | null> {
+    env: Record<string, unknown>,
+    where: string = '',
+    escaper: ((markup: string) => string) = escape):
+    Promise<string | null> {
     try {
         return await evalTemplate(content, env, escaper);
     } catch (err) {
         const contentWithLines = content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
         console.debug(`[Prompt Template] handling ${where} errors:\n${contentWithLines}`);
 
-        if(err instanceof SyntaxError)
+        if (err instanceof SyntaxError)
             err.message += getSyntaxErrorInfo(content);
 
         console.error(err);
@@ -211,6 +224,18 @@ async function evalTemplateHandler(content: string,
     }
 
     return null;
+}
+
+async function processSpecialEntities(env: Record<string, unknown>, prefix : string) {
+    const worldInfoData = (await getEnabledWorldInfoEntries()).filter(data => data.disable && data.comment.startsWith(prefix));
+    let prompt = '';
+    for(const data of worldInfoData) {
+        const result = await evalTemplateHandler(data.content, env, `worldinfo ${data.world}.${data.comment}`);
+        if(result)
+            prompt += result;
+    }
+
+    return prompt;
 }
 
 const MESSAGE_RENDER_EVENTS = [

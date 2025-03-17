@@ -7,7 +7,7 @@ export interface WorldInfoData {
     uid: number;
     key: string[];
     keysecondary: string[];
-    comment: string;
+    comment: string;            // title
     content: string;
     constant: boolean;
     vectorized: boolean;
