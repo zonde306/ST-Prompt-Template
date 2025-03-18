@@ -80,7 +80,6 @@ export async function getWorldInfoActivatedEntries(name: string, keywords: strin
 
 export function selectActivatedEntries(entries: WorldInfoData[], keywords: string, withConstant : boolean = false) {
     let activated: Set<WorldInfoData> = new Set<WorldInfoData>();
-    const messages = chat.length;
     for (const data of entries) {
         if(data.constant && !withConstant)
             continue;
