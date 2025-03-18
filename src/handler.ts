@@ -7,7 +7,7 @@ import { prepareContext, evalTemplate, getSyntaxErrorInfo, escape } from './func
 import { STATE } from './function/variables';
 import { getTokenCountAsync } from '../../../../tokenizers.js';
 import { extension_settings } from '../../../../extensions.js';
-import { getEnabledWorldInfoEntries } from './function/worldinfo';
+import { getEnabledWorldInfoEntries, selectActivatedEntries } from './function/worldinfo';
 import { getCharaDefs } from './function/characters';
 
 let runID = 0;
@@ -33,7 +33,7 @@ async function updateGenerate(data: GenerateData) {
         }
     }
 
-    const after = await processSpecialEntities(env, '[GENERATE:AFTER]');
+    const after = await processSpecialEntities(env, '[GENERATE:AFTER]', prompts);
     prompts += after;
 
     data.messages[0].content = before + data.messages[0].content;
@@ -109,7 +109,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         }
     );
 
-    const after = await processSpecialEntities(env, '[RENDER:AFTER]');
+    const after = await processSpecialEntities(env, '[RENDER:AFTER]', newContent || '');
     if(newContent)
         newContent = before + newContent + after;
 
@@ -226,8 +226,8 @@ async function evalTemplateHandler(content: string,
     return null;
 }
 
-async function processSpecialEntities(env: Record<string, unknown>, prefix : string) {
-    const worldInfoData = (await getEnabledWorldInfoEntries()).filter(data => data.disable && data.comment.startsWith(prefix));
+async function processSpecialEntities(env: Record<string, unknown>, prefix : string, keywords : string = '') {
+    const worldInfoData = selectActivatedEntries((await getEnabledWorldInfoEntries()).filter(data => data.disable && data.comment.startsWith(prefix)), keywords, true);
     let prompt = '';
     for(const data of worldInfoData) {
         const result = await evalTemplateHandler(data.content, env, `worldinfo ${data.world}.${data.comment}`);

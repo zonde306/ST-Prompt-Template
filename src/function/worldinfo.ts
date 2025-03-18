@@ -1,5 +1,5 @@
 import { loadWorldInfo, parseRegexFromString, world_info_case_sensitive, world_info_match_whole_words, world_info_logic, world_info_use_group_scoring, DEFAULT_WEIGHT, METADATA_KEY, selected_world_info, world_info } from '../../../../../world-info.js';
-import { substituteParams, chat_metadata, this_chid } from '../../../../../../script.js';
+import { substituteParams, chat_metadata, this_chid, chat } from '../../../../../../script.js';
 import { power_user } from '../../../../../power-user.js';
 import { getCharaFilename } from '../../../../../utils.js';
 
@@ -72,10 +72,33 @@ export async function getWorldInfoEntryContent(name: string, title: string | Reg
     return data.content;
 }
 
-export async function getWorldInfoActivatedEntries(name: string, keyword: string) {
+export async function getWorldInfoActivatedEntries(name: string, keywords: string, withConstant : boolean = false) {
+    const entries = await getWorldInfoData(name);
+    if (!entries) return [];
+    return selectActivatedEntries(entries, keywords, withConstant);
+}
+
+export function selectActivatedEntries(entries: WorldInfoData[], keywords: string, withConstant : boolean = false) {
     let activated: Set<WorldInfoData> = new Set<WorldInfoData>();
-    for (const data of await getWorldInfoData(name)) {
-        const matchedKey = data.key.map(k => substituteParams(k)).find(k => matchKeys(keyword, k, data));
+    const messages = chat.length;
+    for (const data of entries) {
+        if(data.constant && !withConstant)
+            continue;
+
+        // unsupported
+        if(data.vectorized)
+            continue;
+
+        if(data.useProbability && data.probability < _.random(1, 100))
+            continue;
+
+        if(data.constant) {
+            // Constant entries are always activated
+            activated.add(data);
+            continue;
+        }
+
+        const matchedKey = data.key.map(k => substituteParams(k)).find(k => matchKeys(keywords, k, data));
         if (!matchedKey)
             continue;
 
@@ -91,7 +114,7 @@ export async function getWorldInfoActivatedEntries(name: string, keyword: string
         let hasAllMatch = true;
         for (const secondary of data.keysecondary) {
             const secondarySubstituted = substituteParams(secondary);
-            const hasSecondaryMatch = secondarySubstituted && matchKeys(keyword, secondarySubstituted.trim(), data);
+            const hasSecondaryMatch = secondarySubstituted && matchKeys(keywords, secondarySubstituted.trim(), data);
 
             if (hasSecondaryMatch) hasAnyMatch = true;
             if (!hasSecondaryMatch) hasAllMatch = false;
@@ -133,16 +156,16 @@ export async function getWorldInfoActivatedEntries(name: string, keyword: string
     }
 
     let matched: WorldInfoData[] = [];
-    for (const [key, datas] of _.entries(grouped)) {
-        if (key === '_UNGROUPED') continue;
+    for (const [group, datas] of _.entries(grouped)) {
+        if (group === '') continue;
 
         if(datas.length === 1) {
             matched.push(datas[0]);
             continue;
         }
 
-        // Prioritize Inclusion
-        const usePrioritize = datas.filter(data => data.useProbability);
+        // Group prioritization
+        const usePrioritize = datas.filter(data => data.groupOverride);
         if (usePrioritize.length > 0) {
             const orders = datas.map(data => data.order);
             const top = _.min(orders);
@@ -155,7 +178,7 @@ export async function getWorldInfoActivatedEntries(name: string, keyword: string
         // Use Group Scoring
         const useScores = datas.filter(data => data.useGroupScoring ?? world_info_use_group_scoring);
         if (useScores.length > 0) {
-            const scores = datas.map(data => getScore(keyword, data));
+            const scores = datas.map(data => getScore(keywords, data));
             const top = _.max(scores);
             if (top) {
                 matched.push(datas[Math.max(scores.findIndex(score => score >= top), 0)]);
@@ -164,7 +187,7 @@ export async function getWorldInfoActivatedEntries(name: string, keyword: string
         }
 
         // Use random with weights
-        const useWeights = datas.filter(data => !data.useProbability && !data.useGroupScoring);
+        const useWeights = datas.filter(data => !data.groupOverride && !data.useGroupScoring);
         if(useWeights.length > 0) {
             const weights = datas.map(data => data.groupWeight ?? DEFAULT_WEIGHT);
             const totalWeight = _.sum(weights);

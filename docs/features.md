@@ -65,12 +65,26 @@ New affection: 60/100
 
 ## Prompt Injection
 
-To control prompt placement when world/knowledge book execution order can't be managed, this feature allows injecting specific prompts at designated positions.
+In certain scenarios where the execution order of **World/Knowledge Books** cannot be controlled, this feature ensures prompts can be placed at specified positions by allowing injection of specific prompts at the **beginning** or **end** of content.
 
-Add prefixes to **World/Knowledge Book** entry **titles (memo)** to control injection points:
+Simply add prefixes to the **title (memo)** of **World/Knowledge Book** entries to inject their content into the corresponding order. **The entry must be set to "disabled" status for this to take effect**.
 
-- `[GENERATE:BEFORE]`: Inject content at the beginning of the prompt sent to LLM
-- `[GENERATE:AFTER]`: Append content to the end of the prompt sent to LLM
-- `[RENDER:BEFORE]`: Inject content at the beginning of received LLM output
-- `[RENDER:AFTER]`: Append content to the end of received LLM output
+This functionality is affected by:
+- Trigger policies
+- Order
+- Inclusion groups
+- Priority determination
+- Trigger probability
+- Group weight
+- Primary keywords
+- Logic
+- Optional filters
+
+> Sticky, cooldown, and delay features are not implemented.
+
+Injection prefixes:
+- `[GENERATE:BEFORE]`: Inject content at the beginning of prompts sent to LLM (Only 🔵)
+- `[GENERATE:AFTER]`: Append content to the end of prompts sent to LLM (🔵 and 🟢)
+- `[RENDER:BEFORE]`: Inject content at the beginning of received LLM outputs (Only 🔵)
+- `[RENDER:AFTER]`: Append content to the end of received LLM outputs (🔵 and 🟢)
 

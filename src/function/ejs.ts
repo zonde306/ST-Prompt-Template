@@ -3,7 +3,7 @@ import ejs from '../3rdparty/ejs.js';
 import vm from 'vm-browserify';
 import _ from 'lodash';
 import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.js';
-import { getWorldInfoEntryContent, getWorldInfoData, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries } from './worldinfo';
+import { getWorldInfoEntryContent, getWorldInfoData, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries, selectActivatedEntries } from './worldinfo';
 import { allVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption } from './variables';
 import { getCharaDefs, DEFAULT_CHAR_DEFINE, getCharaData } from './characters';
 import { substituteParams, eventSource } from '../../../../../../script.js';
@@ -194,6 +194,7 @@ export async function prepareContext(end: number = 65535, env: Record<string, un
         getWorldInfoActivatedData: getWorldInfoActivatedEntries.bind(context),
         evalTemplate: boundedEvalTemplate.bind(context),
         getEnabledWorldInfoEntries: getEnabledWorldInfoEntries.bind(context),
+        selectActivatedEntries: selectActivatedEntries.bind(context),
         ...boundCloneDefines(context, SharedDefines),
         ref: new WeakRef(context),
     });
