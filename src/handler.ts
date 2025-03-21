@@ -141,7 +141,8 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         updateTokens(container.text(), 'receive');
 }
 
-async function handlePreloadWorldInfo() {
+async function handlePreloadWorldInfo(chat_filename? : string) {
+    if(!chat_filename) return;
     STATE.isDryRun = true;
     const start = Date.now();
 
