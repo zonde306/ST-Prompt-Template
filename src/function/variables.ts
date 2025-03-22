@@ -63,12 +63,12 @@ function evalFilter(filter? : MessageFilter, msgid? : number, swipeid?: number) 
     else if(swipeid !== undefined)
         swipe_id = swipeid;
     else
-        swipe_id = chat[message_id].swipe_id;
+        swipe_id = chat[message_id]?.swipe_id || 0;
 
     if(swipe_id < 0)
-        swipe_id = chat[message_id].swipes.length + swipe_id;
+        swipe_id = (chat[message_id]?.swipes?.length || 0) + swipe_id;
 
-    if(chat[message_id].swipes[swipe_id] === undefined) {
+    if(chat[message_id]?.swipes?.[swipe_id] === undefined) {
         console.info(`No swipe found for filter: ${filter}`);
         return [message_id, swipe_id];
     }
