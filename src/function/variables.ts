@@ -13,7 +13,7 @@ export function allVariables(end : number = 65535) {
                    extension_settings.variables.global,
                    // @ts-expect-error: 2339
                    chat_metadata.variables || {},
-                   ...chat.slice(0, Math.max(end - 1, 0)).map(msg => msg.variables?.[msg.swipe_id] || {}),
+                   ...chat.slice(0, Math.max(end - 1, 0)).map(msg => msg.variables?.[msg.swipe_id || 0] || {}),
                    { _trace_id : (STATE.traceId)++, _modify_id: 0 },
     );
 }
