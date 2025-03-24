@@ -53,7 +53,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
 
     const start = Date.now();
 
-    if (!message_id) {
+    if (message_id === '' || message_id === undefined || message_id === null) {
         console.warn(`chat message message_id is empty`);
         return;
     }

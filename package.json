@@ -1,6 +1,6 @@
 {
   "name": "extension-prompt-template",
-  "version": "1.6.1.3",
+  "version": "1.6.1.4",
   "private": true,
   "dependencies": {
     "syntax-error": "^1.4.0",
