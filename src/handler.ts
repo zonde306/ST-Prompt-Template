@@ -97,19 +97,17 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         name: message.name,
     });
 
-    const before = await processSpecialEntities(env, '[RENDER:BEFORE]');
-    const content = html.replaceAll('&lt;%', '<%').replaceAll('%&gt;', '%>');
-
     let hasHTML = false;
-    let newContent = await evalTemplateHandler(content, env,
-        `chat #${message_idx}`,
-        (markup: string) => {
-            hasHTML = true;
-            return messageFormatting(markup, message.name, message.is_system, message.is_user, message_idx);
-        }
-    );
+    function escaper(markup: string): string {
+        hasHTML = true;
+        return messageFormatting(markup, message.name, message.is_system, message.is_user, message_idx);
+    }
 
-    const after = await processSpecialEntities(env, '[RENDER:AFTER]', newContent || '');
+    const before = await processSpecialEntities(env, '[RENDER:BEFORE]', '', escaper);
+    const content = html.replaceAll('&lt;%', '<%').replaceAll('%&gt;', '%>');
+    let newContent = await evalTemplateHandler(content, env, `chat #${message_idx}`, escaper);
+
+    const after = await processSpecialEntities(env, '[RENDER:AFTER]', newContent || '', escaper);
     if(newContent)
         newContent = before + newContent + after;
 
@@ -227,11 +225,11 @@ async function evalTemplateHandler(content: string,
     return null;
 }
 
-async function processSpecialEntities(env: Record<string, unknown>, prefix : string, keywords : string = '') {
+async function processSpecialEntities(env: Record<string, unknown>, prefix : string, keywords : string = '', escaper: ((markup: string) => string) = escape) {
     const worldInfoData = selectActivatedEntries((await getEnabledWorldInfoEntries()).filter(data => data.disable && data.comment.startsWith(prefix)), keywords, true);
     let prompt = '';
     for(const data of worldInfoData) {
-        const result = await evalTemplateHandler(data.content, env, `worldinfo ${data.world}.${data.comment}`);
+        const result = await evalTemplateHandler(data.content, env, `worldinfo ${data.world}.${data.comment}`, escaper);
         if(result)
             prompt += result;
     }
