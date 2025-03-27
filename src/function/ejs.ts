@@ -150,7 +150,9 @@ async function boundedEvalTemplate(this: Record<string, unknown>, content: strin
 
 async function activateWorldInfo(world : string, uid : string | RegExp | number) {
     const entry = await getWorldInfoEntry(world, uid);
-    if(entry) activatedWorldEntries.push(entry);
+    if(entry != null)
+        activatedWorldEntries.push(entry);
+    
     return entry;
 }
 
