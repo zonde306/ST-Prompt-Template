@@ -273,6 +273,7 @@ function print(...args);
  *
  * @param {string} worldinfo - 世界书名
  * @param {string | RegExp | number} title - 条目uid/标题
+ * @returns {Promise<WorldInfoData | null>} - 世界书的条目
  */
 async function activewi(worldinfo, title);
 async function activateWorldInfo(worldinfo, title);

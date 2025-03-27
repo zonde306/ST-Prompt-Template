@@ -151,6 +151,7 @@ async function boundedEvalTemplate(this: Record<string, unknown>, content: strin
 async function activateWorldInfo(world : string, uid : string | RegExp | number) {
     const entry = await getWorldInfoEntry(world, uid);
     if(entry) activatedWorldEntries.push(entry);
+    return entry;
 }
 
 export async function prepareContext(end: number = 65535, env: Record<string, unknown> = {}): Promise<Record<string, unknown>> {

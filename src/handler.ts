@@ -178,7 +178,7 @@ async function handlePreloadWorldInfo(chat_filename? : string) {
 
 async function handleWorldInfoActivation(_type: string, _options : GenerateOptions, dryRun: boolean) {
     if(dryRun) return;
-    eventSource.emit(event_types.WORLDINFO_FORCE_ACTIVATE, activatedWorldEntries);
+    await eventSource.emit(event_types.WORLDINFO_FORCE_ACTIVATE, activatedWorldEntries);
     console.debug('[Prompt Template] force activate world info:');
     console.debug(activatedWorldEntries);
     activatedWorldEntries.length = 0;

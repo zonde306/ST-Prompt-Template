@@ -273,6 +273,7 @@ function print(...args);
  *
  * @param {string} worldinfo - World Book name
  * @param {string | RegExp | number} title - Entry UID/title
+ * @returns {Promise<WorldInfoData | null>} - World Book entry
  */
 async function activewi(worldinfo, title);
 async function activateWorldInfo(worldinfo, title);
