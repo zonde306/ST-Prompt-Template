@@ -17,7 +17,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({
 
         try {
             // @ts-expect-error: TS2322
-            return await evalTemplate(value, env);
+            return await evalTemplate(value, env, { logging: false });
         } catch (err) {
             if (err instanceof SyntaxError) {
                 // @ts-expect-error: TS2322

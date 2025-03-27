@@ -245,7 +245,7 @@ async function evalTemplateHandler(content: string,
     escaper: ((markup: string) => string) = escape):
     Promise<string | null> {
     try {
-        return await evalTemplate(content, env, escaper);
+        return await evalTemplate(content, env, { escaper, logging: false });
     } catch (err) {
         const contentWithLines = content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
         console.debug(`[Prompt Template] handling ${where} errors:\n${contentWithLines}`);
