@@ -52,13 +52,30 @@ export async function evalTemplate(content: string, data: Record<string, unknown
     escaper: ((markup: string) => string) = escape,
     includer: (originalPath: string, parsedPath: string) => IncluderResult = include) {
     // await eventSource.emit('prompt_template_evaluation', { content, data });
-    let result = await vm.runInNewContext(CODE_TEMPLATE, {
-        ejs,
-        content,
-        data,
-        escaper: escaper || escape,
-        includer: includer || include,
-    });
+
+    let result = '';
+    try {
+        result = await vm.runInNewContext(CODE_TEMPLATE, {
+            ejs,
+            content,
+            data,
+            escaper: escaper || escape,
+            includer: includer || include,
+        });
+    } catch (err) {
+        const contentWithLines = content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
+        console.debug(`[Prompt Template] evalTemplate errors:\n${contentWithLines}`);
+
+        if (err instanceof SyntaxError)
+            err.message += getSyntaxErrorInfo(content);
+
+        console.error(err);
+
+        // @ts-expect-error
+        toastr.error(err.message, `EJS Template Error`);
+        throw err;
+    }
+
     // await eventSource.emit('prompt_template_evaluation_post', { result, data });
     return result;
 }
