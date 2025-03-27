@@ -26,10 +26,12 @@ async function updateGenerate(data: GenerateData) {
 
     let prompts = before;
     for (const [idx, message] of data.messages.entries()) {
+        const beforeMessage = await processSpecialEntities(env, `[GENERATE:${idx}:BEFORE]`);
         const prompt = await evalTemplateHandler(message.content, env, `message #${idx + 1}(${message.role})`);
+        const afterMessage = await processSpecialEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
         if (prompt) {
-            message.content = prompt;
-            prompts += prompt;
+            message.content = beforeMessage + prompt + afterMessage;
+            prompts += beforeMessage + prompt + afterMessage;
         }
     }
 

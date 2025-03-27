@@ -67,6 +67,9 @@ Supported prefixes:
 
 > Render-related injections follow [Floor Rendering](#floor-rendering) rules
 
+- `[GENERATE:{idx}:BEFORE]`: Inject at message index start (0-based)
+- `[GENERATE:{idx}:AFTER]`: Inject at message index end
+
 ---
 
 ## Chat Rendering

@@ -85,9 +85,17 @@
 
 - `[RENDER:AFTER]`：将此条目注入到**接收的LLM的输出**的内容结尾（🔵和🟢）
 
-	> `[RENDER:BEFORE]`与`[RENDER:AFTER]`仅用于渲染，不会发送到**LLM**
+  > `[RENDER:BEFORE]`与`[RENDER:AFTER]`仅用于渲染，不会发送到**LLM**
+  >
+  > 因此，也会遵循[楼层渲染](#楼层渲染)的设定
+
+- `[GENERATE:{idx}:BEFORE]`：将此条目注入到**发送给LLM**的第`{idx}`条消息的开头（仅限🔵）
+
+- `[GENERATE:{idx}:AFTER]`：将此条目的内容注入到**发送给LLM**的第`{idx}`条消息的末尾（🔵和🟢）
+
+	> 以发送到 LLM 中的 `messages` 内容顺序为准，**`{idx}`从 0 开始**
 	>
-	> 因此，也会遵循[楼层渲染](#楼层渲染)的设定
+	> 例如 `[GENERATE:1:BEFORE]`为将提示词注入到第1条messages中（首条为0）
 
 ---
 

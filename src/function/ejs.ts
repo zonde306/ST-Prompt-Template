@@ -51,7 +51,7 @@ const CODE_TEMPLATE = `
 export async function evalTemplate(content: string, data: Record<string, unknown>,
     escaper: ((markup: string) => string) = escape,
     includer: (originalPath: string, parsedPath: string) => IncluderResult = include) {
-    await eventSource.emit('prompt_template_evaluation', { content, data });
+    // await eventSource.emit('prompt_template_evaluation', { content, data });
     let result = await vm.runInNewContext(CODE_TEMPLATE, {
         ejs,
         content,
@@ -59,7 +59,7 @@ export async function evalTemplate(content: string, data: Record<string, unknown
         escaper: escaper || escape,
         includer: includer || include,
     });
-    await eventSource.emit('prompt_template_evaluation_post', { result, data });
+    // await eventSource.emit('prompt_template_evaluation_post', { result, data });
     return result;
 }
 
