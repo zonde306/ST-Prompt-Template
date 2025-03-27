@@ -178,15 +178,15 @@ async function handlePreloadWorldInfo(chat_filename? : string) {
 
 async function handleWorldInfoActivation(_type: string, _options : GenerateOptions, dryRun: boolean) {
     if(dryRun) return;
-    await eventSource.emit(event_types.WORLDINFO_FORCE_ACTIVATE, activatedWorldEntries);
+    await eventSource.emit(event_types.WORLDINFO_FORCE_ACTIVATE, activatedWorldEntries.values());
     console.debug('[Prompt Template] force activate world info:');
     console.debug(activatedWorldEntries);
-    activatedWorldEntries.length = 0;
+    activatedWorldEntries.clear();
 }
 
 async function handleWorldInfoActivate(data: ChatData) {
     if(!data.dryRun) return;
-    activatedWorldEntries.length = 0;
+    activatedWorldEntries.clear();
 
     STATE.isDryRun = true;
     const start = Date.now();
