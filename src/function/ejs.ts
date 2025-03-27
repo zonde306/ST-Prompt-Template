@@ -17,8 +17,6 @@ interface IncluderResult {
     template: string;
 }
 
-export let activatedWorldEntries = new Map<string, WorldinfoForceActivate>();
-
 export function include(originalPath: string, _parsedPath: string): IncluderResult {
     console.warn(`[Prompt Template] include not implemented`);
     return { filename: originalPath, template: '' };
@@ -147,6 +145,8 @@ async function boundedEvalTemplate(this: Record<string, unknown>, content: strin
                                    data: Record<string, unknown> = {}) {
     return substituteParams(await evalTemplate(content, { ...this, ...data }));
 }
+
+export let activatedWorldEntries = new Map<string, WorldinfoForceActivate>();
 
 async function activateWorldInfo(world : string, uid : string | RegExp | number) {
     const entry = await getWorldInfoEntry(world, uid);
