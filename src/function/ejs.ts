@@ -3,7 +3,7 @@ import ejs from '../3rdparty/ejs.js';
 import vm from 'vm-browserify';
 import _ from 'lodash';
 import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.js';
-import { getWorldInfoEntryContent, getWorldInfoData, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries, selectActivatedEntries } from './worldinfo';
+import { getWorldInfoEntryContent, getWorldInfoData, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries, selectActivatedEntries, WorldinfoForceActivate, getWorldInfoEntry } from './worldinfo';
 import { allVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption } from './variables';
 import { getCharaDefs, DEFAULT_CHAR_DEFINE, getCharaData } from './characters';
 import { substituteParams, eventSource } from '../../../../../../script.js';
@@ -16,6 +16,8 @@ interface IncluderResult {
     filename: string;
     template: string;
 }
+
+export let activatedWorldEntries : WorldinfoForceActivate[] = [];
 
 export function include(originalPath: string, _parsedPath: string): IncluderResult {
     console.warn(`[Prompt Template] include not implemented`);
@@ -146,6 +148,11 @@ async function boundedEvalTemplate(this: Record<string, unknown>, content: strin
     return substituteParams(await evalTemplate(content, { ...this, ...data }));
 }
 
+async function activateWorldInfo(world : string, uid : string | RegExp | number) {
+    const entry = await getWorldInfoEntry(world, uid);
+    if(entry) activatedWorldEntries.push(entry);
+}
+
 export async function prepareContext(end: number = 65535, env: Record<string, unknown> = {}): Promise<Record<string, unknown>> {
     let vars = allVariables(end);
     STATE.cache = vars;
@@ -195,6 +202,8 @@ export async function prepareContext(end: number = 65535, env: Record<string, un
         evalTemplate: boundedEvalTemplate.bind(context),
         getEnabledWorldInfoEntries: getEnabledWorldInfoEntries.bind(context),
         selectActivatedEntries: selectActivatedEntries.bind(context),
+        activewi: activateWorldInfo,
+        activateWorldInfo: activateWorldInfo,
         ...boundCloneDefines(context, SharedDefines),
         ref: new WeakRef(context),
     });

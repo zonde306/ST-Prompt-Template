@@ -267,6 +267,15 @@ async function getEnabledWorldInfoEntries(chara = true, global = true, persona =
  * @param {string} args - 字符串内容
  */
 function print(...args);
+
+/**
+ * 激活世界书
+ *
+ * @param {string} worldinfo - 世界书名
+ * @param {string | RegExp | number} title - 条目uid/标题
+ */
+async function activewi(worldinfo, title);
+async function activateWorldInfo(worldinfo, title);
 ```
 
 > `flags` 类型:

@@ -267,6 +267,15 @@ async function getEnabledWorldInfoEntries(chara = true, global = true, persona =
  * @param {string} args - String content
  */
 function print(...args);
+
+/**
+ * Activation a World Book entry
+ *
+ * @param {string} worldinfo - World Book name
+ * @param {string | RegExp | number} title - Entry UID/title
+ */
+async function activewi(worldinfo, title);
+async function activateWorldInfo(worldinfo, title);
 ```
 
 > `flags` types:

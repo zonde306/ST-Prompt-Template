@@ -1,9 +1,9 @@
 // @ts-expect-error
 import vm from 'vm-browserify';
 import _ from 'lodash';
-import { GenerateData, Message } from './defines';
-import { eventSource, event_types, chat, saveChatConditional, messageFormatting } from '../../../../../script.js';
-import { prepareContext, evalTemplate, getSyntaxErrorInfo, escape } from './function/ejs';
+import { GenerateData, Message, ChatData } from './defines';
+import { eventSource, event_types, chat, saveChatConditional, messageFormatting, GenerateOptions } from '../../../../../script.js';
+import { prepareContext, evalTemplate, getSyntaxErrorInfo, escape, activatedWorldEntries } from './function/ejs';
 import { STATE } from './function/variables';
 import { getTokenCountAsync } from '../../../../tokenizers.js';
 import { extension_settings } from '../../../../extensions.js';
@@ -46,6 +46,7 @@ async function updateGenerate(data: GenerateData) {
 
     await checkAndSave();
     updateTokens(prompts, 'send');
+    activatedWorldEntries.length = 0;
 }
 
 async function updateMessageRender(message_id: string, isDryRun?: boolean) {
@@ -118,7 +119,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         container.empty().append(newContent);
 
     if (hasHTML && isDryRun) {
-        isFakeRun = true;
+        isFakeRun = true; // prevent multiple updates
         console.debug(`[HTML] rendering #${message_idx} messages`);
         if (message.is_user) {
             await eventSource.emit(event_types.USER_MESSAGE_RENDERED, message_idx);
@@ -173,6 +174,38 @@ async function handlePreloadWorldInfo(chat_filename? : string) {
             await updateMessageRender(message_id, true);
         }
     }
+}
+
+async function handleWorldInfoActivation(_type: string, _options : GenerateOptions, dryRun: boolean) {
+    if(dryRun) return;
+    eventSource.emit(event_types.WORLDINFO_FORCE_ACTIVATE, activatedWorldEntries);
+    activatedWorldEntries.length = 0;
+}
+
+async function handleWorldInfoActivate(data: ChatData) {
+    if(!data.dryRun) return;
+    activatedWorldEntries.length = 0;
+
+    STATE.isDryRun = true;
+    const start = Date.now();
+
+    const env = await prepareContext(65535, {
+        runType: 'preparation',
+        runID: runID++
+    });
+
+    let prompts = await processSpecialEntities(env, '[GENERATE:BEFORE]');
+    for (const [idx, message] of data.chat.entries()) {
+        const beforeMessage = await processSpecialEntities(env, `[GENERATE:${idx}:BEFORE]`);
+        const prompt = await evalTemplateHandler(message.content, env, `message #${idx + 1}(${message.role})`);
+        const afterMessage = await processSpecialEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
+        prompts += beforeMessage + prompt + afterMessage;
+    }
+
+    await processSpecialEntities(env, '[GENERATE:AFTER]', prompts);
+
+    const end = Date.now() - start;
+    console.log(`[Prompt Template] processing ${data.chat.length} messages in ${end}ms`);
 }
 
 async function checkAndSave() {
@@ -249,11 +282,15 @@ const MESSAGE_RENDER_EVENTS = [
 export async function init() {
     eventSource.on(event_types.CHAT_COMPLETION_SETTINGS_READY, updateGenerate);
     eventSource.on(event_types.CHAT_CHANGED, handlePreloadWorldInfo);
+    eventSource.on(event_types.GENERATION_STARTED, handleWorldInfoActivation);
+    eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, handleWorldInfoActivate);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.on(e, updateMessageRender));
 }
 
 export async function exit() {
     eventSource.removeListener(event_types.CHAT_COMPLETION_SETTINGS_READY, updateGenerate);
     eventSource.removeListener(event_types.CHAT_CHANGED, handlePreloadWorldInfo);
+    eventSource.removeListener(event_types.GENERATION_STARTED, handleWorldInfoActivation);
+    eventSource.removeListener(event_types.CHAT_COMPLETION_PROMPT_READY, handleWorldInfoActivate);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.removeListener(e, updateMessageRender));
 }
