@@ -284,7 +284,7 @@ const MESSAGE_RENDER_EVENTS = [
 export async function init() {
     eventSource.on(event_types.CHAT_COMPLETION_SETTINGS_READY, updateGenerate);
     eventSource.on(event_types.CHAT_CHANGED, handlePreloadWorldInfo);
-    eventSource.on(event_types.GENERATION_STARTED, handleWorldInfoActivation);
+    eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleWorldInfoActivation);
     eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, handleWorldInfoActivate);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.on(e, updateMessageRender));
 }
@@ -292,7 +292,7 @@ export async function init() {
 export async function exit() {
     eventSource.removeListener(event_types.CHAT_COMPLETION_SETTINGS_READY, updateGenerate);
     eventSource.removeListener(event_types.CHAT_CHANGED, handlePreloadWorldInfo);
-    eventSource.removeListener(event_types.GENERATION_STARTED, handleWorldInfoActivation);
+    eventSource.removeListener(event_types.GENERATION_AFTER_COMMANDS, handleWorldInfoActivation);
     eventSource.removeListener(event_types.CHAT_COMPLETION_PROMPT_READY, handleWorldInfoActivate);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.removeListener(e, updateMessageRender));
 }
