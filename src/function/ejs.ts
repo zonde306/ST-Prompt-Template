@@ -52,6 +52,7 @@ interface EvalTemplateOptions {
     escaper?: ((markup: string) => string) | undefined;
     includer?: (originalPath: string, parsedPath: string) => IncluderResult | undefined;
     logging?: boolean;
+    when?: string;
 }
 
 export async function evalTemplate(content: string, data: Record<string, unknown>,
@@ -70,7 +71,7 @@ export async function evalTemplate(content: string, data: Record<string, unknown
     } catch (err) {
         if (opts.logging ?? true) {
             const contentWithLines = content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
-            console.debug(`[Prompt Template] evalTemplate errors:\n${contentWithLines}`);
+            console.debug(`[Prompt Template] when ${opts.when} has errors:\n${contentWithLines}`);
 
             if (err instanceof SyntaxError)
                 err.message += getSyntaxErrorInfo(content);
@@ -90,10 +91,13 @@ export async function evalTemplate(content: string, data: Record<string, unknown
 async function boundedImport(this: Record<string, unknown>,
     worldinfo: string, entry: string | RegExp | number,
     data: Record<string, unknown> = {}): Promise<string> {
-    const content = await getWorldInfoEntryContent(worldinfo, entry);
-    if (content) {
+    const wi = await getWorldInfoEntry(worldinfo, entry);
+    if (wi) {
         // or use _.merge?
-        return await evalTemplate(substituteParams(content), { ...this, ...data });
+        return await evalTemplate(substituteParams(wi.content),
+            { ...this, ...data },
+            { when: `${wi.world}.${wi.comment}` },
+        );
     }
 
     console.warn(`[Prompt Template] worldinfo ${worldinfo} or entry ${entry} not found`);
@@ -109,7 +113,7 @@ async function boundedCharDef(this: Record<string, unknown>,
         return "";
     }
 
-    return substituteParams(await evalTemplate(template, { ...this, ...data, ...defs }),
+    return substituteParams(await evalTemplate(template, { ...this, ...data, ...defs }, { when: `${name}` }),
         undefined, defs.name, undefined, undefined, false);
 }
 
@@ -122,7 +126,7 @@ async function boundedPresetPrompt(this: Record<string, unknown>,
         return "";
     }
 
-    return substituteParams(await evalTemplate(prompt, { ...this, ...data }));
+    return substituteParams(await evalTemplate(prompt, { ...this, ...data }, { when: `${name}` }));
 }
 
 let SharedDefines: Record<string, unknown> = {};
@@ -162,12 +166,12 @@ async function boundedQuickReply(this: Record<string, unknown>, name: string, la
         return '';
     }
 
-    return substituteParams(await evalTemplate(reply, { ...this, ...data }));
+    return substituteParams(await evalTemplate(reply, { ...this, ...data }, { when: `${name}.${label}` }));
 }
 
 async function boundedEvalTemplate(this: Record<string, unknown>, content: string,
                                    data: Record<string, unknown> = {}) {
-    return substituteParams(await evalTemplate(content, { ...this, ...data }));
+    return substituteParams(await evalTemplate(content, { ...this, ...data }, { when: `evalTemplate` }));
 }
 
 export let activatedWorldEntries = new Map<string, WorldinfoForceActivate>();
@@ -321,7 +325,7 @@ export function getSyntaxErrorInfo(code : string, count : number = 4) : string {
 globalThis.EjsTemplate = {
     evalTemplate: async(code : string, context : Record<string, unknown> = {}) => {
         STATE.isDryRun = false;
-        return await evalTemplate(code, context);
+        return await evalTemplate(code, context, { logging: false });
     },
     prepareContext: prepareContext,
     getSyntaxErrorInfo: getSyntaxErrorInfo,
