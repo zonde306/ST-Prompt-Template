@@ -46,7 +46,7 @@ async function updateGenerate(data: GenerateData) {
 
     await checkAndSave();
     updateTokens(prompts, 'send');
-    activatedWorldEntries.length = 0;
+    activatedWorldEntries.clear();
 }
 
 async function updateMessageRender(message_id: string, isDryRun?: boolean) {
