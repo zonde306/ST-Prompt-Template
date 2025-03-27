@@ -3,7 +3,7 @@ import ejs from '../3rdparty/ejs.js';
 import vm from 'vm-browserify';
 import _ from 'lodash';
 import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.js';
-import { getWorldInfoEntryContent, getWorldInfoData, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries, selectActivatedEntries, WorldinfoForceActivate, getWorldInfoEntry } from './worldinfo';
+import { getWorldInfoData, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries, selectActivatedEntries, WorldinfoForceActivate, getWorldInfoEntry } from './worldinfo';
 import { allVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption } from './variables';
 import { getCharaDefs, DEFAULT_CHAR_DEFINE, getCharaData } from './characters';
 import { substituteParams, eventSource } from '../../../../../../script.js';
