@@ -155,7 +155,11 @@ async function handlePreloadWorldInfo(chat_filename? : string) {
     });
 
     for (const data of worldInfoData) {
-        await evalTemplateHandler(data.content, env, `worldinfo ${data.world}.${data.comment}`);
+        await evalTemplateHandler(
+            data.content,
+            { ...env, world_info: data.world, world_uid: data.uid, world_title: data.comment },
+            `worldinfo ${data.world}.${data.comment}`
+        );
     }
 
     const charaDef = getCharaDefs();
@@ -266,7 +270,12 @@ async function processSpecialEntities(env: Record<string, unknown>, prefix : str
     const worldInfoData = selectActivatedEntries((await getEnabledWorldInfoEntries()).filter(data => data.disable && data.comment.startsWith(prefix)), keywords, true);
     let prompt = '';
     for(const data of worldInfoData) {
-        const result = await evalTemplateHandler(data.content, env, `worldinfo ${data.world}.${data.comment}`, escaper);
+        const result = await evalTemplateHandler(
+            data.content,
+            { ...env, world_info: data.world, world_uid: data.uid, world_title: data.comment },
+            `worldinfo ${data.world}.${data.comment}`,
+            escaper
+        );
         if(result)
             prompt += result;
     }
