@@ -114,7 +114,7 @@ async function execute(cmd);
 /**
  * 读取世界书条目内容
  *
- * @param {string} worldinfo - 世界书名
+ * @param {string} worldinfo - 世界书名(递归时可传递空值，自动推断为当前世界书)
  * @param {string | RegExp | number} title - 条目uid/标题
  * @param {Record<string, any>} [data={}] - 传递的数据
  * @returns {Promise<string>} - 世界书条目的内容
@@ -343,6 +343,42 @@ async function activateWorldInfo(worldinfo, title);
 > 在设置变量后，如果需要立即访问新的值，则需要禁用缓存(`noCache=true`)
 >
 > 缓存并不会立即更新，只会在开始时加载，中途不会更新
+>
+> ---
+>
+> `getwi`、`getWorldInfo`：
+>
+> 在递归导入时，`worldinfo`能够自动推断为当前世界书名，只需要传递空值即可
+>
+> 递归仅包含`getwi`、`getWorldInfo`这两者，由酒馆自己激活的不包含在内
+>
+> 例如：
+>
+> `测试世界书`：`测试条目1
+>
+> ```javascript
+> // 由酒馆激活时必须提供worldinfo
+> <%- await getwi('测试世界书', '测试条目1') %>
+> ```
+>
+> `测试世界书`：`测试条目2`
+>
+> ```javascript
+> // 由导入加载时可省略worldinfo，只需要传递空值即可
+> <%- await getwi('', '测试条目2') %>
+> ```
+>
+> `测试世界书`：`测试条目3`
+>
+> ```javascript
+> <%- 'hello world!' %>
+> ```
+>
+> 以上输出：
+>
+> ```
+> hello world!
+> ```
 
 ---
 

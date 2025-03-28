@@ -114,7 +114,7 @@ async function execute(cmd);
 /**
  * Read World Book entry content
  *
- * @param {string} worldinfo - World Book name
+ * @param {string} worldinfo - World Book name (leave empty for current in recursion)
  * @param {string | RegExp | number} title - Entry UID/title
  * @param {Record<string, any>} [data={}] - Additional data
  * @returns {Promise<string>} - World Book entry content
@@ -339,6 +339,42 @@ async function activateWorldInfo(worldinfo, title);
 > If you need to access the new value immediately after setting a variable, you must disable caching (`noCache=true`).
 >
 > The cache is not updated immediately; it is only loaded at the beginning and does not update midway.
+>
+> ---
+>
+> `getwi`, `getWorldInfo`:
+>
+> During recursive imports, `worldinfo` can automatically infer the current world book title, requiring only an empty value to be passed.
+>
+> The recursion only includes `getwi` and `getWorldInfo`; those activated by the Tavern itself are not included.
+>
+> Example:
+>
+> `Test World Book`: `Test Entry 1`
+>
+> ```javascript
+> // Must provide worldinfo when activated by the Tavern
+> <%- await getwi('Test World Book', 'Test Entry 1') %>
+> ```
+>
+> `Test World Book`: `Test Entry 2`
+>
+> ```javascript
+> // Can omit worldinfo when loaded via import, only an empty value needs to be passed
+> <%- await getwi('', 'Test Entry 2') %>
+> ```
+>
+> `Test World Book`: `Test Entry 3`
+>
+> ```javascript
+> <%- 'hello world!' %>
+> ```
+>
+> The above outputs:
+>
+> ```
+> hello world!
+> ```
 
 ---
 
