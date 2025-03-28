@@ -354,20 +354,20 @@ async function activateWorldInfo(worldinfo, title);
 >
 > ```javascript
 > // Must provide worldinfo when activated by the Tavern
-> <%- await getwi('Test World Book', 'Test Entry 1') %>
+> <%- await getwi('Test World Book', 'Test Entry 1') -%>
 > ```
 >
 > `Test World Book`: `Test Entry 2`
 >
 > ```javascript
 > // Can omit worldinfo when loaded via import, only an empty value needs to be passed
-> <%- await getwi('', 'Test Entry 2') %>
+> <%- await getwi('', 'Test Entry 3') -%>
 > ```
 >
 > `Test World Book`: `Test Entry 3`
 >
 > ```javascript
-> <%- 'hello world!' %>
+> <%- 'hello world!' -%>
 > ```
 >
 > The above outputs:

@@ -357,21 +357,21 @@ async function activateWorldInfo(worldinfo, title);
 > `测试世界书`：`测试条目1
 >
 > ```javascript
-> // 由酒馆激活时必须提供worldinfo
-> <%- await getwi('测试世界书', '测试条目1') %>
+> // 由酒馆激活时必须提供 worldinfo
+> <%- await getwi('测试世界书', '测试条目1') -%>
 > ```
 >
 > `测试世界书`：`测试条目2`
 >
 > ```javascript
-> // 由导入加载时可省略worldinfo，只需要传递空值即可
-> <%- await getwi('', '测试条目2') %>
+> // 由导入加载时可省略 worldinfo，只需要传递空值即可
+> <%- await getwi('', '测试条目3') -%>
 > ```
 >
 > `测试世界书`：`测试条目3`
 >
 > ```javascript
-> <%- 'hello world!' %>
+> <%- 'hello world!' -%>
 > ```
 >
 > 以上输出：
