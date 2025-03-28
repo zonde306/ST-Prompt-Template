@@ -91,11 +91,11 @@ export async function evalTemplate(content: string, data: Record<string, unknown
 async function boundedImport(this: Record<string, unknown>,
     worldinfo: string, entry: string | RegExp | number,
     data: Record<string, unknown> = {}): Promise<string> {
-    const wi = await getWorldInfoEntry(worldinfo, entry);
+    // @ts-expect-error
+    const wi = await getWorldInfoEntry(worldinfo || this.world_info || '', entry);
     if (wi) {
-        // or use _.merge?
         return await evalTemplate(substituteParams(wi.content),
-            { ...this, ...data },
+            { ...this, ...data, world_info: wi.world, world_uid: wi.uid, world_title: wi.comment },
             { when: `${wi.world}.${wi.comment}` },
         );
     }
@@ -113,8 +113,13 @@ async function boundedCharDef(this: Record<string, unknown>,
         return "";
     }
 
-    return substituteParams(await evalTemplate(template, { ...this, ...data, ...defs }, { when: `${name}` }),
-        undefined, defs.name, undefined, undefined, false);
+    return substituteParams(
+        await evalTemplate(template,
+            { ...this, ...data, ...defs, chara_name: defs.name },
+            { when: `${name}` },
+        ),
+        undefined, defs.name, undefined, undefined, false
+    );
 }
 
 async function boundedPresetPrompt(this: Record<string, unknown>,
@@ -126,13 +131,16 @@ async function boundedPresetPrompt(this: Record<string, unknown>,
         return "";
     }
 
-    return substituteParams(await evalTemplate(prompt, { ...this, ...data }, { when: `${name}` }));
+    return substituteParams(await evalTemplate(prompt,
+        { ...this, ...data, prompt_name: name },
+        { when: `${name}` },
+    ));
 }
 
 let SharedDefines: Record<string, unknown> = {};
 
 function boundedDefine(this: Record<string, unknown>, name: string, value: unknown) {
-    console.debug(`[Prompt Template] global ${name} defined: ${value}`);
+    // console.debug(`[Prompt Template] global ${name} defined: ${value}`);
     SharedDefines[name] = value;
     this[name] = value;
 }
@@ -166,12 +174,18 @@ async function boundedQuickReply(this: Record<string, unknown>, name: string, la
         return '';
     }
 
-    return substituteParams(await evalTemplate(reply, { ...this, ...data }, { when: `${name}.${label}` }));
+    return substituteParams(await evalTemplate(reply,
+        { ...this, ...data, qr_name: name, qr_label: label },
+        { when: `${name}.${label}` },
+    ));
 }
 
 async function boundedEvalTemplate(this: Record<string, unknown>, content: string,
                                    data: Record<string, unknown> = {}) {
-    return substituteParams(await evalTemplate(content, { ...this, ...data }, { when: `evalTemplate` }));
+    return substituteParams(await evalTemplate(content,
+        { ...this, ...data },
+        { when: `evalTemplate` }
+    ));
 }
 
 export let activatedWorldEntries = new Map<string, WorldinfoForceActivate>();
