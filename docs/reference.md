@@ -354,7 +354,7 @@ async function activateWorldInfo(worldinfo, title);
 >
 > ```javascript
 > // Must provide worldinfo when activated by the Tavern
-> <%- await getwi('Test World Book', 'Test Entry 1') -%>
+> <%- await getwi('Test World Book', 'Test Entry 2') -%>
 > ```
 >
 > `Test World Book`: `Test Entry 2`

@@ -358,7 +358,7 @@ async function activateWorldInfo(worldinfo, title);
 >
 > ```javascript
 > // 由酒馆激活时必须提供 worldinfo
-> <%- await getwi('测试世界书', '测试条目1') -%>
+> <%- await getwi('测试世界书', '测试条目2') -%>
 > ```
 >
 > `测试世界书`：`测试条目2`
