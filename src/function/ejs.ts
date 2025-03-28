@@ -92,10 +92,10 @@ async function boundedImport(this: Record<string, unknown>,
     worldinfo: string, entry: string | RegExp | number,
     data: Record<string, unknown> = {}): Promise<string> {
     // @ts-expect-error
-    const wi = await getWorldInfoEntry(worldinfo || this.world_info || '', entry);
+    const wi = await getWorldInfoEntry(worldinfo || this.world_info?.world || '', entry);
     if (wi) {
         return await evalTemplate(substituteParams(wi.content),
-            { ...this, ...data, world_info: wi.world, world_uid: wi.uid, world_title: wi.comment },
+            _.merge(this, data, { world_info: wi }),
             { when: `${wi.world}.${wi.comment}` },
         );
     }
@@ -115,7 +115,7 @@ async function boundedCharDef(this: Record<string, unknown>,
 
     return substituteParams(
         await evalTemplate(template,
-            { ...this, ...data, ...defs, chara_name: defs.name },
+            _.merge(this, data, defs, { chara_name: defs.name }),
             { when: `${name}` },
         ),
         undefined, defs.name, undefined, undefined, false
@@ -132,7 +132,7 @@ async function boundedPresetPrompt(this: Record<string, unknown>,
     }
 
     return substituteParams(await evalTemplate(prompt,
-        { ...this, ...data, prompt_name: name },
+        _.merge(this, data, { prompt_name: name }),
         { when: `${name}` },
     ));
 }
@@ -175,7 +175,7 @@ async function boundedQuickReply(this: Record<string, unknown>, name: string, la
     }
 
     return substituteParams(await evalTemplate(reply,
-        { ...this, ...data, qr_name: name, qr_label: label },
+        _.merge(this, data, { qr_name: name, qr_label: label }),
         { when: `${name}.${label}` },
     ));
 }
@@ -183,7 +183,7 @@ async function boundedQuickReply(this: Record<string, unknown>, name: string, la
 async function boundedEvalTemplate(this: Record<string, unknown>, content: string,
                                    data: Record<string, unknown> = {}) {
     return substituteParams(await evalTemplate(content,
-        { ...this, ...data },
+        _.merge(this, data),
         { when: `evalTemplate` }
     ));
 }
@@ -341,6 +341,8 @@ globalThis.EjsTemplate = {
         STATE.isDryRun = false;
         return await evalTemplate(code, context, { logging: false });
     },
-    prepareContext: prepareContext,
+    prepareContext: async(context : Record<string, unknown> = {}, end : number = 65535) => {
+        return await prepareContext(end, context);
+    },
     getSyntaxErrorInfo: getSyntaxErrorInfo,
 };

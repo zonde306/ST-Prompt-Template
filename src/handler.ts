@@ -157,7 +157,7 @@ async function handlePreloadWorldInfo(chat_filename? : string) {
     for (const data of worldInfoData) {
         await evalTemplateHandler(
             data.content,
-            { ...env, world_info: data.world, world_uid: data.uid, world_title: data.comment },
+            _.merge(env, { world_info: data }),
             `worldinfo ${data.world}.${data.comment}`
         );
     }
@@ -272,7 +272,7 @@ async function processSpecialEntities(env: Record<string, unknown>, prefix : str
     for(const data of worldInfoData) {
         const result = await evalTemplateHandler(
             data.content,
-            { ...env, world_info: data.world, world_uid: data.uid, world_title: data.comment },
+            _.merge(env, { world_info: data }),
             `worldinfo ${data.world}.${data.comment}`,
             escaper
         );

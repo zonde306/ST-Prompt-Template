@@ -550,40 +550,65 @@ Unnamed parameters:
 
 # Exported Functions
 
-Functions exported by the extension, accessible to other extensions
+Functions exported by the extension, accessible in other extensions
 
-These functions reside in the `globalThis.EjsTemplate` scope
+These functions reside within the `globalThis.EjsTemplate` scope
 
 ```javascript
 /**
- * Process text with template syntax
+ * Processes template syntax in text
+ * @note Context data is typically obtained from prepareContext. To modify, directly alter the original object
  *
- * @param {string} content - Template code
- * @param {object} data - Execution context (data environment)
- * @returns {string} Processed content after template evaluation
+ * @param {string} code - Template code
+ * @param {object} [context={}] - Execution context
+ * @returns {string} Processed template content
  */
 async function evalTemplate(code, context = {});
 
 /**
- * Create execution context for template processing
+ * Creates execution context for template processing
  *
- * @param {number} last_message_id - Maximum message ID for variable merging
- * @param {object} context - Additional execution context
+ * @param {object} [context={}] - Additional context data
+ * @param {number} [last_message_id=65535] - Maximum message ID for merging message variables
  * @returns {object} Prepared execution context
  */
-async function prepareContext(last_message_id = 65535, context = {});
+async function prepareContext(context = {}, last_message_id = 65535);
 
 /**
- * Check for template syntax errors without execution
+ * Checks for template syntax errors without execution
  *
- * @param {string} content - Template code to validate
- * @param {number} max_lines - Number of surrounding lines to show for errors
- * @returns {string} Syntax error message, or empty string if valid
+ * @param {string} content - Template code
+ * @param {number} [max_lines=4] - Number of surrounding lines to show for errors
+ * @returns {string} Syntax error message, empty if no errors
  */
 async function getSyntaxErrorInfo(code, max_lines = 4);
 ```
 
-> These functions can be accessed via `globalThis.EjsTemplate` (i.e., `EjsTemplate.evalTemplate`*)* 
+> Access via `globalThis.EjsTemplate` (e.g., `EjsTemplate.evalTemplate`)
+>
+> To modify prepared `context` in `evalTemplate`, modify the original object instead of passing new instances
+>
+> ❌ Incorrect usage:
+>
+> ```javascript
+> const env = await prepareContext();
+> await evalTemplate('a is <%= a %>', { ...env, a: 1 });
+> ```
+>
+> ✅ Correct usage:
+>
+> ```javascript
+> const env = await prepareContext();
+> // Use lodash.merge to modify in-place
+> await evalTemplate('a is <%= a %>', _.merge(env, { a: 1 }));
+> ```
+>
+> Or set values directly during context preparation:
+>
+> ```javascript
+> const env = await prepareContext({ a: 1 });
+> await evalTemplate('a is <%= a %>', env);
+> ```
 
 ---
 

@@ -567,34 +567,59 @@ LAST_RECEIVE_CHARS = 0
 ```javascript
 /**
  * 对文本进行模板语法处理
+ * @note data 一般从 prepareContext 获取，若要修改则应直接修改原始对象
  *
- * @param {string} content - 模板代码
- * @param {object} data - 执行环境(上下文)
+ * @param {string} code - 模板代码
+ * @param {object} [context={}] - 执行环境(上下文)
  * @returns {string} 对模板进行计算后的内容
  */
 async function evalTemplate(code, context = {});
 
 /**
- * 生成模板语法处理使用的执行环境(上下文)
+ * 创建模板语法处理使用的执行环境(上下文)
  *
- * @param {last_message_id} number - 合并消息变量的最大ID
- * @param {object} context - 附加的执行环境(上下文)
+ * @param {object} [context={}] - 附加的执行环境(上下文)
+ * @param {last_message_id} [number=65535] - 合并消息变量的最大ID
  * @returns {object} 执行环境(上下文)
  */
-async function prepareContext(last_message_id = 65535, context = {});
+async function prepareContext(context = {}, last_message_id = 65535);
 
 /**
  * 检查模板是否存在语法错误
  * 并不会实际执行
  *
  * @param {string} content - 模板代码
- * @param {number} max_lines - 发生错误时输出的附近行数
+ * @param {number} [max_lines=4] - 发生错误时输出的附近行数
  * @returns {string} 语法错误信息，无错误返回空字符串
  */
 async function getSyntaxErrorInfo(code, max_lines = 4);
 ```
 
 > 可通过 `globalThis.EjsTemplate`访问这些函数（如 `EjsTemplate.evalTemplate`）
+>
+> 若要在 `evalTemplate`时修改已准备好的`context`应该直接修改原有对象，而不是传递一个新的对象
+>
+> ❌错误用法：
+>
+> ```javascript
+> const env = await prepareContext();
+> await evalTemplate('a is <%= a %>', { ...env, a: 1 });
+> ```
+>
+> ✅正确用法：
+>
+> ```javascript
+> const env = await prepareContext();
+> // 使用 lodash 的 merge 原地修改
+> await evalTemplate('a is <%= a %>', _.merge(env, { a: 1 }));
+> ```
+>
+> 或者直接在 `prepareContext` 设置
+>
+> ```javascript
+> const env = await prepareContext({ a: 1 });
+> await evalTemplate('a is <%= a %>', env);
+> ```
 
 ---
 
