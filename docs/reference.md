@@ -244,9 +244,10 @@ async function getWorldInfoActivatedData(name, keyword);
  *
  * @param {string} content - Template content to process
  * @param {Object} [data={}] - Additional data
+ * @param {Object} [options={}] - ejs options
  * @returns {Promise<string>} - Processed content
  */
-async function evalTemplate(content, data = {});
+async function evalTemplate(content, data = {}, options = {});
 
 /**
  * Get all possible entries of World Books that might be used.
@@ -597,9 +598,10 @@ These functions reside within the `globalThis.EjsTemplate` scope
  *
  * @param {string} code - Template code
  * @param {object} [context={}] - Execution context
+ * @param {Object} [options={}] - ejs options
  * @returns {string} Processed template content
  */
-async function evalTemplate(code, context = {});
+async function evalTemplate(code, context = {}, options = {});
 
 /**
  * Creates execution context for template processing

@@ -44,15 +44,17 @@ const CODE_TEMPLATE = `
             context: data,
             client: false,
             outputFunctionName: 'print',
+            ...options,
         },
     );
 `;
 
-interface EvalTemplateOptions {
+export interface EvalTemplateOptions {
     escaper?: ((markup: string) => string) | undefined;
     includer?: (originalPath: string, parsedPath: string) => IncluderResult | undefined;
     logging?: boolean;
     when?: string;
+    options?: Record<string, unknown>;
 }
 
 export async function evalTemplate(content: string, data: Record<string, unknown>,
@@ -67,6 +69,7 @@ export async function evalTemplate(content: string, data: Record<string, unknown
             data,
             escaper: opts.escaper || escape,
             includer: opts.includer || include,
+            options: opts.options || {},
         });
     } catch (err) {
         if (opts.logging ?? true) {
@@ -181,10 +184,11 @@ async function boundedQuickReply(this: Record<string, unknown>, name: string, la
 }
 
 async function boundedEvalTemplate(this: Record<string, unknown>, content: string,
-                                   data: Record<string, unknown> = {}) {
+                                   data: Record<string, unknown> = {},
+                                   options: Record<string, unknown> = {}) {
     return substituteParams(await evalTemplate(content,
         _.merge(this, data),
-        { when: `evalTemplate` }
+        { when: `evalTemplate`, options }
     ));
 }
 
@@ -337,9 +341,9 @@ export function getSyntaxErrorInfo(code : string, count : number = 4) : string {
 
 // @ts-expect-error
 globalThis.EjsTemplate = {
-    evalTemplate: async(code : string, context : Record<string, unknown> = {}) => {
+    evalTemplate: async(code : string, context : Record<string, unknown> = {}, options: Record<string, unknown> = {}) => {
         STATE.isDryRun = false;
-        return await evalTemplate(code, context, { logging: false });
+        return await evalTemplate(code, context, { logging: false, options });
     },
     prepareContext: async(context : Record<string, unknown> = {}, end : number = 65535) => {
         return await prepareContext(end, context);

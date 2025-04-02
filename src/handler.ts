@@ -3,7 +3,7 @@ import vm from 'vm-browserify';
 import _ from 'lodash';
 import { GenerateData, Message, ChatData } from './defines';
 import { eventSource, event_types, chat, saveChatConditional, messageFormatting, GenerateOptions } from '../../../../../script.js';
-import { prepareContext, evalTemplate, getSyntaxErrorInfo, escape, activatedWorldEntries } from './function/ejs';
+import { prepareContext, evalTemplate, getSyntaxErrorInfo, escape, activatedWorldEntries, EvalTemplateOptions } from './function/ejs';
 import { STATE } from './function/variables';
 import { getTokenCountAsync } from '../../../../tokenizers.js';
 import { extension_settings } from '../../../../extensions.js';
@@ -106,11 +106,17 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         return messageFormatting(markup, message.name, message.is_system, message.is_user, message_idx);
     }
 
-    const before = await processSpecialEntities(env, '[RENDER:BEFORE]', '', escaper);
-    const content = html.replaceAll('&lt;%', '<%').replaceAll('%&gt;', '%>');
-    let newContent = await evalTemplateHandler(content, env, `chat #${message_idx}`, escaper);
+    const before = await processSpecialEntities(env, '[RENDER:BEFORE]', '', { escaper });
+    const content = html/*.replaceAll('&lt;%', '<%').replaceAll('%&gt;', '%>')*/;
+    let newContent = await evalTemplateHandler(content, env, `chat #${message_idx}`, {
+        escaper,
+        options: {
+            openDelimiter: '&lt;',
+            closeDelimiter: '&gt;',
+        },
+    });
 
-    const after = await processSpecialEntities(env, '[RENDER:AFTER]', newContent || '', escaper);
+    const after = await processSpecialEntities(env, '[RENDER:AFTER]', newContent || '', { escaper });
     if(newContent)
         newContent = before + newContent + after;
 
@@ -246,10 +252,10 @@ function updateTokens(prompts: string, type: 'send' | 'receive') {
 async function evalTemplateHandler(content: string,
     env: Record<string, unknown>,
     where: string = '',
-    escaper: ((markup: string) => string) = escape):
+    options: EvalTemplateOptions = {}):
     Promise<string | null> {
     try {
-        return await evalTemplate(content, env, { escaper, logging: false });
+        return await evalTemplate(content, env, { ...options, logging: false });
     } catch (err) {
         const contentWithLines = content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
         console.debug(`[Prompt Template] handling ${where} errors:\n${contentWithLines}`);
@@ -266,7 +272,7 @@ async function evalTemplateHandler(content: string,
     return null;
 }
 
-async function processSpecialEntities(env: Record<string, unknown>, prefix : string, keywords : string = '', escaper: ((markup: string) => string) = escape) {
+async function processSpecialEntities(env: Record<string, unknown>, prefix : string, keywords : string = '', options : EvalTemplateOptions = {}) {
     const worldInfoData = selectActivatedEntries((await getEnabledWorldInfoEntries()).filter(data => data.disable && data.comment.startsWith(prefix)), keywords, true);
     let prompt = '';
     for(const data of worldInfoData) {
@@ -274,7 +280,7 @@ async function processSpecialEntities(env: Record<string, unknown>, prefix : str
             data.content,
             _.merge(env, { world_info: data }),
             `worldinfo ${data.world}.${data.comment}`,
-            escaper
+            options,
         );
         if(result)
             prompt += result;

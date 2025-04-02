@@ -244,9 +244,10 @@ async function getWorldInfoActivatedData(name, keyword);
  *
  * @param {string} content - 要处理的字符串内容
  * @param {Object} [data={}] - 传递的数据
+ * @param {Object} [options={}] - ejs 参数
  * @returns {Promise<string>} - 处理后的字符串内容
  */
-async function evalTemplate(content, data = {});
+async function evalTemplate(content, data = {}, options = {});
 
 /**
  * 获取所有可能会使用的世界书的全部条目
@@ -607,9 +608,10 @@ LAST_RECEIVE_CHARS = 0
  *
  * @param {string} code - 模板代码
  * @param {object} [context={}] - 执行环境(上下文)
+ * @param {Object} [options={}] - ejs 参数
  * @returns {string} 对模板进行计算后的内容
  */
-async function evalTemplate(code, context = {});
+async function evalTemplate(code, context = {}, options = {});
 
 /**
  * 创建模板语法处理使用的执行环境(上下文)
