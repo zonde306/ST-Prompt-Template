@@ -59,7 +59,7 @@ export interface EvalTemplateOptions {
 }
 
 function escapeEjsInDisabledBlocks(str : string, markup: string = 'escape-ejs') {
-    return str.replace(new RegExp(`<${markup}>([\\s\\S]*?)</${markup}>`, 'g'),
+    return str.replaceAll(new RegExp(`<${markup}>([\\s\\S]*?)</${markup}>`, 'g'),
         (_match, content) => content.replace(/<%/g, '<%%').replace(/%>/g, '%%>'),
     );
 }
