@@ -178,7 +178,31 @@
 
 [Context % / Budget](https://docs.sillytavern.app/usage/core-concepts/worldinfo/#context---budget)
 
+---
 
+## 范围转义
+
+在`<escape-ejs>...</escape-ejs>`内的 `<%`和`%>`将会被自动替换为`<%%`和`%%>`
+
+例如，输入：
+
+```html
+<%= 'line 1' %>
+<escape-ejs>
+<%= 'line 2' %>
+</escape-ejs>
+<%= 'line 3' %>
+```
+
+进行处理后，将会输出
+
+```html
+line 1
+
+<%= 'line 2' %>
+
+line 3
+```
 
 
 

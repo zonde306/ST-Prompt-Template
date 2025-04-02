@@ -111,3 +111,30 @@ The extension may affect:
 - Context length estimates
 
 Use with caution when using `getwi`, `getvar`, or `getchr` as they may cause budget overflows.
+
+---
+
+## Scope Escaping
+
+The `<%` and `%>` within `<escape-ejs>...</escape-ejs>` will be automatically replaced with `<%%` and `%%>`.
+
+For example, input:
+
+```html
+<%= 'line 1' %>
+<escape-ejs>
+<%= 'line 2' %>
+</escape-ejs>
+<%= 'line 3' %>
+```
+
+After processing, the output will be:
+
+```html
+line 1
+
+<%= 'line 2' %>
+
+line 3
+```
+

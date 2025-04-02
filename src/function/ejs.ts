@@ -55,6 +55,13 @@ export interface EvalTemplateOptions {
     logging?: boolean;
     when?: string;
     options?: Record<string, unknown>;
+    disableFlags?: string;
+}
+
+function escapeEjsInDisabledBlocks(str : string, markup: string = 'escape-ejs') {
+    return str.replace(new RegExp(`<${markup}>([\\s\\S]*?)</${markup}>`, 'g'),
+        (_match, content) => content.replace(/<%/g, '<%%').replace(/%>/g, '%%>'),
+    );
 }
 
 export async function evalTemplate(content: string, data: Record<string, unknown>,
@@ -65,7 +72,7 @@ export async function evalTemplate(content: string, data: Record<string, unknown
     try {
         result = await vm.runInNewContext(CODE_TEMPLATE, {
             ejs,
-            content,
+            content: escapeEjsInDisabledBlocks(content, opts.disableFlags || 'escape-ejs'),
             data,
             escaper: opts.escaper || escape,
             includer: opts.includer || include,
