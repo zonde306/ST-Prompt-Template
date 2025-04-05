@@ -14,6 +14,13 @@ let runID = 0;
 let isFakeRun = false;
 
 async function updateGenerate(data: GenerateData) {
+    // @ts-expect-error: 2339
+    if(extension_settings.EjsTemplate?.enabled === false)
+        return;
+    // @ts-expect-error: 2339
+    if(extension_settings.EjsTemplate?.generate_enabled === false)
+        return;
+
     STATE.isDryRun = false;
     const start = Date.now();
 
@@ -22,20 +29,25 @@ async function updateGenerate(data: GenerateData) {
         runID: runID++
     });
 
-    const before = await processSpecialEntities(env, '[GENERATE:BEFORE]');
+    // @ts-expect-error: 2339
+    const before = extension_settings.EjsTemplate?.generate_before_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:BEFORE]');
 
     let prompts = before;
     for (const [idx, message] of data.messages.entries()) {
-        const beforeMessage = await processSpecialEntities(env, `[GENERATE:${idx}:BEFORE]`);
+        // @ts-expect-error: 2339
+        const beforeMessage =  extension_settings.EjsTemplate?.generate_before_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:BEFORE]`);
+
         const prompt = await evalTemplateHandler(message.content, env, `message #${idx + 1}(${message.role})`);
-        const afterMessage = await processSpecialEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
+        // @ts-expect-error: 2339
+        const afterMessage = extension_settings.EjsTemplate?.generate_after_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
         if (prompt) {
             message.content = beforeMessage + prompt + afterMessage;
             prompts += beforeMessage + prompt + afterMessage;
         }
     }
 
-    const after = await processSpecialEntities(env, '[GENERATE:AFTER]', prompts);
+    // @ts-expect-error: 2339
+    const after = extension_settings.EjsTemplate?.generate_after_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:AFTER]', prompts);
     prompts += after;
 
     data.messages[0].content = before + data.messages[0].content;
@@ -50,6 +62,13 @@ async function updateGenerate(data: GenerateData) {
 }
 
 async function updateMessageRender(message_id: string, isDryRun?: boolean) {
+    // @ts-expect-error: 2339
+    if(extension_settings.EjsTemplate?.enabled === false)
+        return;
+    // @ts-expect-error: 2339
+    if(extension_settings.EjsTemplate?.render_enabled === false)
+        return;
+
     if (isFakeRun) return;
 
     STATE.isDryRun = !!isDryRun;
@@ -106,8 +125,9 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         return messageFormatting(markup, message.name, message.is_system, message.is_user, message_idx);
     }
 
-    const before = await processSpecialEntities(env, '[RENDER:BEFORE]', '', { escaper });
-    const content = html/*.replaceAll('&lt;%', '<%').replaceAll('%&gt;', '%>')*/;
+    // @ts-expect-error: 2339
+    const before = extension_settings.EjsTemplate?.render_before_enabled === false ? '' : await processSpecialEntities(env, '[RENDER:BEFORE]', '', { escaper });
+    const content = html;
     let newContent = await evalTemplateHandler(content, env, `chat #${message_idx}`, {
         escaper,
         options: {
@@ -116,7 +136,8 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         },
     });
 
-    const after = await processSpecialEntities(env, '[RENDER:AFTER]', newContent || '', { escaper });
+    // @ts-expect-error: 2339
+    const after = extension_settings.EjsTemplate?.render_after_enabled === false ? '' : await processSpecialEntities(env, '[RENDER:AFTER]', newContent || '', { escaper });
     if(newContent)
         newContent = before + newContent + after;
 
