@@ -1,0 +1,14 @@
+{
+	"[PT] Enable": "启用扩展",
+	"[PT] Enable Generate-time evaluation": "在生成时处理提示词模板",
+	"[PT] Enable [GENERATE:BEFORE] evaluation": "允许使用 [GENERATE:BEFORE] 将提示词插入到生成输入顶部",
+	"[PT] Enable [GENERATE:AFTER] evaluation": "允许 [GENERATE:AFTER] 将提示词插入到生成输入底部",
+	"[PT] Enable Render-time evaluation": "在楼层消息中处理提示词模板（仅显示）",
+	"[PT] Enable [RENDER:BEFORE] evaluation": "允许 [RENDER:BEFORE] 将提示词插入到显示消息的顶部",
+	"[PT] Enable [RENDER:AFTER] evaluation": "允许 [RENDER:AFTER] 将提示词插入到显示消息的底部",
+	"[PT] Enable Autosave": "在处理模板后保存聊天文件",
+	"[PT] Enable Preload": "在打开角色卡时对世界书处理提示词模板",
+	"[PT] Enable code blocks": "处理 <pre> 块中的提示词模板",
+	"[PT] Enable strict mode": "处理提示词模板时使用严格模式",
+	"[PT] Enable debug logging": "发生错误时输出调试信息",
+}

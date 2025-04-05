@@ -6,7 +6,10 @@
     "js": "dist/index.js",
     "css": "",
     "author": "zonde306",
-    "version": "1.6.8.5",
+    "version": "1.6.8.6",
     "homePage": "https://github.com/zonde306/ST-Prompt-Template",
-    "auto_update": true
+    "auto_update": true,
+	"i18n" : {
+		"zh-cn": "locales/zh-cn.json",
+	}
 }
