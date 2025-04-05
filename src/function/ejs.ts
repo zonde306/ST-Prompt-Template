@@ -95,6 +95,10 @@ function escapeEjsInDisabledBlocks(str : string, options : EjsOptions = {}, mark
 export async function evalTemplate(content: string, data: Record<string, unknown>,
     opts : EvalTemplateOptions = {}) {
     // await eventSource.emit('prompt_template_evaluation', { content, data });
+    if(opts.options?.debug && !opts.options.destructuredLocals) {
+        // unpack variables
+        opts.options.destructuredLocals = Object.keys(data);
+    }
 
     let result = '';
     try {

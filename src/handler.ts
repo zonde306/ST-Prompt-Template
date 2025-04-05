@@ -273,10 +273,20 @@ function updateTokens(prompts: string, type: 'send' | 'receive') {
 async function evalTemplateHandler(content: string,
     env: Record<string, unknown>,
     where: string = '',
-    options: EvalTemplateOptions = {}):
+    opt: EvalTemplateOptions = {}):
     Promise<string | null> {
     try {
-        return await evalTemplate(content, env, { ...options, logging: false });
+        return await evalTemplate(content, env, {
+            ...opt,
+            logging: false,
+            options: {
+                // @ts-expect-error: 2339
+                strict: extension_settings.EjsTemplate?.strict_enabled ?? false,
+                // @ts-expect-error: 2339
+                debug: extension_settings.EjsTemplate?.debug_enabled ?? false,
+                ...(opt.options || {}),
+            },
+        });
     } catch (err) {
         const contentWithLines = content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
         console.debug(`[Prompt Template] handling ${where} errors:\n${contentWithLines}`);
