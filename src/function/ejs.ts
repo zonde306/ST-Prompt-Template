@@ -49,18 +49,43 @@ const CODE_TEMPLATE = `
     );
 `;
 
+export interface EjsOptions {
+    cache?: boolean;    // Compiled functions are cached, requires `filename`
+    filename?: string;  // The name of the file being rendered. Not required if you are using renderFile(). Used by cache to key caches, and for includes.
+    root?: string | string[];   // Set template root(s) for includes with an absolute path (e.g, /file.ejs). Can be array to try to resolve include from multiple directories.
+    views?: string[];   // An array of paths to use when resolving includes with relative paths.
+    context?: Record<string, unknown>;  // Function execution context
+    compileDebug?: boolean; // When false no debug instrumentation is compiled
+    delimiter?: string; // When true, compiles a function that can be rendered in the browser without needing to load the EJS Runtime (ejs.min.js).
+    client?: boolean;   // Character to use for inner delimiter, by default '%'
+    openDelimiter?: string; // Character to use for opening delimiter, by default '<'
+    closeDelimiter?: string;    // Character to use for closing delimiter, by default '>'
+    debug?: boolean;    // Outputs generated function body
+    strict?: boolean;   // When set to true, generated function is in strict mode
+    _with?: boolean;    // Whether or not to use with() {} constructs. If false then the locals will be stored in the locals object. Set to false in strict mode.
+    destructuredLocals?: string[];  // An array of local variables that are always destructured from the locals object, available even in strict mode.
+    localsName?: string;    // Name to use for the object storing local variables when not using with Defaults to locals
+    rmWhitespace?: boolean; // Remove all safe-to-remove whitespace, including leading and trailing whitespace. It also enables a safer version of -%> line slurping for all scriptlet tags (it does not strip new lines of tags in the middle of a line).
+    escape?: ((markup: string) => string);  // The escaping function used with <%= construct. It is used in rendering and is .toString()ed in the generation of client functions. (By default escapes XML).
+    outputFunctionName?: string;    // Set to a string (e.g., 'echo' or 'print') for a function to print output inside scriptlet tags.
+    async?: boolean;    // When true, EJS will use an async function for rendering. (Depends on async/await support in the JS runtime).
+    includer?: ((originalPath: string, parsedPath: string) => IncluderResult);  // Custom function to handle EJS includes, receives (originalPath, parsedPath) parameters, where originalPath is the path in include as-is and parsedPath is the previously resolved path. Should return an object { filename, template }, you may return only one of the properties, where filename is the final parsed path and template is the included content.
+} 
+
 export interface EvalTemplateOptions {
     escaper?: ((markup: string) => string) | undefined;
     includer?: (originalPath: string, parsedPath: string) => IncluderResult | undefined;
     logging?: boolean;
     when?: string;
-    options?: Record<string, unknown>;
+    options?: EjsOptions;
     disableFlags?: string;
 }
 
-function escapeEjsInDisabledBlocks(str : string, markup: string = 'escape-ejs') {
+function escapeEjsInDisabledBlocks(str : string, options : EjsOptions = {}, markup: string = 'escape-ejs') {
+    const leftDelimiter = `${options.openDelimiter || '<'}${options.delimiter || '%'}`;
+    const rightDelimiter = `${options.delimiter || '%'}${options.closeDelimiter || '>'}`;
     return str.replaceAll(new RegExp(`<${markup}>([\\s\\S]*?)</${markup}>`, 'g'),
-        (_match, content) => content.replace(/<%/g, '<%%').replace(/%>/g, '%%>'),
+        (_match, content) => content.replaceAll(leftDelimiter, '<%%').replaceAll(rightDelimiter, '%%>'),
     );
 }
 
@@ -72,7 +97,7 @@ export async function evalTemplate(content: string, data: Record<string, unknown
     try {
         result = await vm.runInNewContext(CODE_TEMPLATE, {
             ejs,
-            content: escapeEjsInDisabledBlocks(content, opts.disableFlags || 'escape-ejs'),
+            content: escapeEjsInDisabledBlocks(content, opts.options || {}, opts.disableFlags || 'escape-ejs'),
             data,
             escaper: opts.escaper || escape,
             includer: opts.includer || include,
