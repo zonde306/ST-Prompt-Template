@@ -68,12 +68,6 @@ export async function init() {
                         <span class="fa-solid fa-circle-question note-link-span"></span>
                     </label>
                     
-                    <label class="flex-container" title="在渲染（楼层消息）执行模板处理">
-                        <input type="checkbox" id="pt_render_enabled">
-                        <span data-i18n="[PT] Enable Render-time evaluation">Render-time evaluation</span>
-                        <span class="fa-solid fa-circle-question note-link-span"></span>
-                    </label>
-                    
                     <label class="flex-container" title="启用 [GENERATE:BEFORE] 功能（详见文档）">
                         <input type="checkbox" id="pt_generate_before_enabled">
                         <span data-i18n="[PT] Enable [GENERATE:BEFORE] evaluation">[GENERATE:BEFORE] evaluation</span>
@@ -83,6 +77,12 @@ export async function init() {
                     <label class="flex-container" title="启用 [GENERATE:AFTER] 功能（详见文档）">
                         <input type="checkbox" id="pt_generate_after_enabled">
                         <span data-i18n="[PT] Enable [GENERATE:AFTER] evaluation">[GENERATE:AFTER] evaluation</span>
+                        <span class="fa-solid fa-circle-question note-link-span"></span>
+                    </label>
+                    
+                    <label class="flex-container" title="在渲染（楼层消息）执行模板处理">
+                        <input type="checkbox" id="pt_render_enabled">
+                        <span data-i18n="[PT] Enable Render-time evaluation">Render-time evaluation</span>
                         <span class="fa-solid fa-circle-question note-link-span"></span>
                     </label>
                     
