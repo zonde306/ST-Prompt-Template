@@ -84,10 +84,11 @@ export interface EvalTemplateOptions {
 function escapeEjsInDisabledBlocks(str : string, options : EjsOptions = {}, markup: string = 'escape-ejs') {
     const openDelimiter = options.openDelimiter || '<';
     const closeDelimiter = options.closeDelimiter || '>';
-    const leftDelimiter = `${openDelimiter}${options.delimiter || '%'}`;
-    const rightDelimiter = `${closeDelimiter}${options.closeDelimiter || '>'}`;
+    const delimiter = options.delimiter || '%';
     return str.replaceAll(new RegExp(`${openDelimiter}#${markup}${closeDelimiter}([\\s\\S]*?)${openDelimiter}#/${markup}${closeDelimiter}`, 'g'),
-        (_match, content) => content.replaceAll(leftDelimiter, '<%%').replaceAll(rightDelimiter, '%%>'),
+        (_match, content) => content
+                                    .replaceAll(`${openDelimiter}${delimiter}`, `${openDelimiter}${openDelimiter}${delimiter}`)
+                                    .replaceAll(`${closeDelimiter}${delimiter}`, `${closeDelimiter}${closeDelimiter}${delimiter}`),
     );
 }
 
