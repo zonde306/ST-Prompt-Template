@@ -12,6 +12,7 @@ const SETTINGS : Record<string, { name: string, value: boolean }> = {
     '#pt_strict_enabled': { name: 'strict_enabled', value: false },
     '#pt_debug_enabled': { name: 'debug_enabled', value: false },
     '#pt_autosave_enabled': { name: 'autosave_enabled', value: true },
+    '#pt_preload_worldinfo': { name: 'preload_worldinfo_enabled', value: true },
 };
 
 export function loadSettings() {
@@ -82,8 +83,15 @@ export async function init() {
                         <input type="checkbox" id="pt_render_after_enabled"><span data-i18n="[PT] Enable [RENDER:AFTER] evaluation">[RENDER:AFTER] evaluation</span>
                     </label>
                     
+                    <hr>
+                    
                     <label class="flex-container">
                         <input type="checkbox" id="pt_autosave_enabled"><span data-i18n="[PT] Enable Autosave">Save variables after updating</span>
+                    </label>
+                    
+                    
+                    <label class="flex-container">
+                        <input type="checkbox" id="pt_preload_worldinfo"><span data-i18n="[PT] Enable Preload">Preload world info</span>
                     </label>
                     
                     <hr>
@@ -104,6 +112,8 @@ export async function init() {
         $(id).off('click').on('click', () => {
             // @ts-expect-error: 2339
             extension_settings.EjsTemplate[setting.name] = $(id).prop('checked') ?? setting.value;
+            // @ts-expect-error: 2339
+            console.debug(`[Prompt Template] setting ${setting.name} changed to ${extension_settings.EjsTemplate[setting.name]}`);
         });
     }
     

@@ -170,6 +170,13 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
 }
 
 async function handlePreloadWorldInfo(chat_filename? : string) {
+    // @ts-expect-error: 2339
+    if(extension_settings.EjsTemplate?.enabled === false)
+        return;
+    // @ts-expect-error: 2339
+    if(extension_settings.EjsTemplate?.preload_worldinfo_enabled === false)
+        return;
+
     if(!chat_filename) return;
     STATE.isDryRun = true;
     const start = Date.now();
@@ -208,6 +215,10 @@ async function handlePreloadWorldInfo(chat_filename? : string) {
 }
 
 async function handleWorldInfoActivation(_type: string, _options : GenerateOptions, dryRun: boolean) {
+    // @ts-expect-error: 2339
+    if(extension_settings.EjsTemplate?.enabled === false)
+        return;
+
     if(dryRun) return;
     await eventSource.emit(event_types.WORLDINFO_FORCE_ACTIVATE, activatedWorldEntries.values());
     console.debug('[Prompt Template] force activate world info:');
@@ -216,6 +227,10 @@ async function handleWorldInfoActivation(_type: string, _options : GenerateOptio
 }
 
 async function handleWorldInfoActivate(data: ChatData) {
+    // @ts-expect-error: 2339
+    if(extension_settings.EjsTemplate?.enabled === false)
+        return;
+
     if(!data.dryRun) return;
     activatedWorldEntries.clear();
 
