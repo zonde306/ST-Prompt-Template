@@ -13,6 +13,7 @@ const SETTINGS : Record<string, { name: string, value: boolean }> = {
     '#pt_debug_enabled': { name: 'debug_enabled', value: false },
     '#pt_autosave_enabled': { name: 'autosave_enabled', value: true },
     '#pt_preload_worldinfo': { name: 'preload_worldinfo_enabled', value: true },
+    '#pt_code_blocks': { name: 'code_blocks_enabled', value: false },
 };
 
 export function loadSettings() {
@@ -89,9 +90,13 @@ export async function init() {
                         <input type="checkbox" id="pt_autosave_enabled"><span data-i18n="[PT] Enable Autosave">Save variables after updating</span>
                     </label>
                     
-                    
                     <label class="flex-container">
                         <input type="checkbox" id="pt_preload_worldinfo"><span data-i18n="[PT] Enable Preload">Preload world info</span>
+                    </label>
+                    
+                    
+                    <label class="flex-container">
+                        <input type="checkbox" id="pt_code_blocks"><span data-i18n="[PT] Enable code blocks">Evaluate inside a code block</span>
                     </label>
                     
                     <hr>

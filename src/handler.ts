@@ -127,7 +127,12 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
 
     // @ts-expect-error: 2339
     const before = extension_settings.EjsTemplate?.render_before_enabled === false ? '' : await processSpecialEntities(env, '[RENDER:BEFORE]', '', { escaper });
-    const content = html;
+
+    // @ts-expect-error: 2339
+    const content = extension_settings.EjsTemplate?.code_blocks_enabled === true ? html.replace(/(<pre\b[^>]*>)([\s\S]*?)(<\/pre>)/gi, (m, p1, p2, p3) => {
+        return p1 + p2.replace(/&lt;/g, '#lt#').replace(/&gt;/g, '#gt#') + p3;
+    }) : html;
+
     let newContent = await evalTemplateHandler(content, env, `chat #${message_idx}`, {
         escaper,
         options: {
@@ -135,6 +140,13 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
             closeDelimiter: '&gt;',
         },
     });
+    
+    // @ts-expect-error: 2339
+    if(extension_settings.EjsTemplate?.code_blocks_enabled === true) {
+        newContent = newContent?.replace(/(<pre\b[^>]*>)([\s\S]*?)(<\/pre>)/gi, (m, p1, p2, p3) => {
+            return p1 + p2.replace(/#lt#/g, '&lt;').replace(/#gt#/g, '&gt;') + p3;
+        }) ?? null;
+    }
 
     // @ts-expect-error: 2339
     const after = extension_settings.EjsTemplate?.render_after_enabled === false ? '' : await processSpecialEntities(env, '[RENDER:AFTER]', newContent || '', { escaper });
