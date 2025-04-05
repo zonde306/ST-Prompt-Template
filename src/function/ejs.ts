@@ -84,7 +84,7 @@ export interface EvalTemplateOptions {
 function escapeEjsInDisabledBlocks(str : string, options : EjsOptions = {}, markup: string = 'escape-ejs') {
     const leftDelimiter = `${options.openDelimiter || '<'}${options.delimiter || '%'}`;
     const rightDelimiter = `${options.delimiter || '%'}${options.closeDelimiter || '>'}`;
-    return str.replaceAll(new RegExp(`<${markup}>([\\s\\S]*?)</${markup}>`, 'g'),
+    return str.replaceAll(new RegExp(`<#${markup}>([\\s\\S]*?)<#/${markup}>`, 'g'),
         (_match, content) => content.replaceAll(leftDelimiter, '<%%').replaceAll(rightDelimiter, '%%>'),
     );
 }

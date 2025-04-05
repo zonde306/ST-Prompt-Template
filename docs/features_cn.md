@@ -182,15 +182,15 @@
 
 ## 范围转义
 
-在`<escape-ejs>...</escape-ejs>`内的 `<%`和`%>`将会被自动替换为`<%%`和`%%>`
+在`<#escape-ejs>...<#/escape-ejs>`内的 `<%`和`%>`将会被自动替换为`<%%`和`%%>`
 
 例如，输入：
 
 ```html
 <%= 'line 1' %>
-<escape-ejs>
+<#escape-ejs>
 <%= 'line 2' %>
-</escape-ejs>
+<#/escape-ejs>
 <%= 'line 3' %>
 ```
 

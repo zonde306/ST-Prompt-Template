@@ -116,15 +116,15 @@ Use with caution when using `getwi`, `getvar`, or `getchr` as they may cause bud
 
 ## Scope Escaping
 
-The `<%` and `%>` within `<escape-ejs>...</escape-ejs>` will be automatically replaced with `<%%` and `%%>`.
+The `<%` and `%>` within `<#escape-ejs>...<#/escape-ejs>` will be automatically replaced with `<%%` and `%%>`.
 
 For example, input:
 
 ```html
 <%= 'line 1' %>
-<escape-ejs>
+<#escape-ejs>
 <%= 'line 2' %>
-</escape-ejs>
+<#/escape-ejs>
 <%= 'line 3' %>
 ```
 
