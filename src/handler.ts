@@ -242,7 +242,8 @@ async function handleWorldInfoActivate(data: ChatData) {
 }
 
 async function checkAndSave() {
-    if (STATE.isUpdated)
+    // @ts-expect-error: 2339
+    if (STATE.isUpdated && extension_settings.EjsTemplate?.autosave_enabled !== false)
         await saveChatConditional();
 
     STATE.isUpdated = false;

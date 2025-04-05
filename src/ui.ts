@@ -11,6 +11,7 @@ const SETTINGS : Record<string, { name: string, value: boolean }> = {
     '#pt_render_after_enabled': { name: 'render_after_enabled', value: true },
     '#pt_strict_enabled': { name: 'strict_enabled', value: false },
     '#pt_debug_enabled': { name: 'debug_enabled', value: false },
+    '#pt_autosave_enabled': { name: 'autosave_enabled', value: true },
 };
 
 export function loadSettings() {
@@ -79,6 +80,10 @@ export async function init() {
                     
                     <label class="flex-container">
                         <input type="checkbox" id="pt_render_after_enabled"><span data-i18n="[PT] Enable [RENDER:AFTER] evaluation">[RENDER:AFTER] evaluation</span>
+                    </label>
+                    
+                    <label class="flex-container">
+                        <input type="checkbox" id="pt_autosave_enabled"><span data-i18n="[PT] Enable Autosave">Save variables after updating</span>
                     </label>
                     
                     <hr>
