@@ -1,7 +1,7 @@
 import { eventSource, event_types } from '../../../../../script.js';
 import { extension_settings, renderExtensionTemplateAsync } from '../../../../extensions.js';
 
-const SETTINGS : Record<string, { name: string, value: boolean }> = {
+const DEFAULT_SETTINGS : Record<string, { name: string, value: boolean }> = {
     '#pt_enabled': { name: 'enabled', value: true },
     '#pt_generate_enabled': { name: 'generate_enabled', value: true },
     '#pt_generate_before_enabled': { name: 'generate_before_enabled', value: true },
@@ -16,6 +16,23 @@ const SETTINGS : Record<string, { name: string, value: boolean }> = {
     '#pt_code_blocks': { name: 'code_blocks_enabled', value: false },
 };
 
+interface EjsSettings extends Record<string, boolean> {
+    enabled: boolean;
+    generate_enabled: boolean;
+    generate_before_enabled: boolean;
+    generate_after_enabled: boolean;
+    render_enabled: boolean;
+    render_before_enabled: boolean;
+    render_after_enabled: boolean;
+    strict_enabled: boolean;
+    debug_enabled: boolean;
+    autosave_enabled: boolean;
+    preload_worldinfo_enabled: boolean;
+    code_blocks_enabled: boolean;
+};
+
+export const settings = {} as EjsSettings;
+
 export function loadSettings() {
     // @ts-expect-error: 2339
     if(!extension_settings.EjsTemplate) {
@@ -23,16 +40,17 @@ export function loadSettings() {
         extension_settings.EjsTemplate = {};
     }
 
-    for(const [id, setting] of Object.entries(SETTINGS)) {
+    for(const [id, setting] of Object.entries(DEFAULT_SETTINGS)) {
         // @ts-expect-error: 2339
         extension_settings.EjsTemplate[setting.name] = $(id).prop('checked') ?? setting.value;
+        settings[setting.name] = $(id).prop('checked') ?? setting.value;
     }
 }
 
 function handleSettingLoad() {
-    for(const [id, setting] of Object.entries(SETTINGS)) {
+    for(const [id, setting] of Object.entries(DEFAULT_SETTINGS)) {
         // @ts-expect-error: 2339
-        $(id).prop('checked', extension_settings.EjsTemplate?.[setting.name] ?? setting.value);
+        $(id).prop('checked', extension_settings.EjsTemplate?.[setting.name] ?? settings[setting.name] ?? setting.value);
     }
 }
 
@@ -43,7 +61,7 @@ function handleSettingSave() {
 export async function init() {
     $('#extensions_settings').append(await renderExtensionTemplateAsync('third-party/ST-Prompt-Template', 'settings'));
 
-    for(const [id, setting] of Object.entries(SETTINGS)) {
+    for(const [id, setting] of Object.entries(DEFAULT_SETTINGS)) {
         $(id).off('click').on('click', () => {
             // @ts-expect-error: 2339
             if(!extension_settings.EjsTemplate) {
@@ -53,6 +71,7 @@ export async function init() {
 
             // @ts-expect-error: 2339
             extension_settings.EjsTemplate[setting.name] = $(id).prop('checked') ?? setting.value;
+            settings[setting.name] = $(id).prop('checked') ?? setting.value;
             // @ts-expect-error: 2339
             console.debug(`[Prompt Template] setting ${setting.name} changed to ${extension_settings.EjsTemplate[setting.name]}`);
         });
@@ -67,6 +86,7 @@ export async function init() {
     
     eventSource.on(event_types.SETTINGS_LOADED, handleSettingLoad);
     eventSource.on(event_types.SETTINGS_UPDATED, handleSettingSave);
+    handleSettingLoad();
 }
 
 export async function exit() {
