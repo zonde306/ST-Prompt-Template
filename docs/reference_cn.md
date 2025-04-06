@@ -278,6 +278,51 @@ function print(...args);
  */
 async function activewi(worldinfo, title);
 async function activateWorldInfo(worldinfo, title);
+
+/**
+ * 获取当前已开启的世界书的所有条目集合
+ *
+ * @param {boolean} chara - 是否包含角色卡的内置世界书
+ * @param {boolean} global - 是否包全局启用的世界书
+ * @param {boolean} persona - 是否包用户角色绑定的世界书
+ * @param {boolean} persona - 是否包含角色卡的外挂世界书
+ * @returns {Promise<WorldInfoData[]>} - 世界书的条目列表
+ */
+async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true);
+
+/**
+ * 从世界书条目列表筛选出激活的条目
+ *
+ * @param {WorldInfoData[]} entries - 世界书条目列表
+ * @param {string | string[]} keywords - 用户激活的内容
+ * @param {boolean} withConstant - 允许激活永久🔵条目
+ * @param {boolean} withDisabled - 允许激活禁用条目
+ * @returns {WorldInfoData[]} - 被激活的世界书的条目列表
+ */
+function selectActivatedEntries(entries, keywords, withConstant = true, withDisabled = false);
+
+/**
+ * 获取指定聊天(楼层)消息内容
+ *
+ * @param {number} idx - 聊天(楼层)消息ID
+ * @param {'user' | 'assistant' | 'system' | undefined} role - 仅选取指定角色的消息，不提供则不过滤
+ * @returns {string} - 聊天(楼层)消息内容，失败返回空字符串
+ */
+function getChatMessage(idx, role = undefined);
+
+/**
+ * 获取指定范围内聊天(楼层)消息内容列表
+ *
+ * @param {number} count - 聊天(楼层)消息数量
+ * @param {'user' | 'assistant' | 'system'} role - 仅选取指定角色的消息
+ * @param {number} start - 聊天(楼层)消息开始位置ID
+ * @param {number} end - 聊天(楼层)消息结束位置ID
+ * @returns {string[]} - 聊天(楼层)消息内容列表
+ */
+function getChatMessages(count);
+function getChatMessages(count, role);
+function getChatMessages(start, end);
+function getChatMessages(start, end, role);
 ```
 
 > `flags` 类型:

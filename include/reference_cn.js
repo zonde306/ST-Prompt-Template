@@ -111,7 +111,7 @@ async function execute(cmd);
 /**
  * 读取世界书条目内容
  *
- * @param {string} worldinfo - 世界书名
+ * @param {string} worldinfo - 世界书名(递归时可传递空值，自动推断为当前世界书)
  * @param {string | RegExp | number} title - 条目uid/标题
  * @param {Record<string, any>} [data={}] - 传递的数据
  * @returns {Promise<string>} - 世界书条目的内容
@@ -241,9 +241,10 @@ async function getWorldInfoActivatedData(name, keyword);
  *
  * @param {string} content - 要处理的字符串内容
  * @param {Object} [data={}] - 传递的数据
+ * @param {Object} [options={}] - ejs 参数
  * @returns {Promise<string>} - 处理后的字符串内容
  */
-async function evalTemplate(content, data = {});
+async function evalTemplate(content, data = {}, options = {});
 
 /**
  * 获取所有可能会使用的世界书的全部条目
@@ -266,52 +267,56 @@ async function getEnabledWorldInfoEntries(chara = true, global = true, persona =
 function print(...args);
 
 /**
- * 全部变量合集
- * 根据以下顺序(优先级)合并变量, 高优先级覆盖低优先级的同名变量:
- * 1.消息变量(楼层号从末尾到开头)
- * 2.局部(聊天)变量
- * 3.全局变量
- * 
- * @note: 处理楼层消息变量时此值不包含当前以及之后的楼层变量
- *        冲突处理: 类型同为 [] 或者 {} 则合并，否则替换
- * @see: https://lodash.com/docs/4.17.15#merge
+ * 激活世界书
+ *
+ * @param {string} worldinfo - 世界书名
+ * @param {string | RegExp | number} title - 条目uid/标题
+ * @returns {Promise<WorldInfoData | null>} - 世界书的条目
  */
-const variables = {};
+async function activewi(worldinfo, title);
+async function activateWorldInfo(worldinfo, title);
 
 /**
- * 酒馆的 SillyTavern.getContext() 返回内容
- * 详细内容可在控制台里输入 SillyTavern.getContext() 查看
+ * 获取当前已开启的世界书的所有条目集合
+ *
+ * @param {boolean} chara - 是否包含角色卡的内置世界书
+ * @param {boolean} global - 是否包全局启用的世界书
+ * @param {boolean} persona - 是否包用户角色绑定的世界书
+ * @param {boolean} persona - 是否包含角色卡的外挂世界书
+ * @returns {Promise<WorldInfoData[]>} - 世界书的条目列表
  */
-const SillyTavern = SillyTavern.getContext();
+async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true);
 
 /**
- * faker 库的内容,用于生成随机内容
- * 使用方式: faker.fakerEN, faker.fakerCN 等
- * 例如: faker.fakerEN.lastName() 获取一个随机英文名
- * @see: https://fakerjs.dev/api/
+ * 从世界书条目列表筛选出激活的条目
+ *
+ * @param {WorldInfoData[]} entries - 世界书条目列表
+ * @param {string | string[]} keywords - 用户激活的内容
+ * @param {boolean} withConstant - 允许激活永久🔵条目
+ * @param {boolean} withDisabled - 允许激活禁用条目
+ * @returns {WorldInfoData[]} - 被激活的世界书的条目列表
  */
-const faker = require("faker");
-
-/*
- * Lodash 库
- * 使用方式: _.get, _.set 等
- * 例如: _.toArray('abc') 输出 ['a','b','c']
- * @see: https://lodash.com/docs/4.17.15
- */
-const _ = require("lodash");
-
-/*
- * JQuery 库
- * 使用方法: $()
- * 例如 $('.mes_text') 获取文本框
- * @see: https://api.jquery.com/
- */
-const $ = require("JQuery");
+function selectActivatedEntries(entries, keywords, withConstant = true, withDisabled = false);
 
 /**
- * 模板计算时的阶段
- * generate: 生成阶段
- * preparation: 准备阶段
- * render: 渲染(楼层消息)阶段
+ * 获取指定聊天(楼层)消息内容
+ *
+ * @param {number} idx - 聊天(楼层)消息ID
+ * @param {'user' | 'assistant' | 'system' | undefined} role - 仅选取指定角色的消息，不提供则不过滤
+ * @returns {string} - 聊天(楼层)消息内容，失败返回空字符串
  */
-const runType = 'generate' | 'preparation' | 'render';
+function getChatMessage(idx, role = undefined);
+
+/**
+ * 获取指定范围内聊天(楼层)消息内容列表
+ *
+ * @param {number} count - 聊天(楼层)消息数量
+ * @param {'user' | 'assistant' | 'system'} role - 仅选取指定角色的消息
+ * @param {number} start - 聊天(楼层)消息开始位置ID
+ * @param {number} end - 聊天(楼层)消息结束位置ID
+ * @returns {string[]} - 聊天(楼层)消息内容列表
+ */
+function getChatMessages(count);
+function getChatMessages(count, role);
+function getChatMessages(start, end);
+function getChatMessages(start, end, role);

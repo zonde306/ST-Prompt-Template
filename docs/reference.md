@@ -278,6 +278,51 @@ function print(...args);
  */
 async function activewi(worldinfo, title);
 async function activateWorldInfo(worldinfo, title);
+
+/**
+ * Get all entries from currently enabled World Info books
+ *
+ * @param {boolean} chara - Include character embedded World Info
+ * @param {boolean} global - Include globally enabled World Info
+ * @param {boolean} persona - Include user persona World Info
+ * @param {boolean} charaExtra - Include character extra World Info
+ * @returns {Promise<WorldInfoData[]>} List of World Info entries
+ */
+async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true);
+
+/**
+ * Filter activated entries from World Info entry list
+ *
+ * @param {WorldInfoData[]} entries - World Info entry list
+ * @param {string | string[]} keywords - User activation content
+ * @param {boolean} withConstant - Allow permanent 🔵 entries
+ * @param {boolean} withDisabled - Allow disabled entries
+ * @returns {WorldInfoData[]} Activated World Info entries
+ */
+function selectActivatedEntries(entries, keywords, withConstant = true, withDisabled = false);
+
+/**
+ * Get specified chat (floor) message content
+ *
+ * @param {number} idx - Chat (floor) message ID
+ * @param {'user' | 'assistant' | 'system' | undefined} role - Filter by role, no filter if undefined
+ * @returns {string} Chat message content, empty string on failure
+ */
+function getChatMessage(idx, role = undefined);
+
+/**
+ * Get chat (floor) message content list within specified range
+ *
+ * @param {number} count - Number of chat messages
+ * @param {'user' | 'assistant' | 'system'} role - Filter by role
+ * @param {number} start - Start message ID
+ * @param {number} end - End message ID
+ * @returns {string[]} Chat message content list
+ */
+function getChatMessages(count);
+function getChatMessages(count, role);
+function getChatMessages(start, end);
+function getChatMessages(start, end, role);
 ```
 
 > `flags` types:

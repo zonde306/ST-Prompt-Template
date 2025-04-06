@@ -9,6 +9,7 @@ import { getCharaDefs, DEFAULT_CHAR_DEFINE, getCharaData } from './characters';
 import { substituteParams, eventSource } from '../../../../../../script.js';
 import { getPresetPromptsContent } from './presets';
 import { getQuickReply, getQuickReplyData } from './quickreply';
+import { getChatMessage, getChatMessages } from './chat';
 import { fakerEnv } from './faker';
 import check from 'syntax-error';
 
@@ -287,10 +288,12 @@ export async function prepareContext(end: number = 65535, env: Record<string, un
         getQuickReplyData: getQuickReplyData.bind(context),
         getWorldInfoActivatedData: getWorldInfoActivatedEntries.bind(context),
         evalTemplate: boundedEvalTemplate.bind(context),
-        getEnabledWorldInfoEntries: getEnabledWorldInfoEntries.bind(context),
-        selectActivatedEntries: selectActivatedEntries.bind(context),
+        getEnabledWorldInfoEntries: getEnabledWorldInfoEntries,
+        selectActivatedEntries: selectActivatedEntries,
         activewi: activateWorldInfo,
         activateWorldInfo: activateWorldInfo,
+        getChatMessage: getChatMessage,
+        getChatMessages: getChatMessages,
         ...boundCloneDefines(context, SharedDefines),
         ref: new WeakRef(context),
     });

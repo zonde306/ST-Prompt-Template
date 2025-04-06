@@ -77,16 +77,25 @@ export async function getWorldInfoEntryContent(name: string, title: string | Reg
     return data.content;
 }
 
-export async function getWorldInfoActivatedEntries(name: string, keywords: string, withConstant : boolean = false) {
+export async function getWorldInfoActivatedEntries(name: string,
+    keywords: string | string[], withConstant : boolean = false,
+    withDisabled: boolean = false) {
     const entries = await getWorldInfoData(name);
     if (!entries) return [];
-    return selectActivatedEntries(entries, keywords, withConstant);
+    return selectActivatedEntries(entries, keywords, withConstant, withDisabled);
 }
 
-export function selectActivatedEntries(entries: WorldInfoData[], keywords: string, withConstant : boolean = false) {
+export function selectActivatedEntries(
+    entries: WorldInfoData[],
+    keywords: string | string[],
+    withConstant : boolean = true,
+    withDisabled: boolean = false) {
     let activated: Set<WorldInfoData> = new Set<WorldInfoData>();
+    keywords = _.castArray(keywords).join('\n\n');
     for (const data of entries) {
         if(data.constant && !withConstant)
+            continue;
+        if(data.disable && !withDisabled)
             continue;
 
         // unsupported
@@ -280,7 +289,9 @@ function getScore(haystack: string, entry: WorldInfoData) {
     return primaryScore;
 }
 
-export async function getEnabledWorldInfoEntries(chara : boolean = true, global : boolean = true, persona : boolean = true, charaExtra : boolean = true) {
+export async function getEnabledWorldInfoEntries(
+    chara : boolean = true, global : boolean = true,
+    persona : boolean = true, charaExtra : boolean = true) : Promise<WorldInfoData[]> {
     let results : WorldInfoData[] = [];
     if (chara) {
         // @ts-expect-error
