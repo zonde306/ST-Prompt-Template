@@ -1,6 +1,5 @@
-import { extension_settings } from '../../../../extensions.js';
 import { eventSource, event_types } from '../../../../../script.js';
-import { renderExtensionTemplateAsync } from '../../../../extensions.js';
+import { extension_settings, renderExtensionTemplateAsync } from '../../../../extensions.js';
 
 const SETTINGS : Record<string, { name: string, value: boolean }> = {
     '#pt_enabled': { name: 'enabled', value: true },
