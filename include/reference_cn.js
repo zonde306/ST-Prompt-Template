@@ -320,3 +320,114 @@ function getChatMessages(count);
 function getChatMessages(count, role);
 function getChatMessages(start, end);
 function getChatMessages(start, end, role);
+
+// 默认的角色卡定义输出格式
+const DEFAULT_CHAR_DEFINE = `\
+<% if (name) { %>\
+<<%- name %>>
+<% if (system_prompt) { %>\
+System: <%- system_prompt %>
+<% } %>\
+name: <%- name %>
+<% if (personality) { %>\
+personality: <%- personality %>
+<% } %>\
+<% if (description) { %>\
+description: <%- description %>
+<% } %>\
+<% if (message_example) { %>\
+example:
+<%- message_example %>
+<% } %>\
+<% if (depth_prompt) { %>\
+System: <%- depth_prompt %>
+<% } %>\
+</<%- name %>>\
+<% } %>\
+`;
+
+/**
+ * 全部变量合集
+ * 根据以下顺序(优先级)合并变量, 高优先级覆盖低优先级的同名变量:
+ * 1.消息变量(楼层号从末尾到开头)
+ * 2.局部(聊天)变量
+ * 3.全局变量
+ * 
+ * @note: 处理楼层消息变量时此值不包含当前以及之后的楼层变量
+ *        冲突处理: 类型同为 [] 或者 {} 则合并，否则替换
+ * @see: https://lodash.com/docs/4.17.15#merge
+ */
+variables = {}
+
+/**
+ * 酒馆的 SillyTavern.getContext() 返回内容
+ * 详细内容可在控制台里输入 SillyTavern.getContext() 查看
+ */
+SillyTavern = SillyTavern.getContext()
+
+/**
+ * faker 库的内容,用于生成随机内容
+ * 使用方式: faker.fakerEN, faker.fakerCN 等
+ * 例如: faker.fakerEN.lastName() 获取一个随机英文名
+ * @see: https://fakerjs.dev/api/
+ */
+faker = require("faker")
+
+/*
+ * Lodash 库
+ * 使用方式: _.get, _.set 等
+ * 例如: _.toArray('abc') 输出 ['a','b','c']
+ * @see: https://lodash.com/docs/4.17.15
+ */
+_ = require("lodash")
+
+/*
+ * JQuery 库
+ * 使用方法: $()
+ * 例如 $('.mes_text') 获取文本框
+ * @see: https://api.jquery.com/
+ */
+$ = require("JQuery")
+
+/**
+ * 模板计算时的阶段
+ * generate: 生成阶段
+ * preparation: 准备阶段
+ * render: 渲染(楼层消息)阶段
+ */
+runType = 'generate' | 'preparation' | 'render'
+
+/*
+ * 消息ID(即楼层号)
+ */
+message_id = 0
+
+/*
+ * 消息页码ID
+ */
+swipe_id = 0
+
+/*
+ * 消息角色名
+ */
+name = 'User'
+
+/*
+ * 消息是否为最后一条
+ */
+is_last = false
+
+/*
+ * 消息是否为最后一条
+ */
+is_last = false
+
+/*
+ * 消息是否为用户
+ */
+is_user = false
+
+/*
+ * 消息是否为系统
+ */
+is_system = false
