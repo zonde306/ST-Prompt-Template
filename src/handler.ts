@@ -314,7 +314,7 @@ async function evalTemplateHandler(content: string,
 }
 
 async function processSpecialEntities(env: Record<string, unknown>, prefix : string, keywords : string = '', options : EvalTemplateOptions = {}) {
-    const worldInfoData = selectActivatedEntries((await getEnabledWorldInfoEntries()).filter(data => data.disable && data.comment.startsWith(prefix)), keywords, true);
+    const worldInfoData = selectActivatedEntries((await getEnabledWorldInfoEntries()).filter(data => data.disable && data.comment.startsWith(prefix)), keywords, true, true);
     let prompt = '';
     for(const data of worldInfoData) {
         const result = await evalTemplateHandler(

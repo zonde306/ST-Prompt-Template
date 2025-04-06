@@ -1,4 +1,4 @@
-import { eventSource, event_types } from '../../../../../script.js';
+import { eventSource, event_types, saveSettingsDebounced } from '../../../../../script.js';
 import { extension_settings, renderExtensionTemplateAsync } from '../../../../extensions.js';
 
 const DEFAULT_SETTINGS : Record<string, { name: string, value: boolean }> = {
@@ -76,6 +76,7 @@ export async function init() {
             settings[setting.name] = $(id).prop('checked') ?? setting.value;
             // @ts-expect-error: 2339
             console.debug(`[Prompt Template] setting ${setting.name} changed to ${extension_settings.EjsTemplate[setting.name]}`);
+            saveSettingsDebounced();
         });
     }
 
