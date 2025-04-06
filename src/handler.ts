@@ -9,16 +9,15 @@ import { getTokenCountAsync } from '../../../../tokenizers.js';
 import { extension_settings } from '../../../../extensions.js';
 import { getEnabledWorldInfoEntries, selectActivatedEntries } from './function/worldinfo';
 import { getCharaDefs } from './function/characters';
+import { settings } from './ui';
 
 let runID = 0;
 let isFakeRun = false;
 
 async function updateGenerate(data: GenerateData) {
-    // @ts-expect-error: 2339
-    if(extension_settings.EjsTemplate?.enabled === false)
+    if(settings.enabled === false)
         return;
-    // @ts-expect-error: 2339
-    if(extension_settings.EjsTemplate?.generate_enabled === false)
+    if(settings.generate_enabled === false)
         return;
 
     STATE.isDryRun = false;
@@ -29,25 +28,21 @@ async function updateGenerate(data: GenerateData) {
         runID: runID++
     });
 
-    // @ts-expect-error: 2339
-    const before = extension_settings.EjsTemplate?.generate_before_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:BEFORE]');
+    const before = settings.generate_before_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:BEFORE]');
 
     let prompts = before;
     for (const [idx, message] of data.messages.entries()) {
-        // @ts-expect-error: 2339
-        const beforeMessage =  extension_settings.EjsTemplate?.generate_before_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:BEFORE]`);
+        const beforeMessage =  settings.generate_before_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:BEFORE]`);
 
         const prompt = await evalTemplateHandler(message.content, env, `message #${idx + 1}(${message.role})`);
-        // @ts-expect-error: 2339
-        const afterMessage = extension_settings.EjsTemplate?.generate_after_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
+        const afterMessage = settings.generate_after_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
         if (prompt) {
             message.content = beforeMessage + prompt + afterMessage;
             prompts += beforeMessage + prompt + afterMessage;
         }
     }
 
-    // @ts-expect-error: 2339
-    const after = extension_settings.EjsTemplate?.generate_after_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:AFTER]', prompts);
+    const after = settings.generate_after_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:AFTER]', prompts);
     prompts += after;
 
     data.messages[0].content = before + data.messages[0].content;
@@ -62,11 +57,9 @@ async function updateGenerate(data: GenerateData) {
 }
 
 async function updateMessageRender(message_id: string, isDryRun?: boolean) {
-    // @ts-expect-error: 2339
-    if(extension_settings.EjsTemplate?.enabled === false)
+    if(settings.enabled === false)
         return;
-    // @ts-expect-error: 2339
-    if(extension_settings.EjsTemplate?.render_enabled === false)
+    if(settings.render_enabled === false)
         return;
 
     if (isFakeRun) return;
@@ -125,11 +118,9 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         return messageFormatting(markup, message.name, message.is_system, message.is_user, message_idx);
     }
 
-    // @ts-expect-error: 2339
-    const before = extension_settings.EjsTemplate?.render_before_enabled === false ? '' : await processSpecialEntities(env, '[RENDER:BEFORE]', '', { escaper });
+    const before = settings.render_before_enabled === false ? '' : await processSpecialEntities(env, '[RENDER:BEFORE]', '', { escaper });
 
-    // @ts-expect-error: 2339
-    const content = extension_settings.EjsTemplate?.code_blocks_enabled === false ? html.replace(/(<pre\b[^>]*>)([\s\S]*?)(<\/pre>)/gi, (m, p1, p2, p3) => {
+    const content = settings.code_blocks_enabled === false ? html.replace(/(<pre\b[^>]*>)([\s\S]*?)(<\/pre>)/gi, (m, p1, p2, p3) => {
         return p1 + p2.replace(/&lt;/g, '#lt#').replace(/&gt;/g, '#gt#') + p3;
     }) : html;
 
@@ -141,15 +132,13 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         },
     });
 
-    // @ts-expect-error: 2339
-    if(extension_settings.EjsTemplate?.code_blocks_enabled === false) {
+    if(settings.code_blocks_enabled === false) {
         newContent = newContent?.replace(/(<pre\b[^>]*>)([\s\S]*?)(<\/pre>)/gi, (m, p1, p2, p3) => {
             return p1 + p2.replace(/#lt#/g, '&lt;').replace(/#gt#/g, '&gt;') + p3;
         }) ?? null;
     }
 
-    // @ts-expect-error: 2339
-    const after = extension_settings.EjsTemplate?.render_after_enabled === false ? '' : await processSpecialEntities(env, '[RENDER:AFTER]', newContent || '', { escaper });
+    const after = settings.render_after_enabled === false ? '' : await processSpecialEntities(env, '[RENDER:AFTER]', newContent || '', { escaper });
     if(newContent)
         newContent = before + newContent + after;
 
@@ -182,11 +171,9 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
 }
 
 async function handlePreloadWorldInfo(chat_filename? : string) {
-    // @ts-expect-error: 2339
-    if(extension_settings.EjsTemplate?.enabled === false)
+    if(settings.enabled === false)
         return;
-    // @ts-expect-error: 2339
-    if(extension_settings.EjsTemplate?.preload_worldinfo_enabled === false)
+    if(settings.preload_worldinfo_enabled === false)
         return;
 
     if(!chat_filename) return;
@@ -227,8 +214,7 @@ async function handlePreloadWorldInfo(chat_filename? : string) {
 }
 
 async function handleWorldInfoActivation(_type: string, _options : GenerateOptions, dryRun: boolean) {
-    // @ts-expect-error: 2339
-    if(extension_settings.EjsTemplate?.enabled === false)
+    if(settings.enabled === false)
         return;
 
     if(dryRun) return;
@@ -239,8 +225,7 @@ async function handleWorldInfoActivation(_type: string, _options : GenerateOptio
 }
 
 async function handleWorldInfoActivate(data: ChatData) {
-    // @ts-expect-error: 2339
-    if(extension_settings.EjsTemplate?.enabled === false)
+    if(settings.enabled === false)
         return;
 
     if(!data.dryRun) return;
@@ -269,8 +254,7 @@ async function handleWorldInfoActivate(data: ChatData) {
 }
 
 async function checkAndSave() {
-    // @ts-expect-error: 2339
-    if (STATE.isUpdated && extension_settings.EjsTemplate?.autosave_enabled !== false)
+    if (STATE.isUpdated && settings.autosave_enabled !== false)
         await saveChatConditional();
 
     STATE.isUpdated = false;
@@ -308,10 +292,8 @@ async function evalTemplateHandler(content: string,
             ...opt,
             logging: false,
             options: {
-                // @ts-expect-error: 2339
-                strict: extension_settings.EjsTemplate?.strict_enabled ?? false,
-                // @ts-expect-error: 2339
-                debug: extension_settings.EjsTemplate?.debug_enabled ?? false,
+                strict: settings.strict_enabled ?? false,
+                debug: settings.debug_enabled ?? false,
                 ...(opt.options || {}),
             },
         });

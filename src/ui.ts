@@ -51,6 +51,8 @@ function handleSettingLoad() {
     for(const [id, setting] of Object.entries(DEFAULT_SETTINGS)) {
         // @ts-expect-error: 2339
         $(id).prop('checked', extension_settings.EjsTemplate?.[setting.name] ?? settings[setting.name] ?? setting.value);
+        // @ts-expect-error: 2339
+        settings[setting.name] = extension_settings.EjsTemplate?.[setting.name] ?? settings[setting.name] ?? setting.value;
     }
 }
 
