@@ -14,6 +14,7 @@ const DEFAULT_SETTINGS : Record<string, { name: string, value: boolean }> = {
     '#pt_autosave_enabled': { name: 'autosave_enabled', value: true },
     '#pt_preload_worldinfo': { name: 'preload_worldinfo_enabled', value: true },
     '#pt_code_blocks': { name: 'code_blocks_enabled', value: false },
+    '#pt_world_active': { name: 'world_active_enabled', value: true },
 };
 
 interface EjsSettings extends Record<string, boolean> {
@@ -29,6 +30,7 @@ interface EjsSettings extends Record<string, boolean> {
     autosave_enabled: boolean;
     preload_worldinfo_enabled: boolean;
     code_blocks_enabled: boolean;
+    world_active_enabled: boolean;
 };
 
 export const settings = {} as EjsSettings;

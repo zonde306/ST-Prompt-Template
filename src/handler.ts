@@ -227,6 +227,8 @@ async function handleWorldInfoActivation(_type: string, _options : GenerateOptio
 async function handleWorldInfoActivate(data: ChatData) {
     if(settings.enabled === false)
         return;
+    if(settings.world_active_enabled === false)
+        return;
 
     if(!data.dryRun) return;
     activatedWorldEntries.clear();
@@ -239,15 +241,16 @@ async function handleWorldInfoActivate(data: ChatData) {
         runID: runID++
     });
 
-    let prompts = await processSpecialEntities(env, '[GENERATE:BEFORE]');
+    let prompts = settings.generate_before_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:BEFORE]');
     for (const [idx, message] of data.chat.entries()) {
-        const beforeMessage = await processSpecialEntities(env, `[GENERATE:${idx}:BEFORE]`);
+        const beforeMessage = settings.generate_before_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:BEFORE]`);
         const prompt = await evalTemplateHandler(message.content, env, `message #${idx + 1}(${message.role})`);
-        const afterMessage = await processSpecialEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
+        const afterMessage = settings.generate_after_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
         prompts += beforeMessage + prompt + afterMessage;
     }
 
-    await processSpecialEntities(env, '[GENERATE:AFTER]', prompts);
+    if(settings.generate_after_enabled)
+        await processSpecialEntities(env, '[GENERATE:AFTER]', prompts);
 
     const end = Date.now() - start;
     console.log(`[Prompt Template] processing ${data.chat.length} messages in ${end}ms`);
