@@ -2,9 +2,9 @@
 import vm from 'vm-browserify';
 import _ from 'lodash';
 import { GenerateData, Message, ChatData } from './defines';
-import { eventSource, event_types, chat, saveChatConditional, messageFormatting, GenerateOptions } from '../../../../../script.js';
+import { eventSource, event_types, chat, messageFormatting, GenerateOptions } from '../../../../../script.js';
 import { prepareContext, evalTemplate, getSyntaxErrorInfo, activatedWorldEntries, EvalTemplateOptions } from './function/ejs';
-import { STATE } from './function/variables';
+import { STATE, checkAndSave } from './function/variables';
 import { getTokenCountAsync } from '../../../../tokenizers.js';
 import { extension_settings } from '../../../../extensions.js';
 import { getEnabledWorldInfoEntries, selectActivatedEntries } from './function/worldinfo';
@@ -256,12 +256,7 @@ async function handleWorldInfoActivate(data: ChatData) {
     console.log(`[Prompt Template] processing ${data.chat.length} messages in ${end}ms`);
 }
 
-async function checkAndSave() {
-    if (STATE.isUpdated && settings.autosave_enabled !== false)
-        await saveChatConditional();
 
-    STATE.isUpdated = false;
-}
 
 function updateTokens(prompts: string, type: 'send' | 'receive') {
     window.setTimeout(() => {

@@ -1,5 +1,6 @@
-import { chat, chat_metadata } from '../../../../../../script.js';
+import { chat, chat_metadata, saveChatConditional } from '../../../../../../script.js';
 import { extension_settings } from '../../../../../extensions.js';
+import { settings } from '../ui';
 
 export let STATE = {
     isDryRun: false,
@@ -291,4 +292,11 @@ export function decreaseVariable(this : Record<string, unknown>, key : string,
     if(this?.runID === undefined)
         console.warn(`setVariable called with invalid context ${this}`);
     return increaseVariable.call(this, key, -value, options);
+}
+
+export async function checkAndSave() {
+    if (STATE.isUpdated && settings.autosave_enabled !== false)
+        await saveChatConditional();
+    
+    STATE.isUpdated = false;
 }

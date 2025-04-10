@@ -2,7 +2,7 @@ import { SlashCommand } from '../../../../slash-commands/SlashCommand.js';
 import { ARGUMENT_TYPE, SlashCommandArgument, SlashCommandNamedArgument } from '../../../../slash-commands/SlashCommandArgument.js';
 import { SlashCommandParser } from '../../../../slash-commands/SlashCommandParser.js';
 import { evalTemplate, prepareContext, getSyntaxErrorInfo } from './function/ejs';
-import { STATE } from './function/variables';
+import { STATE, checkAndSave } from './function/variables';
 
 SlashCommandParser.addCommandObject(SlashCommand.fromProps({
     name: 'ejs',
@@ -24,6 +24,8 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({
                 err.message += getSyntaxErrorInfo(value);
             }
             throw err;
+        } finally {
+            await checkAndSave();
         }
     },
     namedArgumentList: [
