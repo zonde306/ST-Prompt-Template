@@ -3,6 +3,7 @@ import { ARGUMENT_TYPE, SlashCommandArgument, SlashCommandNamedArgument } from '
 import { SlashCommandParser } from '../../../../slash-commands/SlashCommandParser.js';
 import { evalTemplate, prepareContext, getSyntaxErrorInfo } from './function/ejs';
 import { STATE, checkAndSave } from './function/variables';
+import { settings } from './ui';
 
 SlashCommandParser.addCommandObject(SlashCommand.fromProps({
     name: 'ejs',
@@ -13,7 +14,9 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         if (args.block)
             value = `<%= ${value} %>`;
         const env = await prepareContext(65535, { runType: 'command', runID: -1, ...ctx });
-        console.debug(`execute template code: ${value}`);
+
+        if(settings.debug_enabled)
+            console.debug(`execute template code: ${value}`);
 
         try {
             // @ts-expect-error: TS2322
@@ -23,6 +26,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({
                 // @ts-expect-error: TS2322
                 err.message += getSyntaxErrorInfo(value);
             }
+            console.error(err);
             throw err;
         } finally {
             await checkAndSave();

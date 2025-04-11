@@ -12,6 +12,7 @@ import { getQuickReply, getQuickReplyData } from './quickreply';
 import { getChatMessage, getChatMessages } from './chat';
 import { fakerEnv } from './faker';
 import check from 'syntax-error';
+import { settings } from '../ui';
 
 interface IncluderResult {
     filename: string;
@@ -113,8 +114,10 @@ export async function evalTemplate(content: string, data: Record<string, unknown
         });
     } catch (err) {
         if (opts.logging ?? true) {
-            const contentWithLines = content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
-            console.debug(`[Prompt Template] when ${opts.when} has errors:\n${contentWithLines}`);
+            if(settings.debug_enabled) {
+                const contentWithLines = content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
+                console.debug(`[Prompt Template] when ${opts.when} has errors:\n${contentWithLines}`);
+            }
 
             if (err instanceof SyntaxError)
                 err.message += getSyntaxErrorInfo(content);

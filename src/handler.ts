@@ -296,8 +296,10 @@ async function evalTemplateHandler(content: string,
             },
         });
     } catch (err) {
-        const contentWithLines = content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
-        console.debug(`[Prompt Template] handling ${where} errors:\n${contentWithLines}`);
+        if(settings.debug_enabled) {
+            const contentWithLines = content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
+            console.debug(`[Prompt Template] handling ${where} errors:\n${contentWithLines}`);
+        }
 
         if (err instanceof SyntaxError)
             err.message += getSyntaxErrorInfo(content);
