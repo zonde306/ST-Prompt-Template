@@ -6,7 +6,7 @@
     "js": "dist/index.js",
     "css": "",
     "author": "zonde306",
-    "version": "1.6.13",
+    "version": "1.6.14",
     "homePage": "https://github.com/zonde306/ST-Prompt-Template",
     "auto_update": true,
 	"i18n" : {

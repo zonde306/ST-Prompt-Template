@@ -74,7 +74,8 @@ function evalFilter(filter? : MessageFilter, msgid? : number, swipeid?: number) 
         return [message_id, swipe_id];
     }
 
-    console.debug(`Found message ${message_id} with swipe ${swipe_id} for filter: ${filter}`);
+    if(settings.debug_enabled)
+        console.debug(`Found message ${message_id} with swipe ${swipe_id} for filter: ${filter}`);
     return [message_id, swipe_id];
 }
 
@@ -84,8 +85,10 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
     if(noCache || this?.runID === undefined) {
         // @ts-expect-error: TS2322
         STATE.cache = allVariables(this?.message_id !== undefined ? this.message_id : 65535);
-        console.debug(`[Prompt Template] reload variables cache:`);
-        console.debug(STATE.cache);
+        if(settings.debug_enabled) {
+            console.debug(`[Prompt Template] reload variables cache:`);
+            console.debug(STATE.cache);
+        }
     }
     
     const { index, scope, flags, results, withMsg, merge, dryRun } = options;
@@ -111,7 +114,10 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
             case 'global':
                 data = JSON.parse(_.get(extension_settings.variables.global, key, '{}') || '{}');
                 _.set(extension_settings.variables.global, key, JSON.stringify(_.set(data, idx, newValue)));
-                console.debug(`Set global variable ${key} to ${newValue} (index ${idx})`);
+
+                if(settings.debug_enabled)
+                    console.debug(`Set global variable ${key} to ${newValue} (index ${idx})`);
+
                 STATE.isUpdated = true;
                 break;
             case 'local':
@@ -121,7 +127,10 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                 data = JSON.parse(_.get(chat_metadata.variables, key, '{}') || '{}');
                 // @ts-expect-error: TS2322
                 _.set(chat_metadata.variables, key, JSON.stringify(_.set(data, idx, newValue)));
-                console.debug(`Set local variable ${key} to ${newValue} (index ${idx})`);
+
+                if(settings.debug_enabled)
+                    console.debug(`Set local variable ${key} to ${newValue} (index ${idx})`);
+
                 STATE.isUpdated = true;
                 break;
             case 'message':
@@ -132,7 +141,10 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                     if(!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
                     data = JSON.parse(_.get(chat[message_id].variables[swipe_id], key, '{}') || '{}');
                     _.set(chat[message_id].variables[swipe_id], key, JSON.stringify(_.set(data, idx, newValue)));
-                    console.debug(`Set message #${message_id}.${swipe_id} variable ${key} to ${newValue} (index ${idx})`);
+
+                    if(settings.debug_enabled)
+                        console.debug(`Set message #${message_id}.${swipe_id} variable ${key} to ${newValue} (index ${idx})`);
+
                     STATE.isUpdated = true;
                 }
                 break;
@@ -153,7 +165,10 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
         switch(scope || 'message') {
             case 'global':
                 _.set(extension_settings.variables.global, key, newValue);
-                console.debug(`Set global variable ${key} to ${newValue}`);
+
+                if(settings.debug_enabled)
+                    console.debug(`Set global variable ${key} to ${newValue}`);
+
                 STATE.isUpdated = true;
                 break;
             case 'local':
@@ -161,7 +176,10 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                 if(!chat_metadata.variables) chat_metadata.variables = {};
                 // @ts-expect-error: TS2322
                 _.set(chat_metadata.variables, key, newValue);
-                console.debug(`Set local variable ${key} to ${newValue}`);
+
+                if(settings.debug_enabled)
+                    console.debug(`Set local variable ${key} to ${newValue}`);
+
                 STATE.isUpdated = true;
                 break;
             case 'message':
@@ -171,7 +189,10 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                     if(!chat[message_id].variables) chat[message_id].variables = {};
                     if(!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
                     _.set(chat[message_id].variables[swipe_id], key, newValue);
-                    console.debug(`Set message #${message_id}.${swipe_id} variable ${key} to ${newValue}`);
+
+                    if(settings.debug_enabled)
+                        console.debug(`Set message #${message_id}.${swipe_id} variable ${key} to ${newValue}`);
+
                     STATE.isUpdated = true;
                 }
                 break;
@@ -202,8 +223,10 @@ export function getVariable(this : Record<string, unknown>, key : string,
     if(noCache || this?.runID === undefined) {
         // @ts-expect-error: TS2322
         STATE.cache = allVariables(this?.message_id !== undefined ? this.message_id : 65535);
-        console.debug(`[Prompt Template] reload variables cache:`);
-        console.debug(STATE.cache);
+        if(settings.debug_enabled) {
+            console.debug(`[Prompt Template] reload variables cache:`);
+            console.debug(STATE.cache);
+        }
     }
 
     const { index, scope, defaults, withMsg } = options;
@@ -271,8 +294,10 @@ export function increaseVariable(this : Record<string, unknown>, key : string,
     if(noCache || this?.runID === undefined) {
         // @ts-expect-error: TS2322
         STATE.cache = allVariables(this?.message_id !== undefined ? this.message_id : 65535);
-        console.debug(`[Prompt Template] reload variables cache:`);
-        console.debug(STATE.cache);
+        if(settings.debug_enabled) {
+            console.debug(`[Prompt Template] reload variables cache:`);
+            console.debug(STATE.cache);
+        }
     }
 
     const { index, inscope, outscope, flags, defaults, results, withMsg, dryRun } = options;
