@@ -35,17 +35,29 @@ interface EjsSettings extends Record<string, boolean> {
 
 export const settings = {} as EjsSettings;
 
-export function loadSettings() {
+export function loadSettings(reset: boolean = false) {
     // @ts-expect-error: 2339
     if(!extension_settings.EjsTemplate) {
         // @ts-expect-error: 2339
         extension_settings.EjsTemplate = {};
+        reset = true;
     }
 
     for(const [id, setting] of Object.entries(DEFAULT_SETTINGS)) {
+        if(reset) {
+            // @ts-expect-error: 2339
+            extension_settings.EjsTemplate[setting.name] = setting.value;
+            settings[setting.name] = setting.value;
+        } else {
         // @ts-expect-error: 2339
-        extension_settings.EjsTemplate[setting.name] = $(id).prop('checked') ?? setting.value;
-        settings[setting.name] = $(id).prop('checked') ?? setting.value;
+            extension_settings.EjsTemplate[setting.name] = $(id).prop('checked') ?? setting.value;
+            settings[setting.name] = $(id).prop('checked') ?? setting.value;
+        }
+    }
+
+    if(reset) {
+        handleSettingLoad();
+        saveSettingsDebounced();
     }
 }
 
@@ -86,7 +98,7 @@ export async function init() {
     if(!extension_settings.EjsTemplate) {
         // @ts-expect-error: 2339
         extension_settings.EjsTemplate = {};
-        loadSettings();
+        loadSettings(true);
     }
     
     eventSource.on(event_types.SETTINGS_LOADED, handleSettingLoad);
