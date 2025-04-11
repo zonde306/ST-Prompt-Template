@@ -303,8 +303,10 @@ export async function prepareContext(end: number = 65535, env: Record<string, un
 
     await eventSource.emit('prompt_template_prepare', context);
 
-    console.debug(`[Prompt Template] context prepared:`);
-    console.debug(context);
+    if(settings.debug_enabled) {
+        console.debug(`[Prompt Template] context prepared:`);
+        console.debug(context);
+    }
 
     return context;
 }
