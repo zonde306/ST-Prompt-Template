@@ -36,7 +36,7 @@ async function updateGenerate(data: GenerateData) {
 
         const prompt = await evalTemplateHandler(message.content, env, `message #${idx + 1}(${message.role})`);
         const afterMessage = settings.generate_after_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
-        if (prompt) {
+        if (prompt != null) {
             message.content = beforeMessage + prompt + afterMessage;
             prompts += beforeMessage + prompt + afterMessage;
         }
@@ -139,7 +139,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
     }
 
     const after = settings.render_after_enabled === false ? '' : await processSpecialEntities(env, '[RENDER:AFTER]', newContent || '', { escaper });
-    if(newContent)
+    if(newContent != null)
         newContent = before + newContent + after;
 
     // update if changed
@@ -246,7 +246,7 @@ async function handleWorldInfoActivate(data: ChatData) {
         const beforeMessage = settings.generate_before_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:BEFORE]`);
         const prompt = await evalTemplateHandler(message.content, env, `message #${idx + 1}(${message.role})`);
         const afterMessage = settings.generate_after_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
-        prompts += beforeMessage + prompt + afterMessage;
+        prompts += beforeMessage + (prompt || '') + afterMessage;
     }
 
     if(settings.generate_after_enabled)
@@ -323,7 +323,7 @@ async function processSpecialEntities(env: Record<string, unknown>, prefix : str
             `worldinfo ${data.world}.${data.comment}`,
             options,
         );
-        if(result)
+        if(result != null)
             prompt += result;
     }
 
