@@ -126,6 +126,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         if(newContent) {
             message.mes = newContent;
             html = messageFormatting(newContent, message.name, message.is_system, message.is_user, message_idx);
+            container.empty().append(html);
             forceSave = true;
         }
     }
