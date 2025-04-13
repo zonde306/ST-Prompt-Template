@@ -122,7 +122,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
 
     let forceSave = false;
     if(!isDryRun && settings.permanent_evaluation_enabled) {
-        const newContent = await evalTemplateHandler(message.mes, env, `chat #${message_idx} raw`);
+        const newContent = await evalTemplateHandler(message.mes, env, `chat #${message_idx}.${message.swipe_id} raw`);
         if(newContent) {
             message.mes = newContent;
             html = messageFormatting(newContent, message.name, message.is_system, message.is_user, message_idx);
@@ -134,7 +134,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         return p1 + p2.replace(/&lt;/g, '#lt#').replace(/&gt;/g, '#gt#') + p3;
     }) : html;
 
-    let newContent = await evalTemplateHandler(content, env, `chat #${message_idx}`, {
+    let newContent = await evalTemplateHandler(content, env, `chat #${message_idx}.${message.swipe_id}`, {
         escaper,
         options: {
             openDelimiter: '&lt;',
