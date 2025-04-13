@@ -286,6 +286,8 @@ export interface GetSetVarOption {
     withMsg?: MessageFilter;
     dryRun?: boolean;
     noCache?: boolean;
+    min?: number;
+    max?: number;
 }
 
 export function increaseVariable(this : Record<string, unknown>, key : string,
@@ -300,14 +302,18 @@ export function increaseVariable(this : Record<string, unknown>, key : string,
         }
     }
 
-    const { index, inscope, outscope, flags, defaults, results, withMsg, dryRun } = options;
+    const { index, inscope, outscope, flags, defaults, results, withMsg, dryRun, min, max } = options;
     if((flags === 'nx' && !_.has(STATE.cache, key)) ||
       (flags === 'xx' && _.has(STATE.cache, key)) ||
       (flags === 'nxs' && getVariable.call(this, key, { index, withMsg, scope: inscope }) === undefined) ||
       (flags === 'xxs' && getVariable.call(this, key, { index, withMsg, scope: inscope }) !== undefined) ||
       (flags === 'n' || flags === undefined)) {
-        const val = getVariable.call(this, key, { index, withMsg, scope: inscope, defaults: defaults || 0 });
-        return setVariable.call(this, key, val + value, { index, results, withMsg, dryRun, scope: outscope, flags: 'n' });
+        let val = getVariable.call(this, key, { index, withMsg, scope: inscope, defaults: defaults || 0 }) + value;
+        if(min != null)
+            val = Math.max(val, min);
+        if(max != null)
+            val = Math.min(val, max);
+        return setVariable.call(this, key, val, { index, results, withMsg, dryRun, scope: outscope, flags: 'n' });
     }
     return undefined;
 }

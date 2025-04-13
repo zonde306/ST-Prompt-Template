@@ -73,6 +73,8 @@ function getMessageVar(key, options = {});
  * @property {MessageFilter} [withMsg=undefined] - Message filter (for message variables)
  * @property {boolean} [dryRun=false] - Allow updates during preparation phase
  * @property {boolean} [noCache=false] - Disable caching (when reading immediately after setting)
+ * @property {number} [min=null] - Minimum
+ * @property {number} [max=null] - Maximum
  */
 
 /**

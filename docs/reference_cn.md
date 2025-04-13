@@ -6,18 +6,18 @@
  * @interface MessageFilter
  * @property {('system' | 'user' | 'assistant' | 'any')} [role='assistant'] - 选取指定角色. 
  *      可以是 'system', 'user', 'assistant', or 'any'. 从末尾开始搜索. 如果设置了id则此项会无效.
- * @property {number} [id=undefined] - 选取指定的消息楼层,可以是负数(负数为末尾开始).
- * @property {number} [swipe_id=undefined] - 选取指定消息的切换ID.
+ * @property {number} [id=null] - 选取指定的消息楼层,可以是负数(负数为末尾开始).
+ * @property {number} [swipe_id=null] - 选取指定消息的切换ID.
  */
 
 /**
  * 设置变量选项
  * @typedef {Object} SetVarOption
- * @property {number} [index=undefined] - 变量的索引,与/setvar的index相同.
+ * @property {number} [index=null] - 变量的索引,与/setvar的index相同.
  * @property {'global' | 'local' | 'message' | 'cache'} [scope='message'] - 变量类型(作用域),详见下方
  * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - 设置条件,不满足则不设置,详见下方
  * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - 返回值类型,详见下方
- * @property {MessageFilter} [withMsg=undefined] - 消息过滤器(如果要设置消息变量)
+ * @property {MessageFilter} [withMsg=null] - 消息过滤器(如果要设置消息变量)
  * @property {boolean} [merge=false] - 是否使用合并来设置(_.merge)变量
  * @property {boolean} [dryRun=false] - 是否允许在准备阶段设置变量
  * @property {boolean} [noCache=false] - 禁用缓存(例如在设置变量后立即读取)
@@ -41,7 +41,7 @@ function setMessageVar(key, value, options = {});
 /**
  * 获取变量选项
  * @typedef {Object} GetVarOption
- * @property {number} [index=undefined] - 变量的索引,与/getvar的index相同
+ * @property {number} [index=null] - 变量的索引,与/getvar的index相同
  * @property {'global' | 'local' | 'message' | 'cache'} [scope='cache'] - 变量类型(作用域),详见下方
  * @property {any} [defaults=undefined] - 默认值(如果变量不存在时返回)
  * @property {MessageFilter} [withMsg=undefined] - 消息选择过滤器
@@ -64,7 +64,7 @@ function getMessageVar(key, options = {});
 /**
  * 更新变量选项
  * @typedef {Object} GetSetVarOption
- * @property {number} [index] - 变量的索引,与/getvar的index相同
+ * @property {number} [index=null] - 变量的索引,与/getvar的index相同
  * @property {unknown} [defaults=0] - 如果变量不存在时使用的默认值
  * @property {'global' | 'local' | 'message' | 'cache'} [inscope='cache'] - 读取的变量类型(作用域),详见下方
  * @property {'global' | 'local' | 'message' | 'cache'} outscope='message'] - 设置的变量类型(作用域),详见下方
@@ -73,6 +73,8 @@ function getMessageVar(key, options = {});
  * @property {MessageFilter} [withMsg=undefined] - 消息过滤器(如果要设置消息变量)
  * @property {boolean} [dryRun=false] - 是否允许在准备阶段更新变量
  * @property {boolean} [noCache=false] - 禁用缓存(例如在设置变量后立即读取)
+ * @property {number} [min=null] - 最小值
+ * @property {number} [max=null] - 最大值
  */
 
 /**
