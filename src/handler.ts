@@ -86,7 +86,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
     }
 
     const container = $(`div.mes[mesid="${message_id}"]`)?.find('.mes_text');
-    const html = container?.html();
+    let html = container?.html();
     if (!html) {
         console.warn(`chat message #${message_id} container not found`);
         return;
@@ -119,6 +119,16 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
     }
 
     const before = settings.render_before_enabled === false ? '' : await processSpecialEntities(env, '[RENDER:BEFORE]', '', { escaper });
+
+    let forceSave = false;
+    if(!isDryRun && settings.permanent_evaluation_enabled) {
+        const newContent = await evalTemplateHandler(message.mes, env, `chat #${message_idx} raw`);
+        if(newContent) {
+            message.mes = newContent;
+            html = messageFormatting(newContent, message.name, message.is_system, message.is_user, message_idx);
+            forceSave = true;
+        }
+    }
 
     const content = settings.code_blocks_enabled === false ? html.replace(/(<pre\b[^>]*>)([\s\S]*?)(<\/pre>)/gi, (m, p1, p2, p3) => {
         return p1 + p2.replace(/&lt;/g, '#lt#').replace(/&gt;/g, '#gt#') + p3;
@@ -164,7 +174,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
     const end = Date.now() - start;
     console.log(`[Prompt Template] processing #${message_idx} messages in ${end}ms`);
 
-    await checkAndSave();
+    await checkAndSave(forceSave);
 
     if (!isDryRun)
         updateTokens(container.text(), 'receive');

@@ -325,8 +325,8 @@ export function decreaseVariable(this : Record<string, unknown>, key : string,
     return increaseVariable.call(this, key, -value, options);
 }
 
-export async function checkAndSave() {
-    if (STATE.isUpdated && settings.autosave_enabled !== false)
+export async function checkAndSave(force : boolean = false) {
+    if (force || (STATE.isUpdated && settings.autosave_enabled !== false))
         await saveChatConditional();
     
     STATE.isUpdated = false;
