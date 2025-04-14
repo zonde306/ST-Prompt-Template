@@ -204,6 +204,94 @@ line 1
 line 3
 ```
 
+---
+
+## 设置选项
+
+各个设置选项的说明
+
+- Enable Prompt template
+
+
+总开关，控制是否开启此扩展
+
+- Generate-time evaluation
+
+是否开启对LLM生成时的提示词进行处理
+
+世界书、预设、角色卡数据等功能均在此处进行处理
+
+- [GENERATE] evaluation
+- [RENDER] evaluation
+
+开启对应的[提示词注入](#提示词注入)功能
+
+- Chat message evaluation
+
+对聊天消息（显示内容）进行处理
+
+- Evaluate inside a code block
+
+对聊天消息（显示内容）中的`<pre>`标签内部进行处理
+
+非必要建议保持关闭，因为与其他扩展存在冲突
+
+- Evaluate raw message (AND SAVE)
+
+是否允许直接对原始聊天消息内容进行处理
+
+**原始消息内容未经过正则、宏处理**
+
+顺序：
+
+1. 生成结束（并显示出来）/编辑消息后/滑动消息/打开角色卡
+2. 执行此功能（`Evaluate raw message (AND SAVE)`）
+3. 对显示内容进行处理（`Chat message evaluation`）
+
+> 此功能需要开启`Chat message evaluation`才会生效
+
+- Enable activewi to take effect this time
+
+是否允许 `activewi`以及其别名函数能够在同一次生成时生效
+
+禁用后可减少生成时间消耗，但是`activewi`及其别名函数只会在下次生成时才生效
+
+- Save variables after updating
+
+当此扩展处理完毕并更新了变量后对聊天消息进行保存
+
+- Preload world info
+
+在打开角色卡时立即加载（预热）需要的世界书
+
+并立即对世界书进行处理
+
+> 预先加载可以减少首次生成的消耗时间，但是会导致打开角色卡变慢
+
+这个功能主要是用来加载`define`函数的
+
+- Use strict mode
+
+在处理模板代码时使用 Javascript 的「严格模式」
+
+具体变化见[严格模式](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Strict_mode)
+
+- Enable debug logging
+
+开启调试日志，开启后此扩展将会在控制台输出大量调试日志
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

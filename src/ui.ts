@@ -4,11 +4,9 @@ import { extension_settings, renderExtensionTemplateAsync } from '../../../../ex
 const DEFAULT_SETTINGS : Record<string, { name: string, value: boolean }> = {
     '#pt_enabled': { name: 'enabled', value: true },
     '#pt_generate_enabled': { name: 'generate_enabled', value: true },
-    '#pt_generate_before_enabled': { name: 'generate_before_enabled', value: true },
-    '#pt_generate_after_enabled': { name: 'generate_after_enabled', value: true },
+    '#pt_generate_loader_enabled': { name: 'generate_loader_enabled', value: true },
     '#pt_render_enabled': { name: 'render_enabled', value: true },
-    '#pt_render_before_enabled': { name: 'render_before_enabled', value: true },
-    '#pt_render_after_enabled': { name: 'render_after_enabled', value: true },
+    '#pt_render_loader_enabled': { name: 'render_loader_enabled', value: true },
     '#pt_strict_enabled': { name: 'strict_enabled', value: false },
     '#pt_debug_enabled': { name: 'debug_enabled', value: false },
     '#pt_autosave_enabled': { name: 'autosave_enabled', value: true },
@@ -18,14 +16,12 @@ const DEFAULT_SETTINGS : Record<string, { name: string, value: boolean }> = {
     '#pt_permanent_evaluation': { name: 'permanent_evaluation_enabled', value: false },
 };
 
-interface EjsSettings extends Record<string, boolean> {
+interface EjsSettings {
     enabled: boolean;
     generate_enabled: boolean;
-    generate_before_enabled: boolean;
-    generate_after_enabled: boolean;
+    generate_loader_enabled: boolean;
     render_enabled: boolean;
-    render_before_enabled: boolean;
-    render_after_enabled: boolean;
+    render_loader_enabled: boolean;
     strict_enabled: boolean;
     debug_enabled: boolean;
     autosave_enabled: boolean;

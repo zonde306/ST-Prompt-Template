@@ -1,3 +1,5 @@
+import { ReasoningType } from "../../../../reasoning.js";
+
 export interface Chat {
     role: string;
     content: string;
@@ -9,8 +11,41 @@ export interface ChatData {
     dryRun: boolean;
 }
 
-export interface Message {
-    extra: Record<string, unknown>;
+// Allow custom fields
+export interface MessageExtra extends Record<string, unknown> {
+    // public/scripts/reasoning.js
+    reasoning?: string;
+    reasoning_type?: ReasoningType;
+
+    // public/scripts/extensions/memory/index.js
+    memory?: string;    // Summary
+
+    // public/scripts/chats.js
+    image?: string;
+    inline_image?: boolean;
+    file?: { url: string, size: number, name: string, created: number, text?: string };
+    fileLength?: number;
+    image_swipes?: Array<string>;
+    title?: string;
+    append_title?: string;
+
+    // public/scripts/bookmarks.js
+    bookmark_link?: boolean;
+
+    // public/scripts/group-chats.js
+    gen_id?: number;
+
+    // public/scripts/slash-commands.js
+    bias?: string;
+
+    // public/scripts/extensions/translate/index.js
+    display_text?: string;
+    reasoning_display_text?: string;
+}
+
+// Allow custom fields
+export interface Message extends Record<string, unknown> {
+    extra: MessageExtra;
     is_system: boolean;
     is_user: boolean;
     mes: string;
@@ -20,7 +55,7 @@ export interface Message {
     swipe_id: number;
     swipe_info: Array<unknown>;
     swipes: Array<string>;
-    is_initial?: Array<boolean>;
+    is_ejs_processed?: Array<boolean>;
 }
 
 export interface ScriptInject {
@@ -32,7 +67,7 @@ export interface ScriptInject {
     value: string;
 }
 
-export interface Metadata {
+export interface Metadata extends Record<string, unknown> {
     variables?: Record<string, unknown>;
     chat_id_hash?: number;
     lastInContextMessageId?: number;

@@ -2,7 +2,7 @@
 import vm from 'vm-browserify';
 import _ from 'lodash';
 import { GenerateData, Message, ChatData } from './defines';
-import { eventSource, event_types, chat, messageFormatting, GenerateOptions } from '../../../../../script.js';
+import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock } from '../../../../../script.js';
 import { prepareContext, evalTemplate, getSyntaxErrorInfo, activatedWorldEntries, EvalTemplateOptions } from './function/ejs';
 import { STATE, checkAndSave } from './function/variables';
 import { getTokenCountAsync } from '../../../../tokenizers.js';
@@ -28,21 +28,21 @@ async function updateGenerate(data: GenerateData) {
         runID: runID++
     });
 
-    const before = settings.generate_before_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:BEFORE]');
+    const before = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:BEFORE]');
 
     let prompts = before;
     for (const [idx, message] of data.messages.entries()) {
-        const beforeMessage =  settings.generate_before_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:BEFORE]`);
+        const beforeMessage =  settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:BEFORE]`);
 
         const prompt = await evalTemplateHandler(message.content, env, `message #${idx + 1}(${message.role})`);
-        const afterMessage = settings.generate_after_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
+        const afterMessage = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
         if (prompt != null) {
             message.content = beforeMessage + prompt + afterMessage;
             prompts += beforeMessage + prompt + afterMessage;
         }
     }
 
-    const after = settings.generate_after_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:AFTER]', prompts);
+    const after = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:AFTER]', prompts);
     prompts += after;
 
     data.messages[0].content = before + data.messages[0].content;
@@ -85,16 +85,9 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         return;
     }
 
-    const container = $(`div.mes[mesid="${message_id}"]`)?.find('.mes_text');
-    let html = container?.html();
-    if (!html) {
-        console.warn(`chat message #${message_id} container not found`);
-        return;
-    }
-
     // initialize at least once
     if (isDryRun) {
-        if (message?.is_initial?.[message_idx]) {
+        if (message?.is_ejs_processed?.[message_idx]) {
             console.info(`chat message #${message_id} is initialized, skipping`);
             return;
         }
@@ -107,7 +100,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         message_id: message_idx,
         swipe_id: message.swipe_id,
         runID: runID++,
-        is_last: message_idx === chat.length - 1,
+        is_last: message_idx >= chat.length - 1,
         is_user: message.is_user,
         is_system: message.is_system,
         name: message.name,
@@ -119,19 +112,25 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         return messageFormatting(markup, message.name, message.is_system, message.is_user, message_idx);
     }
 
-    const before = settings.render_before_enabled === false ? '' : await processSpecialEntities(env, '[RENDER:BEFORE]', '', { escaper });
+    const before = settings.render_loader_enabled === false ? '' : await processSpecialEntities(env, '[RENDER:BEFORE]', '', { escaper });
 
-    let forceSave = false;
-    if(!isDryRun && settings.permanent_evaluation_enabled) {
+    if(settings.permanent_evaluation_enabled) {
         env.runType = 'render_permanent';
         const newContent = await evalTemplateHandler(message.mes, env, `chat #${message_idx}.${message.swipe_id} raw`);
         env.runType = 'render';
-        if(newContent) {
-            message.mes = newContent;
-            html = messageFormatting(newContent, message.name, message.is_system, message.is_user, message_idx);
-            container.empty().append(html);
-            forceSave = true;
+        if(newContent != null) {
+            if(!message.extra)
+                message.extra = {};
+            message.extra.display_text = newContent;
+            updateMessageBlock(message_idx, message, { rerenderMessage: true });
         }
+    }
+
+    const container = $(`div.mes[mesid="${message_id}"]`)?.find('.mes_text');
+    const html = container?.html();
+    if (!html) {
+        console.warn(`chat message #${message_id} container not found`);
+        return;
     }
 
     const content = settings.code_blocks_enabled === false ? html.replace(/(<pre\b[^>]*>)([\s\S]*?)(<\/pre>)/gi, (m, p1, p2, p3) => {
@@ -152,7 +151,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         }) ?? null;
     }
 
-    const after = settings.render_after_enabled === false ? '' : await processSpecialEntities(env, '[RENDER:AFTER]', newContent || '', { escaper });
+    const after = settings.render_loader_enabled === false ? '' : await processSpecialEntities(env, '[RENDER:AFTER]', newContent || '', { escaper });
     if(newContent != null)
         newContent = before + newContent + after;
 
@@ -171,14 +170,14 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         isFakeRun = false;
     }
 
-    if (!message.is_initial)
-        message.is_initial = [];
-    message.is_initial[message.swipe_id || 0] = true;
+    if (!message.is_ejs_processed)
+        message.is_ejs_processed = [];
+    message.is_ejs_processed[message.swipe_id || 0] = true;
 
     const end = Date.now() - start;
     console.log(`[Prompt Template] processing #${message_idx} messages in ${end}ms`);
 
-    await checkAndSave(forceSave);
+    await checkAndSave();
 
     if (!isDryRun)
         updateTokens(container.text(), 'receive');
@@ -255,15 +254,15 @@ async function handleWorldInfoActivate(data: ChatData) {
         runID: runID++
     });
 
-    let prompts = settings.generate_before_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:BEFORE]');
+    let prompts = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:BEFORE]');
     for (const [idx, message] of data.chat.entries()) {
-        const beforeMessage = settings.generate_before_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:BEFORE]`);
+        const beforeMessage = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:BEFORE]`);
         const prompt = await evalTemplateHandler(message.content, env, `message #${idx + 1}(${message.role})`);
-        const afterMessage = settings.generate_after_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
+        const afterMessage = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
         prompts += beforeMessage + (prompt || '') + afterMessage;
     }
 
-    if(settings.generate_after_enabled)
+    if(settings.generate_loader_enabled)
         await processSpecialEntities(env, '[GENERATE:AFTER]', prompts);
 
     const end = Date.now() - start;

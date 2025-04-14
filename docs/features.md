@@ -138,3 +138,57 @@ line 1
 line 3
 ```
 
+---
+
+## Setting Options
+
+Descriptions of individual configuration options:
+
+- **Enable Prompt template**  
+  Master toggle to control whether this extension is enabled.
+
+- **Generate-time evaluation**  
+  Whether to process prompts during LLM generation.  
+  Functions such as world books, presets, and character card data are processed here.
+
+- **[GENERATE] evaluation**  
+- **[RENDER] evaluation**  
+  Enable corresponding [Prompt Injection](#Prompt Injection) features.
+
+- **Chat message evaluation**  
+  Process chat messages (displayed content).
+
+- **Evaluate inside a code block**  
+  Process content within `<pre>` tags in chat messages (displayed content).  
+  Keep disabled unless necessary, as it may conflict with other extensions.
+
+- **Evaluate raw message (AND SAVE)**  
+  Whether to allow processing of raw chat message content.  
+  **Raw message content is not processed by regex or macros.**  
+  Execution order:  
+  1. After generation completes (and displays)/editing messages/sliding messages/opening character cards  
+  2. Execute this feature (`Evaluate raw message (AND SAVE)`)  
+  3. Process displayed content (`Chat message evaluation`)  
+
+  > This feature only takes effect when `Chat message evaluation` is enabled.
+
+- **Enable activewi to take effect this time**  
+  Whether to allow `activewi` and its alias functions to take effect during the same generation cycle.  
+  Disabling reduces generation time consumption, but `activewi` and its aliases will only take effect in the next generation cycle.
+
+- **Save variables after updating**  
+  Save chat messages after this extension finishes processing and updates variables.
+
+- **Preload world info**  
+  Immediately load (pre-warm) required world books when opening character cards.  
+  Process world books immediately.  
+
+  > Preloading reduces initial generation time but may slow down character card opening.  
+  > This feature is primarily used to load `define` functions.
+
+- **Use strict mode**  
+  Enforce JavaScript "strict mode" when processing template code.  
+  See [Strict Mode](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode) for details.
+
+- **Enable debug logging**  
+  Enable debug logging. When active, this extension outputs extensive debug logs to the console.
