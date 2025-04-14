@@ -92,6 +92,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         return;
     }
 
+    // initialize at least once
     if (isDryRun) {
         if (message?.is_initial?.[message_idx]) {
             console.info(`chat message #${message_id} is initialized, skipping`);
@@ -122,7 +123,9 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
 
     let forceSave = false;
     if(!isDryRun && settings.permanent_evaluation_enabled) {
+        env.runType = 'render_permanent';
         const newContent = await evalTemplateHandler(message.mes, env, `chat #${message_idx}.${message.swipe_id} raw`);
+        env.runType = 'render';
         if(newContent) {
             message.mes = newContent;
             html = messageFormatting(newContent, message.name, message.is_system, message.is_user, message_idx);
