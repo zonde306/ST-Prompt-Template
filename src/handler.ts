@@ -114,7 +114,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
 
     const before = settings.render_loader_enabled === false ? '' : await processSpecialEntities(env, '[RENDER:BEFORE]', '', { escaper });
 
-    if(settings.permanent_evaluation_enabled) {
+    if(!isDryRun && settings.permanent_evaluation_enabled) {
         env.runType = 'render_permanent';
         const newContent = await evalTemplateHandler(message.mes, env, `chat #${message_idx}.${message.swipe_id} raw`);
         env.runType = 'render';
@@ -122,6 +122,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
             if(!message.extra)
                 message.extra = {};
             message.extra.display_text = newContent;
+            message.mes = newContent;
             updateMessageBlock(message_idx, message, { rerenderMessage: true });
         }
     }
