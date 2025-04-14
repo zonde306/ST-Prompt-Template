@@ -103,10 +103,17 @@ export async function evalTemplate(content: string, data: Record<string, unknown
     }
 
     let result = '';
+
+    // avoiding accidental evaluation
+    content = escapeEjsInDisabledBlocks(content, opts.options || {}, opts.disableFlags || 'escape-ejs');
+    content = escapeEjsInDisabledBlocks(content, opts.options || {}, opts.disableFlags || 'thinking');
+    content = escapeEjsInDisabledBlocks(content, opts.options || {}, opts.disableFlags || 'think');
+    content = escapeEjsInDisabledBlocks(content, opts.options || {}, opts.disableFlags || 'reasoning');
+    
     try {
         result = await vm.runInNewContext(CODE_TEMPLATE, {
             ejs,
-            content: escapeEjsInDisabledBlocks(content, opts.options || {}, opts.disableFlags || 'escape-ejs'),
+            content,
             data,
             escaper: opts.escaper || escape,
             includer: opts.includer || include,
