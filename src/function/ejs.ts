@@ -80,7 +80,7 @@ export interface EvalTemplateOptions {
     logging?: boolean;
     when?: string;
     options?: EjsOptions;
-    disableFlags?: string;
+    disableMarkup?: string;
 }
 
 function escapeEjsInDisabledBlocks(str : string, options : EjsOptions = {}, markup: string = 'escape-ejs') {
@@ -88,7 +88,7 @@ function escapeEjsInDisabledBlocks(str : string, options : EjsOptions = {}, mark
     const closeDelimiter = options.closeDelimiter || '>';
     const delimiter = options.delimiter || '%';
     return str.replaceAll(new RegExp(`${openDelimiter}#${markup}${closeDelimiter}([\\s\\S]*?)${openDelimiter}#/${markup}${closeDelimiter}`, 'g'),
-        (_match, content) => content
+        (_match, content : string) => content
                                     .replaceAll(`${openDelimiter}${delimiter}`, `${openDelimiter}${openDelimiter}${delimiter}`)
                                     .replaceAll(`${closeDelimiter}${delimiter}`, `${closeDelimiter}${closeDelimiter}${delimiter}`),
     );
@@ -105,10 +105,10 @@ export async function evalTemplate(content: string, data: Record<string, unknown
     let result = '';
 
     // avoiding accidental evaluation
-    content = escapeEjsInDisabledBlocks(content, opts.options || {}, opts.disableFlags || 'escape-ejs');
-    content = escapeEjsInDisabledBlocks(content, opts.options || {}, opts.disableFlags || 'thinking');
-    content = escapeEjsInDisabledBlocks(content, opts.options || {}, opts.disableFlags || 'think');
-    content = escapeEjsInDisabledBlocks(content, opts.options || {}, opts.disableFlags || 'reasoning');
+    content = escapeEjsInDisabledBlocks(content, opts.options || {}, opts.disableMarkup || 'escape-ejs');
+    content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'thinking');
+    content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'think');
+    content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'reasoning');
     
     try {
         result = await vm.runInNewContext(CODE_TEMPLATE, {
