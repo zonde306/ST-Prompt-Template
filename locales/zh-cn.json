@@ -11,4 +11,7 @@
 	"[PT] Enable code blocks": "处理 <pre> 块中的提示词模板",
 	"[PT] Enable strict mode": "处理提示词模板时使用严格模式",
 	"[PT] Enable debug logging": "发生错误时输出调试信息",
+	"[PT] Permanent evaluation results": "直接在原始消息内容里执行处理（修改原始消息）",
+	"[PT] Enable [GENERATE] evaluation": "允许 [GENERATE] 提示词插入功能",
+	"[PT] Enable [RENDER] evaluation": "允许 [RENDER] 提示词插入功能"
 }
