@@ -90,8 +90,8 @@ function escapeEjsInDisabledBlocks(str : string, options : EjsOptions = {}, mark
     const sepcialDelimiter = openDelimiter === '<' && closeDelimiter === '>' ? '' : '#';
     return str.replaceAll(new RegExp(`${openDelimiter}${sepcialDelimiter}${markup}${closeDelimiter}([\\s\\S]*?)${openDelimiter}${sepcialDelimiter}/${markup}${closeDelimiter}`, 'g'),
         (_match, content : string) => content
-                                    .replaceAll(`${openDelimiter}${delimiter}`, `${openDelimiter}${openDelimiter}${delimiter}`)
-                                    .replaceAll(`${closeDelimiter}${delimiter}`, `${closeDelimiter}${closeDelimiter}${delimiter}`),
+                                    .replaceAll(`${openDelimiter}${delimiter}`, `${openDelimiter}${delimiter}${delimiter}`)
+                                    .replaceAll(`${delimiter}${closeDelimiter}`, `${delimiter}${delimiter}${closeDelimiter}`),
     );
 }
 
