@@ -525,6 +525,14 @@ _ = require("lodash")
  */
 $ = require("JQuery")
 
+/*
+ * toastr 库
+ * 使用方式: toastr.info, toastr.error
+ * 例如: toastr.info('hello world')
+ * @see: https://codeseven.github.io/toastr/
+ */
+toastr = require("toastr")
+
 /**
  * 模板计算时的阶段
  * generate: 生成阶段

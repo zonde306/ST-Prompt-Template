@@ -521,6 +521,14 @@ _ = require("lodash")
  */
 $ = require("JQuery")
 
+/*
+ * toastr library
+ * Usage: toastr.info, toastr.error
+ * Example: toastr.info('hello world')
+ * @see: https://codeseven.github.io/toastr/
+ */
+toastr = require("toastr")
+
 /**
  * Phase during template calculation
  * generate: Generation phase

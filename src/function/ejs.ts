@@ -32,6 +32,7 @@ export function escape(markup: string): string {
 const SHARE_CONTEXT: Record<string, unknown> = {
     _,
     $,
+    toastr,
 };
 
 const CODE_TEMPLATE = `
