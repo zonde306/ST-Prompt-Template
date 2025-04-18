@@ -321,7 +321,7 @@ async function evalTemplateHandler(content: string,
         console.error(err);
 
         // @ts-expect-error
-        toastr.error(err.message, `EJS Error`);
+        toastr.error(err.message.replaceAll('\n', '<br>'), `EJS Error`);
     }
 
     return null;
