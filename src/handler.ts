@@ -87,7 +87,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
 
     // initialize at least once
     if (isDryRun) {
-        if (message?.is_ejs_processed?.[message_idx]) {
+        if (message?.is_ejs_processed?.[message.swipe_id || 0]) {
             console.info(`chat message #${message_id} is initialized, skipping`);
             return;
         }
