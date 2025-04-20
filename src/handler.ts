@@ -88,14 +88,9 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
     }
 
     // initialize at least once
-    if (isDryRun) {
-        if (message?.is_ejs_processed?.[message.swipe_id || 0]) {
-            console.info(`chat message #${message_id} is initialized, skipping`);
-            return;
-        }
+    if (isDryRun && !message?.is_ejs_processed?.[message.swipe_id || 0])
         STATE.isDryRun = isDryRun = false;
-    }
-
+    
     // allows access to current variables without updating them
     const env = await prepareContext(message_idx + Number(!!isDryRun), {
         runType: 'render',
@@ -352,6 +347,7 @@ async function handleEditDone(message_id : string) {
 }
 
 async function handleMessageUpdated(message_id : string) {
+    // avoid errors caused by cancelling edits
     await updateMessageRender(message_id, lastMessageEdited !== message_id);
     lastMessageEdited = null;
 }
