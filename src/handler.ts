@@ -14,6 +14,7 @@ import { settings } from './ui';
 let runID = 0;
 let isFakeRun = false;
 let domnObserver : MutationObserver | null = null;
+let lastMessageEdited : string | number | null = null;
 
 async function updateGenerate(data: GenerateData) {
     if(settings.enabled === false)
@@ -346,9 +347,17 @@ async function processSpecialEntities(env: Record<string, unknown>, prefix : str
     return prompt;
 }
 
+async function handleEditDone(message_id : string) {
+    lastMessageEdited = message_id;
+}
+
+async function handleMessageUpdated(message_id : string) {
+    await updateMessageRender(message_id, lastMessageEdited !== message_id);
+    lastMessageEdited = null;
+}
+
 const MESSAGE_RENDER_EVENTS = [
-    event_types.MESSAGE_SWIPED,             // message swipe start
-    event_types.MESSAGE_UPDATED,            // message edit done/cancel
+    event_types.MESSAGE_SWIPED,
     event_types.CHARACTER_MESSAGE_RENDERED,
     event_types.USER_MESSAGE_RENDERED,
 ];
@@ -358,6 +367,8 @@ export async function init() {
     eventSource.on(event_types.CHAT_CHANGED, handlePreloadWorldInfo);
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleWorldInfoActivation);
     eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, handleWorldInfoActivate);
+    eventSource.on(event_types.MESSAGE_EDITED, handleEditDone);
+    eventSource.on(event_types.MESSAGE_UPDATED, handleMessageUpdated);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.on(e, updateMessageRender));
 
     domnObserver = new MutationObserver(mutations => {
@@ -395,6 +406,8 @@ export async function exit() {
     eventSource.removeListener(event_types.CHAT_CHANGED, handlePreloadWorldInfo);
     eventSource.removeListener(event_types.GENERATION_AFTER_COMMANDS, handleWorldInfoActivation);
     eventSource.removeListener(event_types.CHAT_COMPLETION_PROMPT_READY, handleWorldInfoActivate);
+    eventSource.removeListener(event_types.MESSAGE_EDITED, handleEditDone);
+    eventSource.removeListener(event_types.MESSAGE_UPDATED, handleMessageUpdated);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.removeListener(e, updateMessageRender));
 
     domnObserver?.disconnect();
