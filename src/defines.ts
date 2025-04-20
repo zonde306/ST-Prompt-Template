@@ -25,7 +25,7 @@ export interface MessageExtra extends Record<string, unknown> {
     inline_image?: boolean;
     file?: { url: string, size: number, name: string, created: number, text?: string };
     fileLength?: number;
-    image_swipes?: Array<string>;
+    image_swipes?: string[];
     title?: string;
     append_title?: string;
 
@@ -41,6 +41,8 @@ export interface MessageExtra extends Record<string, unknown> {
     // public/scripts/extensions/translate/index.js
     display_text?: string;
     reasoning_display_text?: string;
+    
+    raw_message?: string[];
 }
 
 // Allow custom fields

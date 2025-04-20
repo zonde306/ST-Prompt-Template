@@ -13,6 +13,7 @@ import { settings } from './ui';
 
 let runID = 0;
 let isFakeRun = false;
+let domnObserver : MutationObserver | null = null;
 
 async function updateGenerate(data: GenerateData) {
     if(settings.enabled === false)
@@ -121,7 +122,10 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         if(newContent != null) {
             if(!message.extra)
                 message.extra = {};
-            message.extra.display_text = newContent;
+            if(!message.extra.raw_message)
+                message.extra.raw_message = [];
+            // message.extra.display_text = newContent;
+            message.extra.raw_message[message.swipe_id || 0] = message.mes;
             message.mes = newContent;
             updateMessageBlock(message_idx, message, { rerenderMessage: true });
         }
@@ -270,8 +274,6 @@ async function handleWorldInfoActivate(data: ChatData) {
     console.log(`[Prompt Template] processing ${data.chat.length} messages in ${end}ms`);
 }
 
-
-
 function updateTokens(prompts: string, type: 'send' | 'receive') {
     window.setTimeout(() => {
         getTokenCountAsync(prompts).then(count => {
@@ -345,8 +347,8 @@ async function processSpecialEntities(env: Record<string, unknown>, prefix : str
 }
 
 const MESSAGE_RENDER_EVENTS = [
-    event_types.MESSAGE_SWIPED,
-    event_types.MESSAGE_UPDATED,
+    event_types.MESSAGE_SWIPED,             // message swipe start
+    event_types.MESSAGE_UPDATED,            // message edit done/cancel
     event_types.CHARACTER_MESSAGE_RENDERED,
     event_types.USER_MESSAGE_RENDERED,
 ];
@@ -357,6 +359,35 @@ export async function init() {
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleWorldInfoActivation);
     eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, handleWorldInfoActivate);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.on(e, updateMessageRender));
+
+    domnObserver = new MutationObserver(mutations => {
+        for(const mutation of mutations) {
+            if(mutation.type !== 'childList')
+                continue;
+
+            for(const node of mutation.addedNodes) {
+                if(node.nodeType !== Node.ELEMENT_NODE || !$(node).is('#curEditTextarea'))
+                    continue;
+
+                const message_idx = $(node).closest('.mes').attr('mesid');
+                if(!message_idx)
+                    continue;
+
+                const message : Message = chat[Number(message_idx)];
+                if(!message?.extra?.raw_message?.[message.swipe_id || 0])
+                    continue;
+                
+                console.debug(`[Prompt Template] rollback message #${message_idx}`);
+                $(node).val(message.extra.raw_message[message.swipe_id || 0]);
+                $(node).trigger('input');
+            }
+        }
+    });
+
+    domnObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+    });
 }
 
 export async function exit() {
@@ -365,4 +396,7 @@ export async function exit() {
     eventSource.removeListener(event_types.GENERATION_AFTER_COMMANDS, handleWorldInfoActivation);
     eventSource.removeListener(event_types.CHAT_COMPLETION_PROMPT_READY, handleWorldInfoActivate);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.removeListener(e, updateMessageRender));
+
+    domnObserver?.disconnect();
+    domnObserver = null;
 }
