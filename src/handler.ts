@@ -352,7 +352,7 @@ async function handleFilterInstall(_type: string, _options : GenerateOptions, dr
         extension_settings.regex.push({
             id: regexFilterUUID,
             scriptName: 'Prompt Template Filter',
-            findRegex: "/<%(?![%])([\s\S]*?)(?<!%)%>/g",
+            findRegex: "/<%(?![%])([\\s\\S]*?)(?<!%)%>/g",
             replaceString: "",
             trimStrings: [],
             placement: [ 1, 2, 6 ],
@@ -364,21 +364,21 @@ async function handleFilterInstall(_type: string, _options : GenerateOptions, dr
             minDepth: NaN,
             maxDepth: NaN,
         });
-        console.debug('inject regex filter');
+        console.debug('[Prompt Template] inject regex filter');
     } else if(!settings.filter_message_enabled && idx > -1) {
         extension_settings.regex.splice(idx, 1);
-        console.debug('remove regex filter');
+        console.debug('[Prompt Template] remove regex filter');
     }
 }
 
 async function handleFilterUninstall() {
     if(settings.enabled === false)
         return;
-    
+
     const idx = extension_settings.regex.findIndex(x => x.id === regexFilterUUID);
     if(idx > -1) {
         extension_settings.regex.splice(idx, 1);
-        console.debug('remove regex filter');
+        console.debug('[Prompt Template] remove regex filter');
     }
 }
 
