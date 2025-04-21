@@ -14,6 +14,7 @@ const DEFAULT_SETTINGS : Record<string, { name: string, value: boolean }> = {
     '#pt_code_blocks': { name: 'code_blocks_enabled', value: false },
     '#pt_world_active': { name: 'world_active_enabled', value: true },
     '#pt_permanent_evaluation': { name: 'permanent_evaluation_enabled', value: false },
+    '#pt_filter_chat_message': { name: 'filter_message_enabled', value: true },
 };
 
 interface EjsSettings {
@@ -29,6 +30,7 @@ interface EjsSettings {
     code_blocks_enabled: boolean;
     world_active_enabled: boolean;
     permanent_evaluation_enabled: boolean;
+    filter_message_enabled: boolean;
 };
 
 export const settings = {} as EjsSettings;
@@ -45,10 +47,12 @@ export function loadSettings(reset: boolean = false) {
         if(reset) {
             // @ts-expect-error: 2339
             extension_settings.EjsTemplate[setting.name] = setting.value;
+            // @ts-expect-error: 7053
             settings[setting.name] = setting.value;
         } else {
         // @ts-expect-error: 2339
             extension_settings.EjsTemplate[setting.name] = $(id).prop('checked') ?? setting.value;
+            // @ts-expect-error: 7053
             settings[setting.name] = $(id).prop('checked') ?? setting.value;
         }
     }
@@ -85,6 +89,7 @@ export async function init() {
 
             // @ts-expect-error: 2339
             extension_settings.EjsTemplate[setting.name] = $(id).prop('checked') ?? setting.value;
+            // @ts-expect-error: 7053
             settings[setting.name] = $(id).prop('checked') ?? setting.value;
             // @ts-expect-error: 2339
             console.debug(`[Prompt Template] setting ${setting.name} changed to ${extension_settings.EjsTemplate[setting.name]}`);

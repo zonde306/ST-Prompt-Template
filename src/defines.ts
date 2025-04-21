@@ -41,8 +41,6 @@ export interface MessageExtra extends Record<string, unknown> {
     // public/scripts/extensions/translate/index.js
     display_text?: string;
     reasoning_display_text?: string;
-    
-    raw_message?: string[];
 }
 
 // Allow custom fields

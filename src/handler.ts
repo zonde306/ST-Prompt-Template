@@ -13,8 +13,9 @@ import { settings } from './ui';
 
 let runID = 0;
 let isFakeRun = false;
-let domnObserver : MutationObserver | null = null;
-let lastMessageEdited : string | number | null = null;
+
+// just a randomly generated value
+const regexFilterUUID = "a8ff1bc7-15f2-4122-b43b-ded692560538";
 
 async function updateGenerate(data: GenerateData) {
     if(settings.enabled === false)
@@ -118,11 +119,9 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         if(newContent != null) {
             if(!message.extra)
                 message.extra = {};
-            if(!message.extra.raw_message)
-                message.extra.raw_message = [];
-            // message.extra.display_text = newContent;
-            message.extra.raw_message[message.swipe_id || 0] = message.mes;
-            message.mes = newContent;
+
+            // only modify display content
+            message.extra.display_text = newContent;
             updateMessageBlock(message_idx, message, { rerenderMessage: true });
         }
     }
@@ -342,17 +341,49 @@ async function processSpecialEntities(env: Record<string, unknown>, prefix : str
     return prompt;
 }
 
-async function handleEditDone(message_id : string) {
-    lastMessageEdited = message_id;
+async function handleFilterInstall(_type: string, _options : GenerateOptions, dryRun: boolean) {
+    if(settings.enabled === false)
+        return;
+    if(dryRun)
+        return;
+
+    const idx = extension_settings.regex.findIndex(x => x.id === regexFilterUUID);
+    if(settings.filter_message_enabled && idx === -1) {
+        extension_settings.regex.push({
+            id: regexFilterUUID,
+            scriptName: 'Prompt Template Filter',
+            findRegex: "/<%(?![%])([\s\S]*?)(?<!%)%>/g",
+            replaceString: "",
+            trimStrings: [],
+            placement: [ 1, 2, 6 ],
+            disabled: false,
+            markdownOnly: false,
+            promptOnly: true,
+            runOnEdit: false,
+            substituteRegex: 0,
+            minDepth: NaN,
+            maxDepth: NaN,
+        });
+        console.debug('inject regex filter');
+    } else if(!settings.filter_message_enabled && idx > -1) {
+        extension_settings.regex.splice(idx, 1);
+        console.debug('remove regex filter');
+    }
 }
 
-async function handleMessageUpdated(message_id : string) {
-    // avoid errors caused by cancelling edits
-    await updateMessageRender(message_id, lastMessageEdited !== message_id);
-    lastMessageEdited = null;
+async function handleFilterUninstall() {
+    if(settings.enabled === false)
+        return;
+    
+    const idx = extension_settings.regex.findIndex(x => x.id === regexFilterUUID);
+    if(idx > -1) {
+        extension_settings.regex.splice(idx, 1);
+        console.debug('remove regex filter');
+    }
 }
 
 const MESSAGE_RENDER_EVENTS = [
+    event_types.MESSAGE_UPDATED,
     event_types.MESSAGE_SWIPED,
     event_types.CHARACTER_MESSAGE_RENDERED,
     event_types.USER_MESSAGE_RENDERED,
@@ -363,38 +394,9 @@ export async function init() {
     eventSource.on(event_types.CHAT_CHANGED, handlePreloadWorldInfo);
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleWorldInfoActivation);
     eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, handleWorldInfoActivate);
-    eventSource.on(event_types.MESSAGE_EDITED, handleEditDone);
-    eventSource.on(event_types.MESSAGE_UPDATED, handleMessageUpdated);
+    eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleFilterInstall);
+    eventSource.on(event_types.GENERATION_ENDED, handleFilterUninstall);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.on(e, updateMessageRender));
-
-    domnObserver = new MutationObserver(mutations => {
-        for(const mutation of mutations) {
-            if(mutation.type !== 'childList')
-                continue;
-
-            for(const node of mutation.addedNodes) {
-                if(node.nodeType !== Node.ELEMENT_NODE || !$(node).is('#curEditTextarea'))
-                    continue;
-
-                const message_idx = $(node).closest('.mes').attr('mesid');
-                if(!message_idx)
-                    continue;
-
-                const message : Message = chat[Number(message_idx)];
-                if(!message?.extra?.raw_message?.[message.swipe_id || 0])
-                    continue;
-                
-                console.debug(`[Prompt Template] rollback message #${message_idx}`);
-                $(node).val(message.extra.raw_message[message.swipe_id || 0]);
-                $(node).trigger('input');
-            }
-        }
-    });
-
-    domnObserver.observe(document.body, {
-        childList: true,
-        subtree: true,
-    });
 }
 
 export async function exit() {
@@ -402,10 +404,7 @@ export async function exit() {
     eventSource.removeListener(event_types.CHAT_CHANGED, handlePreloadWorldInfo);
     eventSource.removeListener(event_types.GENERATION_AFTER_COMMANDS, handleWorldInfoActivation);
     eventSource.removeListener(event_types.CHAT_COMPLETION_PROMPT_READY, handleWorldInfoActivate);
-    eventSource.removeListener(event_types.MESSAGE_EDITED, handleEditDone);
-    eventSource.removeListener(event_types.MESSAGE_UPDATED, handleMessageUpdated);
+    eventSource.removeListener(event_types.GENERATION_AFTER_COMMANDS, handleFilterInstall);
+    eventSource.removeListener(event_types.GENERATION_ENDED, handleFilterUninstall);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.removeListener(e, updateMessageRender));
-
-    domnObserver?.disconnect();
-    domnObserver = null;
 }
