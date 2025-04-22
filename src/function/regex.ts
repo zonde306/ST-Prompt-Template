@@ -23,7 +23,7 @@ export function activateRegex(pattern: string | RegExp, replace: string, opts: R
     if(REGEX.generateRegex.has(uuid)) {
         const regex = extension_settings.regex.find(x => x.id === uuid);
         if(regex) {
-            regex.findRegex = pattern instanceof RegExp ? pattern.source : pattern;
+            regex.findRegex = pattern instanceof RegExp ? `/${pattern.source}/${pattern.flags}` : pattern;
             regex.replaceString = replace;
             regex.placement = _.compact([
                 opts.user ?? true ? 1 : 0,
@@ -67,7 +67,7 @@ export function deactivateRegex(uuid?: string) {
             REGEX.generateRegex.delete(uuid);
         }
     } else {
-        extension_settings.regex = extension_settings.regex.filter(x => x.scriptName.startsWith('\u200b'));
+        extension_settings.regex = extension_settings.regex.filter(x => !x.scriptName.startsWith('\u200b'));
         REGEX.generateRegex.clear();
     }
 }
