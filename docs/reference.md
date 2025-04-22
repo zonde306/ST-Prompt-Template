@@ -325,6 +325,28 @@ function getChatMessages(count);
 function getChatMessages(count, role);
 function getChatMessages(start, end);
 function getChatMessages(start, end, role);
+
+/**
+ * Regular expression options
+ * @typedef {Object} RegexOptions
+ * @property {string} [uuid=undefined] - Unique ID, modifies existing if same, creates new if different
+ * @property {number} [minDepth=NaN] - Minimum depth
+ * @property {number} [maxDepth=NaN] - Maximum depth
+ * @property {boolean} [user=true] - Applies to user input
+ * @property {boolean} [assistant=true] - Applies to AI output
+ * @property {boolean} [worldinfo=false] - Applies to world information
+ * @property {boolean} [reasoning=true] - Applies to reasoning
+ */
+
+/**
+ * Creates temporary regular expressions during generation to process chat message content
+ * The prompt processing will be automatically removed after completion
+ *
+ * @param {string | RegExp} pattern - Regular expression pattern
+ * @param {string} replace - Replacement content
+ * @param {RegexOptions} opts - Configuration options
+ */
+function activateRegex(pattern, string, opts = {});
 ```
 
 > `flags` types:

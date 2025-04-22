@@ -10,6 +10,7 @@ import { extension_settings } from '../../../../extensions.js';
 import { getEnabledWorldInfoEntries, selectActivatedEntries } from './function/worldinfo';
 import { getCharaDefs } from './function/characters';
 import { settings } from './ui';
+import { activateRegex, deactivateRegex } from './function/regex';
 
 let runID = 0;
 let isFakeRun = false;
@@ -25,6 +26,7 @@ async function updateGenerate(data: GenerateData) {
 
     STATE.isDryRun = false;
     const start = Date.now();
+    deactivateRegex();
 
     const env = await prepareContext(65535, {
         runType: 'generate',
@@ -186,6 +188,9 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
 async function handlePreloadWorldInfo(chat_filename? : string) {
     if(settings.enabled === false)
         return;
+    
+    deactivateRegex();
+
     if(settings.preload_worldinfo_enabled === false)
         return;
 
@@ -349,24 +354,10 @@ async function handleFilterInstall(_type: string, _options : GenerateOptions, dr
 
     const idx = extension_settings.regex.findIndex(x => x.id === regexFilterUUID);
     if(settings.filter_message_enabled && idx === -1) {
-        extension_settings.regex.push({
-            id: regexFilterUUID,
-            scriptName: 'Prompt Template Filter',
-            findRegex: "/<%(?![%])([\\s\\S]*?)(?<!%)%>/g",
-            replaceString: "",
-            trimStrings: [],
-            placement: [ 1, 2, 6 ],
-            disabled: false,
-            markdownOnly: false,
-            promptOnly: true,
-            runOnEdit: false,
-            substituteRegex: 0,
-            minDepth: NaN,
-            maxDepth: NaN,
-        });
+        activateRegex(/<%(?![%])([\s\S]*?)(?<!%)%>/g, '', { uuid: regexFilterUUID });
         console.debug('[Prompt Template] inject regex filter');
     } else if(!settings.filter_message_enabled && idx > -1) {
-        extension_settings.regex.splice(idx, 1);
+        deactivateRegex(regexFilterUUID);
         console.debug('[Prompt Template] remove regex filter');
     }
 }
@@ -375,11 +366,7 @@ async function handleFilterUninstall() {
     if(settings.enabled === false)
         return;
 
-    const idx = extension_settings.regex.findIndex(x => x.id === regexFilterUUID);
-    if(idx > -1) {
-        extension_settings.regex.splice(idx, 1);
-        console.debug('[Prompt Template] remove regex filter');
-    }
+    deactivateRegex(regexFilterUUID);
 }
 
 const MESSAGE_RENDER_EVENTS = [

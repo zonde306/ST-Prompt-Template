@@ -325,6 +325,28 @@ function getChatMessages(count);
 function getChatMessages(count, role);
 function getChatMessages(start, end);
 function getChatMessages(start, end, role);
+
+/**
+ * 正则表达式选项
+ * @typedef {Object} RegexOptions
+ * @property {string} [uuid=undefined] - 唯一ID，相同则修改，不同则创建
+ * @property {number} [minDepth=NaN] - 最小深度
+ * @property {number} [maxDepth=NaN] - 最大深度
+ * @property {boolean} [user=true] - 对用户输入生效
+ * @property {boolean} [assistant=true] - 对AI输出生效
+ * @property {boolean} [worldinfo=false] - 对世界信息生效
+ * @property {boolean} [reasoning=true] - 对推理生效
+ */
+
+/**
+ * 在生成时创建临时正则表达式，对聊天消息内容进行处理
+ * 提示词处理完毕后会自动删除
+ *
+ * @param {string | RegExp} pattern - 正则表达式
+ * @param {string} replace - 替换内容
+ * @param {RegexOptions} opts - 选项
+ */
+function activateRegex(pattern, string, opts = {});
 ```
 
 > `flags` 类型:

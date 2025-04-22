@@ -326,6 +326,7 @@ export async function getEnabledWorldInfoEntries(
     }
 
     if (charaExtra) {
+        // @ts-expect-error: 2345
         const fileName = getCharaFilename(this_chid);
         if (fileName) {
             // @ts-expect-error

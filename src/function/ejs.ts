@@ -13,6 +13,7 @@ import { getChatMessage, getChatMessages } from './chat';
 import { fakerEnv } from './faker';
 import check from 'syntax-error';
 import { settings } from '../ui';
+import { activateRegex } from './regex';
 
 interface IncluderResult {
     filename: string;
@@ -306,6 +307,7 @@ export async function prepareContext(end: number = 65535, env: Record<string, un
         activateWorldInfo: activateWorldInfo,
         getChatMessage: getChatMessage,
         getChatMessages: getChatMessages,
+        activateRegex: activateRegex.bind(context),
         ...boundCloneDefines(context, SharedDefines),
         ref: new WeakRef(context),
     });

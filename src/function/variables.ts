@@ -1,6 +1,7 @@
 import { chat, chat_metadata, saveChatConditional } from '../../../../../../script.js';
 import { extension_settings } from '../../../../../extensions.js';
 import { settings } from '../ui';
+import { getCharaData } from './characters';
 
 export let STATE = {
     isDryRun: false,
@@ -11,11 +12,13 @@ export let STATE = {
 
 export function allVariables(end : number = 65535) {
     return _.merge({},
-                   extension_settings.variables.global,
-                   // @ts-expect-error: 2339
-                   chat_metadata.variables || {},
-                   ...chat.slice(0, Math.max(end - 1, 0)).map(msg => msg.variables?.[msg.swipe_id || 0] || {}),
-                   { _trace_id : (STATE.traceId)++, _modify_id: 0 },
+        // @ts-expect-error: 2339
+        getCharaData()?.data?.extensions?.variables || {},
+        extension_settings.variables.global,
+        // @ts-expect-error: 2339
+        chat_metadata.variables || {},
+        ...chat.slice(0, Math.max(end - 1, 0)).map(msg => msg.variables?.[msg.swipe_id || 0] || {}),
+        { _trace_id : (STATE.traceId)++, _modify_id: 0 },
     );
 }
 
@@ -70,7 +73,7 @@ function evalFilter(filter? : MessageFilter, msgid? : number, swipeid?: number) 
         swipe_id = (chat[message_id]?.swipes?.length || 0) + swipe_id;
 
     if(chat[message_id]?.swipes?.[swipe_id] === undefined) {
-        console.info(`No swipe found for filter: ${filter}`);
+        console.debug(`No swipe found for filter: ${filter}`);
         return [message_id, swipe_id];
     }
 

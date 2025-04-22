@@ -1,8 +1,11 @@
 import { characters, this_chid } from '../../../../../../script.js';
 import { v1CharData } from '../../../../../char-data.js';
 
-export function getCharaData(name : string | RegExp | number = this_chid) : v1CharData | null {
+export function getCharaData(name : string | RegExp | number | undefined = this_chid) : v1CharData | null {
     name = name || this_chid;
+    if(name == null)
+        return null;
+    
     // @ts-expect-error
     const char = characters[name] || characters.find(c => c.name === name || c.name.match(name));
     if (!char)
