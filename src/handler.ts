@@ -21,12 +21,14 @@ const regexFilterUUID = "a8ff1bc7-15f2-4122-b43b-ded692560538";
 async function updateGenerate(data: GenerateData) {
     if(settings.enabled === false)
         return;
+
+    deactivateRegex();
+
     if(settings.generate_enabled === false)
         return;
 
     STATE.isDryRun = false;
     const start = Date.now();
-    deactivateRegex();
 
     const env = await prepareContext(65535, {
         runType: 'generate',
@@ -188,7 +190,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
 async function handlePreloadWorldInfo(chat_filename? : string) {
     if(settings.enabled === false)
         return;
-    
+
     deactivateRegex();
 
     if(settings.preload_worldinfo_enabled === false)
@@ -362,13 +364,6 @@ async function handleFilterInstall(_type: string, _options : GenerateOptions, dr
     }
 }
 
-async function handleFilterUninstall() {
-    if(settings.enabled === false)
-        return;
-
-    deactivateRegex(regexFilterUUID);
-}
-
 const MESSAGE_RENDER_EVENTS = [
     event_types.MESSAGE_UPDATED,
     event_types.MESSAGE_SWIPED,
@@ -382,7 +377,6 @@ export async function init() {
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleWorldInfoActivation);
     eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, handleWorldInfoActivate);
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleFilterInstall);
-    eventSource.on(event_types.GENERATION_ENDED, handleFilterUninstall);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.on(e, updateMessageRender));
 }
 
@@ -392,6 +386,5 @@ export async function exit() {
     eventSource.removeListener(event_types.GENERATION_AFTER_COMMANDS, handleWorldInfoActivation);
     eventSource.removeListener(event_types.CHAT_COMPLETION_PROMPT_READY, handleWorldInfoActivate);
     eventSource.removeListener(event_types.GENERATION_AFTER_COMMANDS, handleFilterInstall);
-    eventSource.removeListener(event_types.GENERATION_ENDED, handleFilterUninstall);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.removeListener(e, updateMessageRender));
 }
