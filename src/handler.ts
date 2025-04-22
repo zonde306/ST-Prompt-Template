@@ -356,7 +356,7 @@ async function handleFilterInstall(_type: string, _options : GenerateOptions, dr
 
     const idx = extension_settings.regex.findIndex(x => x.id === regexFilterUUID);
     if(settings.filter_message_enabled && idx === -1) {
-        activateRegex(/<%(?![%])([\s\S]*?)(?<!%)%>/g, '', { uuid: regexFilterUUID });
+        activateRegex('/<%(?![%])([\\s\\S]*?)(?<!%)%>/g', '', { uuid: regexFilterUUID });
         console.debug('[Prompt Template] inject regex filter');
     } else if(!settings.filter_message_enabled && idx > -1) {
         deactivateRegex(regexFilterUUID);
