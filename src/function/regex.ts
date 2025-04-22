@@ -42,7 +42,7 @@ export function activateRegex(pattern: string | RegExp, replace: string, opts: R
             placement: _.compact([
                 opts.user ?? true ? 1 : 0,
                 opts.assistant ?? true ? 2 : 0,
-                opts.worldinfo ?? true ? 5 : 0,
+                opts.worldinfo ?? false ? 5 : 0,
                 opts.reasoning ?? true ? 6 : 0,
             ]),
             disabled: false,
