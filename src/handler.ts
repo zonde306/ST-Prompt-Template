@@ -22,7 +22,9 @@ async function updateGenerate(data: GenerateData) {
     if(settings.enabled === false)
         return;
 
+    // No longer available here
     deactivateRegex();
+    activatedWorldEntries.clear();
 
     if(settings.generate_enabled === false)
         return;
@@ -60,7 +62,10 @@ async function updateGenerate(data: GenerateData) {
 
     await checkAndSave();
     updateTokens(prompts, 'send');
+
+    // Not allowed here
     activatedWorldEntries.clear();
+    deactivateRegex();
 }
 
 async function updateMessageRender(message_id: string, isDryRun?: boolean) {
@@ -191,7 +196,9 @@ async function handlePreloadWorldInfo(chat_filename? : string) {
     if(settings.enabled === false)
         return;
 
+    // clean old content
     deactivateRegex();
+    activatedWorldEntries.clear();
 
     if(settings.preload_worldinfo_enabled === false)
         return;
@@ -239,8 +246,12 @@ async function handleWorldInfoActivation(_type: string, _options : GenerateOptio
 
     if(dryRun) return;
     await eventSource.emit(event_types.WORLDINFO_FORCE_ACTIVATE, activatedWorldEntries.values());
-    console.debug('[Prompt Template] force activate world info:');
-    console.debug(activatedWorldEntries);
+
+    if(settings.debug_enabled) {
+        console.debug('[Prompt Template] force activate world info:');
+        console.debug(activatedWorldEntries);
+    }
+
     activatedWorldEntries.clear();
 }
 
@@ -251,7 +262,6 @@ async function handleWorldInfoActivate(data: ChatData) {
         return;
 
     if(!data.dryRun) return;
-    activatedWorldEntries.clear();
 
     STATE.isDryRun = true;
     const start = Date.now();
