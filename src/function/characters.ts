@@ -51,7 +51,7 @@ System: <%- depth_prompt %>
 <% } %>\
 `;
 
-export function getCharaDefs(name : string | RegExp | number = this_chid) {
+export function getCharaDefs(name : string | RegExp | number | undefined = this_chid) {
     const char = getCharaData(name);
     if (!char)
         return null;

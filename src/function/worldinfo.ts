@@ -2,6 +2,8 @@ import { loadWorldInfo, parseRegexFromString, world_info_case_sensitive, world_i
 import { substituteParams, chat_metadata, this_chid, characters } from '../../../../../../script.js';
 import { power_user } from '../../../../../power-user.js';
 import { getCharaFilename } from '../../../../../utils.js';
+import { getGroupMembers } from '../../../../../group-chats.js';
+import { v1CharData } from '../../../../../char-data.js';
 
 export interface WorldInfoData {
     uid: number;
@@ -294,6 +296,7 @@ export async function getEnabledWorldInfoEntries(
     persona : boolean = true, charaExtra : boolean = true,
     chat: boolean = true) : Promise<WorldInfoData[]> {
     let results : WorldInfoData[] = [];
+
     if (chara) {
         // @ts-expect-error
         const charaWorld : string = characters[this_chid]?.data?.extensions?.world;
@@ -301,6 +304,17 @@ export async function getEnabledWorldInfoEntries(
             const worldInfo = await getWorldInfoData(charaWorld);
             if (worldInfo.length > 0) {
                 results = results.concat(worldInfo);
+            }
+        }
+
+        for(const member of getGroupMembers()) {
+            // @ts-expect-error
+            const world = member?.data?.extensions?.world;
+            if (world && !selected_world_info.includes(world)) {
+                const worldInfo = await getWorldInfoData(world);
+                if (worldInfo.length > 0) {
+                    results = results.concat(worldInfo);
+                }
             }
         }
     }
@@ -334,12 +348,34 @@ export async function getEnabledWorldInfoEntries(
             const extraCharLore = world_info.charLore?.find((e) => e.name === fileName);
             if (extraCharLore && _.isArray(extraCharLore.extraBooks)) {
                 // @ts-expect-error
-                const primaryBook : string = chat_metadata[METADATA_KEY];
+                const primaryBook : string = characters[this_chid]?.data?.extensions?.world;
                 for(const book of extraCharLore.extraBooks) {
                     if (book !== primaryBook && !selected_world_info.includes(book)) {
                         const worldInfo = await getWorldInfoData(book);
                         if (worldInfo.length > 0) {
                             results = results.concat(worldInfo);
+                        }
+                    }
+                }
+            }
+        }
+
+        for(const member of getGroupMembers()) {
+            // @ts-expect-error: 2339
+            const chid = characters.findIndex(ch => ch.avatar === member.avatar);
+            const file = getCharaFilename(chid);
+            if (file) {
+                // @ts-expect-error
+                const extraCharLore = world_info.charLore?.find((e) => e.name === file);
+                if (extraCharLore && _.isArray(extraCharLore.extraBooks)) {
+                    // @ts-expect-error
+                    const primaryBook : string = member?.data?.extensions?.world;
+                    for(const book of extraCharLore.extraBooks) {
+                        if (book !== primaryBook && !selected_world_info.includes(book)) {
+                            const worldInfo = await getWorldInfoData(book);
+                            if (worldInfo.length > 0) {
+                                results = results.concat(worldInfo);
+                            }
                         }
                     }
                 }
