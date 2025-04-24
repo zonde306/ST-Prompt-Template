@@ -99,6 +99,11 @@ function escapeEjsInDisabledBlocks(str : string, options : EjsOptions = {}, mark
 
 export async function evalTemplate(content: string, data: Record<string, unknown>,
     opts : EvalTemplateOptions = {}) {
+    if (typeof content !== 'string') {
+        console.error(`[Prompt Template] content is not a string`);
+        return content;
+    }
+
     // await eventSource.emit('prompt_template_evaluation', { content, data });
     if(opts.options?.debug && !opts.options.destructuredLocals) {
         // unpack variables

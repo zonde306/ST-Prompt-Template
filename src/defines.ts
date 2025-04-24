@@ -1,8 +1,20 @@
 import { ReasoningType } from "../../../../reasoning.js";
 
+type TextContent = {
+    type: "text";
+    text: string;
+}
+
+type ImageContent = {
+    type: "image";
+    image_url: {
+        url: string // base64 encoded image
+    };
+}
+
 export interface Chat {
     role: string;
-    content: string;
+    content: string | (TextContent | ImageContent)[];
 }
 
 // event_types.CHAT_COMPLETION_PROMPT_READY

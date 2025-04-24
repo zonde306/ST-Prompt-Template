@@ -43,11 +43,26 @@ async function updateGenerate(data: GenerateData) {
     for (const [idx, message] of data.messages.entries()) {
         const beforeMessage =  settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:BEFORE]`);
 
-        const prompt = await evalTemplateHandler(message.content, env, `message #${idx + 1}(${message.role})`);
-        const afterMessage = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
-        if (prompt != null) {
-            message.content = beforeMessage + prompt + afterMessage;
-            prompts += beforeMessage + prompt + afterMessage;
+        if(typeof message.content === 'string') {
+            const prompt = await evalTemplateHandler(message.content, env, `message #${idx + 1}(${message.role})`);
+            const afterMessage = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
+
+            if (prompt != null) {
+                message.content = beforeMessage + prompt + afterMessage;
+                prompts += beforeMessage + prompt + afterMessage;
+            }
+        } else if (_.isArray(message.content)) {
+            for(const content of message.content) {
+                if(content.type === 'text') {
+                    const prompt = await evalTemplateHandler(content.text, env, `message #${idx + 1}(${message.role})`);
+                    const afterMessage = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
+
+                    if (prompt != null) {
+                        content.text = beforeMessage + prompt + afterMessage;
+                        prompts += beforeMessage + prompt + afterMessage;
+                    }
+                }
+            }
         }
     }
 
@@ -274,9 +289,20 @@ async function handleWorldInfoActivate(data: ChatData) {
     let prompts = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:BEFORE]');
     for (const [idx, message] of data.chat.entries()) {
         const beforeMessage = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:BEFORE]`);
-        const prompt = await evalTemplateHandler(message.content, env, `message #${idx + 1}(${message.role})`);
-        const afterMessage = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
-        prompts += beforeMessage + (prompt || '') + afterMessage;
+
+        if (typeof message.content === 'string') {
+            const prompt = await evalTemplateHandler(message.content, env, `message #${idx + 1}(${message.role})`);
+            const afterMessage = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
+            prompts += beforeMessage + (prompt || '') + afterMessage;
+        } else if (_.isArray(message.content)) {
+            for(const content of message.content) {
+                if(content.type === 'text') {
+                    const prompt = await evalTemplateHandler(content.text, env, `message #${idx + 1}(${message.role})`);
+                    const afterMessage = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
+                    prompts += beforeMessage + (prompt || '') + afterMessage;
+                }
+            }
+        }
     }
 
     if(settings.generate_loader_enabled)
