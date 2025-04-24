@@ -1,5 +1,5 @@
 import { loadWorldInfo, parseRegexFromString, world_info_case_sensitive, world_info_match_whole_words, world_info_logic, world_info_use_group_scoring, DEFAULT_WEIGHT, METADATA_KEY, selected_world_info, world_info } from '../../../../../world-info.js';
-import { substituteParams, chat_metadata, this_chid } from '../../../../../../script.js';
+import { substituteParams, chat_metadata, this_chid, characters } from '../../../../../../script.js';
 import { power_user } from '../../../../../power-user.js';
 import { getCharaFilename } from '../../../../../utils.js';
 
@@ -291,13 +291,14 @@ function getScore(haystack: string, entry: WorldInfoData) {
 
 export async function getEnabledWorldInfoEntries(
     chara : boolean = true, global : boolean = true,
-    persona : boolean = true, charaExtra : boolean = true) : Promise<WorldInfoData[]> {
+    persona : boolean = true, charaExtra : boolean = true,
+    chat: boolean = true) : Promise<WorldInfoData[]> {
     let results : WorldInfoData[] = [];
     if (chara) {
         // @ts-expect-error
-        const chatWorld : string = chat_metadata[METADATA_KEY];
-        if (chatWorld && !selected_world_info.includes(chatWorld)) {
-            const worldInfo = await getWorldInfoData(chatWorld);
+        const charaWorld : string = characters[this_chid]?.data?.extensions?.world;
+        if (charaWorld && !selected_world_info.includes(charaWorld)) {
+            const worldInfo = await getWorldInfoData(charaWorld);
             if (worldInfo.length > 0) {
                 results = results.concat(worldInfo);
             }
@@ -342,6 +343,17 @@ export async function getEnabledWorldInfoEntries(
                         }
                     }
                 }
+            }
+        }
+    }
+
+    if (chat) {
+        // @ts-expect-error
+        const chatWorld : string = chat_metadata[METADATA_KEY];
+        if (chatWorld && !selected_world_info.includes(chatWorld)) {
+            const worldInfo = await getWorldInfoData(chatWorld);
+            if (worldInfo.length > 0) {
+                results = results.concat(worldInfo);
             }
         }
     }
