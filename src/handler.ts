@@ -2,7 +2,7 @@
 import vm from 'vm-browserify';
 import _ from 'lodash';
 import { GenerateData, Message, ChatData } from './defines';
-import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock } from '../../../../../script.js';
+import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock, substituteParams } from '../../../../../script.js';
 import { prepareContext, evalTemplate, getSyntaxErrorInfo, activatedWorldEntries, EvalTemplateOptions } from './function/ejs';
 import { STATE, checkAndSave } from './function/variables';
 import { getTokenCountAsync } from '../../../../tokenizers.js';
@@ -346,7 +346,7 @@ async function processSpecialEntities(env: Record<string, unknown>, prefix : str
     let prompt = '';
     for(const data of worldInfoData) {
         const result = await evalTemplateHandler(
-            data.content,
+            substituteParams(data.content),
             _.merge(env, { world_info: data }),
             `worldinfo ${data.world}.${data.comment}`,
             options,
