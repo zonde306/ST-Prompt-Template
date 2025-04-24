@@ -332,7 +332,7 @@ export async function getEnabledWorldInfoEntries(
         if (fileName) {
             // @ts-expect-error
             const extraCharLore = world_info.charLore?.find((e) => e.name === fileName);
-            if (extraCharLore && ~_.isArray(extraCharLore.extraBooks)) {
+            if (extraCharLore && _.isArray(extraCharLore.extraBooks)) {
                 // @ts-expect-error
                 const primaryBook : string = chat_metadata[METADATA_KEY];
                 for(const book of extraCharLore.extraBooks) {
