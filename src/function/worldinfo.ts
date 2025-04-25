@@ -1,4 +1,4 @@
-import { loadWorldInfo, parseRegexFromString, world_info_case_sensitive, world_info_match_whole_words, world_info_logic, world_info_use_group_scoring, DEFAULT_WEIGHT, METADATA_KEY, selected_world_info, world_info } from '../../../../../world-info.js';
+import { loadWorldInfo, parseRegexFromString, world_info_case_sensitive, world_info_match_whole_words, world_info_logic, world_info_use_group_scoring, DEFAULT_WEIGHT, METADATA_KEY, selected_world_info, world_info, DEFAULT_DEPTH } from '../../../../../world-info.js';
 import { substituteParams, chat_metadata, this_chid, characters } from '../../../../../../script.js';
 import { power_user } from '../../../../../power-user.js';
 import { getCharaFilename } from '../../../../../utils.js';
@@ -55,7 +55,7 @@ export async function getWorldInfoData(name: string): Promise<WorldInfoData[]> {
     if (!lorebook)
         return [];
 
-    return _.values(lorebook.entries).map(({ uid, ...rest }) => ({ ...rest, uid: Number(uid), world: name })).sort((a, b) => a.position - b.position || a.order - b.order);
+    return _.values(lorebook.entries).map(({ uid, ...rest }) => ({ ...rest, uid: Number(uid), world: name })).sort(worldInfoSorter);
 }
 
 export async function getWorldInfoTitles(name: string): Promise<string[]> {
@@ -166,7 +166,7 @@ export function selectActivatedEntries(
     const ungrouped = grouped[''] || [];
     if (ungrouped.length > 0 && _.size(grouped) <= 1) {
         // No grouping required
-        return ungrouped.sort((a, b) => a.position - b.position || a.order - b.order);
+        return ungrouped.sort(worldInfoSorter);
     }
 
     let matched: WorldInfoData[] = [];
@@ -212,7 +212,7 @@ export function selectActivatedEntries(
         }
     }
 
-    return _.concat(ungrouped, matched).sort((a, b) => a.position - b.position || a.order - b.order);
+    return _.concat(ungrouped, matched).sort(worldInfoSorter);
 }
 
 function transformString(str: string, entry: WorldInfoData) {
@@ -393,5 +393,9 @@ export async function getEnabledWorldInfoEntries(
         }
     }
 
-    return results.sort((a, b) => a.position - b.position || a.order - b.order);
+    return results.sort(worldInfoSorter);
+}
+
+function worldInfoSorter(a: WorldInfoData, b: WorldInfoData) {
+    return a.position - b.position || a.order - b.order || (a.depth || DEFAULT_DEPTH) - (b.depth || DEFAULT_DEPTH);
 }
