@@ -3,7 +3,6 @@ import { substituteParams, chat_metadata, this_chid, characters } from '../../..
 import { power_user } from '../../../../../power-user.js';
 import { getCharaFilename } from '../../../../../utils.js';
 import { getGroupMembers } from '../../../../../group-chats.js';
-import { v1CharData } from '../../../../../char-data.js';
 
 export interface WorldInfoData {
     uid: number;
@@ -56,7 +55,7 @@ export async function getWorldInfoData(name: string): Promise<WorldInfoData[]> {
     if (!lorebook)
         return [];
 
-    return _.values(lorebook.entries).map(({ uid, ...rest }) => ({ ...rest, uid: Number(uid), world: name })).sort((a, b) => a.order - b.order);
+    return _.values(lorebook.entries).map(({ uid, ...rest }) => ({ ...rest, uid: Number(uid), world: name })).sort((a, b) => a.position - b.position || a.order - b.order);
 }
 
 export async function getWorldInfoTitles(name: string): Promise<string[]> {
@@ -167,7 +166,7 @@ export function selectActivatedEntries(
     const ungrouped = grouped[''] || [];
     if (ungrouped.length > 0 && _.size(grouped) <= 1) {
         // No grouping required
-        return ungrouped.sort((a, b) => a.order - b.order);
+        return ungrouped.sort((a, b) => a.position - b.position || a.order - b.order);
     }
 
     let matched: WorldInfoData[] = [];
@@ -213,7 +212,7 @@ export function selectActivatedEntries(
         }
     }
 
-    return _.concat(ungrouped, matched).sort((a, b) => a.order - b.order);
+    return _.concat(ungrouped, matched).sort((a, b) => a.position - b.position || a.order - b.order);
 }
 
 function transformString(str: string, entry: WorldInfoData) {
@@ -394,5 +393,5 @@ export async function getEnabledWorldInfoEntries(
         }
     }
 
-    return results.sort((a, b) => a.order - b.order);
+    return results.sort((a, b) => a.position - b.position || a.order - b.order);
 }

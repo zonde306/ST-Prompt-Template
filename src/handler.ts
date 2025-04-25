@@ -231,7 +231,7 @@ async function handlePreloadWorldInfo(chat_filename? : string) {
 
     for (const data of worldInfoData) {
         await evalTemplateHandler(
-            data.content,
+            substituteParams(data.content),
             _.merge(env, { world_info: data }),
             `worldinfo ${data.world}.${data.comment}`
         );
