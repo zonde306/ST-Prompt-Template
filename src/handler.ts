@@ -229,8 +229,13 @@ async function handlePreloadWorldInfo(chat_filename? : string) {
         runID: runID++
     });
 
+    let prompts = '';
+
+    if(settings.generate_loader_enabled)
+        prompts += await processSpecialEntities(env, '[GENERATE:BEFORE]');
+
     for (const data of worldInfoData) {
-        await evalTemplateHandler(
+        prompts += await evalTemplateHandler(
             substituteParams(data.content),
             _.merge(env, { world_info: data }),
             `worldinfo ${data.world}.${data.comment}`
@@ -240,8 +245,11 @@ async function handlePreloadWorldInfo(chat_filename? : string) {
     const charaDef = getCharaDefs();
     if (charaDef?.description || charaDef?.scenario) {
         const content = (charaDef.description || '') + '\n---\n' + (charaDef.scenario || '');
-        await evalTemplateHandler(content, env, `character ${charaDef.name}`);
+        prompts += await evalTemplateHandler(content, env, `character ${charaDef.name}`);
     }
+
+    if(settings.generate_loader_enabled)
+        await processSpecialEntities(env, '[GENERATE:AFTER]', prompts);
 
     const end = Date.now() - start;
     console.log(`[Prompt Template] processing ${worldInfoData.length} world info in ${end}ms`);
