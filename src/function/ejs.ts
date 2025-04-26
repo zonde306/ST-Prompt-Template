@@ -202,8 +202,8 @@ let SharedDefines: Record<string, unknown> = {};
 
 function boundedDefine(this: Record<string, unknown>, name: string, value: unknown) {
     // console.debug(`[Prompt Template] global ${name} defined: ${value}`);
-    SharedDefines[name] = value;
-    this[name] = value;
+    _.set(SharedDefines, name, value);
+    _.set(this, name, value);
 }
 
 function boundCloneDefines(self: Record<string, unknown>, defines: Record<string, unknown> | unknown[]) {
