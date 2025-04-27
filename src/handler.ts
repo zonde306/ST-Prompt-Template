@@ -407,7 +407,7 @@ async function handleFilterInstall(_type: string, _options : GenerateOptions, dr
 }
 
 function cleanPreContent(html : string) {
-    return html.replace(/<pre>([\s\S]*?)<\/pre>/gi, (_preMatch, preContent : string) => {
+    return html.replace(/<pre\b[^>]*>([\s\S]*?)<\/pre>/gi, (_preMatch, preContent : string) => {
         const cleanedContent = preContent.replace(/&lt;%([\s\S]*?)%&gt;/g, (_blockMatch, content : string) => {
             return `&lt;%${content.replace(/<[^>]+>/g, '')}%&gt;`;
         });
