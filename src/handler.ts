@@ -157,9 +157,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         return;
     }
 
-    const content = settings.code_blocks_enabled === false ? html.replace(/(<pre\b[^>]*>)([\s\S]*?)(<\/pre>)/gi, (m, p1, p2, p3) => {
-        return p1 + p2.replace(/&lt;/g, '#lt#').replace(/&gt;/g, '#gt#') + p3;
-    }) : html;
+    const content = settings.code_blocks_enabled === false ? escapePreContent(html) : cleanPreContent(html);
 
     let newContent = await evalTemplateHandler(content, env, `chat #${message_idx}.${message.swipe_id}`, {
         escaper,
@@ -406,6 +404,21 @@ async function handleFilterInstall(_type: string, _options : GenerateOptions, dr
         deactivateRegex(regexFilterUUID);
         console.debug('[Prompt Template] remove regex filter');
     }
+}
+
+function cleanPreContent(html : string) {
+    return html.replace(/<pre>([\s\S]*?)<\/pre>/gi, (_preMatch, preContent : string) => {
+        const cleanedContent = preContent.replace(/&lt;%([\s\S]*?)%&gt;/g, (_blockMatch, content : string) => {
+            return `&lt;%${content.replace(/<[^>]+>/g, '')}%&gt;`;
+        });
+        return `<pre>${cleanedContent}</pre>`;
+    });
+}
+
+function escapePreContent(html: string) {
+    return html.replace(/(<pre\b[^>]*>)([\s\S]*?)(<\/pre>)/gi, (_m, p1, p2, p3) => {
+        return p1 + p2.replace(/&lt;/g, '#lt#').replace(/&gt;/g, '#gt#') + p3;
+    })
 }
 
 const MESSAGE_RENDER_EVENTS = [
