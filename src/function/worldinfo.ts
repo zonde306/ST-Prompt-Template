@@ -397,5 +397,5 @@ export async function getEnabledWorldInfoEntries(
 }
 
 function worldInfoSorter(a: WorldInfoData, b: WorldInfoData) {
-    return a.position - b.position || a.order - b.order || (a.depth || DEFAULT_DEPTH) - (b.depth || DEFAULT_DEPTH);
+    return a.position - b.position || a.order - b.order || (b.depth || DEFAULT_DEPTH) - (a.depth || DEFAULT_DEPTH);
 }
