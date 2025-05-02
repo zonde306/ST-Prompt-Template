@@ -14,7 +14,6 @@ import check from 'syntax-error';
 import { settings } from '../ui';
 import { activateRegex } from './regex';
 import { h64 } from 'xxhashjs';
-import { extension_settings } from '../../../../../extensions.js';
 
 interface IncluderResult {
     filename: string;
@@ -119,7 +118,7 @@ export async function evalTemplate(content: string, data: Record<string, unknown
     content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'think');
     content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'reasoning');
 
-    if(settings.cache_enabled) {
+    if(settings.cache_enabled && opts.options?.cache !== false) {
         if(opts.options?.filename) {
             opts.options.cache = true;
         } else {
@@ -157,18 +156,6 @@ export async function evalTemplate(content: string, data: Record<string, unknown
         throw err;
     }
 
-    // @ts-expect-error: 2339
-    if(!extension_settings.EjsTemplate) {
-        // @ts-expect-error: 2339
-        extension_settings.EjsTemplate = {};
-    }
-    if(ejs.cache._data instanceof Map) {
-        // @ts-expect-error: 2339
-        extension_settings.EjsTemplate.ejs_cache = Object.fromEntries(ejs.cache._data);
-    } else if(_.isPlainObject(ejs.cache._data)) {
-        // @ts-expect-error: 2339
-        extension_settings.EjsTemplate.ejs_cache = ejs.cache._data;
-    }
     // await eventSource.emit('prompt_template_evaluation_post', { result, data });
     return result;
 }
