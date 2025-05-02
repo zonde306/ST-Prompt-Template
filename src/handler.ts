@@ -235,7 +235,10 @@ async function handlePreloadWorldInfo(chat_filename? : string) {
         prompts += await evalTemplateHandler(
             substituteParams(data.content),
             _.merge(env, { world_info: data }),
-            `worldinfo ${data.world}.${data.comment}`
+            `worldinfo ${data.world}.${data.comment}`,
+
+            // avoid massive cache invalidations
+            { options: { cache: false } },
         );
     }
 

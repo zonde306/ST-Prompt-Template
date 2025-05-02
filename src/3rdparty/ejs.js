@@ -1145,7 +1145,7 @@ exports.shallowCopyFromList = function (to, from, list) {
  */
 exports.cache = {
   _data: new Map(),
-  _capacity: 255,
+  _capacity: 64,
   set: function (key, val) {
     if (this._data.has(key))
       this._data.delete(key);
