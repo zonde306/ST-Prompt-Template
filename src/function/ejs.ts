@@ -126,8 +126,7 @@ export async function evalTemplate(content: string, data: Record<string, unknown
             if(!opts.options)
                 opts.options = {};
             opts.options.cache = true;
-            // @ts-expect-error: 2345
-            opts.options.filename = h64(0x1337, content).toString();
+            opts.options.filename = h64(content, 0x1337).toString();
         }
     }
     
