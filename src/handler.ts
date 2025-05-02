@@ -1,6 +1,5 @@
 // @ts-expect-error
 import vm from 'vm-browserify';
-import _ from 'lodash';
 import { GenerateData, Message, ChatData } from './defines';
 import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock, substituteParams } from '../../../../../script.js';
 import { prepareContext, evalTemplate, getSyntaxErrorInfo, activatedWorldEntries, EvalTemplateOptions } from './function/ejs';

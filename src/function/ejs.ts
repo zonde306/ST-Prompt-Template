@@ -1,7 +1,6 @@
 import ejs from '../3rdparty/ejs.js';
 // @ts-expect-error
 import vm from 'vm-browserify';
-import _ from 'lodash';
 import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.js';
 import { getWorldInfoData, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries, selectActivatedEntries, WorldinfoForceActivate, getWorldInfoEntry } from './worldinfo';
 import { allVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption } from './variables';
