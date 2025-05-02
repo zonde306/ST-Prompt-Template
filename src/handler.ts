@@ -10,6 +10,7 @@ import { getEnabledWorldInfoEntries, selectActivatedEntries } from './function/w
 import { getCharaDefs } from './function/characters';
 import { settings } from './ui';
 import { activateRegex, deactivateRegex } from './function/regex';
+import ejs from './3rdparty/ejs.js';
 
 let runID = 0;
 let isFakeRun = false;
@@ -405,6 +406,16 @@ async function handleFilterInstall(_type: string, _options : GenerateOptions, dr
     }
 }
 
+async function handleSettingsLoad() {
+    if(ejs.cache?._data instanceof Map) {
+        // @ts-expect-error: 2339
+        ejs.cache._data = new Map(Object.entries(extension_settings.EjsTemplate?.ejs_cache || {}));
+    } else if(_.isPlainObject(ejs.cache?._data)) {
+        // @ts-expect-error: 2339
+        ejs.cache._data = extension_settings.EjsTemplate?.ejs_cache || {};
+    }
+}
+
 function cleanPreContent(html : string) {
     return html.replace(/<pre\b[^>]*>([\s\S]*?)<\/pre>/gi, (_preMatch, preContent : string) => {
         const cleanedContent = preContent.replace(/&lt;%([\s\S]*?)%&gt;/g, (_blockMatch, content : string) => {
@@ -433,6 +444,7 @@ export async function init() {
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleWorldInfoActivation);
     eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, handleWorldInfoActivate);
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleFilterInstall);
+    eventSource.on(event_types.SETTINGS_LOADED, handleSettingsLoad);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.on(e, updateMessageRender));
 }
 
@@ -442,5 +454,6 @@ export async function exit() {
     eventSource.removeListener(event_types.GENERATION_AFTER_COMMANDS, handleWorldInfoActivation);
     eventSource.removeListener(event_types.CHAT_COMPLETION_PROMPT_READY, handleWorldInfoActivate);
     eventSource.removeListener(event_types.GENERATION_AFTER_COMMANDS, handleFilterInstall);
+    eventSource.removeListener(event_types.SETTINGS_LOADED, handleSettingsLoad);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.removeListener(e, updateMessageRender));
 }

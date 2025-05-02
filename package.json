@@ -1,11 +1,12 @@
 {
   "name": "extension-prompt-template",
-  "version": "1.8.8.2",
+  "version": "1.8.9",
   "private": true,
   "dependencies": {
     "syntax-error": "^1.4.0",
     "tsc": "^2.0.4",
-    "vm-browserify": "^1.1.2"
+    "vm-browserify": "^1.1.2",
+    "xxhashjs": "^0.2.2"
   },
   "scripts": {
     "build": "webpack --mode production"
@@ -31,6 +32,7 @@
     "@babel/preset-typescript": "^7.26.0",
     "@types/ejs": "^3.1.5",
     "@types/syntax-error": "^1.4.5",
+    "@types/xxhashjs": "^0.2.4",
     "babel-loader": "^9.2.1",
     "core-js": "^3.40.0",
     "eslint-config-react-app": "^7.0.1",

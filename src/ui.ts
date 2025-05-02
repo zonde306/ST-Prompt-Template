@@ -15,6 +15,7 @@ const DEFAULT_SETTINGS : Record<string, { name: string, value: boolean }> = {
     '#pt_world_active': { name: 'world_active_enabled', value: true },
     '#pt_permanent_evaluation': { name: 'permanent_evaluation_enabled', value: false },
     '#pt_filter_chat_message': { name: 'filter_message_enabled', value: true },
+    '#pt_cache_enabled': { name: 'cache_enabled', value: false },
 };
 
 interface EjsSettings {
@@ -31,6 +32,7 @@ interface EjsSettings {
     world_active_enabled: boolean;
     permanent_evaluation_enabled: boolean;
     filter_message_enabled: boolean;
+    cache_enabled: boolean;
 };
 
 export const settings = {} as EjsSettings;

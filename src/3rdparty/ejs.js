@@ -1144,18 +1144,30 @@ exports.shallowCopyFromList = function (to, from, list) {
  * @private
  */
 exports.cache = {
-  _data: {},
+  _data: new Map(),
+  _capacity: 64,
   set: function (key, val) {
-    this._data[key] = val;
+    if (this._data.has(key))
+      this._data.delete(key);
+    this._data.set(key, value);
+    if (this._data.size > this._capacity) {
+      const first = this._data.keys().next().value;
+      this._data.delete(firstKey);
+    }
   },
   get: function (key) {
-    return this._data[key];
+    if (!this._data.has(key))
+      return undefined;
+    const value = this._data.get(key);
+    this._data.delete(key);
+    this._data.set(key, value);
+    return value;
   },
   remove: function (key) {
-    delete this._data[key];
+    this._data.delete(key);
   },
   reset: function () {
-    this._data = {};
+    this._data.clear();
   }
 };
 
