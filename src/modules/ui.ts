@@ -18,7 +18,7 @@ const DEFAULT_SETTINGS : Record<string, { name: string, value: boolean }> = {
     '#pt_cache_enabled': { name: 'cache_enabled', value: false },
 };
 
-interface EjsSettings {
+interface EjsSettings extends Record<string, boolean> {
     enabled: boolean;
     generate_enabled: boolean;
     generate_loader_enabled: boolean;
@@ -49,12 +49,10 @@ export function loadSettings(reset: boolean = false) {
         if(reset) {
             // @ts-expect-error: 2339
             extension_settings.EjsTemplate[setting.name] = setting.value;
-            // @ts-expect-error: 7053
             settings[setting.name] = setting.value;
         } else {
         // @ts-expect-error: 2339
             extension_settings.EjsTemplate[setting.name] = $(id).prop('checked') ?? setting.value;
-            // @ts-expect-error: 7053
             settings[setting.name] = $(id).prop('checked') ?? setting.value;
         }
     }
@@ -68,7 +66,6 @@ export function loadSettings(reset: boolean = false) {
 export function applySettings(present: Record<string, boolean> = {}) {
     for(const [id, setting] of Object.entries(DEFAULT_SETTINGS)) {
         if(present[setting.name] !== undefined) {
-            // @ts-expect-error: 2339
             settings[setting.name] = present[setting.name];
             // @ts-expect-error: 2339
             extension_settings.EjsTemplate[setting.name] = present[setting.name];
@@ -103,7 +100,6 @@ export async function init() {
 
             // @ts-expect-error: 2339
             extension_settings.EjsTemplate[setting.name] = $(id).prop('checked') ?? setting.value;
-            // @ts-expect-error: 7053
             settings[setting.name] = $(id).prop('checked') ?? setting.value;
             // @ts-expect-error: 2339
             console.debug(`[Prompt Template] setting ${setting.name} changed to ${extension_settings.EjsTemplate[setting.name]}`);
