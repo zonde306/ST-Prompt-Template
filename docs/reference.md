@@ -697,6 +697,31 @@ async function prepareContext(context = {}, last_message_id = 65535);
  * @returns {string} Syntax error message, empty if no errors
  */
 async function getSyntaxErrorInfo(code, max_lines = 4);
+
+/**
+ * @typedef {Object} EjsSettings
+ * @property {boolean} enabled - Enable Prompt template
+ * @property {boolean} generate_enabled - Generate-time evaluation
+ * @property {boolean} generate_loader_enabled - [GENERATE] evaluation
+ * @property {boolean} render_enabled - Chat message evaluation
+ * @property {boolean} render_loader_enabled - [RENDER] evaluation
+ * @property {boolean} strict_enabled - Use strict mode
+ * @property {boolean} debug_enabled - Enable debug logging
+ * @property {boolean} autosave_enabled - Save variables after updating
+ * @property {boolean} preload_worldinfo_enabled - Preload world info
+ * @property {boolean} code_blocks_enabled - Evaluate inside a code block
+ * @property {boolean} world_active_enabled - Enable activewi to take effect this time
+ * @property {boolean} raw_message_evaluation_enabled - Evaluate raw message
+ * @property {boolean} filter_message_enabled - Filter chat messages when generating
+ * @property {boolean} cache_enabled - Enable cache
+ */
+
+/**
+ * Turn features on or off
+ *
+ * @param {EjsSettings} features - setting options
+ */
+function setFeatures(features = {});
 ```
 
 > Access via `globalThis.EjsTemplate` (e.g., `EjsTemplate.evalTemplate`)

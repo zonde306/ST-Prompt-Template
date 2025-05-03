@@ -13,7 +13,7 @@ const DEFAULT_SETTINGS : Record<string, { name: string, value: boolean }> = {
     '#pt_preload_worldinfo': { name: 'preload_worldinfo_enabled', value: true },
     '#pt_code_blocks': { name: 'code_blocks_enabled', value: false },
     '#pt_world_active': { name: 'world_active_enabled', value: true },
-    '#pt_permanent_evaluation': { name: 'permanent_evaluation_enabled', value: false },
+    '#pt_permanent_evaluation': { name: 'raw_message_evaluation_enabled', value: false },
     '#pt_filter_chat_message': { name: 'filter_message_enabled', value: true },
     '#pt_cache_enabled': { name: 'cache_enabled', value: false },
 };
@@ -30,7 +30,7 @@ interface EjsSettings {
     preload_worldinfo_enabled: boolean;
     code_blocks_enabled: boolean;
     world_active_enabled: boolean;
-    permanent_evaluation_enabled: boolean;
+    raw_message_evaluation_enabled: boolean;
     filter_message_enabled: boolean;
     cache_enabled: boolean;
 };
@@ -62,6 +62,18 @@ export function loadSettings(reset: boolean = false) {
     if(reset) {
         handleSettingLoad();
         saveSettingsDebounced();
+    }
+}
+
+export function applySettings(present: Record<string, boolean> = {}) {
+    for(const [id, setting] of Object.entries(DEFAULT_SETTINGS)) {
+        if(present[setting.name] !== undefined) {
+            // @ts-expect-error: 2339
+            settings[setting.name] = present[setting.name];
+            // @ts-expect-error: 2339
+            extension_settings.EjsTemplate[setting.name] = present[setting.name];
+            $(id).prop('checked', present[setting.name]);
+        }
     }
 }
 

@@ -708,6 +708,31 @@ async function prepareContext(context = {}, last_message_id = 65535);
  * @returns {string} 语法错误信息，无错误返回空字符串
  */
 async function getSyntaxErrorInfo(code, max_lines = 4);
+
+/**
+ * @typedef {Object} EjsSettings
+ * @property {boolean} enabled - Enable Prompt template
+ * @property {boolean} generate_enabled - Generate-time evaluation
+ * @property {boolean} generate_loader_enabled - [GENERATE] evaluation
+ * @property {boolean} render_enabled - Chat message evaluation
+ * @property {boolean} render_loader_enabled - [RENDER] evaluation
+ * @property {boolean} strict_enabled - Use strict mode
+ * @property {boolean} debug_enabled - Enable debug logging
+ * @property {boolean} autosave_enabled - Save variables after updating
+ * @property {boolean} preload_worldinfo_enabled - Preload world info
+ * @property {boolean} code_blocks_enabled - Evaluate inside a code block
+ * @property {boolean} world_active_enabled - Enable activewi to take effect this time
+ * @property {boolean} raw_message_evaluation_enabled - Evaluate raw message
+ * @property {boolean} filter_message_enabled - Filter chat messages when generating
+ * @property {boolean} cache_enabled - Enable cache
+ */
+
+/**
+ * 从外部修改扩展设置(开启或关闭功能)
+ *
+ * @param {EjsSettings} features - 设置选项
+ */
+function setFeatures(features = {});
 ```
 
 > 可通过 `globalThis.EjsTemplate`访问这些函数（如 `EjsTemplate.evalTemplate`）

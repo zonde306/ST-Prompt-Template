@@ -135,7 +135,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
 
     const before = settings.render_loader_enabled === false ? '' : await processSpecialEntities(env, '[RENDER:BEFORE]', '', { escaper });
 
-    if(!isDryRun && settings.permanent_evaluation_enabled) {
+    if(!isDryRun && settings.raw_message_evaluation_enabled) {
         env.runType = 'render_permanent';
         const newContent = await evalTemplateHandler(message.mes, env, `chat #${message_idx}.${message.swipe_id} raw`);
         env.runType = 'render';
