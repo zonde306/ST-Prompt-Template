@@ -1,15 +1,15 @@
 // @ts-expect-error
 import vm from 'vm-browserify';
 import { GenerateData, Message, ChatData } from './defines';
-import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock, substituteParams } from '../../../../../script.js';
-import { prepareContext, evalTemplate, getSyntaxErrorInfo, activatedWorldEntries, EvalTemplateOptions } from './function/ejs';
-import { STATE, checkAndSave } from './function/variables';
-import { getTokenCountAsync } from '../../../../tokenizers.js';
-import { extension_settings } from '../../../../extensions.js';
-import { getEnabledWorldInfoEntries, selectActivatedEntries } from './function/worldinfo';
-import { getCharaDefs } from './function/characters';
+import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock, substituteParams } from '../../../../../../script.js';
+import { prepareContext, evalTemplate, getSyntaxErrorInfo, activatedWorldEntries, EvalTemplateOptions } from '../function/ejs';
+import { STATE, checkAndSave } from '../function/variables';
+import { getTokenCountAsync } from '../../../../../tokenizers.js';
+import { extension_settings } from '../../../../../extensions.js';
+import { getEnabledWorldInfoEntries, selectActivatedEntries } from '../function/worldinfo';
+import { getCharaDefs } from '../function/characters';
 import { settings } from './ui';
-import { activateRegex, deactivateRegex } from './function/regex';
+import { activateRegex, deactivateRegex } from '../function/regex';
 
 let runID = 0;
 let isFakeRun = false;

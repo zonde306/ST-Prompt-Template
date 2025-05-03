@@ -1,4 +1,4 @@
-import { ReasoningType } from "../../../../reasoning.js";
+import { ReasoningType } from "../../../../../reasoning.js";
 
 type TextContent = {
     type: "text";

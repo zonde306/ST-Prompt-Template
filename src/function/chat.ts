@@ -1,6 +1,6 @@
 import { chat, substituteParams } from "../../../../../../script.js";
 import { getRegexedString, regex_placement } from "../../../../regex/engine.js";
-import { Message } from "../defines";
+import { Message } from "../modules/defines";
 
 function processMessage(message: Message) : string {
     const placement = message.is_user ? regex_placement.USER_INPUT : regex_placement.AI_OUTPUT;

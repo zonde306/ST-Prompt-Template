@@ -1,6 +1,6 @@
 import { chat, chat_metadata, saveChatConditional } from '../../../../../../script.js';
 import { extension_settings } from '../../../../../extensions.js';
-import { settings } from '../ui';
+import { settings } from '../modules/ui';
 import { getCharaData } from './characters';
 
 export let STATE = {

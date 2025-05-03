@@ -1,6 +1,7 @@
-import { init as finit, exit as fexit } from './handler';
-import { init as vinit, exit as vexit } from './command';
-import { init as uinit, exit as uexit } from './ui';
+import { init as finit, exit as fexit } from './modules/handler';
+import { init as vinit, exit as vexit } from './modules/command';
+import { init as uinit, exit as uexit } from './modules/ui';
+import { init as einit, exit as eexit } from './modules/exports';
 
 interface PluginInfo {
     id: string;
@@ -18,6 +19,7 @@ export async function init() {
     await finit();
     await vinit();
     await uinit();
+    await einit();
     console.log('ST-Prompt-Template initialized');
 }
 
@@ -25,6 +27,7 @@ export async function exit() {
     await fexit();
     await vexit();
     await uexit();
+    await eexit();
     console.log('ST-Prompt-Template exited');
 }
 

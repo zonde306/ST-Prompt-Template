@@ -1,8 +1,8 @@
-import { SlashCommand } from '../../../../slash-commands/SlashCommand.js';
-import { ARGUMENT_TYPE, SlashCommandArgument, SlashCommandNamedArgument } from '../../../../slash-commands/SlashCommandArgument.js';
-import { SlashCommandParser } from '../../../../slash-commands/SlashCommandParser.js';
-import { evalTemplate, prepareContext, getSyntaxErrorInfo } from './function/ejs';
-import { STATE, checkAndSave } from './function/variables';
+import { SlashCommand } from '../../../../../slash-commands/SlashCommand.js';
+import { ARGUMENT_TYPE, SlashCommandArgument, SlashCommandNamedArgument } from '../../../../../slash-commands/SlashCommandArgument.js';
+import { SlashCommandParser } from '../../../../../slash-commands/SlashCommandParser.js';
+import { evalTemplate, prepareContext, getSyntaxErrorInfo } from '../function/ejs';
+import { STATE, checkAndSave } from '../function/variables';
 import { settings } from './ui';
 
 SlashCommandParser.addCommandObject(SlashCommand.fromProps({

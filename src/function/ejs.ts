@@ -11,7 +11,7 @@ import { getQuickReply, getQuickReplyData } from './quickreply';
 import { getChatMessage, getChatMessages } from './chat';
 import { fakerEnv } from './faker';
 import check from 'syntax-error';
-import { settings } from '../ui';
+import { settings } from '../modules/ui';
 import { activateRegex } from './regex';
 import { h64 } from 'xxhashjs';
 
@@ -412,15 +412,3 @@ export function getSyntaxErrorInfo(code : string, count : number = 4) : string {
     count = _.clamp(count, 0, lines.length);
     return `${lines.slice(line - count, line).join('\n')}\n${lines[line]}\n${' '.repeat(error.column - 1)}^\n${lines.slice(line + 1, line + count + 1).join('\n')}\n\nat line: ${line}, column: ${error.column}`;
 }
-
-// @ts-expect-error
-globalThis.EjsTemplate = {
-    evalTemplate: async(code : string, context : Record<string, unknown> = {}, options: Record<string, unknown> = {}) => {
-        STATE.isDryRun = false;
-        return await evalTemplate(code, context, { logging: false, options });
-    },
-    prepareContext: async(context : Record<string, unknown> = {}, end : number = 65535) => {
-        return await prepareContext(end, context);
-    },
-    getSyntaxErrorInfo: getSyntaxErrorInfo,
-};

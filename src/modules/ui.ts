@@ -1,5 +1,5 @@
-import { eventSource, event_types, saveSettingsDebounced } from '../../../../../script.js';
-import { extension_settings, renderExtensionTemplateAsync } from '../../../../extensions.js';
+import { eventSource, event_types, saveSettingsDebounced } from '../../../../../../script.js';
+import { extension_settings, renderExtensionTemplateAsync } from '../../../../../extensions.js';
 
 const DEFAULT_SETTINGS : Record<string, { name: string, value: boolean }> = {
     '#pt_enabled': { name: 'enabled', value: true },
