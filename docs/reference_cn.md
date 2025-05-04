@@ -347,6 +347,25 @@ function getChatMessages(start, end, role);
  * @param {RegexOptions} opts - 选项
  */
 function activateRegex(pattern, string, opts = {});
+
+/**
+ * 添加提示词注入
+ * 功能类似世界书，但为手动激活以及放置
+ *
+ * @param {string} key - 注入键(组)
+ * @param {string} prompt - 提示词内容
+ * @param {number} [order=100] - 顺序
+ * @param {number} [sticky=0] - 黏性
+ */
+function injectPrompt(key, prompt, order = 100, sticky = 0);
+
+/**
+ * 读取提示词注入
+ *
+ * @param {string} key - 注入键(组)
+ * @returns {string} - 已注入的提示词内容
+ */
+function getPromptsInjected(key);
 ```
 
 > `flags` 类型:

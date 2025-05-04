@@ -2,7 +2,7 @@ import ejs from '../3rdparty/ejs.js';
 // @ts-expect-error
 import vm from 'vm-browserify';
 import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.js';
-import { getWorldInfoData, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries, selectActivatedEntries, WorldinfoForceActivate, getWorldInfoEntry } from './worldinfo';
+import { getWorldInfoData, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries, selectActivatedEntries, activateWorldInfo, getWorldInfoEntry } from './worldinfo';
 import { allVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption } from './variables';
 import { getCharaDefs, DEFAULT_CHAR_DEFINE, getCharaData } from './characters';
 import { substituteParams, eventSource } from '../../../../../../script.js';
@@ -14,6 +14,7 @@ import check from 'syntax-error';
 import { settings } from '../modules/ui';
 import { activateRegex } from './regex';
 import { h64 } from 'xxhashjs';
+import { injectPrompt, getPromptsInjected } from './inject';
 
 interface IncluderResult {
     filename: string;
@@ -261,15 +262,6 @@ async function boundedEvalTemplate(this: Record<string, unknown>, content: strin
     ));
 }
 
-export let activatedWorldEntries = new Map<string, WorldinfoForceActivate>();
-
-async function activateWorldInfo(world : string, uid : string | RegExp | number) {
-    const entry = await getWorldInfoEntry(world, uid);
-    if(entry)
-        activatedWorldEntries.set(`${world}.${uid}`, entry);
-    return entry;
-}
-
 export async function prepareContext(end: number = 65535, env: Record<string, unknown> = {}): Promise<Record<string, unknown>> {
     let vars = allVariables(end);
     STATE.cache = vars;
@@ -324,6 +316,8 @@ export async function prepareContext(end: number = 65535, env: Record<string, un
         getChatMessage: getChatMessage,
         getChatMessages: getChatMessages,
         activateRegex: activateRegex.bind(context),
+        injectPrompt: injectPrompt.bind(context),
+        getPromptsInjected: getPromptsInjected.bind(context),
         ...boundCloneDefines(context, SharedDefines),
         ref: new WeakRef(context),
     });

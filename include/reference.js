@@ -70,6 +70,8 @@ function getMessageVar(key, options = {});
  * @property {MessageFilter} [withMsg=undefined] - Message filter (for message variables)
  * @property {boolean} [dryRun=false] - Allow updates during preparation phase
  * @property {boolean} [noCache=false] - Disable caching (when reading immediately after setting)
+ * @property {number} [min=null] - Minimum
+ * @property {number} [max=null] - Maximum
  */
 
 /**
@@ -321,30 +323,45 @@ function getChatMessages(count, role);
 function getChatMessages(start, end);
 function getChatMessages(start, end, role);
 
-// Default character card definition output format
-const DEFAULT_CHAR_DEFINE = `\
-<% if (name) { %>\
-<<%- name %>>
-<% if (system_prompt) { %>\
-System: <%- system_prompt %>
-<% } %>\
-name: <%- name %>
-<% if (personality) { %>\
-personality: <%- personality %>
-<% } %>\
-<% if (description) { %>\
-description: <%- description %>
-<% } %>\
-<% if (message_example) { %>\
-example:
-<%- message_example %>
-<% } %>\
-<% if (depth_prompt) { %>\
-System: <%- depth_prompt %>
-<% } %>\
-</<%- name %>>\
-<% } %>\
-`;
+/**
+ * Regular expression options
+ * @typedef {Object} RegexOptions
+ * @property {string} [uuid=undefined] - Unique ID, modifies existing if same, creates new if different
+ * @property {number} [minDepth=NaN] - Minimum depth
+ * @property {number} [maxDepth=NaN] - Maximum depth
+ * @property {boolean} [user=true] - Applies to user input
+ * @property {boolean} [assistant=true] - Applies to AI output
+ * @property {boolean} [worldinfo=false] - Applies to world information
+ * @property {boolean} [reasoning=true] - Applies to reasoning
+ */
+
+/**
+ * Creates temporary regular expressions during generation to process chat message content
+ * The prompt processing will be automatically removed after completion
+ *
+ * @param {string | RegExp} pattern - Regular expression pattern
+ * @param {string} replace - Replacement content
+ * @param {RegexOptions} opts - Configuration options
+ */
+function activateRegex(pattern, string, opts = {});
+
+/**
+ * Add prompt injection (similar to World Info but manually activated)
+ *
+ * @param {string} key - Injection key (group)
+ * @param {string} prompt - Prompt content
+ * @param {number} [order=100] - Injection order priority
+ * @param {number} [sticky=0] - Sticky level (0=normal, 1=keep alive, 2=persistent)
+ */
+function injectPrompt(key, prompt, order = 100, sticky = 0);
+
+/**
+ * Get injected prompts by key
+ *
+ * @param {string} key - Injection key (group)
+ * @returns {string} Concatenated injected prompt content
+ */
+function getPromptsInjected(key);
 
 /**
  * Collection of all variables
@@ -389,6 +406,14 @@ _ = require("lodash")
  */
 $ = require("JQuery")
 
+/*
+ * toastr library
+ * Usage: toastr.info, toastr.error
+ * Example: toastr.info('hello world')
+ * @see: https://codeseven.github.io/toastr/
+ */
+toastr = require("toastr")
+
 /**
  * Phase during template calculation
  * generate: Generation phase
@@ -396,33 +421,3 @@ $ = require("JQuery")
  * render: Rendering (floor message) phase
  */
 runType = 'generate' | 'preparation' | 'render'
-
-/*
- * Message ID
- */
-message_id = 0
-
-/*
- * Swipe ID
- */
-swipe_id = 0
-
-/*
- * Message role name
- */
-name = 'User'
-
-/*
- * Whether this is the last message
- */
-is_last = false
-
-/*
- * Whether message is from user
- */
-is_user = false
-
-/*
- * Whether message is system message
- */
-is_system = false

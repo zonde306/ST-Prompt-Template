@@ -2,14 +2,15 @@
 import vm from 'vm-browserify';
 import { GenerateData, Message, ChatData } from './defines';
 import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock, substituteParams } from '../../../../../../script.js';
-import { prepareContext, evalTemplate, getSyntaxErrorInfo, activatedWorldEntries, EvalTemplateOptions } from '../function/ejs';
+import { prepareContext, evalTemplate, getSyntaxErrorInfo, EvalTemplateOptions } from '../function/ejs';
 import { STATE, checkAndSave } from '../function/variables';
 import { getTokenCountAsync } from '../../../../../tokenizers.js';
 import { extension_settings } from '../../../../../extensions.js';
-import { getEnabledWorldInfoEntries, selectActivatedEntries } from '../function/worldinfo';
+import { getEnabledWorldInfoEntries, selectActivatedEntries, applyActivateWorldInfo, deactivateActivateWorldInfo } from '../function/worldinfo';
 import { getCharaDefs } from '../function/characters';
 import { settings } from './ui';
 import { activateRegex, deactivateRegex } from '../function/regex';
+import { deactivatePromptInjection } from '../function/inject';
 
 let runID = 0;
 let isFakeRun = false;
@@ -23,7 +24,7 @@ async function updateGenerate(data: GenerateData) {
 
     // No longer available here
     deactivateRegex();
-    activatedWorldEntries.clear();
+    deactivateActivateWorldInfo();
 
     if(settings.generate_enabled === false)
         return;
@@ -78,8 +79,9 @@ async function updateGenerate(data: GenerateData) {
     updateTokens(prompts, 'send');
 
     // Not allowed here
-    activatedWorldEntries.clear();
+    deactivateActivateWorldInfo();
     deactivateRegex();
+    deactivatePromptInjection();
 }
 
 async function updateMessageRender(message_id: string, isDryRun?: boolean) {
@@ -210,7 +212,7 @@ async function handlePreloadWorldInfo(chat_filename? : string) {
 
     // clean old content
     deactivateRegex();
-    activatedWorldEntries.clear();
+    deactivateActivateWorldInfo();
 
     if(settings.preload_worldinfo_enabled === false)
         return;
@@ -268,14 +270,7 @@ async function handleWorldInfoActivation(_type: string, _options : GenerateOptio
         return;
 
     if(dryRun) return;
-    await eventSource.emit(event_types.WORLDINFO_FORCE_ACTIVATE, activatedWorldEntries.values());
-
-    if(settings.debug_enabled) {
-        console.debug('[Prompt Template] force activate world info:');
-        console.debug(activatedWorldEntries);
-    }
-
-    activatedWorldEntries.clear();
+    await applyActivateWorldInfo(true);
 }
 
 async function handleWorldInfoActivate(data: ChatData) {

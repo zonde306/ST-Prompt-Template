@@ -347,6 +347,24 @@ function getChatMessages(start, end, role);
  * @param {RegexOptions} opts - Configuration options
  */
 function activateRegex(pattern, string, opts = {});
+
+/**
+ * Add prompt injection (similar to World Info but manually activated)
+ *
+ * @param {string} key - Injection key (group)
+ * @param {string} prompt - Prompt content
+ * @param {number} [order=100] - Injection order priority
+ * @param {number} [sticky=0] - Sticky level (0=normal, 1=keep alive, 2=persistent)
+ */
+function injectPrompt(key, prompt, order = 100, sticky = 0);
+
+/**
+ * Get injected prompts by key
+ *
+ * @param {string} key - Injection key (group)
+ * @returns {string} Concatenated injected prompt content
+ */
+function getPromptsInjected(key);
 ```
 
 > `flags` types:

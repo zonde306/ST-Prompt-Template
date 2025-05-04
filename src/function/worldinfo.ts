@@ -1,5 +1,5 @@
 import { loadWorldInfo, parseRegexFromString, world_info_case_sensitive, world_info_match_whole_words, world_info_logic, world_info_use_group_scoring, DEFAULT_WEIGHT, METADATA_KEY, selected_world_info, world_info, DEFAULT_DEPTH } from '../../../../../world-info.js';
-import { substituteParams, chat_metadata, this_chid, characters } from '../../../../../../script.js';
+import { substituteParams, chat_metadata, this_chid, characters, eventSource, event_types } from '../../../../../../script.js';
 import { power_user } from '../../../../../power-user.js';
 import { getCharaFilename } from '../../../../../utils.js';
 import { getGroupMembers } from '../../../../../group-chats.js';
@@ -47,6 +47,25 @@ export interface WorldInfo {
 export interface WorldinfoForceActivate {
     world: string;
     uid: string | number;
+}
+
+let activatedWorldEntries = new Map<string, WorldinfoForceActivate>();
+
+export async function activateWorldInfo(world : string, uid : string | RegExp | number) {
+    const entry = await getWorldInfoEntry(world, uid);
+    if(entry)
+        activatedWorldEntries.set(`${world}.${uid}`, entry);
+    return entry;
+}
+
+export async function applyActivateWorldInfo(deactivate : boolean = true) {
+    await eventSource.emit(event_types.WORLDINFO_FORCE_ACTIVATE, activatedWorldEntries.values());
+    if(deactivate)
+        deactivateActivateWorldInfo();
+}
+
+export function deactivateActivateWorldInfo() {
+    activatedWorldEntries.clear();
 }
 
 export async function getWorldInfoData(name: string): Promise<WorldInfoData[]> {

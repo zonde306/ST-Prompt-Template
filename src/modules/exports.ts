@@ -1,6 +1,7 @@
 import { evalTemplate, prepareContext, getSyntaxErrorInfo } from '../function/ejs';
 import { STATE } from '../function/variables';
 import { applySettings } from './ui';
+import { allVariables } from '../function/variables';
 
 export async function init() {
     // @ts-expect-error
@@ -17,10 +18,11 @@ export async function init() {
             end : number = 65535) => {
             return await prepareContext(end, context);
         },
-        getSyntaxErrorInfo: getSyntaxErrorInfo,
+        getSyntaxErrorInfo,
         setFeatures: (features: Record<string, boolean>) => {
             applySettings(features);
         },
+        allVariables,
     };
 }
 
