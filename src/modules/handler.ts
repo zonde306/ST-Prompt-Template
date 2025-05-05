@@ -34,7 +34,13 @@ async function updateGenerate(data: GenerateData) {
 
     const env = await prepareContext(65535, {
         runType: 'generate',
-        runID: runID++
+        runID: runID++,
+        message_id: undefined,
+        swipe_id: undefined,
+        is_last: undefined,
+        is_user: undefined,
+        is_system: undefined,
+        name: undefined,
     });
 
     const before = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:BEFORE]');
@@ -78,7 +84,7 @@ async function updateGenerate(data: GenerateData) {
     await checkAndSave();
     updateTokens(prompts, 'send');
 
-    // Not allowed here
+    // cleanup
     deactivateActivateWorldInfo();
     deactivateRegex();
     deactivatePromptInjection();
@@ -225,7 +231,13 @@ async function handlePreloadWorldInfo(chat_filename? : string) {
 
     const env = await prepareContext(65535, {
         runType: 'preparation',
-        runID: runID++
+        runID: runID++,
+        message_id: undefined,
+        swipe_id: undefined,
+        is_last: undefined,
+        is_user: undefined,
+        is_system: undefined,
+        name: undefined,
     });
 
     let prompts = '';
@@ -286,7 +298,13 @@ async function handleWorldInfoActivate(data: ChatData) {
 
     const env = await prepareContext(65535, {
         runType: 'preparation',
-        runID: runID++
+        runID: runID++,
+        message_id: undefined,
+        swipe_id: undefined,
+        is_last: undefined,
+        is_user: undefined,
+        is_system: undefined,
+        name: undefined,
     });
 
     let prompts = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:BEFORE]');
