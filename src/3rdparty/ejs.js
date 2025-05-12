@@ -593,13 +593,13 @@ Template.prototype = {
         if (!_JS_IDENTIFIER.test(opts.outputFunctionName)) {
           throw new Error('outputFunctionName is not a valid JS identifier.');
         }
-        prepended += '  var ' + opts.outputFunctionName + ' = __append;' + '\n';
+        prepended += '  const ' + opts.outputFunctionName + ' = __append;' + '\n';
       }
       if (opts.localsName && !_JS_IDENTIFIER.test(opts.localsName)) {
         throw new Error('localsName is not a valid JS identifier.');
       }
       if (opts.destructuredLocals && opts.destructuredLocals.length) {
-        var destructuring = '  var __locals = (' + opts.localsName + ' || {}),\n';
+        var destructuring = '  const __locals = (' + opts.localsName + ' || {}),\n';
         for (var i = 0; i < opts.destructuredLocals.length; i++) {
           var name = opts.destructuredLocals[i];
           if (!_JS_IDENTIFIER.test(name)) {

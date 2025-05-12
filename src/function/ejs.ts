@@ -62,7 +62,7 @@ const CODE_TEMPLATE = `
             context: data,
             client: false,
             outputFunctionName: 'print',
-            localsName: 'locals',
+            localsName: 'self',
             _with: false,
             ...options,
         },
