@@ -49,6 +49,8 @@ const CODE_TEMPLATE = `
             context: data,
             client: false,
             outputFunctionName: 'print',
+            localsName: 'locals',
+            _with: false,
             ...options,
         },
     );
@@ -106,18 +108,21 @@ export async function evalTemplate(content: string, data: Record<string, unknown
     }
 
     // await eventSource.emit('prompt_template_evaluation', { content, data });
-    if(opts.options?.debug && !opts.options.destructuredLocals) {
-        // unpack variables
-        opts.options.destructuredLocals = Object.keys(data);
-    }
-
-    let result = '';
 
     // avoiding accidental evaluation
+    let result = '';
     content = escapeEjsInDisabledBlocks(content, opts.options || {}, opts.disableMarkup || 'escape-ejs');
     content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'thinking');
     content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'think');
     content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'reasoning');
+
+    if(!opts.options?.destructuredLocals) {
+        if(!opts.options)
+            opts.options = {};
+        
+        // unpack variables
+        opts.options.destructuredLocals = Object.keys(data);
+    }
 
     if(settings.cache_enabled && opts.options?.cache !== false) {
         if(opts.options?.filename) {
