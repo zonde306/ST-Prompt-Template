@@ -63,7 +63,7 @@ const CODE_TEMPLATE = `
             client: false,
             outputFunctionName: 'print',
             localsName: 'self',
-            _with: true,
+            _with: false,
             ...options,
         },
     );
@@ -129,7 +129,6 @@ export async function evalTemplate(content: string, data: Record<string, unknown
     content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'think');
     content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'reasoning');
 
-    /* Fix const conflict while disabling
     if(!opts.options?.destructuredLocals) {
         if(!opts.options)
             opts.options = {};
@@ -137,7 +136,6 @@ export async function evalTemplate(content: string, data: Record<string, unknown
         // unpack variables
         opts.options.destructuredLocals = Object.keys(data);
     }
-    */
 
     if(settings.cache_enabled && opts.options?.cache !== false) {
         if(opts.options?.filename) {
