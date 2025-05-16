@@ -151,9 +151,10 @@ async function getPresetPrompt(name, data = {});
  *
  * @param {string} name - 变量/函数名
  * @param {any} value - 变量/函数的内容
+ * @param {boolean} [merge=false] - 是否使用合并来定义(_.merge)
  * @note 定义函数时应该使用 this 访问上下文, 例如: this.variables, this.getvar, this.setvar
  */
-function define(name, value);
+function define(name, value, merge = false);
 
 /**
  * 读取快速回复的内容

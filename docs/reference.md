@@ -151,9 +151,10 @@ async function getPresetPrompt(name, data = {});
  *
  * @param {string} name - Variable/function name
  * @param {any} value - Content
+ * @property {boolean} [merge=false] - Use _.merge to definitions.
  * @note Use 'this' to access context in function definitions (e.g., this.variables, this.getvar)
  */
-function define(name, value);
+function define(name, value, merge = false);
 
 /**
  * Read Quick Reply content

@@ -232,8 +232,16 @@ async function boundedPresetPrompt(this: Record<string, unknown>,
 
 let SharedDefines: Record<string, unknown> = {};
 
-function boundedDefine(this: Record<string, unknown>, name: string, value: unknown) {
+function boundedDefine(this: Record<string, unknown>, name: string, value: unknown, merge: boolean = false) {
     // console.debug(`[Prompt Template] global ${name} defined: ${value}`);
+    if (merge) {
+        const oldValue = _.get(SharedDefines, name);
+        if(_.isArray(oldValue) && _.isArray(value))
+            value = _.concat(oldValue, value);
+        else if(_.isPlainObject(oldValue) && _.isPlainObject(value))
+            value = _.merge(oldValue, value);
+    }
+
     _.set(SharedDefines, name, value);
     _.set(this, name, value);
 }
