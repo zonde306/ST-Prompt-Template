@@ -110,7 +110,12 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
         if(flags === 'xxs' && getVariable.call(this, key, options) === undefined) return undefined;
 
         if(results === 'old' || merge) oldValue = _.get(data, idx, undefined);
-        if(merge) newValue = _.merge(results === 'old' ? _.cloneDeep(oldValue) : oldValue, value);
+        if(merge) {
+            if(_.isArray(oldValue) && _.isArray(value))
+                newValue = _.concat(oldValue, value);
+            else
+                newValue = _.merge(results === 'old' ? _.cloneDeep(oldValue) : oldValue, value);
+        }
         _.set(STATE.cache, key, JSON.stringify(_.set(data, idx, newValue)));
 
         switch(scope || 'message') {
@@ -162,7 +167,12 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
         if(flags === 'xxs' && getVariable.call(this, key, options) === undefined) return undefined;
 
         if(results === 'old' || merge) oldValue = _.get(STATE.cache, key, undefined);
-        if(merge) newValue = _.merge(results === 'old' ? _.cloneDeep(oldValue) : oldValue, value);
+        if(merge) {
+            if(_.isArray(oldValue) && _.isArray(value))
+                newValue = _.concat(oldValue, value);
+            else
+                newValue = _.merge(results === 'old' ? _.cloneDeep(oldValue) : oldValue, value);
+        }
         _.set(STATE.cache, key, newValue);
 
         switch(scope || 'message') {
