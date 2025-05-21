@@ -5,7 +5,7 @@ import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.j
 import { getWorldInfoData, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries, selectActivatedEntries, activateWorldInfo, getWorldInfoEntry } from './worldinfo';
 import { allVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption } from './variables';
 import { getCharaDefs, DEFAULT_CHAR_DEFINE, getCharaData } from './characters';
-import { substituteParams, eventSource } from '../../../../../../script.js';
+import { substituteParams, eventSource, this_chid, characters, chat_metadata } from '../../../../../../script.js';
 import { getPresetPromptsContent } from './presets';
 import { getQuickReply, getQuickReplyData } from './quickreply';
 import { getChatMessage, getChatMessages } from './chat';
@@ -15,6 +15,8 @@ import { settings } from '../modules/ui';
 import { activateRegex } from './regex';
 import { h64 } from 'xxhashjs';
 import { injectPrompt, getPromptsInjected } from './inject';
+import { power_user } from '../../../../../power-user.js';
+import { METADATA_KEY } from '../../../../../world-info.js';
 
 interface IncluderResult {
     filename: string;
@@ -230,7 +232,7 @@ async function boundedPresetPrompt(this: Record<string, unknown>,
     ));
 }
 
-let SharedDefines: Record<string, unknown> = {};
+export let SharedDefines: Record<string, unknown> = {};
 
 function boundedDefine(this: Record<string, unknown>, name: string, value: unknown, merge: boolean = false) {
     // console.debug(`[Prompt Template] global ${name} defined: ${value}`);
@@ -299,8 +301,15 @@ export async function prepareContext(end: number = 65535, env: Record<string, un
         execute: async (cmd: string) => (await executeSlashCommandsWithOptions(cmd)).pipe,
         SillyTavern: SillyTavern.getContext(),
         faker: fakerEnv.faker,
-        ...env,
 
+        // @ts-expect-error: 2538
+        charaLoreBook: characters[this_chid]?.data?.extensions?.world,
+        personaLoreBook: power_user.persona_description_lorebook,
+        // @ts-expect-error: 7053
+        chatLoreBook: chat_metadata[METADATA_KEY],
+
+        ...env,
+        
         get vars() {
             return new WeakRef(STATE.cache);
         }

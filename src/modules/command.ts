@@ -4,6 +4,8 @@ import { SlashCommandParser } from '../../../../../slash-commands/SlashCommandPa
 import { evalTemplate, prepareContext, getSyntaxErrorInfo } from '../function/ejs';
 import { STATE, checkAndSave } from '../function/variables';
 import { settings } from './ui';
+import { handlePreloadWorldInfo } from './handler';
+import { getCurrentChatId } from '../../../../../../script.js';
 
 SlashCommandParser.addCommandObject(SlashCommand.fromProps({
     name: 'ejs',
@@ -55,6 +57,16 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({
     ],
     helpString: 'Execute template code',
     returns: 'string',
+}));
+
+SlashCommandParser.addCommandObject(SlashCommand.fromProps({
+    name: 'ejs-refresh',
+    // @ts-expect-error: 2322
+    callback: async (args, value) => {
+        await handlePreloadWorldInfo(getCurrentChatId(), true);
+        toastr.success('Preload world info success');
+    },
+    helpString: 'Preload world info',
 }));
 
 export async function init() {

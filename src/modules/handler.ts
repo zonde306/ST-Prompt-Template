@@ -212,7 +212,8 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         updateTokens(container.text(), 'receive');
 }
 
-async function handlePreloadWorldInfo(chat_filename? : string) {
+// export for command
+export async function handlePreloadWorldInfo(chat_filename? : string, force: boolean = false) {
     if(settings.enabled === false)
         return;
 
@@ -220,10 +221,11 @@ async function handlePreloadWorldInfo(chat_filename? : string) {
     deactivateRegex();
     deactivateActivateWorldInfo();
 
-    if(settings.preload_worldinfo_enabled === false)
+    if(settings.preload_worldinfo_enabled === false && !force)
+        return;
+    if(!chat_filename && !force)
         return;
 
-    if(!chat_filename) return;
     STATE.isDryRun = true;
     const start = Date.now();
 

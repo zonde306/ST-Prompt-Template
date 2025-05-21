@@ -534,6 +534,7 @@ System: <%- depth_prompt %>
  * @note: 处理楼层消息变量时此值不包含当前以及之后的楼层变量
  *        冲突处理: 类型同为 [] 或者 {} 则合并，否则替换
  * @see: https://lodash.com/docs/4.17.15#merge
+ * @type {object}
  */
 variables = {}
 
@@ -548,6 +549,7 @@ SillyTavern = SillyTavern.getContext()
  * 使用方式: faker.fakerEN, faker.fakerCN 等
  * 例如: faker.fakerEN.lastName() 获取一个随机英文名
  * @see: https://fakerjs.dev/api/
+ * @type {object}
  */
 faker = require("faker")
 
@@ -580,8 +582,30 @@ toastr = require("toastr")
  * generate: 生成阶段
  * preparation: 准备阶段
  * render: 渲染(楼层消息)阶段
+ * @type {(String|undefined)}
  */
 runType = 'generate' | 'preparation' | 'render'
+
+/*
+ * 角色卡内嵌的世界书名字
+ * 未绑定时为 undefined
+ * @type {(String|undefined)}
+ */
+charaLoreBook = ''
+
+/*
+ * 用户角色绑定的世界书名字
+ * 未绑定时为 undefined
+ * @type {(String|undefined)}
+ */
+personaLoreBook = ''
+
+/*
+ * 聊天文件绑定的世界书名字
+ * 未绑定时为 undefined
+ * @type {(String|undefined)}
+ */
+chatLoreBook = ''
 ```
 
 只有在 `runType` 为 `render` 时才会出现的字段

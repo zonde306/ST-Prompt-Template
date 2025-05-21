@@ -582,35 +582,87 @@ runType = 'generate' | 'preparation' | 'render'
 Available only during `render` phase:
 
 ```javascript
-/*
- * Message ID
+/**
+ * Aggregated variables collection
+ * Merges variables in the following priority order (highest to lowest):
+ * 1. Message variables (from latest to earliest floor)
+ * 2. Local (chat) variables
+ * 3. Global variables
+ * 
+ * @note: During message processing, this excludes variables from current/subsequent floors
+ *        Conflict resolution: Merge if both types are [] or {}, otherwise replace
+ * @see: https://lodash.com/docs/4.17.15 #merge
+ * @type {object}
  */
-message_id = 0
+variables = {}
+
+/**
+ * SillyTavern.getContext() return value
+ * Check console output of SillyTavern.getContext() for full details
+ */
+SillyTavern = SillyTavern.getContext()
+
+/**
+ * Faker library for generating random content
+ * Usage: faker.fakerEN, faker.fakerCN, etc.
+ * Example: faker.fakerEN.lastName() for random English surname
+ * @see: https://fakerjs.dev/api/   
+ */
+faker = require("faker")
 
 /*
- * Swipe ID
+ * Lodash utility library
+ * Usage: _.get, _.set, etc.
+ * Example: _.toArray('abc') returns ['a','b','c']
+ * @see: https://lodash.com/docs/4.17.15   
  */
-swipe_id = 0
+_ = require("lodash")
 
 /*
- * Message role name
+ * jQuery library
+ * Usage: $()
+ * Example: $('.mes_text') selects message text elements
+ * @see: https://api.jquery.com/   
  */
-name = 'User'
+$ = require("JQuery")
 
 /*
- * Whether this is the last message
+ * Toastr notification library
+ * Usage: toastr.info, toastr.error
+ * Example: toastr.info('hello world')
+ * @see: https://codeseven.github.io/toastr/   
  */
-is_last = false
+toastr = require("toastr")
+
+/**
+ * Template processing phase indicator
+ * generate: Content generation phase
+ * preparation: Preprocessing phase
+ * render: Message rendering phase
+ * @type {(String|undefined)}
+ */
+runType = 'generate' | 'preparation' | 'render'
 
 /*
- * Whether message is from user
+ * Character card embedded World Info name
+ * undefined when unbound
+ * @type {(String|undefined)}
  */
-is_user = false
+charaLoreBook = ''
 
 /*
- * Whether message is system message
+ * User persona bound World Info name
+ * undefined when unbound
+ * @type {(String|undefined)}
  */
-is_system = false
+personaLoreBook = ''
+
+/*
+ * Chat file bound World Info name
+ * undefined when unbound
+ * @type {(String|undefined)}
+ */
+chatLoreBook = ''
 ```
 
 ---
