@@ -207,7 +207,7 @@ async function boundedReadWorldinfo(this: Record<string, unknown>,
         );
     }
 
-    console.warn(`[Prompt Template] worldinfo ${worldinfo} or entry ${entryOrData} not found`);
+    console.warn(`[Prompt Template] worldinfo ${worldinfoOrEntry} or entry ${entryOrData} not found`);
     return "";
 }
 
