@@ -2,7 +2,7 @@ import ejs from '../3rdparty/ejs.js';
 // @ts-expect-error
 import vm from 'vm-browserify';
 import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.js';
-import { getWorldInfoData, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries, selectActivatedEntries, activateWorldInfo, getWorldInfoEntry } from './worldinfo';
+import { getWorldInfoData, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries, selectActivatedEntries, activateWorldInfo, getWorldInfoEntry, WorldInfoData } from './worldinfo';
 import { allVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption } from './variables';
 import { getCharaDefs, DEFAULT_CHAR_DEFINE, getCharaData } from './characters';
 import { substituteParams, eventSource, this_chid, characters, chat_metadata } from '../../../../../../script.js';
@@ -183,11 +183,23 @@ export async function evalTemplate(content: string, data: Record<string, unknown
     return result;
 }
 
-async function boundedImport(this: Record<string, unknown>,
-    worldinfo: string, entry: string | RegExp | number,
+async function boundedReadWorldinfo(this: Record<string, unknown>,
+    worldinfoOrEntry: string,
+    entryOrData: string | RegExp | number | Record<string, unknown> = {},
     data: Record<string, unknown> = {}): Promise<string> {
-    // @ts-expect-error
-    const wi = await getWorldInfoEntry(worldinfo || this.world_info?.world || '', entry);
+    let wi : WorldInfoData | null = null;
+    if(_.isPlainObject(entryOrData)) {
+        // @ts-expect-error: 2339
+        wi = await getWorldInfoEntry(this.world_info?.world || '', worldinfoOrEntry);
+        if(_.isPlainObject(entryOrData)) {
+            // @ts-expect-error: 2322
+            data = entryOrData;
+        }
+    } else {
+        // @ts-expect-error: 2339
+        wi = await getWorldInfoEntry(worldinfoOrEntry || this.world_info?.world || '', entryOrData);
+    }
+
     if (wi) {
         return await evalTemplate(substituteParams(wi.content),
             _.merge(this, data, { world_info: wi }),
@@ -195,7 +207,7 @@ async function boundedImport(this: Record<string, unknown>,
         );
     }
 
-    console.warn(`[Prompt Template] worldinfo ${worldinfo} or entry ${entry} not found`);
+    console.warn(`[Prompt Template] worldinfo ${worldinfo} or entry ${entryOrData} not found`);
     return "";
 }
 
@@ -316,8 +328,8 @@ export async function prepareContext(end: number = 65535, env: Record<string, un
     };
 
     _.merge(context, {
-        getwi: boundedImport.bind(context),
-        getWorldInfo: boundedImport.bind(context),
+        getwi: boundedReadWorldinfo.bind(context),
+        getWorldInfo: boundedReadWorldinfo.bind(context),
         getchr: boundedCharDef.bind(context),
         getChara: boundedCharDef.bind(context),
         getprp: boundedPresetPrompt.bind(context),

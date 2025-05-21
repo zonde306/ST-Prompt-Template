@@ -123,6 +123,8 @@ async function execute(cmd);
  */
 async function getwi(worldinfo, title, data = {});
 async function getWorldInfo(worldinfo, title, data = {});
+async function getwi(title, data = {});
+async function getWorldInfo(title, data = {});
 
 /**
  * 读取角色卡定义
@@ -454,8 +456,8 @@ function getPromptsInjected(key);
 > `测试世界书`：`测试条目2`
 >
 > ```javascript
-> // 由导入加载时可省略 worldinfo，只需要传递空值即可
-> <%- await getwi('', '测试条目3') -%>
+> // 若不提供 worldinfo 则自动判断
+> <%- await getwi('测试条目3') -%>
 > ```
 >
 > `测试世界书`：`测试条目3`

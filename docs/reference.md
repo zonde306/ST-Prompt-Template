@@ -123,6 +123,8 @@ async function execute(cmd);
  */
 async function getwi(worldinfo, title, data = {});
 async function getWorldInfo(worldinfo, title, data = {});
+async function getwi(title, data = {});
+async function getWorldInfo(title, data = {});
 
 /**
  * Read character card definition
@@ -450,7 +452,7 @@ function getPromptsInjected(key);
 >
 > ```javascript
 > // Can omit worldinfo when loaded via import, only an empty value needs to be passed
-> <%- await getwi('', 'Test Entry 3') -%>
+> <%- await getwi('Test Entry 3') -%>
 > ```
 >
 > `Test World Book`: `Test Entry 3`

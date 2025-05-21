@@ -70,7 +70,7 @@ export function deactivateActivateWorldInfo() {
 
 export async function getWorldInfoData(name: string): Promise<WorldInfoData[]> {
     // @ts-expect-error
-    const lorebook: WorldInfo | null = await loadWorldInfo(name);
+    const lorebook: WorldInfo | null = await loadWorldInfo(name || characters[this_chid]?.data?.extensions?.world || power_user.persona_description_lorebook || chat_metadata[METADATA_KEY] || '');
     if (!lorebook)
         return [];
 
