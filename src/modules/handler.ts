@@ -119,6 +119,13 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         return;
     }
 
+    const container = $(`div.mes[mesid="${message_id}"]`)?.find('.mes_text');
+    const html = container?.html();
+    if (!html) {
+        console.warn(`chat message #${message_id} container not found`);
+        return;
+    }
+
     // initialize at least once
     if (isDryRun && !message?.is_ejs_processed?.[message.swipe_id || 0])
         STATE.isDryRun = isDryRun = false;
@@ -155,13 +162,6 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
             message.extra.display_text = newContent;
             updateMessageBlock(message_idx, message, { rerenderMessage: true });
         }
-    }
-
-    const container = $(`div.mes[mesid="${message_id}"]`)?.find('.mes_text');
-    const html = container?.html();
-    if (!html) {
-        console.warn(`chat message #${message_id} container not found`);
-        return;
     }
 
     const content = settings.code_blocks_enabled === false ? escapePreContent(html) : cleanPreContent(html);
