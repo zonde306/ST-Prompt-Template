@@ -122,6 +122,10 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
     const container = $(`div.mes[mesid="${message_id}"]`)?.find('.mes_text');
     const html = container?.html();
     if (!html) {
+        if(message.extra?.display_text) {
+            message.extra.display_text = undefined;
+            updateMessageBlock(message_idx, message, { rerenderMessage: true });
+        }
         console.warn(`chat message #${message_id} container not found`);
         return;
     }
@@ -161,7 +165,13 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
             // only modify display content
             message.extra.display_text = newContent;
             updateMessageBlock(message_idx, message, { rerenderMessage: true });
+        } else if(message.extra?.display_text) {
+            message.extra.display_text = undefined;
+            updateMessageBlock(message_idx, message, { rerenderMessage: true });
         }
+    } else if(message.extra?.display_text) {
+        message.extra.display_text = undefined;
+        updateMessageBlock(message_idx, message, { rerenderMessage: true });
     }
 
     const content = settings.code_blocks_enabled === false ? escapePreContent(html) : cleanPreContent(html);
