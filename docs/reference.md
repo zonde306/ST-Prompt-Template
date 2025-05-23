@@ -358,8 +358,9 @@ function activateRegex(pattern, string, opts = {});
  * @param {string} prompt - Prompt content
  * @param {number} [order=100] - Injection order priority
  * @param {number} [sticky=0] - Sticky level (0=normal, 1=keep alive, 2=persistent)
+ * @param {string} [uid=''] - Unique ID
  */
-function injectPrompt(key, prompt, order = 100, sticky = 0);
+function injectPrompt(key, prompt, order = 100, sticky = 0, uid = '');
 
 /**
  * Get injected prompts by key

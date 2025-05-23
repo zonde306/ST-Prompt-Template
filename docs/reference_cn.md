@@ -359,8 +359,9 @@ function activateRegex(pattern, string, opts = {});
  * @param {string} prompt - 提示词内容
  * @param {number} [order=100] - 顺序
  * @param {number} [sticky=0] - 黏性
+ * @param {string} [uid=''] - 唯一ID
  */
-function injectPrompt(key, prompt, order = 100, sticky = 0);
+function injectPrompt(key, prompt, order = 100, sticky = 0, uid = '');
 
 /**
  * 读取提示词注入
