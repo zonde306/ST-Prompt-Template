@@ -166,7 +166,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
 
     const content = settings.code_blocks_enabled === false ? escapePreContent(html) : cleanPreContent(html);
 
-    let newContent = await evalTemplateHandler(content, env, `chat #${message_idx}.${message.swipe_id}`, {
+    let newContent = await evalTemplateHandler(removeHtmlTagsInsideBlock(content), env, `chat #${message_idx}.${message.swipe_id}`, {
         escaper,
         options: {
             openDelimiter: '&lt;',
@@ -436,6 +436,14 @@ function escapePreContent(html: string) {
     return html.replace(/(<pre\b[^>]*>)([\s\S]*?)(<\/pre>)/gi, (_m, p1, p2, p3) => {
         return p1 + p2.replace(/&lt;/g, '#lt#').replace(/&gt;/g, '#gt#') + p3;
     })
+}
+
+function removeHtmlTagsInsideBlock(text: string) {
+    const result = text.replace(/&lt;%((?:[^%]|%[^>])*)%&gt;/g, (_match, content : string) => {
+        const cleanedContent = content.replace(/<[^>]+>/g, '');
+        return `&lt;%${cleanedContent}%&gt;`;
+    });
+    return result;
 }
 
 const MESSAGE_RENDER_EVENTS = [
