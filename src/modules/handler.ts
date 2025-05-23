@@ -120,8 +120,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
     }
 
     const container = $(`div.mes[mesid="${message_id}"]`)?.find('.mes_text');
-    const html = container?.html();
-    if (!html) {
+    if (!container?.text()) {
         if(message.extra?.display_text) {
             message.extra.display_text = undefined;
             updateMessageBlock(message_idx, message, { rerenderMessage: true });
@@ -174,6 +173,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
         updateMessageBlock(message_idx, message, { rerenderMessage: true });
     }
 
+    const html = container.html();
     const content = settings.code_blocks_enabled === false ? escapePreContent(html) : cleanPreContent(html);
 
     let newContent = await evalTemplateHandler(removeHtmlTagsInsideBlock(content), env, `chat #${message_idx}.${message.swipe_id}`, {
