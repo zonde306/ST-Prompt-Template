@@ -120,12 +120,13 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
     }
 
     const container = $(`div.mes[mesid="${message_id}"]`)?.find('.mes_text');
-    if (!container?.text()) {
+    // don't render if the message is swping (with generating)
+    if (!container?.text() || message.mes === message.swipes[message.swipe_id - 1]) {
         if(message.extra?.display_text) {
             message.extra.display_text = undefined;
             updateMessageBlock(message_idx, message, { rerenderMessage: true });
         }
-        console.warn(`chat message #${message_id} container not found`);
+        console.warn(`chat message #${message_id}.${message.swipe_id} is generating`);
         return;
     }
 
