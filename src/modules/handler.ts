@@ -18,8 +18,11 @@ let isFakeRun = false;
 // just a randomly generated value
 const regexFilterUUID = "a8ff1bc7-15f2-4122-b43b-ded692560538";
 
-async function updateGenerate(data: GenerateData) {
+async function handleGenerating(data: ChatData) {
     if(settings.enabled === false)
+        return;
+
+    if(data.dryRun)
         return;
 
     // No longer available here
@@ -46,7 +49,7 @@ async function updateGenerate(data: GenerateData) {
     const before = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:BEFORE]');
 
     let prompts = before;
-    for (const [idx, message] of data.messages.entries()) {
+    for (const [idx, message] of data.chat.entries()) {
         const beforeMessage =  settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:BEFORE]`);
 
         if(typeof message.content === 'string') {
@@ -75,11 +78,11 @@ async function updateGenerate(data: GenerateData) {
     const after = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:AFTER]', prompts);
     prompts += after;
 
-    data.messages[0].content = before + data.messages[0].content;
-    data.messages[data.messages.length - 1].content += after;
+    data.chat[0].content = before + data.chat[0].content;
+    data.chat[data.chat.length - 1].content += after;
 
     const end = Date.now() - start;
-    console.log(`[Prompt Template] processing ${data.messages.length} messages in ${end}ms`);
+    console.log(`[Prompt Template] processing ${data.chat.length} messages in ${end}ms`);
 
     await checkAndSave();
     updateTokens(prompts, 'send');
@@ -90,7 +93,7 @@ async function updateGenerate(data: GenerateData) {
     deactivatePromptInjection();
 }
 
-async function updateMessageRender(message_id: string, isDryRun?: boolean) {
+async function handleMessageRender(message_id: string, isDryRun?: boolean) {
     if(settings.enabled === false)
         return;
     if(settings.render_enabled === false)
@@ -121,7 +124,7 @@ async function updateMessageRender(message_id: string, isDryRun?: boolean) {
 
     const container = $(`div.mes[mesid="${message_id}"]`)?.find('.mes_text');
     // don't render if the message is swping (with generating)
-    if (!container?.text() || message.mes === message.swipes[message.swipe_id - 1]) {
+    if (!container?.text() || message.mes === message.swipes?.[message.swipe_id - 1]) {
         if(message.extra?.display_text) {
             message.extra.display_text = undefined;
             updateMessageBlock(message_idx, message, { rerenderMessage: true });
@@ -285,7 +288,7 @@ export async function handlePreloadWorldInfo(chat_filename? : string, force: boo
     for (const mes of $('div.mes[mesid]')) {
         const message_id = $(mes).attr('mesid');
         if (message_id) {
-            await updateMessageRender(message_id, true);
+            await handleMessageRender(message_id, true);
         }
     }
 }
@@ -304,7 +307,8 @@ async function handleWorldInfoActivate(data: ChatData) {
     if(settings.world_active_enabled === false)
         return;
 
-    if(!data.dryRun) return;
+    if(!data.dryRun)
+        return;
 
     STATE.isDryRun = true;
     const start = Date.now();
@@ -465,19 +469,19 @@ const MESSAGE_RENDER_EVENTS = [
 ];
 
 export async function init() {
-    eventSource.on(event_types.CHAT_COMPLETION_SETTINGS_READY, updateGenerate);
     eventSource.on(event_types.CHAT_CHANGED, handlePreloadWorldInfo);
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleWorldInfoActivation);
+    eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, handleGenerating);
     eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, handleWorldInfoActivate);
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleFilterInstall);
-    MESSAGE_RENDER_EVENTS.forEach(e => eventSource.on(e, updateMessageRender));
+    MESSAGE_RENDER_EVENTS.forEach(e => eventSource.on(e, handleMessageRender));
 }
 
 export async function exit() {
-    eventSource.removeListener(event_types.CHAT_COMPLETION_SETTINGS_READY, updateGenerate);
     eventSource.removeListener(event_types.CHAT_CHANGED, handlePreloadWorldInfo);
     eventSource.removeListener(event_types.GENERATION_AFTER_COMMANDS, handleWorldInfoActivation);
+    eventSource.removeListener(event_types.CHAT_COMPLETION_PROMPT_READY, handleGenerating);
     eventSource.removeListener(event_types.CHAT_COMPLETION_PROMPT_READY, handleWorldInfoActivate);
     eventSource.removeListener(event_types.GENERATION_AFTER_COMMANDS, handleFilterInstall);
-    MESSAGE_RENDER_EVENTS.forEach(e => eventSource.removeListener(e, updateMessageRender));
+    MESSAGE_RENDER_EVENTS.forEach(e => eventSource.removeListener(e, handleMessageRender));
 }
