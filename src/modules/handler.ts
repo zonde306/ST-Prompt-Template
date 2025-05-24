@@ -95,20 +95,20 @@ async function handleOaiGenerating(data: ChatData) {
 
 async function handleCombinedProcessing(data: CombinedData) {
     if(!data.prompt) return;
-    
+
     const oaiData = {
         dryRun: data.dryRun,
         chat: [{
             role: '',
             content: data.prompt,
         }],
-    };
+    } as ChatData;
 
     // pass by reference
     await handleOaiActivator(oaiData);
     await handleOaiGenerating(oaiData);
 
-    data.prompt = oaiData.chat[0].content;
+    data.prompt = oaiData.chat[0].content as string;
 }
 
 async function handleMessageRender(message_id: string, isDryRun?: boolean) {
