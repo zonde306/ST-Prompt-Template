@@ -16,7 +16,7 @@
  * @property {number} [index=undefined] - Variable index (same as /setvar's index)
  * @property {'global' | 'local' | 'message' | 'cache'} [scope='message'] - Variable scope, see details below
  * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - Set conditions, see details below
- * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - Return type, see details below
+ * @property {'old' | 'new' | 'fullcache'} [results='new'] - Return type, see details below
  * @property {MessageFilter} [withMsg=undefined] - Message filter (for message variables)
  * @property {boolean} [merge=false] - Use _.merge to set variables
  * @property {boolean} [dryRun=false] - Allow setting variables during preparation phase
@@ -69,7 +69,7 @@ function getMessageVar(key, options = {});
  * @property {'global' | 'local' | 'message' | 'cache'} [inscope='cache'] - Read scope, see details below
  * @property {'global' | 'local' | 'message' | 'cache'} [outscope='message'] - Write scope, see details below
  * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - Update conditions, see details below
- * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - Return type, see details below
+ * @property {'old' | 'new' | 'fullcache'} [results='new'] - Return type, see details below
  * @property {MessageFilter} [withMsg=undefined] - Message filter (for message variables)
  * @property {boolean} [dryRun=false] - Allow updates during preparation phase
  * @property {boolean} [noCache=false] - Disable caching (when reading immediately after setting)

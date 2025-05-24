@@ -16,7 +16,7 @@
  * @property {number} [index=null] - 变量的索引,与/setvar的index相同.
  * @property {'global' | 'local' | 'message' | 'cache'} [scope='message'] - 变量类型(作用域),详见下方
  * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - 设置条件,不满足则不设置,详见下方
- * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - 返回值类型,详见下方
+ * @property {'old' | 'new' | 'fullcache'} [results='new'] - 返回值类型,详见下方
  * @property {MessageFilter} [withMsg=null] - 消息过滤器(如果要设置消息变量)
  * @property {boolean} [merge=false] - 是否使用合并来设置(_.merge)变量
  * @property {boolean} [dryRun=false] - 是否允许在准备阶段设置变量
@@ -69,7 +69,7 @@ function getMessageVar(key, options = {});
  * @property {'global' | 'local' | 'message' | 'cache'} [inscope='cache'] - 读取的变量类型(作用域),详见下方
  * @property {'global' | 'local' | 'message' | 'cache'} outscope='message'] - 设置的变量类型(作用域),详见下方
  * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - 更新条件,不满足则不更新,详见下方
- * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - 返回值类型,详见下方
+ * @property {'old' | 'new' | 'fullcache'} [results='new'] - 返回值类型,详见下方
  * @property {MessageFilter} [withMsg=undefined] - 消息过滤器(如果要设置消息变量)
  * @property {boolean} [dryRun=false] - 是否允许在准备阶段更新变量
  * @property {boolean} [noCache=false] - 禁用缓存(例如在设置变量后立即读取)

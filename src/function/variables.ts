@@ -217,9 +217,9 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
 
     if(results === 'old')
         return oldValue;
-    if(results === 'new')
-        return newValue;
-    return STATE.cache;
+    if(results === 'fullcache')
+        return STATE.cache;
+    return newValue;
 }
 
 export interface GetVarOption {
