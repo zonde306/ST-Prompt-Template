@@ -137,3 +137,8 @@ export interface GenerateData {
     tool_choice?: string;
     assistant_impersonation?: string;
 }
+
+export interface CombinedPromptData {
+    prompt: string;
+    dryRun: boolean;
+}

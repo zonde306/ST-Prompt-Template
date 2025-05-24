@@ -1,6 +1,6 @@
 // @ts-expect-error
 import vm from 'vm-browserify';
-import { GenerateData, Message, ChatData } from './defines';
+import { Message, ChatData, CombinedPromptData as CombinedData } from './defines';
 import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock, substituteParams } from '../../../../../../script.js';
 import { prepareContext, evalTemplate, getSyntaxErrorInfo, EvalTemplateOptions } from '../function/ejs';
 import { STATE, checkAndSave } from '../function/variables';
@@ -18,7 +18,7 @@ let isFakeRun = false;
 // just a randomly generated value
 const regexFilterUUID = "a8ff1bc7-15f2-4122-b43b-ded692560538";
 
-async function handleGenerating(data: ChatData) {
+async function handleOaiGenerating(data: ChatData) {
     if(settings.enabled === false)
         return;
 
@@ -91,6 +91,24 @@ async function handleGenerating(data: ChatData) {
     deactivateActivateWorldInfo();
     deactivateRegex();
     deactivatePromptInjection();
+}
+
+async function handleCombinedProcessing(data: CombinedData) {
+    if(!data.prompt) return;
+    
+    const oaiData = {
+        dryRun: data.dryRun,
+        chat: [{
+            role: '',
+            content: data.prompt,
+        }],
+    };
+
+    // pass by reference
+    await handleOaiActivator(oaiData);
+    await handleOaiGenerating(oaiData);
+
+    data.prompt = oaiData.chat[0].content;
 }
 
 async function handleMessageRender(message_id: string, isDryRun?: boolean) {
@@ -301,7 +319,7 @@ async function handleWorldInfoActivation(_type: string, _options : GenerateOptio
     await applyActivateWorldInfo(true);
 }
 
-async function handleWorldInfoActivate(data: ChatData) {
+async function handleOaiActivator(data: ChatData) {
     if(settings.enabled === false)
         return;
     if(settings.world_active_enabled === false)
@@ -471,8 +489,9 @@ const MESSAGE_RENDER_EVENTS = [
 export async function init() {
     eventSource.on(event_types.CHAT_CHANGED, handlePreloadWorldInfo);
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleWorldInfoActivation);
-    eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, handleGenerating);
-    eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, handleWorldInfoActivate);
+    eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, handleOaiGenerating);           // for oai
+    eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, handleOaiActivator);            // for oai
+    eventSource.on(event_types.GENERATE_AFTER_COMBINE_PROMPTS, handleCombinedProcessing);    // for other
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleFilterInstall);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.on(e, handleMessageRender));
 }
@@ -480,8 +499,9 @@ export async function init() {
 export async function exit() {
     eventSource.removeListener(event_types.CHAT_CHANGED, handlePreloadWorldInfo);
     eventSource.removeListener(event_types.GENERATION_AFTER_COMMANDS, handleWorldInfoActivation);
-    eventSource.removeListener(event_types.CHAT_COMPLETION_PROMPT_READY, handleGenerating);
-    eventSource.removeListener(event_types.CHAT_COMPLETION_PROMPT_READY, handleWorldInfoActivate);
+    eventSource.removeListener(event_types.CHAT_COMPLETION_PROMPT_READY, handleOaiGenerating);
+    eventSource.removeListener(event_types.CHAT_COMPLETION_PROMPT_READY, handleOaiActivator);
+    eventSource.removeListener(event_types.GENERATE_AFTER_COMBINE_PROMPTS, handleCombinedProcessing);
     eventSource.removeListener(event_types.GENERATION_AFTER_COMMANDS, handleFilterInstall);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.removeListener(e, handleMessageRender));
 }
