@@ -609,6 +609,42 @@ personaLoreBook = ''
  * @type {(String|undefined)}
  */
 chatLoreBook = ''
+
+/*
+ * 用户角色名字
+ * @type {String}
+ */
+userName = 'User'
+
+/*
+ * 角色卡角色名字
+ * @type {String}
+ */
+assistantName = 'SillyTavern System'
+
+/*
+ * 聊天会话ID
+ * @type {String}
+ */
+chatId = ''
+
+/*
+ * 角色卡ID
+ * @type {String}
+ */
+characterId = ''
+
+/*
+ * 群聊ID
+ * @type {(String|null)}
+ */
+groupId = null
+
+/*
+ * 群聊状态信息
+ * @type {array}
+ */
+groups = []
 ```
 
 只有在 `runType` 为 `render` 时才会出现的字段

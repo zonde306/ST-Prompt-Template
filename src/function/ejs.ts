@@ -5,7 +5,7 @@ import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.j
 import { getWorldInfoData, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries, selectActivatedEntries, activateWorldInfo, getWorldInfoEntry, WorldInfoData } from './worldinfo';
 import { allVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption } from './variables';
 import { getCharaDefs, DEFAULT_CHAR_DEFINE, getCharaData } from './characters';
-import { substituteParams, eventSource, this_chid, characters, chat_metadata } from '../../../../../../script.js';
+import { substituteParams, eventSource, this_chid, characters, chat_metadata, name1, name2, getCurrentChatId } from '../../../../../../script.js';
 import { getPresetPromptsContent } from './presets';
 import { getQuickReply, getQuickReplyData } from './quickreply';
 import { getChatMessage, getChatMessages } from './chat';
@@ -17,6 +17,9 @@ import { h64 } from 'xxhashjs';
 import { injectPrompt, getPromptsInjected } from './inject';
 import { power_user } from '../../../../../power-user.js';
 import { METADATA_KEY } from '../../../../../world-info.js';
+
+// @ts-expect-error: 7034
+import { groups, selected_group } from '../../../../../group-chats.js';
 
 interface IncluderResult {
     filename: string;
@@ -313,7 +316,17 @@ export async function prepareContext(end: number = 65535, env: Record<string, un
         execute: async (cmd: string) => (await executeSlashCommandsWithOptions(cmd)).pipe,
         SillyTavern: SillyTavern.getContext(),
         faker: fakerEnv.faker,
+        userName: name1,
+        assistantName: name2,
+        chatId: getCurrentChatId(),
+        characterId: this_chid,
 
+        // @ts-expect-error: 7005
+        groups,
+        
+        // @ts-expect-error: 7005
+        groupId: selected_group,
+        
         // @ts-expect-error: 2538
         charaLoreBook: characters[this_chid]?.data?.extensions?.world,
         personaLoreBook: power_user.persona_description_lorebook,

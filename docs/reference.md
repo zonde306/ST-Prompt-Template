@@ -666,6 +666,42 @@ personaLoreBook = ''
  * @type {(String|undefined)}
  */
 chatLoreBook = ''
+
+/*
+ * User role name
+ * @type {String}
+ */
+userName = 'User'
+
+/*
+ * Character card role name
+ * @type {String}
+ */
+assistantName = 'SillyTavern System'
+
+/*
+ * Chat session ID
+ * @type {String}
+ */
+chatId = ''
+
+/*
+ * Character card ID
+ * @type {String}
+ */
+characterId = ''
+
+/*
+ * Group chat ID
+ * @type {(String|null)}
+ */
+groupId = null
+
+/*
+ * Group chat status information
+ * @type {array}
+ */
+groups = []
 ```
 
 ---
