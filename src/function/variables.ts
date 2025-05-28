@@ -11,7 +11,7 @@ export let STATE = {
 };
 
 export function allVariables(end : number = 65535) {
-    return _.merge({},
+    return _.mergeWith({},
         // @ts-expect-error: 2339
         getCharaData()?.data?.extensions?.variables || {},
         extension_settings.variables.global,
@@ -19,6 +19,7 @@ export function allVariables(end : number = 65535) {
         chat_metadata.variables || {},
         ...chat.slice(0, Math.max(end - 1, 0)).map(msg => msg.variables?.[msg.swipe_id || 0] || {}),
         { _trace_id : (STATE.traceId)++, _modify_id: 0 },
+        (_dst : unknown, src : unknown) => _.isArray(src) ? src : undefined,
     );
 }
 
@@ -111,10 +112,13 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
 
         if(results === 'old' || merge) oldValue = _.get(data, idx, undefined);
         if(merge) {
-            if(_.isArray(oldValue) && _.isArray(value))
+            if(_.isArray(oldValue) && _.isArray(value)) {
                 newValue = _.concat(oldValue, value);
-            else
-                newValue = _.merge(results === 'old' ? _.cloneDeep(oldValue) : oldValue, value);
+            } else {
+                newValue = _.mergeWith(
+                    results === 'old' ? _.cloneDeep(oldValue) : oldValue,
+                    value, (_dst: unknown, src: unknown) => _.isArray(src) ? src : undefined);
+            }
         }
         _.set(STATE.cache, key, JSON.stringify(_.set(data, idx, newValue)));
 
@@ -171,7 +175,9 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
             if(_.isArray(oldValue) && _.isArray(value))
                 newValue = _.concat(oldValue, value);
             else
-                newValue = _.merge(results === 'old' ? _.cloneDeep(oldValue) : oldValue, value);
+                newValue = _.mergeWith(
+                    results === 'old' ? _.cloneDeep(oldValue) : oldValue,
+                    value, (_dst: unknown, src: unknown) => _.isArray(src) ? src : undefined);
         }
         _.set(STATE.cache, key, newValue);
 
