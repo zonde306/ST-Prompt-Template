@@ -49,6 +49,12 @@ export interface WorldinfoForceActivate {
     uid: string | number;
 }
 
+export interface ActivateWorldInfoCondition {
+    withConstant?: boolean; 
+    withDisabled?: boolean;
+    onlyDisabled?: boolean;
+}
+
 let activatedWorldEntries = new Map<string, WorldinfoForceActivate>();
 
 export async function activateWorldInfo(world : string, uid : string | RegExp | number) {
@@ -56,6 +62,16 @@ export async function activateWorldInfo(world : string, uid : string | RegExp | 
     if(entry)
         activatedWorldEntries.set(`${world}.${uid}`, entry);
     return entry;
+}
+
+export async function activateWorldInfoByKeywords(
+    keywords: string | string[],
+    condition: ActivateWorldInfoCondition = {}
+) {
+    const entries = await getEnabledWorldInfoEntries();
+    const activated = selectActivatedEntries(entries, keywords, condition);
+    activated.forEach(x => activatedWorldEntries.set(`${x.world}.${x.uid}`, x));
+    return activated;
 }
 
 export async function applyActivateWorldInfo(deactivate : boolean = true) {
@@ -98,24 +114,26 @@ export async function getWorldInfoEntryContent(name: string, title: string | Reg
 }
 
 export async function getWorldInfoActivatedEntries(name: string,
-    keywords: string | string[], withConstant : boolean = false,
-    withDisabled: boolean = false) {
+    keywords: string | string[],
+    condition: ActivateWorldInfoCondition = {}) {
     const entries = await getWorldInfoData(name);
     if (!entries) return [];
-    return selectActivatedEntries(entries, keywords, withConstant, withDisabled);
+    return selectActivatedEntries(entries, keywords, condition);
 }
 
 export function selectActivatedEntries(
     entries: WorldInfoData[],
     keywords: string | string[],
-    withConstant : boolean = true,
-    withDisabled: boolean = false) {
+    condition: ActivateWorldInfoCondition = {}) : WorldInfoData[] {
+    const { withConstant, withDisabled, onlyDisabled } = condition;
     let activated: Set<WorldInfoData> = new Set<WorldInfoData>();
     keywords = _.castArray(keywords).join('\n\n');
     for (const data of entries) {
-        if(data.constant && !withConstant)
+        if(!withConstant && data.constant)
             continue;
-        if(data.disable && !withDisabled)
+        if(onlyDisabled && !data.disable)
+            continue;
+        if(!withDisabled && !onlyDisabled && data.disable)
             continue;
 
         // unsupported

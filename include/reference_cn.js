@@ -13,7 +13,7 @@
  * @property {number} [index=null] - 变量的索引,与/setvar的index相同.
  * @property {'global' | 'local' | 'message' | 'cache'} [scope='message'] - 变量类型(作用域),详见下方
  * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - 设置条件,不满足则不设置,详见下方
- * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - 返回值类型,详见下方
+ * @property {'old' | 'new' | 'fullcache'} [results='new'] - 返回值类型,详见下方
  * @property {MessageFilter} [withMsg=null] - 消息过滤器(如果要设置消息变量)
  * @property {boolean} [merge=false] - 是否使用合并来设置(_.merge)变量
  * @property {boolean} [dryRun=false] - 是否允许在准备阶段设置变量
@@ -66,7 +66,7 @@ function getMessageVar(key, options = {});
  * @property {'global' | 'local' | 'message' | 'cache'} [inscope='cache'] - 读取的变量类型(作用域),详见下方
  * @property {'global' | 'local' | 'message' | 'cache'} outscope='message'] - 设置的变量类型(作用域),详见下方
  * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - 更新条件,不满足则不更新,详见下方
- * @property {'old' | 'new' | 'fullcache'} [results='fullcache'] - 返回值类型,详见下方
+ * @property {'old' | 'new' | 'fullcache'} [results='new'] - 返回值类型,详见下方
  * @property {MessageFilter} [withMsg=undefined] - 消息过滤器(如果要设置消息变量)
  * @property {boolean} [dryRun=false] - 是否允许在准备阶段更新变量
  * @property {boolean} [noCache=false] - 禁用缓存(例如在设置变量后立即读取)
@@ -120,6 +120,8 @@ async function execute(cmd);
  */
 async function getwi(worldinfo, title, data = {});
 async function getWorldInfo(worldinfo, title, data = {});
+async function getwi(title, data = {});
+async function getWorldInfo(title, data = {});
 
 /**
  * 读取角色卡定义
@@ -148,9 +150,10 @@ async function getPresetPrompt(name, data = {});
  *
  * @param {string} name - 变量/函数名
  * @param {any} value - 变量/函数的内容
+ * @param {boolean} [merge=false] - 是否使用合并来定义(_.merge)
  * @note 定义函数时应该使用 this 访问上下文, 例如: this.variables, this.getvar, this.setvar
  */
-function define(name, value);
+function define(name, value, merge = false);
 
 /**
  * 读取快速回复的内容
@@ -233,10 +236,11 @@ function getQuickReplyData(name);
  * @note 返回数据未进行模板处理
  *
  * @param {string} name - 世界书的名字/uid
- * @param {string} keyword - 用于激活世界书的关键字(内容)
+ * @param {(string|string[])} keyword - 用于激活世界书的关键字(内容)
+ * @param {ActivateWorldInfoCondition} [condition={}] - 激活条件
  * @returns {Promise<WorldInfoData[]>} - 世界书的条目列表
  */
-async function getWorldInfoActivatedData(name, keyword);
+async function getWorldInfoActivatedData(name, keyword, condition = {});
 
 /**
  * 对字符串内容进行模板处理
@@ -270,13 +274,32 @@ function print(...args);
 
 /**
  * 激活世界书
+ * 需要提具体条目
  *
  * @param {string} worldinfo - 世界书名
  * @param {string | RegExp | number} title - 条目uid/标题
- * @returns {Promise<WorldInfoData | null>} - 世界书的条目
+ * @returns {Promise<WorldInfoData | null>} - 激活的世界书的条目
  */
 async function activewi(worldinfo, title);
 async function activateWorldInfo(worldinfo, title);
+
+/**
+ * 激活世界书条件
+ * @typedef {Object} ActivateWorldInfoCondition
+ * @property {boolean} [withConstant=false] - 是否允许激活永久🔵条目
+ * @property {boolean} [withDisabled=false] - 是否允许激活禁用条目
+ * @property {boolean} [onlyDisabled=false] - 是否仅激活禁用条目(启用时强制启用withDisabled选项)
+ */
+
+/**
+ * 激活世界书
+ * 通过关键字激活
+ *
+ * @param {string} worldinfo - 世界书名
+ * @param {ActivateWorldInfoCondition} [condition={}] - 激活选项
+ * @returns {Promise<WorldInfoData[]>} - 激活的世界书的条目列表
+ */
+async function activateWorldInfoByKeywords(keywords, condition = {});
 
 /**
  * 获取当前已开启的世界书的所有条目集合
@@ -294,11 +317,10 @@ async function getEnabledWorldInfoEntries(chara = true, global = true, persona =
  *
  * @param {WorldInfoData[]} entries - 世界书条目列表
  * @param {string | string[]} keywords - 用户激活的内容
- * @param {boolean} withConstant - 允许激活永久🔵条目
- * @param {boolean} withDisabled - 允许激活禁用条目
+ * @param {ActivateWorldInfoCondition} [condition={}] - 激活条件
  * @returns {WorldInfoData[]} - 被激活的世界书的条目列表
  */
-function selectActivatedEntries(entries, keywords, withConstant = true, withDisabled = false);
+function selectActivatedEntries(entries, keywords, condition = {});
 
 /**
  * 获取指定聊天(楼层)消息内容
@@ -353,8 +375,9 @@ function activateRegex(pattern, string, opts = {});
  * @param {string} prompt - 提示词内容
  * @param {number} [order=100] - 顺序
  * @param {number} [sticky=0] - 黏性
+ * @param {string} [uid=''] - 唯一ID
  */
-function injectPrompt(key, prompt, order = 100, sticky = 0);
+function injectPrompt(key, prompt, order = 100, sticky = 0, uid = '');
 
 /**
  * 读取提示词注入

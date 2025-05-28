@@ -239,10 +239,11 @@ function getQuickReplyData(name);
  * @note 返回数据未进行模板处理
  *
  * @param {string} name - 世界书的名字/uid
- * @param {string} keyword - 用于激活世界书的关键字(内容)
+ * @param {(string|string[])} keyword - 用于激活世界书的关键字(内容)
+ * @param {ActivateWorldInfoCondition} [condition={}] - 激活条件
  * @returns {Promise<WorldInfoData[]>} - 世界书的条目列表
  */
-async function getWorldInfoActivatedData(name, keyword);
+async function getWorldInfoActivatedData(name, keyword, condition = {});
 
 /**
  * 对字符串内容进行模板处理
@@ -276,13 +277,32 @@ function print(...args);
 
 /**
  * 激活世界书
+ * 需要提具体条目
  *
  * @param {string} worldinfo - 世界书名
  * @param {string | RegExp | number} title - 条目uid/标题
- * @returns {Promise<WorldInfoData | null>} - 世界书的条目
+ * @returns {Promise<WorldInfoData | null>} - 激活的世界书的条目
  */
 async function activewi(worldinfo, title);
 async function activateWorldInfo(worldinfo, title);
+
+/**
+ * 激活世界书条件
+ * @typedef {Object} ActivateWorldInfoCondition
+ * @property {boolean} [withConstant=false] - 是否允许激活永久🔵条目
+ * @property {boolean} [withDisabled=false] - 是否允许激活禁用条目
+ * @property {boolean} [onlyDisabled=false] - 是否仅激活禁用条目(启用时强制启用withDisabled选项)
+ */
+
+/**
+ * 激活世界书
+ * 通过关键字激活
+ *
+ * @param {string} worldinfo - 世界书名
+ * @param {ActivateWorldInfoCondition} [condition={}] - 激活选项
+ * @returns {Promise<WorldInfoData[]>} - 激活的世界书的条目列表
+ */
+async function activateWorldInfoByKeywords(keywords, condition = {});
 
 /**
  * 获取当前已开启的世界书的所有条目集合
@@ -300,11 +320,10 @@ async function getEnabledWorldInfoEntries(chara = true, global = true, persona =
  *
  * @param {WorldInfoData[]} entries - 世界书条目列表
  * @param {string | string[]} keywords - 用户激活的内容
- * @param {boolean} withConstant - 允许激活永久🔵条目
- * @param {boolean} withDisabled - 允许激活禁用条目
+ * @param {ActivateWorldInfoCondition} [condition={}] - 激活条件
  * @returns {WorldInfoData[]} - 被激活的世界书的条目列表
  */
-function selectActivatedEntries(entries, keywords, withConstant = true, withDisabled = false);
+function selectActivatedEntries(entries, keywords, condition = {});
 
 /**
  * 获取指定聊天(楼层)消息内容
