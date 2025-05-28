@@ -484,10 +484,11 @@ const MESSAGE_RENDER_EVENTS = [
     event_types.MESSAGE_SWIPED,
     event_types.CHARACTER_MESSAGE_RENDERED,
     event_types.USER_MESSAGE_RENDERED,
+    // event_types.MESSAGE_DELETED,
 ];
 
 export async function init() {
-    eventSource.on(event_types.CHAT_CHANGED, handlePreloadWorldInfo);
+    eventSource.makeFirst(event_types.CHAT_CHANGED, handlePreloadWorldInfo);
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleWorldInfoActivation);
     eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, handleOaiGenerating);           // for oai
     eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, handleOaiActivator);            // for oai
