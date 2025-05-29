@@ -120,12 +120,15 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                     value, (_dst: unknown, src: unknown) => _.isArray(src) ? src : undefined);
             }
         }
-        _.set(STATE.cache, key, JSON.stringify(_.set(data, idx, newValue)));
+        
+        newValue === undefined ? _.unset(data, idx) : _.set(data, idx, newValue);
+        _.set(STATE.cache, key, JSON.stringify(data));
 
         switch(scope || 'message') {
             case 'global':
                 data = JSON.parse(_.get(extension_settings.variables.global, key, '{}') || '{}');
-                _.set(extension_settings.variables.global, key, JSON.stringify(_.set(data, idx, newValue)));
+                newValue === undefined ? _.unset(data, idx) : _.set(data, idx, newValue);
+                _.set(extension_settings.variables.global, key, JSON.stringify(data));
 
                 if(settings.debug_enabled)
                     console.debug(`Set global variable ${key} to ${newValue} (index ${idx})`);
@@ -137,8 +140,9 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                 if(!chat_metadata.variables) chat_metadata.variables = {};
                 // @ts-expect-error: TS2322
                 data = JSON.parse(_.get(chat_metadata.variables, key, '{}') || '{}');
+                newValue === undefined ? _.unset(data, idx) : _.set(data, idx, newValue);
                 // @ts-expect-error: TS2322
-                _.set(chat_metadata.variables, key, JSON.stringify(_.set(data, idx, newValue)));
+                _.set(chat_metadata.variables, key, JSON.stringify(data));
 
                 if(settings.debug_enabled)
                     console.debug(`Set local variable ${key} to ${newValue} (index ${idx})`);
@@ -152,7 +156,8 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                     if(!chat[message_id].variables) chat[message_id].variables = {};
                     if(!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
                     data = JSON.parse(_.get(chat[message_id].variables[swipe_id], key, '{}') || '{}');
-                    _.set(chat[message_id].variables[swipe_id], key, JSON.stringify(_.set(data, idx, newValue)));
+                    newValue === undefined ? _.unset(data, idx) : _.set(data, idx, newValue);
+                    _.set(chat[message_id].variables[swipe_id], key, JSON.stringify(data));
 
                     if(settings.debug_enabled)
                         console.debug(`Set message #${message_id}.${swipe_id} variable ${key} to ${newValue} (index ${idx})`);
@@ -179,11 +184,15 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                     results === 'old' ? _.cloneDeep(oldValue) : oldValue,
                     value, (_dst: unknown, src: unknown) => _.isArray(src) ? src : undefined);
         }
-        _.set(STATE.cache, key, newValue);
+
+        newValue === undefined ? _.unset(STATE.cache, key) : _.set(STATE.cache, key, newValue);
 
         switch(scope || 'message') {
             case 'global':
-                _.set(extension_settings.variables.global, key, newValue);
+                if(newValue === undefined)
+                    _.unset(extension_settings.variables.global, key);
+                else
+                    _.set(extension_settings.variables.global, key, newValue);
 
                 if(settings.debug_enabled)
                     console.debug(`Set global variable ${key} to ${newValue}`);
@@ -193,8 +202,11 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
             case 'local':
                 // @ts-expect-error: TS2322
                 if(!chat_metadata.variables) chat_metadata.variables = {};
-                // @ts-expect-error: TS2322
-                _.set(chat_metadata.variables, key, newValue);
+                
+                if(newValue === undefined) // @ts-expect-error: TS2322
+                    _.unset(chat_metadata.variables, key);
+                else // @ts-expect-error: TS2322
+                    _.set(chat_metadata.variables, key, newValue);
 
                 if(settings.debug_enabled)
                     console.debug(`Set local variable ${key} to ${newValue}`);
@@ -207,7 +219,10 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                 if(message_id !== undefined && swipe_id !== undefined) {
                     if(!chat[message_id].variables) chat[message_id].variables = {};
                     if(!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
-                    _.set(chat[message_id].variables[swipe_id], key, newValue);
+                    if(newValue === undefined)
+                        _.unset(chat[message_id].variables[swipe_id], key);
+                    else
+                        _.set(chat[message_id].variables[swipe_id], key, newValue);
 
                     if(settings.debug_enabled)
                         console.debug(`Set message #${message_id}.${swipe_id} variable ${key} to ${newValue}`);
