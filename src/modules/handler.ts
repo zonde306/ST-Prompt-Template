@@ -417,7 +417,7 @@ async function evalTemplateHandler(content: string,
         console.error(err);
 
         // @ts-expect-error
-        toastr.error(err.message, `EJS Error`);
+        toastr.error(err.message, `EJS Error`, {  onclick: () => navigator.clipboard.writeText(err.message).then(() => toastr.success('Copied to clipboard!') )});
     }
 
     return null;

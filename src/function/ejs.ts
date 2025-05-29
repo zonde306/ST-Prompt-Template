@@ -178,7 +178,7 @@ export async function evalTemplate(content: string, data: Record<string, unknown
             console.error(err);
 
             // @ts-expect-error
-            toastr.error(err.message, `EJS Template Error`);
+            toastr.error(err.message, `EJS Template Error`, {  onclick: () => navigator.clipboard.writeText(err.message).then(() => toastr.success('Copied to clipboard!') )});
         }
         throw err;
     }
