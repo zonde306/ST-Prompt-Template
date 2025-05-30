@@ -15,7 +15,12 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         const ctx = JSON.parse(args.ctx || '{}');
         if (args.block)
             value = `<%= ${value} %>`;
-        const env = await prepareContext(65535, { runType: 'command', runID: -1, ...ctx });
+        const env = await prepareContext(65535, {
+            runType: 'command',
+            runID: -1,
+            isDryRun: false,
+            ...ctx,
+        });
 
         if(settings.debug_enabled)
             console.debug(`execute template code: ${value}`);

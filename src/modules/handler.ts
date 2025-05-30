@@ -44,6 +44,7 @@ async function handleOaiGenerating(data: ChatData) {
         is_user: undefined,
         is_system: undefined,
         name: undefined,
+        isDryRun: false,
     });
 
     const before = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:BEFORE]');
@@ -165,6 +166,7 @@ async function handleMessageRender(message_id: string, isDryRun?: boolean) {
         is_user: message.is_user,
         is_system: message.is_system,
         name: message.name,
+        isDryRun: isDryRun,
     });
 
     let hasHTML = false;
@@ -272,6 +274,7 @@ export async function handlePreloadWorldInfo(chat_filename? : string, force: boo
         is_user: undefined,
         is_system: undefined,
         name: undefined,
+        isDryRun: true,
     });
 
     let prompts = '';
@@ -340,6 +343,7 @@ async function handleOaiActivator(data: ChatData) {
         is_user: undefined,
         is_system: undefined,
         name: undefined,
+        isDryRun: true,
     });
 
     let prompts = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:BEFORE]');
