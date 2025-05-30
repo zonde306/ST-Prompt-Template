@@ -818,7 +818,7 @@ async function getSyntaxErrorInfo(code, max_lines = 4);
  * @property {boolean} generate_loader_enabled - [GENERATE] evaluation
  * @property {boolean} render_enabled - Chat message evaluation
  * @property {boolean} render_loader_enabled - [RENDER] evaluation
- * @property {boolean} strict_enabled - Use strict mode
+ * @property {boolean} with_context_disabled - Disabling with statement
  * @property {boolean} debug_enabled - Enable debug logging
  * @property {boolean} autosave_enabled - Save variables after updating
  * @property {boolean} preload_worldinfo_enabled - Preload world info

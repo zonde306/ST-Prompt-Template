@@ -400,7 +400,7 @@ async function evalTemplateHandler(content: string,
             ...opt,
             logging: false,
             options: {
-                strict: settings.strict_enabled ?? false,
+                strict: settings.with_context_disabled ?? false,
                 debug: settings.debug_enabled ?? false,
                 ...(opt.options || {}),
             },

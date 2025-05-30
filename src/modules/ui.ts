@@ -7,7 +7,7 @@ const DEFAULT_SETTINGS : Record<string, { name: string, value: boolean }> = {
     '#pt_generate_loader_enabled': { name: 'generate_loader_enabled', value: true },
     '#pt_render_enabled': { name: 'render_enabled', value: true },
     '#pt_render_loader_enabled': { name: 'render_loader_enabled', value: true },
-    '#pt_strict_enabled': { name: 'strict_enabled', value: false },
+    '#pt_with_context_disabled': { name: 'with_context_disabled', value: false },
     '#pt_debug_enabled': { name: 'debug_enabled', value: false },
     '#pt_autosave_enabled': { name: 'autosave_enabled', value: true },
     '#pt_preload_worldinfo': { name: 'preload_worldinfo_enabled', value: true },
@@ -24,7 +24,7 @@ interface EjsSettings extends Record<string, boolean> {
     generate_loader_enabled: boolean;
     render_enabled: boolean;
     render_loader_enabled: boolean;
-    strict_enabled: boolean;
+    with_context_disabled: boolean;
     debug_enabled: boolean;
     autosave_enabled: boolean;
     preload_worldinfo_enabled: boolean;

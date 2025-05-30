@@ -135,15 +135,17 @@ export async function evalTemplate(content: string, data: Record<string, unknown
     content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'think');
     content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'reasoning');
 
-    /*
-    if(!opts.options?.destructuredLocals) {
+    if(settings.with_context_disabled || opts.options?._with === false) {
         if(!opts.options)
             opts.options = {};
-        
-        // unpack variables
-        opts.options.destructuredLocals = Object.keys(data);
+
+        // opts.options.strict = true;
+        opts.options._with = false;
+
+        // unpack params
+        if(!opts.options?.destructuredLocals)
+            opts.options.destructuredLocals = Object.keys(data);
     }
-    */
 
     if(settings.cache_enabled && opts.options?.cache !== false) {
         if(opts.options?.filename) {
