@@ -317,7 +317,7 @@ export async function prepareContext(end: number = 65535, env: Record<string, un
         ...SHARE_CONTEXT,
         variables: vars,
         execute: async (cmd: string) => (await executeSlashCommandsWithOptions(cmd)).pipe,
-        SillyTavern: SillyTavern.getContext(),
+        context: SillyTavern.getContext(),
         faker: fakerEnv.faker,
         userName: name1,
         assistantName: name2,
