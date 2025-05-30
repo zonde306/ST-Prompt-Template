@@ -3,6 +3,7 @@ export let fakerEnv = {
 };
 
 // jQuery
+/*
 $(async () => {
     // lazy load faker
     window.setTimeout(() => {
@@ -17,3 +18,4 @@ $(async () => {
         });
     }, 100);
 });
+*/
