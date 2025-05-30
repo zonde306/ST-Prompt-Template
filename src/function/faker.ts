@@ -7,7 +7,7 @@ $(async () => {
     // lazy load faker
     window.setTimeout(() => {
         // @ts-expect-error: 2307
-        import('https://esm.sh/@faker-js/faker').then(module => {
+        import('https://esm.sh/@faker-js/faker@9.7.0').then(module => {
             fakerEnv.faker = module;
             console.log('Faker loaded');
             console.log(module);
