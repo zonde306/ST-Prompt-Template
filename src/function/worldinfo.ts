@@ -1,4 +1,4 @@
-import { loadWorldInfo, parseRegexFromString, world_info_case_sensitive, world_info_match_whole_words, world_info_logic, world_info_use_group_scoring, DEFAULT_WEIGHT, METADATA_KEY, selected_world_info, world_info, DEFAULT_DEPTH } from '../../../../../world-info.js';
+import { loadWorldInfo, parseRegexFromString, world_info_case_sensitive, world_info_match_whole_words, world_info_logic, world_info_use_group_scoring, DEFAULT_WEIGHT, METADATA_KEY, selected_world_info, world_info, DEFAULT_DEPTH, world_info_position } from '../../../../../world-info.js';
 import { substituteParams, chat_metadata, this_chid, characters, eventSource, event_types } from '../../../../../../script.js';
 import { power_user } from '../../../../../power-user.js';
 import { getCharaFilename } from '../../../../../utils.js';
@@ -90,7 +90,8 @@ export async function getWorldInfoData(name: string): Promise<WorldInfoData[]> {
     if (!lorebook)
         return [];
 
-    return _.values(lorebook.entries).map(({ uid, ...rest }) => ({ ...rest, uid: Number(uid), world: name })).sort(worldInfoSorter);
+    const entries = Object.values(lorebook.entries).map(({ uid, ...rest }) => ({ ...rest, uid: Number(uid), world: name }));
+    return entries.sort(getWorldInfoSorter(entries));
 }
 
 export async function getWorldInfoTitles(name: string): Promise<string[]> {
@@ -203,7 +204,7 @@ export function selectActivatedEntries(
     const ungrouped = grouped[''] || [];
     if (ungrouped.length > 0 && _.size(grouped) <= 1) {
         // No grouping required
-        return ungrouped.sort(worldInfoSorter);
+        return ungrouped.sort(getWorldInfoSorter(ungrouped));
     }
 
     let matched: WorldInfoData[] = [];
@@ -249,7 +250,8 @@ export function selectActivatedEntries(
         }
     }
 
-    return _.concat(ungrouped, matched).sort(worldInfoSorter);
+    const unsorted = _.concat(ungrouped, matched);
+    return unsorted.sort(getWorldInfoSorter(unsorted));
 }
 
 function transformString(str: string, entry: WorldInfoData) {
@@ -430,9 +432,57 @@ export async function getEnabledWorldInfoEntries(
         }
     }
 
-    return results.sort(worldInfoSorter);
+    return results.sort(getWorldInfoSorter(results));
 }
 
-function worldInfoSorter(a: WorldInfoData, b: WorldInfoData) {
-    return a.position - b.position || a.order - b.order || (b.depth || DEFAULT_DEPTH) - (a.depth || DEFAULT_DEPTH);
+// guess
+const DEPTH_MAPPING = {
+    [world_info_position.before]: 4, // Before Char Defs
+    [world_info_position.after]: 3, // After Char Defs
+    [world_info_position.EMTop]: 2, // Before Example Messages
+    [world_info_position.EMBottom]: 1, // After Example Messages
+    [world_info_position.ANTop]: 1, // Top of Author's Note
+    [world_info_position.ANBottom]: -1, // Bottom of Author's Note
+};
+
+function getWorldInfoSorter(entries: WorldInfoData[]) {
+    return (a: WorldInfoData, b: WorldInfoData) => worldInfoSorter(a, b, Math.max(...entries.map(x => x.position === world_info_position.atDepth ? x.depth : 0)));
+}
+
+function worldInfoSorter(a: WorldInfoData, b: WorldInfoData, top: number = DEFAULT_DEPTH) {
+    function calcDepth(entry: WorldInfoData) {
+        const offset = DEPTH_MAPPING[entry.position];
+
+        // absolute depth
+        if(offset == null)
+            return entry.depth ?? DEFAULT_DEPTH;
+
+        // relative to AN
+        if(entry.position === world_info_position.ANTop || entry.position === world_info_position.ANBottom) {
+            // @ts-expect-error: 2339
+            switch(chat_metadata.note_position) {
+                case 0:
+                case 2:
+                    // After Main Prompt / Story String
+                    return offset + top + DEPTH_MAPPING[world_info_position.before] + 2;
+                case 1:
+                    // In-chat @ Depth
+                    // @ts-expect-error: 2339
+                    return (chat_metadata.note_depth ?? DEFAULT_DEPTH) + (entry.depth ?? DEFAULT_DEPTH);
+                default:
+                     // @ts-expect-error: 2339
+                    throw new Error(`Unknown note_position: ${chat_metadata.note_position}`);
+            }
+        }
+
+        // relative to chat history with preset
+        return offset + top;
+    }
+
+    // Sort by depth (desc), then order (asc), then uid (desc)
+    return calcDepth(b) - calcDepth(a) ||
+        a.order - b.order ||
+        b.uid - a.uid;
+    
+    // return a.position - b.position || a.order - b.order || (b.depth || DEFAULT_DEPTH) - (a.depth || DEFAULT_DEPTH) || a.uid - b.uid;
 }

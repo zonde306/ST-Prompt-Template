@@ -13,3 +13,9 @@ export function* getPresetPrompts() : Generator<string> {
     for(const preset of oai_settings.prompts)
         yield preset.name;
 }
+
+export function getPresetSortedPredefined(identifier: Set<string> = new Set([
+    "main", "dialogueExamples", "chatHistory", "charDescription",
+])) {
+    return oai_settings.prompts.filter(preset => identifier.has(preset.identifier)).map(preset => preset.identifier);
+}
