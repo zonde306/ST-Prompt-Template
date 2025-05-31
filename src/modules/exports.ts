@@ -1,6 +1,6 @@
 import { evalTemplate, prepareContext, getSyntaxErrorInfo } from '../function/ejs';
 import { STATE } from '../function/variables';
-import { applySettings } from './ui';
+import { applySettings, loadSettings } from './ui';
 import { allVariables } from '../function/variables';
 
 export async function init() {
@@ -23,6 +23,7 @@ export async function init() {
             applySettings(features);
         },
         allVariables,
+        resetFeatures: () => loadSettings(true),
     };
 }
 
