@@ -117,6 +117,13 @@ export async function init() {
     eventSource.on(event_types.SETTINGS_LOADED, handleSettingLoad);
     eventSource.on(event_types.SETTINGS_UPDATED, handleSettingSave);
     handleSettingLoad();
+
+    $('#pt_reset').click(function() {
+        if (confirm('Reset all prompt template settings?')) {
+            // @ts-expect-error: 2339
+            globalThis.EjsTemplate.resetFeatures();
+        }
+    });
 }
 
 export async function exit() {
