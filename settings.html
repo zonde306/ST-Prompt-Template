@@ -3,7 +3,7 @@
 		<div class="inline-drawer-toggle inline-drawer-header">
 			<b data-i18n="Prompt template settings">
 				<span>Prompt template settings</span>
-				<a class="notes-link" href="javascript:;" onclick="window.EjsTemplate.resetFeatures()">
+				<a class="notes-link" id="pt_reset">
                     <i class="fa fa-rotate-left"></i>
                 </a>
 			</b>
@@ -104,4 +104,12 @@
 			</label>
 		</div>
 	</div>
+
+	<script>
+		$('#pt_reset').click(function() {
+			if (confirm('Reset all prompt template settings?')) {
+				window.EjsTemplate.resetFeatures();
+			}
+		});
+	</script>
 </div>
