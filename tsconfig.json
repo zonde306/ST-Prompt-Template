@@ -18,7 +18,7 @@
         "noUnusedParameters": true,
         "noImplicitReturns": true,
         "noFallthroughCasesInSwitch": true,
-        "types": ["lodash", "jquery"]
+        "types": ["lodash", "jquery", "toastr"]
       },
     "include": [
         "src/**/*.ts",

@@ -329,40 +329,29 @@ function getScore(haystack: string, entry: WorldInfoData) {
     return primaryScore;
 }
 
-export async function getEnabledWorldInfoEntries(
+export function getEnabledLoreBooks(
     chara : boolean = true, global : boolean = true,
     persona : boolean = true, charaExtra : boolean = true,
-    chat: boolean = true) : Promise<WorldInfoData[]> {
-    let results : WorldInfoData[] = [];
+    chat: boolean = true) : string[] {
+    let results : string[] = [];
 
     if (chara) {
         // @ts-expect-error
         const charaWorld : string = characters[this_chid]?.data?.extensions?.world;
-        if (charaWorld && !selected_world_info.includes(charaWorld)) {
-            const worldInfo = await getWorldInfoData(charaWorld);
-            if (worldInfo.length > 0) {
-                results = results.concat(worldInfo);
-            }
-        }
+        if (charaWorld && !selected_world_info.includes(charaWorld))
+            results.push(charaWorld);
 
         for(const member of getGroupMembers()) {
             // @ts-expect-error
             const world = member?.data?.extensions?.world;
-            if (world && !selected_world_info.includes(world)) {
-                const worldInfo = await getWorldInfoData(world);
-                if (worldInfo.length > 0) {
-                    results = results.concat(worldInfo);
-                }
-            }
+            if (world && !selected_world_info.includes(world))
+                results.push(world);
         }
     }
 
     if (global) {
         for (const world of selected_world_info) {
-            const worldInfo = await getWorldInfoData(world);
-            if (worldInfo.length > 0) {
-                results = results.concat(worldInfo);
-            }
+            results.push(world as string);
         }
     }
 
@@ -370,12 +359,8 @@ export async function getEnabledWorldInfoEntries(
         // @ts-expect-error
         const chatWorld : string = chat_metadata[METADATA_KEY];
         const personaWorld : string = power_user.persona_description_lorebook;
-        if(personaWorld && personaWorld !== chatWorld && !selected_world_info.includes(personaWorld)) {
-            const worldInfo = await getWorldInfoData(personaWorld);
-            if (worldInfo.length > 0) {
-                results = results.concat(worldInfo);
-            }
-        }
+        if(personaWorld && personaWorld !== chatWorld && !selected_world_info.includes(personaWorld))
+            results.push(personaWorld);
     }
 
     if (charaExtra) {
@@ -388,12 +373,8 @@ export async function getEnabledWorldInfoEntries(
                 // @ts-expect-error
                 const primaryBook : string = characters[this_chid]?.data?.extensions?.world;
                 for(const book of extraCharLore.extraBooks) {
-                    if (book !== primaryBook && !selected_world_info.includes(book)) {
-                        const worldInfo = await getWorldInfoData(book);
-                        if (worldInfo.length > 0) {
-                            results = results.concat(worldInfo);
-                        }
-                    }
+                    if (book !== primaryBook && !selected_world_info.includes(book))
+                        results.push(book);
                 }
             }
         }
@@ -409,12 +390,8 @@ export async function getEnabledWorldInfoEntries(
                     // @ts-expect-error
                     const primaryBook : string = member?.data?.extensions?.world;
                     for(const book of extraCharLore.extraBooks) {
-                        if (book !== primaryBook && !selected_world_info.includes(book)) {
-                            const worldInfo = await getWorldInfoData(book);
-                            if (worldInfo.length > 0) {
-                                results = results.concat(worldInfo);
-                            }
-                        }
+                        if (book !== primaryBook && !selected_world_info.includes(book))
+                            results.push(book);
                     }
                 }
             }
@@ -424,14 +401,27 @@ export async function getEnabledWorldInfoEntries(
     if (chat) {
         // @ts-expect-error
         const chatWorld : string = chat_metadata[METADATA_KEY];
-        if (chatWorld && !selected_world_info.includes(chatWorld)) {
-            const worldInfo = await getWorldInfoData(chatWorld);
-            if (worldInfo.length > 0) {
-                results = results.concat(worldInfo);
-            }
-        }
+        if (chatWorld && !selected_world_info.includes(chatWorld))
+            results.push(chatWorld);
     }
 
+    return results;
+}
+
+export async function getEnabledWorldInfoEntries(
+    chara : boolean = true, global : boolean = true,
+    persona : boolean = true, charaExtra : boolean = true,
+    chat: boolean = true) : Promise<WorldInfoData[]> {
+    
+    let results : WorldInfoData[] = [];
+    const lorebooks = getEnabledLoreBooks(chara, global, persona, charaExtra, chat);
+    for (const book of lorebooks) {
+        const worldInfo = await getWorldInfoData(book);
+        if (worldInfo?.length > 0) {
+            results = results.concat(worldInfo);
+        }
+    }
+    
     return results.sort(getWorldInfoSorter(results));
 }
 

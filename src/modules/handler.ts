@@ -6,7 +6,7 @@ import { prepareContext, evalTemplate, getSyntaxErrorInfo, EvalTemplateOptions }
 import { STATE, checkAndSave } from '../function/variables';
 import { getTokenCountAsync } from '../../../../../tokenizers.js';
 import { extension_settings } from '../../../../../extensions.js';
-import { getEnabledWorldInfoEntries, selectActivatedEntries, applyActivateWorldInfo, deactivateActivateWorldInfo } from '../function/worldinfo';
+import { getEnabledWorldInfoEntries, selectActivatedEntries, applyActivateWorldInfo, deactivateActivateWorldInfo, WorldInfo as WorldInfoData, getEnabledLoreBooks } from '../function/worldinfo';
 import { getCharaDefs } from '../function/characters';
 import { settings } from './ui';
 import { activateRegex, deactivateRegex } from '../function/regex';
@@ -314,6 +314,55 @@ export async function handlePreloadWorldInfo(chat_filename? : string, force: boo
     }
 }
 
+async function handleRefreshWorldInfo(name: string, data: WorldInfoData) {
+    if(settings.enabled === false)
+        return;
+    if(settings.preload_worldinfo_enabled === false)
+        return;
+
+    const start = Date.now();
+    
+    const enabled = getEnabledLoreBooks();
+    if(!enabled.includes(name))
+        return;
+
+    const worldInfoData = Object.values(data.entries).filter(data => !data.disable);
+
+    const env = await prepareContext(65535, {
+        runType: 'preparation',
+        runID: runID++,
+        message_id: undefined,
+        swipe_id: undefined,
+        is_last: undefined,
+        is_user: undefined,
+        is_system: undefined,
+        name: undefined,
+        isDryRun: true,
+    });
+
+    let prompts = '';
+
+    if(settings.generate_loader_enabled)
+        prompts += await processSpecialEntities(env, '[GENERATE:BEFORE]');
+
+    for (const data of worldInfoData) {
+        prompts += await evalTemplateHandler(
+            substituteParams(data.content),
+            _.merge(env, { world_info: data }),
+            `worldinfo ${data.world}.${data.comment}`,
+
+            // avoid massive cache invalidations
+            { options: { cache: false } },
+        );
+    }
+
+    if(settings.generate_loader_enabled)
+        await processSpecialEntities(env, '[GENERATE:AFTER]', prompts);
+
+    const end = Date.now() - start;
+    console.log(`[Prompt Template] processing ${worldInfoData.length} world info in ${end}ms`);
+}
+
 async function handleWorldInfoActivation(_type: string, _options : GenerateOptions, dryRun: boolean) {
     if(settings.enabled === false)
         return;
@@ -498,6 +547,7 @@ export async function init() {
     eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, handleOaiActivator);            // for oai
     eventSource.on(event_types.GENERATE_AFTER_COMBINE_PROMPTS, handleCombinedProcessing);    // for other
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleFilterInstall);
+    eventSource.on(event_types.WORLDINFO_UPDATED, handleRefreshWorldInfo);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.on(e, handleMessageRender));
 }
 
@@ -508,5 +558,6 @@ export async function exit() {
     eventSource.removeListener(event_types.CHAT_COMPLETION_PROMPT_READY, handleOaiActivator);
     eventSource.removeListener(event_types.GENERATE_AFTER_COMBINE_PROMPTS, handleCombinedProcessing);
     eventSource.removeListener(event_types.GENERATION_AFTER_COMMANDS, handleFilterInstall);
+    eventSource.removeListener(event_types.WORLDINFO_UPDATED, handleRefreshWorldInfo);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.removeListener(e, handleMessageRender));
 }

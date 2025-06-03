@@ -2,7 +2,7 @@ import ejs from '../3rdparty/ejs.js';
 // @ts-expect-error
 import vm from 'vm-browserify';
 import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.js';
-import { getWorldInfoData, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries, selectActivatedEntries, activateWorldInfo, getWorldInfoEntry, WorldInfoData, activateWorldInfoByKeywords } from './worldinfo';
+import { getWorldInfoData, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries, selectActivatedEntries, activateWorldInfo, getWorldInfoEntry, WorldInfoData, activateWorldInfoByKeywords, getEnabledLoreBooks } from './worldinfo';
 import { allVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption } from './variables';
 import { getCharaDefs, DEFAULT_CHAR_DEFINE, getCharaData } from './characters';
 import { substituteParams, eventSource, this_chid, characters, chat_metadata, name1, name2, getCurrentChatId } from '../../../../../../script.js';
@@ -54,6 +54,7 @@ const SHARE_CONTEXT: Record<string, unknown> = {
     injectPrompt,
     getPromptsInjected,
     activateWorldInfoByKeywords,
+    getEnabledLoreBooks,
 };
 
 const CODE_TEMPLATE = `

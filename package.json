@@ -1,9 +1,12 @@
 {
   "name": "extension-prompt-template",
-  "version": "1.9.10",
+  "version": "1.9.11",
   "private": true,
   "dependencies": {
+    "jquery": "^3.7.1",
+    "lodash": "^4.17.21",
     "syntax-error": "^1.4.0",
+    "toastr": "^2.1.4",
     "tsc": "^2.0.4",
     "vm-browserify": "^1.1.2",
     "xxhashjs": "^0.2.2"
