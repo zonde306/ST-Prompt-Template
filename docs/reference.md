@@ -337,13 +337,22 @@ function activateRegex(pattern, replace, opts = {});
  * @param {string} [uid=''] - Unique ID
  */
 function injectPrompt(key, prompt, order = 100, sticky = 0, uid = '');
+
 /**
- * Get injected prompts by key
+ * Content processor
+ * @typedef {Object} PostProcess
+ * @property {(string|RegExp)} search - Search content
+ * @property {string} replace - Replace content
+ */
+
+/**
+ * Read merged prompt injection
  *
  * @param {string} key - Injection key (group)
- * @returns {string} Concatenated injected prompt content
+ * @param {PostProcess[]} [postprocess=[]] - Content processor
+ * @returns {string} - Merged injection prompt words
  */
-function getPromptsInjected(key);
+function getPromptsInjected(key, postprocess = []);
 ```
 
 > `flags` types:

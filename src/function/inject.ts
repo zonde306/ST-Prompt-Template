@@ -24,16 +24,48 @@ export function injectPrompt(
     promptInjected.get(key)!.set(uid, { prompt, order, sticky, uid: uid });
 }
 
-export function getPromptsInjected(key: string): string {
+export interface PostProcess {
+    search: RegExp | string;
+    replace: string;
+}
+
+export function getPromptsInjected(key: string, postprocess: PostProcess[] = []): string {
     const innerMap = promptInjected.get(key);
     if (!innerMap) {
         return '';
     }
 
-    return Array.from(innerMap.values())
+    /*
+    return [
+            // a string
+            Array.from(innerMap.values())
+                .sort((a, b) => a.order - b.order)
+                .map(p => p.prompt)
+                .join('\n'),
+        
+            // some postprocessing
+            ...postprocess
+        ]
+        .reduce(
+            (left: string | PostProcess, right: PostProcess | string) => {
+            // left always a string
+            // right always a PostProcess
+            return (left as string).replace(
+                (right as PostProcess).search,
+                (right as PostProcess).replace
+            );
+        }) as string; // final always a string
+    */
+
+    let combinedPrompt = Array.from(innerMap.values())
         .sort((a, b) => a.order - b.order)
         .map(p => p.prompt)
         .join('\n');
+
+    for (const pp of postprocess)
+        combinedPrompt = combinedPrompt.replace(pp.search, pp.replace);
+
+    return combinedPrompt;
 }
 
 export function deactivatePromptInjection(count: number = 1): void {

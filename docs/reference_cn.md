@@ -383,12 +383,20 @@ function activateRegex(pattern, string, opts = {});
 function injectPrompt(key, prompt, order = 100, sticky = 0, uid = '');
 
 /**
+ * 内容处理器
+ * @typedef {Object} PostProcess
+ * @property {(string|RegExp)} search - 搜索的内容
+ * @property {string} replace - 替换的内容
+ */
+
+/**
  * 读取提示词注入
  *
  * @param {string} key - 注入键(组)
+ * @param {PostProcess[]} [postprocess=[]] - 内容处理
  * @returns {string} - 已注入的提示词内容
  */
-function getPromptsInjected(key);
+function getPromptsInjected(key, postprocess = []);
 ```
 
 > `flags` 类型:
