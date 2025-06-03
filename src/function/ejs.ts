@@ -311,7 +311,7 @@ async function boundedEvalTemplate(this: Record<string, unknown>, content: strin
     ));
 }
 
-export async function prepareContext(end: number = 65535, env: Record<string, unknown> = {}): Promise<Record<string, unknown>> {
+export async function prepareContext(end?: number, env: Record<string, unknown> = {}): Promise<Record<string, unknown>> {
     let vars = allVariables(end);
     STATE.cache = vars;
     let context = {
