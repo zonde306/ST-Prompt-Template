@@ -1,6 +1,6 @@
 {
   "name": "extension-prompt-template",
-  "version": "1.9.11",
+  "version": "1.9.11.1",
   "private": true,
   "dependencies": {
     "jquery": "^3.7.1",

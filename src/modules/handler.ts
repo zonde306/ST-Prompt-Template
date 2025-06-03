@@ -1,7 +1,7 @@
 // @ts-expect-error
 import vm from 'vm-browserify';
 import { Message, ChatData, CombinedPromptData as CombinedData } from './defines';
-import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock, substituteParams } from '../../../../../../script.js';
+import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock, substituteParams, this_chid } from '../../../../../../script.js';
 import { prepareContext, evalTemplate, getSyntaxErrorInfo, EvalTemplateOptions } from '../function/ejs';
 import { STATE, checkAndSave } from '../function/variables';
 import { getTokenCountAsync } from '../../../../../tokenizers.js';
@@ -318,6 +318,8 @@ async function handleRefreshWorldInfo(name: string, data: WorldInfoData) {
     if(settings.enabled === false)
         return;
     if(settings.preload_worldinfo_enabled === false)
+        return;
+    if(!this_chid)
         return;
 
     const start = Date.now();
