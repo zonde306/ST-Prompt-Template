@@ -6,8 +6,7 @@ export let fakerEnv = {
 $(async () => {
     // lazy load faker
     window.setTimeout(() => {
-        // @ts-expect-error: 2307
-        import('https://esm.sh/@faker-js/faker@9.7.0').then(module => {
+        import('../../libs/faker.mjs').then(module => {
             fakerEnv.faker = module;
             console.log('Faker loaded');
             console.log(module);
