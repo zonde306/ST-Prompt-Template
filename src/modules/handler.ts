@@ -144,10 +144,6 @@ async function handleMessageRender(message_id: string, isDryRun?: boolean) {
     const container = $(`div.mes[mesid="${message_id}"]`)?.find('.mes_text');
     // don't render if the message is swping (with generating)
     if (!container?.text() || message.mes === message.swipes?.[message.swipe_id - 1]) {
-        if(message.extra?.display_text) {
-            message.extra.display_text = undefined;
-            updateMessageBlock(message_idx, message, { rerenderMessage: true });
-        }
         console.warn(`chat message #${message_id}.${message.swipe_id} is generating`);
         return;
     }
@@ -156,8 +152,7 @@ async function handleMessageRender(message_id: string, isDryRun?: boolean) {
     if (isDryRun && !message?.is_ejs_processed?.[message.swipe_id || 0])
         STATE.isDryRun = isDryRun = false;
     
-    // allows access to current variables without updating them
-    const env = await prepareContext(message_idx + Number(!!isDryRun), {
+    const env = await prepareContext(message_idx, {
         runType: 'render',
         message_id: message_idx,
         swipe_id: message.swipe_id,
@@ -182,19 +177,10 @@ async function handleMessageRender(message_id: string, isDryRun?: boolean) {
         const newContent = await evalTemplateHandler(message.mes, env, `chat #${message_idx}.${message.swipe_id} raw`);
         env.runType = 'render';
         if(newContent != null) {
-            if(!message.extra)
-                message.extra = {};
-
-            // only modify display content
-            message.extra.display_text = newContent;
-            updateMessageBlock(message_idx, message, { rerenderMessage: true });
-        } else if(message.extra?.display_text) {
-            message.extra.display_text = undefined;
+            // Permanent modification
+            message.mes = newContent;
             updateMessageBlock(message_idx, message, { rerenderMessage: true });
         }
-    } else if(message.extra?.display_text) {
-        message.extra.display_text = undefined;
-        updateMessageBlock(message_idx, message, { rerenderMessage: true });
     }
 
     const html = container.html();

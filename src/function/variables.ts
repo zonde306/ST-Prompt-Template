@@ -10,14 +10,14 @@ export let STATE = {
     traceId: 0,
 };
 
-export function allVariables(end : number = 65535) {
+export function allVariables(end? : number) {
     return _.mergeWith({},
         // @ts-expect-error: 2339
         getCharaData()?.data?.extensions?.variables || {},
         extension_settings.variables.global,
         // @ts-expect-error: 2339
         chat_metadata.variables || {},
-        ...chat.slice(0, Math.max(end - 1, 0)).map(msg => msg.variables?.[msg.swipe_id || 0] || {}),
+        ...chat.slice(0, end).map(msg => msg.variables?.[msg.swipe_id || 0] || {}),
         { _trace_id : (STATE.traceId)++, _modify_id: 0 },
         (_dst : unknown, src : unknown) => _.isArray(src) ? src : undefined,
     );
@@ -88,7 +88,7 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
     const { noCache } = options;
     if(noCache || this?.runID === undefined) {
         // @ts-expect-error: TS2322
-        STATE.cache = allVariables(this?.message_id !== undefined ? this.message_id : 65535);
+        STATE.cache = allVariables(this?.message_id);
         if(settings.debug_enabled) {
             console.debug(`[Prompt Template] reload variables cache:`);
             console.debug(STATE.cache);
@@ -256,7 +256,7 @@ export function getVariable(this : Record<string, unknown>, key : string,
     const { noCache } = options;
     if(noCache || this?.runID === undefined) {
         // @ts-expect-error: TS2322
-        STATE.cache = allVariables(this?.message_id !== undefined ? this.message_id : 65535);
+        STATE.cache = allVariables(this?.message_id);
         if(settings.debug_enabled) {
             console.debug(`[Prompt Template] reload variables cache:`);
             console.debug(STATE.cache);
@@ -329,7 +329,7 @@ export function increaseVariable(this : Record<string, unknown>, key : string,
     const { noCache } = options;
     if(noCache || this?.runID === undefined) {
         // @ts-expect-error: TS2322
-        STATE.cache = allVariables(this?.message_id !== undefined ? this.message_id : 65535);
+        STATE.cache = allVariables(this?.message_id);
         if(settings.debug_enabled) {
             console.debug(`[Prompt Template] reload variables cache:`);
             console.debug(STATE.cache);
