@@ -152,7 +152,7 @@ async function handleMessageRender(message_id: string, isDryRun?: boolean) {
     if (isDryRun && !message?.is_ejs_processed?.[message.swipe_id || 0])
         STATE.isDryRun = isDryRun = false;
     
-    const env = await prepareContext(message_idx, {
+    const env = await prepareContext(message_idx + 1, {
         runType: 'render',
         message_id: message_idx,
         swipe_id: message.swipe_id,
