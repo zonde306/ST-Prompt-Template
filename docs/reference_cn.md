@@ -358,6 +358,7 @@ function getChatMessages(start, end, role);
  * @property {boolean} [assistant=true] - 对AI输出生效
  * @property {boolean} [worldinfo=false] - 对世界信息生效
  * @property {boolean} [reasoning=true] - 对推理生效
+ * @property {boolean} [message=true] - 对楼层消息生效（会永久修改）
  */
 
 /**

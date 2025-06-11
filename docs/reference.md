@@ -318,6 +318,7 @@ function getChatMessages(start, end, role);
  * @property {boolean} [assistant=true] - Apply to AI output
  * @property {boolean} [worldinfo=false] - Apply to World Info
  * @property {boolean} [reasoning=true] - Apply to reasoning
+ * @property {boolean} [message=true] - Apply to chat message (permanent)
  */
 /**
  * Create temporary regex for message processing

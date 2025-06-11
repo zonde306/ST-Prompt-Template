@@ -9,7 +9,7 @@ import { extension_settings } from '../../../../../extensions.js';
 import { getEnabledWorldInfoEntries, selectActivatedEntries, applyActivateWorldInfo, deactivateActivateWorldInfo, WorldInfo as WorldInfoData, getEnabledLoreBooks } from '../function/worldinfo';
 import { getCharaDefs } from '../function/characters';
 import { settings } from './ui';
-import { activateRegex, deactivateRegex } from '../function/regex';
+import { activateRegex, deactivateRegex, deactivateMessageRegex, applyMessageRegex } from '../function/regex';
 import { deactivatePromptInjection } from '../function/inject';
 
 let runID = 0;
@@ -174,7 +174,8 @@ async function handleMessageRender(message_id: string, isDryRun?: boolean) {
 
     if(!isDryRun && settings.raw_message_evaluation_enabled) {
         env.runType = 'render_permanent';
-        const newContent = await evalTemplateHandler(message.mes, env, `chat #${message_idx}.${message.swipe_id} raw`);
+        const newContent = await evalTemplateHandler(applyMessageRegex(message.mes), env, `chat #${message_idx}.${message.swipe_id} raw`);
+        deactivateMessageRegex();
         env.runType = 'render';
         if(newContent != null) {
             // Permanent modification

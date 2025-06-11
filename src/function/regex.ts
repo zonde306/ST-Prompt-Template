@@ -2,10 +2,12 @@ import { extension_settings } from '../../../../../extensions.js';
 
 interface Regex {
     generateRegex: Set<string>;
+    messageRegex: Map<string, { search: RegExp | string, replace: string | Function }>;
 }
 
 export const REGEX : Regex = {
     generateRegex: new Set(),
+    messageRegex: new Map(),
 };
 
 interface RegexOptions {
@@ -16,13 +18,14 @@ interface RegexOptions {
     assistant?: boolean;
     worldinfo?: boolean;
     reasoning?: boolean;
+    message?: boolean;
 }
 
-export function activateRegex(pattern: string | RegExp, replace: string, opts: RegexOptions = {}) {
+export function activateRegex(pattern: string | RegExp, replace: string | Function, opts: RegexOptions = {}) {
     const uuid = opts.uuid || 'regex-' + Math.random().toString(36).substring(2, 9);
     if(REGEX.generateRegex.has(uuid)) {
         const regex = extension_settings.regex.find(x => x.id === uuid);
-        if(regex) {
+        if(regex && typeof replace === 'string') {
             regex.findRegex = pattern instanceof RegExp ? `/${pattern.source}/${pattern.flags}` : pattern;
             regex.replaceString = replace;
             regex.placement = _.compact([
@@ -32,7 +35,15 @@ export function activateRegex(pattern: string | RegExp, replace: string, opts: R
                 opts.reasoning ?? true ? 6 : 0,
             ]);
         }
-    } else {
+    } else if(opts.message) {
+        REGEX.messageRegex.set(
+            uuid,
+            {
+                search: pattern,
+                replace
+            }
+        );
+    } else if(typeof replace === 'string') {
         extension_settings.regex.push({
             id: uuid,
             scriptName: `\u200b${uuid}`,
@@ -53,8 +64,8 @@ export function activateRegex(pattern: string | RegExp, replace: string, opts: R
             minDepth: opts.minDepth ?? NaN,
             maxDepth: opts.minDepth ?? NaN,
         });
+        REGEX.generateRegex.add(uuid);
     }
-    REGEX.generateRegex.add(uuid);
 }
 
 export function deactivateRegex(uuid?: string) {
@@ -70,4 +81,18 @@ export function deactivateRegex(uuid?: string) {
         extension_settings.regex = extension_settings.regex.filter(x => !x.scriptName.startsWith('\u200b'));
         REGEX.generateRegex.clear();
     }
+}
+
+export function deactivateMessageRegex(uuid?: string) {
+    if(uuid) {
+        REGEX.messageRegex.delete(uuid);
+    } else {
+        REGEX.messageRegex.clear();
+    }
+}
+
+export function applyMessageRegex(content: string) {
+    // @ts-expect-error: string.replace replaceValue is allow to pass a function
+    REGEX.messageRegex.forEach(x => content = content.replace(x.search, x.replace));
+    return content;
 }
