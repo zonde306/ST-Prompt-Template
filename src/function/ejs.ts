@@ -255,8 +255,8 @@ export let SharedDefines: Record<string, unknown> = {};
 
 function boundedDefine(this: Record<string, unknown>, name: string, value: unknown, merge: boolean = false) {
     // console.debug(`[Prompt Template] global ${name} defined: ${value}`);
+    const oldValue = _.get(SharedDefines, name);
     if (merge) {
-        const oldValue = _.get(SharedDefines, name);
         if(_.isArray(oldValue) && _.isArray(value))
             value = _.concat(oldValue, value);
         else if(_.isPlainObject(oldValue) && _.isPlainObject(value))
@@ -265,6 +265,7 @@ function boundedDefine(this: Record<string, unknown>, name: string, value: unkno
 
     _.set(SharedDefines, name, value);
     _.set(this, name, value);
+    return oldValue;
 }
 
 function boundCloneDefines(self: Record<string, unknown>, defines: Record<string, unknown> | unknown[]) {
