@@ -106,6 +106,7 @@ export interface EvalTemplateOptions {
     when?: string;
     options?: EjsOptions;
     disableMarkup?: string;
+    filtration?: boolean;
 }
 
 function escapeEjsInDisabledBlocks(str : string, options : EjsOptions = {}, markup: string = 'escape-ejs') {
@@ -131,10 +132,12 @@ export async function evalTemplate(content: string, data: Record<string, unknown
 
     // avoiding accidental evaluation
     let result = '';
-    content = escapeEjsInDisabledBlocks(content, opts.options || {}, opts.disableMarkup || 'escape-ejs');
-    content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'thinking');
-    content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'think');
-    content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'reasoning');
+    if(opts.filtration) {
+        content = escapeEjsInDisabledBlocks(content, opts.options || {}, opts.disableMarkup || 'escape-ejs');
+        content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'thinking');
+        content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'think');
+        content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'reasoning');
+    }
 
     if(settings.with_context_disabled || opts.options?._with === false) {
         if(!opts.options)

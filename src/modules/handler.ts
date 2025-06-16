@@ -162,7 +162,7 @@ async function handleMessageRender(message_id: string, isDryRun?: boolean) {
 
     if(!isDryRun && settings.raw_message_evaluation_enabled) {
         env.runType = 'render_permanent';
-        const newContent = await evalTemplateHandler(applyMessageRegex(message.mes), env, `chat #${message_idx}.${message.swipe_id} raw`);
+        const newContent = await evalTemplateHandler(applyMessageRegex(message.mes), env, `chat #${message_idx}.${message.swipe_id} raw`, { filtration: true });
         deactivateMessageRegex();
         env.runType = 'render';
         if(newContent != null) {
@@ -181,6 +181,7 @@ async function handleMessageRender(message_id: string, isDryRun?: boolean) {
             openDelimiter: '&lt;',
             closeDelimiter: '&gt;',
         },
+        filtration: true,
     });
 
     if(settings.code_blocks_enabled === false) {
