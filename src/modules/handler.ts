@@ -1,6 +1,6 @@
 // @ts-expect-error
 import vm from 'vm-browserify';
-import { Message, ChatData, CombinedPromptData as CombinedData } from './defines';
+import { Message, GenerateAfterData, CombinedPromptData, Chat as ChatData } from './defines';
 import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock, substituteParams, this_chid } from '../../../../../../script.js';
 import { prepareContext, evalTemplate, getSyntaxErrorInfo, EvalTemplateOptions } from '../function/ejs';
 import { STATE, checkAndSave } from '../function/variables';
@@ -14,16 +14,18 @@ import { deactivatePromptInjection } from '../function/inject';
 
 let runID = 0;
 let isFakeRun = false;
+let isDryRun = false;
 
 // just a randomly generated value
 const regexFilterUUID = "a8ff1bc7-15f2-4122-b43b-ded692560538";
 
-async function handleOaiGenerating(data: ChatData) {
+async function handleGenerating(data: GenerateAfterData) {
+    if(isDryRun)
+        return;
     if(settings.enabled === false)
         return;
 
-    if(data.dryRun)
-        return;
+    const chat = typeof data.prompt === 'string' ? [{ role: '', content: data.prompt }] : data.prompt;
 
     // No longer available here
     deactivateRegex();
@@ -50,7 +52,7 @@ async function handleOaiGenerating(data: ChatData) {
     const before = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:BEFORE]');
 
     let prompts = before;
-    for (const [idx, message] of data.chat.entries()) {
+    for (const [idx, message] of chat.entries()) {
         const beforeMessage =  settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:BEFORE]`);
 
         if(typeof message.content === 'string') {
@@ -79,11 +81,15 @@ async function handleOaiGenerating(data: ChatData) {
     const after = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:AFTER]', prompts);
     prompts += after;
 
-    data.chat[0].content = before + data.chat[0].content;
-    data.chat[data.chat.length - 1].content += after;
+    if(typeof data.prompt === 'string') {
+        data.prompt = before + chat[0].content + after;
+    } else {
+        chat[0].content = before + chat[0].content;
+        chat[chat.length - 1].content += after;
+    }
 
     const end = Date.now() - start;
-    console.log(`[Prompt Template] processing ${data.chat.length} messages in ${end}ms`);
+    console.log(`[Prompt Template] processing ${chat.length} messages in ${end}ms`);
 
     await checkAndSave();
     updateTokens(prompts, 'send');
@@ -92,24 +98,6 @@ async function handleOaiGenerating(data: ChatData) {
     deactivateActivateWorldInfo();
     deactivateRegex();
     deactivatePromptInjection();
-}
-
-async function handleCombinedProcessing(data: CombinedData) {
-    if(!data.prompt) return;
-
-    const oaiData = {
-        dryRun: data.dryRun,
-        chat: [{
-            role: '',
-            content: data.prompt,
-        }],
-    } as ChatData;
-
-    // pass by reference
-    await handleOaiActivator(oaiData);
-    await handleOaiGenerating(oaiData);
-
-    data.prompt = oaiData.chat[0].content as string;
 }
 
 async function handleMessageRender(message_id: string, isDryRun?: boolean) {
@@ -360,14 +348,15 @@ async function handleWorldInfoActivation(_type: string, _options : GenerateOptio
     await applyActivateWorldInfo(true);
 }
 
-async function handleOaiActivator(data: ChatData) {
+async function handleActivator(data: GenerateAfterData) {
+    if(!isDryRun)
+        return;
     if(settings.enabled === false)
         return;
     if(settings.world_active_enabled === false)
         return;
 
-    if(!data.dryRun)
-        return;
+    const chat = typeof data.prompt === 'string' ? [{ role: '', content: data.prompt }] : data.prompt;
 
     STATE.isDryRun = true;
     const start = Date.now();
@@ -385,7 +374,7 @@ async function handleOaiActivator(data: ChatData) {
     });
 
     let prompts = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:BEFORE]');
-    for (const [idx, message] of data.chat.entries()) {
+    for (const [idx, message] of chat.entries()) {
         const beforeMessage = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:BEFORE]`);
 
         if (typeof message.content === 'string') {
@@ -407,7 +396,7 @@ async function handleOaiActivator(data: ChatData) {
         await processSpecialEntities(env, '[GENERATE:AFTER]', prompts);
 
     const end = Date.now() - start;
-    console.log(`[Prompt Template] processing ${data.chat.length} messages in ${end}ms`);
+    console.log(`[Prompt Template] processing ${chat.length} messages in ${end}ms`);
 }
 
 function updateTokens(prompts: string, type: 'send' | 'receive') {
@@ -532,21 +521,20 @@ const MESSAGE_RENDER_EVENTS = [
 export async function init() {
     eventSource.makeFirst(event_types.CHAT_CHANGED, handlePreloadWorldInfo);
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleWorldInfoActivation);
-    eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, handleOaiGenerating);           // for oai
-    eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, handleOaiActivator);            // for oai
-    eventSource.on(event_types.GENERATE_AFTER_COMBINE_PROMPTS, handleCombinedProcessing);    // for other
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleFilterInstall);
     eventSource.on(event_types.WORLDINFO_UPDATED, handleRefreshWorldInfo);
+    eventSource.on(event_types.GENERATE_AFTER_COMBINE_PROMPTS, (data: CombinedPromptData) => isDryRun = data.dryRun);
+    eventSource.on(event_types.GENERATE_AFTER_DATA, handleActivator);
+    eventSource.on(event_types.GENERATE_AFTER_DATA, handleGenerating);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.on(e, handleMessageRender));
 }
 
 export async function exit() {
     eventSource.removeListener(event_types.CHAT_CHANGED, handlePreloadWorldInfo);
     eventSource.removeListener(event_types.GENERATION_AFTER_COMMANDS, handleWorldInfoActivation);
-    eventSource.removeListener(event_types.CHAT_COMPLETION_PROMPT_READY, handleOaiGenerating);
-    eventSource.removeListener(event_types.CHAT_COMPLETION_PROMPT_READY, handleOaiActivator);
-    eventSource.removeListener(event_types.GENERATE_AFTER_COMBINE_PROMPTS, handleCombinedProcessing);
     eventSource.removeListener(event_types.GENERATION_AFTER_COMMANDS, handleFilterInstall);
     eventSource.removeListener(event_types.WORLDINFO_UPDATED, handleRefreshWorldInfo);
+    eventSource.removeListener(event_types.GENERATE_AFTER_DATA, handleActivator);
+    eventSource.removeListener(event_types.GENERATE_AFTER_DATA, handleGenerating);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.removeListener(e, handleMessageRender));
 }

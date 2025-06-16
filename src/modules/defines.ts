@@ -142,3 +142,7 @@ export interface CombinedPromptData {
     prompt: string;
     dryRun: boolean;
 }
+
+export interface GenerateAfterData {
+    prompt: string | Chat[];
+}
