@@ -36,6 +36,7 @@ async function handleGenerating(data: GenerateAfterData) {
 
     STATE.isDryRun = false;
     const start = Date.now();
+    console.log(`[Prompt Template] start generating ${chat.length} messages`);
 
     const env = await prepareContext(65535, {
         runType: 'generate',
@@ -361,6 +362,7 @@ async function handleActivator(data: GenerateAfterData) {
 
     STATE.isDryRun = true;
     const start = Date.now();
+    console.log(`[Prompt Template] start activator ${chat.length} messages`);
 
     const env = await prepareContext(65535, {
         runType: 'preparation',
