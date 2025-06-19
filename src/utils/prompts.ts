@@ -1,5 +1,6 @@
 import { EvalTemplateOptions, EjsOptions } from "../function/ejs";
 import { getTokenCountAsync } from '../../../../../tokenizers.js';
+import { extension_settings } from '../../../../../extensions.js';
 
 // Delete the HTML markup inside <% ... %>
 export function removeHtmlTagsInsideBlock(text: string) {
