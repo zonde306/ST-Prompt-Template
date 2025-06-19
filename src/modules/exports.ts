@@ -1,4 +1,4 @@
-import { evalTemplate, prepareContext, getSyntaxErrorInfo } from '../function/ejs';
+import { evalTemplate, prepareContext, getSyntaxErrorInfo, SharedDefines } from '../function/ejs';
 import { STATE } from '../function/variables';
 import { applySettings, loadSettings } from './ui';
 import { allVariables } from '../function/variables';
@@ -24,6 +24,7 @@ export async function init() {
         },
         allVariables,
         resetFeatures: () => loadSettings(true),
+        defines: SharedDefines,
     };
 }
 

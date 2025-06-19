@@ -1,16 +1,17 @@
 // @ts-expect-error
 import vm from 'vm-browserify';
-import { Message, GenerateAfterData, CombinedPromptData, Chat as ChatData } from './defines';
+import { Message, GenerateAfterData, CombinedPromptData } from './defines';
 import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock, substituteParams, this_chid } from '../../../../../../script.js';
-import { prepareContext, evalTemplate, getSyntaxErrorInfo, EvalTemplateOptions } from '../function/ejs';
+import { prepareContext } from '../function/ejs';
 import { STATE, checkAndSave } from '../function/variables';
-import { getTokenCountAsync } from '../../../../../tokenizers.js';
 import { extension_settings } from '../../../../../extensions.js';
-import { getEnabledWorldInfoEntries, selectActivatedEntries, applyActivateWorldInfo, deactivateActivateWorldInfo, WorldInfo as WorldInfoData, getEnabledLoreBooks } from '../function/worldinfo';
+import { getEnabledWorldInfoEntries, applyActivateWorldInfo, deactivateActivateWorldInfo, WorldInfo as WorldInfoData, getEnabledLoreBooks } from '../function/worldinfo';
 import { getCharaDefs } from '../function/characters';
 import { settings } from './ui';
 import { activateRegex, deactivateRegex, deactivateMessageRegex, applyMessageRegex } from '../function/regex';
 import { deactivatePromptInjection } from '../function/inject';
+import { updateTokens, removeHtmlTagsInsideBlock, escapePreContent, cleanPreContent, escapeReasoningBlocks, unescapePreContent } from '../utils/prompts';
+import { evalTemplateHandler, processSpecialEntities } from '../utils/evaluate';
 
 let runID = 0;
 let isFakeRun = false;
@@ -133,7 +134,7 @@ async function handleMessageRender(message_id: string, isDryRun?: boolean) {
     const container = $(`div.mes[mesid="${message_id}"]`)?.find('.mes_text');
     // don't render if the message is swping (with generating)
     if (!container?.text() || message.mes === message.swipes?.[message.swipe_id - 1]) {
-        console.warn(`chat message #${message_id}.${message.swipe_id} is generating`);
+        console.info(`chat message #${message_id}.${message.swipe_id} is generating`);
         return;
     }
 
@@ -163,7 +164,11 @@ async function handleMessageRender(message_id: string, isDryRun?: boolean) {
 
     if(!isDryRun && settings.raw_message_evaluation_enabled) {
         env.runType = 'render_permanent';
-        const newContent = await evalTemplateHandler(applyMessageRegex(message.mes), env, `chat #${message_idx}.${message.swipe_id} raw`, { filtration: true });
+        const newContent = await evalTemplateHandler(
+            escapeReasoningBlocks(applyMessageRegex(message.mes)),
+            env,
+            `chat #${message_idx}.${message.swipe_id} raw`
+        );
         deactivateMessageRegex();
         env.runType = 'render';
         if(newContent != null) {
@@ -174,21 +179,27 @@ async function handleMessageRender(message_id: string, isDryRun?: boolean) {
     }
 
     const html = container.html();
-    const content = settings.code_blocks_enabled === false ? escapePreContent(html) : cleanPreContent(html);
 
-    let newContent = await evalTemplateHandler(removeHtmlTagsInsideBlock(content), env, `chat #${message_idx}.${message.swipe_id}`, {
+    // patch
+    const content = settings.code_blocks_enabled === false ? escapePreContent(html) : cleanPreContent(html);
+    const opts = {
         escaper,
         options: {
             openDelimiter: '&lt;',
             closeDelimiter: '&gt;',
         },
-        filtration: true,
-    });
+    };
+
+    let newContent = await evalTemplateHandler(
+        escapeReasoningBlocks(removeHtmlTagsInsideBlock(content), opts),
+        env,
+        `chat #${message_idx}.${message.swipe_id}`,
+        opts
+    );
 
     if(settings.code_blocks_enabled === false) {
-        newContent = newContent?.replace(/(<pre\b[^>]*>)([\s\S]*?)(<\/pre>)/gi, (m, p1, p2, p3) => {
-            return p1 + p2.replace(/#lt#/g, '&lt;').replace(/#gt#/g, '&gt;') + p3;
-        }) ?? null;
+        // unpatch
+        newContent = unescapePreContent(newContent);
     }
 
     const after = settings.render_loader_enabled === false ? '' : await processSpecialEntities(env, '[RENDER:AFTER]', newContent || '', { escaper });
@@ -402,78 +413,6 @@ async function handleActivator(data: GenerateAfterData) {
     console.log(`[Prompt Template] processing ${chat.length} messages in ${end}ms`);
 }
 
-function updateTokens(prompts: string, type: 'send' | 'receive') {
-    window.setTimeout(() => {
-        getTokenCountAsync(prompts).then(count => {
-            console.log(`[Prompt Template] processing ${type} result: ${count} tokens and ${prompts.length} chars`);
-            switch (type) {
-                case 'send':
-                    // @ts-expect-error
-                    extension_settings.variables.global.LAST_SEND_TOKENS = count;
-                    // @ts-expect-error
-                    extension_settings.variables.global.LAST_SEND_CHARS = prompts.length;
-                    break;
-                case 'receive':
-                    // @ts-expect-error
-                    extension_settings.variables.global.LAST_RECEIVE_TOKENS = count;
-                    // @ts-expect-error
-                    extension_settings.variables.global.LAST_RECEIVE_CHARS = prompts.length;
-                    break;
-            }
-        });
-    });
-}
-
-async function evalTemplateHandler(content: string,
-    env: Record<string, unknown>,
-    where: string = '',
-    opt: EvalTemplateOptions = {}):
-    Promise<string | null> {
-    try {
-        return await evalTemplate(content, env, {
-            ...opt,
-            logging: false,
-            options: {
-                strict: settings.with_context_disabled ?? false,
-                debug: settings.debug_enabled ?? false,
-                ...(opt.options || {}),
-            },
-        });
-    } catch (err) {
-        if(settings.debug_enabled) {
-            const contentWithLines = content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
-            console.debug(`[Prompt Template] handling ${where} errors:\n${contentWithLines}`);
-        }
-
-        if (err instanceof SyntaxError)
-            err.message += getSyntaxErrorInfo(content);
-
-        console.error(err);
-
-        // @ts-expect-error
-        toastr.error(err.message, `EJS Error`, {  onclick: () => navigator.clipboard.writeText(err.message).then(() => toastr.success('Copied to clipboard!') )});
-    }
-
-    return null;
-}
-
-async function processSpecialEntities(env: Record<string, unknown>, prefix : string, keywords : string = '', options : EvalTemplateOptions = {}) {
-    const worldInfoData = selectActivatedEntries((await getEnabledWorldInfoEntries()).filter(x => x.comment.startsWith(prefix)), keywords, { withConstant: true, withDisabled: true, onlyDisabled: true });
-    let prompt = '';
-    for(const data of worldInfoData) {
-        const result = await evalTemplateHandler(
-            substituteParams(data.content),
-            _.merge(env, { world_info: data }),
-            `worldinfo ${data.world}.${data.comment}`,
-            options,
-        );
-        if(result != null)
-            prompt += result;
-    }
-
-    return prompt;
-}
-
 async function handleFilterInstall(_type: string, _options : GenerateOptions, dryRun: boolean) {
     if(settings.enabled === false)
         return;
@@ -488,29 +427,6 @@ async function handleFilterInstall(_type: string, _options : GenerateOptions, dr
         deactivateRegex(regexFilterUUID);
         console.debug('[Prompt Template] remove regex filter');
     }
-}
-
-function cleanPreContent(html : string) {
-    return html.replace(/<pre\b[^>]*>([\s\S]*?)<\/pre>/gi, (_preMatch, preContent : string) => {
-        const cleanedContent = preContent.replace(/&lt;%([\s\S]*?)%&gt;/g, (_blockMatch, content : string) => {
-            return `&lt;%${content.replace(/<[^>]+>/g, '')}%&gt;`;
-        });
-        return `<pre>${cleanedContent}</pre>`;
-    });
-}
-
-function escapePreContent(html: string) {
-    return html.replace(/(<pre\b[^>]*>)([\s\S]*?)(<\/pre>)/gi, (_m, p1, p2, p3) => {
-        return p1 + p2.replace(/&lt;/g, '#lt#').replace(/&gt;/g, '#gt#') + p3;
-    })
-}
-
-function removeHtmlTagsInsideBlock(text: string) {
-    const result = text.replace(/&lt;%((?:[^%]|%[^>])*)%&gt;/g, (_match, content : string) => {
-        const cleanedContent = content.replace(/<[^>]+>/g, '');
-        return `&lt;%${cleanedContent}%&gt;`;
-    });
-    return result;
 }
 
 const MESSAGE_RENDER_EVENTS = [
