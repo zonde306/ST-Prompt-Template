@@ -442,7 +442,12 @@ export async function init() {
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleWorldInfoActivation);
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleFilterInstall);
     eventSource.on(event_types.WORLDINFO_UPDATED, handleRefreshWorldInfo);
-    eventSource.on(event_types.GENERATE_AFTER_COMBINE_PROMPTS, (data: CombinedPromptData) => isDryRun = data.dryRun);
+    eventSource.on(event_types.GENERATE_AFTER_COMBINE_PROMPTS,
+        (data: CombinedPromptData) => {
+            isDryRun = data.dryRun;
+            console.log(`[Prompt Template] dry run: ${isDryRun}`);
+        }
+    );
     eventSource.on(event_types.GENERATE_AFTER_DATA, handleActivator);
     eventSource.on(event_types.GENERATE_AFTER_DATA, handleGenerating);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.on(e, handleMessageRender));
