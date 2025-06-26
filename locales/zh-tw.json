@@ -1,0 +1,22 @@
+{
+	"Prompt template settings": "提示詞模板設置",
+	"[PT] Enable": "啟用擴展",
+	"[PT] Enable Generate-time evaluation": "啟用生成時提示詞處理功能",
+	"[PT] Enable [GENERATE:BEFORE] evaluation": "允許使用 [GENERATE:BEFORE] 將提示詞插入到生成輸入頂部",
+	"[PT] Enable [GENERATE:AFTER] evaluation": "允許 [GENERATE:AFTER] 將提示詞插入到生成輸入底部",
+	"[PT] Enable Render-time evaluation": "在樓層消息中處理提示詞模板（僅顯示）",
+	"[PT] Enable [RENDER:BEFORE] evaluation": "允許 [RENDER:BEFORE] 將提示詞插入到顯示消息的頂部",
+	"[PT] Enable [RENDER:AFTER] evaluation": "允許 [RENDER:AFTER] 將提示詞插入到顯示消息的底部",
+	"[PT] Enable Autosave": "自動保存變量",
+	"[PT] Enable Preload": "打開聊天時加載世界書",
+	"[PT] Enable code blocks": "對樓層<pre>塊進行處理",
+	"[PT] Disabling with statement": "禁用 with 語句",
+	"[PT] Enable debug logging": "調試信息(見控制台)",
+	"[PT] Permanent evaluation results": "對樓層原始消息內容進行處理",
+	"[PT] Enable [GENERATE] evaluation": "允許世界書的 [GENERATE] 提示詞插入功能",
+	"[PT] Enable [RENDER] evaluation": "允許世界書的 [RENDER] 提示詞插入功能",
+	"[PT] Filter chat message": "生成時不要處理樓層消息",
+	"[PT] Enable Chat message evaluation": "啟用渲染時樓層處理功能",
+	"[PT] Enable preparation phase": "允許在準備階段進行處理",
+	"[PT] Enable cache": "啟用模板緩存"
+}

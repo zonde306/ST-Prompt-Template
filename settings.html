@@ -1,8 +1,8 @@
 <div id="prompt_template_settings">
 	<div class="inline-drawer">
 		<div class="inline-drawer-toggle inline-drawer-header">
-			<b data-i18n="Prompt template settings">
-				<span>Prompt template settings</span>
+			<b>
+				<span data-i18n="Prompt template settings">提示词模板设置</span>
 				<a class="notes-link" id="pt_reset">
                     <i class="fa fa-rotate-left"></i>
                 </a>
@@ -11,95 +11,93 @@
 		</div>
 		
 		<div class="inline-drawer-content">
-			<label class="flex-container" title="是否开启提示词模板扩展">
+			<label class="flex-container" title="全局开关">
 				<input type="checkbox" id="pt_enabled">
-				<span data-i18n="[PT] Enable">Enable Prompt template</span>
+				<span data-i18n="[PT] Enable">是否启用扩展</span>
+				<span class="fa-solid fa-circle-question note-link-span"></span>
+			</label>
+			
+			<hr>
+			
+			<label class="flex-container" title="生成全局开关">
+				<input type="checkbox" id="pt_generate_enabled">
+				<span data-i18n="[PT] Enable Generate-time evaluation">处理生成内容</span>
+				<span class="fa-solid fa-circle-question note-link-span"></span>
+			</label>
+			
+			<label class="flex-container" title="允许世界书条目的 [GENERATE:BEFORE] 和 [GENERATE:AFTER] 注入到生成提示词中">
+				<input type="checkbox" id="pt_generate_loader_enabled">
+				<span data-i18n="[PT] Enable [GENERATE] evaluation">生成时注入 [GENERATE] 世界书条目</span>
 				<span class="fa-solid fa-circle-question note-link-span"></span>
 			</label>
 
-			<hr>
-			
-			<label class="flex-container" title="在生成时执行模板处理">
-				<input type="checkbox" id="pt_generate_enabled">
-				<span data-i18n="[PT] Enable Generate-time evaluation">Generate-time evaluation</span>
-				<span class="fa-solid fa-circle-question note-link-span"></span>
-			</label>
-			
-			<label class="flex-container" title="启用 [GENERATE] 功能（详见文档）">
-				<input type="checkbox" id="pt_generate_loader_enabled">
-				<span data-i18n="[PT] Enable [GENERATE] evaluation">[GENERATE] evaluation</span>
-				<span class="fa-solid fa-circle-question note-link-span"></span>
-			</label>
-			
-			<hr>
-			
-			<label class="flex-container" title="在楼层消息执行模板处理">
-				<input type="checkbox" id="pt_render_enabled">
-				<span data-i18n="[PT] Enable Chat message evaluation">Chat message evaluation</span>
-				<span class="fa-solid fa-circle-question note-link-span"></span>
-			</label>
-			
-			<label class="flex-container" title="启用 [RENDER] 功能（详见文档）">
-				<input type="checkbox" id="pt_render_loader_enabled">
-				<span data-i18n="[PT] Enable [RENDER] evaluation">[RENDER] evaluation</span>
-				<span class="fa-solid fa-circle-question note-link-span"></span>
-			</label>
-			
-			<label class="flex-container" title="允许在&lt;pre&gt;内执行模板处理（可能会冲突）">
-				<input type="checkbox" id="pt_code_blocks">
-				<span data-i18n="[PT] Enable code blocks">Evaluate inside a code block</span>
-				<span class="fa-solid fa-circle-question note-link-span"></span>
-			</label>
-			
-			<label class="flex-container" title="先对原始消息进行原始消息的模板处理，会修改原始消息内容">
-				<input type="checkbox" id="pt_permanent_evaluation">
-				<span data-i18n="[PT] Permanent evaluation results">Evaluate raw message</span>
-				<span class="fa-solid fa-circle-question note-link-span"></span>
-			</label>
-			
-			<label class="flex-container" title="生成时不要对聊天消息进行模板处理">
-				<input type="checkbox" id="pt_filter_chat_message">
-				<span data-i18n="[PT] Filter chat message">Filter chat messages when generating</span>
-				<span class="fa-solid fa-circle-question note-link-span"></span>
-			</label>
-			
-			<hr>
-			
 			<label class="flex-container" title="允许 activateWorldInfo, activewi 函数在本次生成时生效">
 				<input type="checkbox" id="pt_world_active">
-				<span data-i18n="[PT] Enable preparation phase">Enable preparation phase</span>
+				<span data-i18n="[PT] Enable preparation phase">在虚拟生成时进行处理</span>
 				<span class="fa-solid fa-circle-question note-link-span"></span>
 			</label>
 			
+			<hr>
 			
-			<label class="flex-container" title="模板处理后，若变量发生变化，则立即保存（到服务器）">
+			<label class="flex-container" title="楼层全局开关">
+				<input type="checkbox" id="pt_render_enabled">
+				<span data-i18n="[PT] Enable Chat message evaluation">处理楼层消息</span>
+				<span class="fa-solid fa-circle-question note-link-span"></span>
+			</label>
+			
+			<label class="flex-container" title="允许世界书条目的 [RENDER:BEFORE] 和 [RENDER:AFTER] 注入到楼层消息中\n仅影响显示内容，不影响生成\n一般用来显示状态栏">
+				<input type="checkbox" id="pt_render_loader_enabled">
+				<span data-i18n="[PT] Enable [RENDER] evaluation">渲染楼层时注入 [RENDER] 世界书条目</span>
+				<span class="fa-solid fa-circle-question note-link-span"></span>
+			</label>
+			
+			<label class="flex-container" title="允许在处理楼层消息时对&lt;pre&gt;块进行模板处理">
+				<input type="checkbox" id="pt_code_blocks">
+				<span data-i18n="[PT] Enable code blocks">处理代码块</span>
+				<span class="fa-solid fa-circle-question note-link-span"></span>
+			</label>
+			
+			<label class="flex-container" title="先对原始消息进行原始消息的模板处理，会修改原始消息内容\n可以避免重复处理楼层消息，建议开启">
+				<input type="checkbox" id="pt_permanent_evaluation">
+				<span data-i18n="[PT] Permanent evaluation results">处理原始消息内容</span>
+				<span class="fa-solid fa-circle-question note-link-span"></span>
+			</label>
+			
+			<label class="flex-container" title="在生成前将楼层消息里的模板语句隐藏，不参与生成">
+				<input type="checkbox" id="pt_filter_chat_message">
+				<span data-i18n="[PT] Filter chat message">生成时忽略楼层消息处理</span>
+				<span class="fa-solid fa-circle-question note-link-span"></span>
+			</label>
+			
+			<hr>
+			
+			<label class="flex-container" title="模板处理结束后立即保存\n一般不需要开启，酒馆也会自行保存的">
 				<input type="checkbox" id="pt_autosave_enabled">
-				<span data-i18n="[PT] Enable Autosave">Save variables after updating</span>
+				<span data-i18n="[PT] Enable Autosave">自动保存变量更新</span>
 				<span class="fa-solid fa-circle-question note-link-span"></span>
 			</label>
 			
-			<label class="flex-container" title="打开角色卡时执行世界书（用于读取define）">
+			<label class="flex-container" title="打开角色卡时立即加载并处理世界书\n一般用来初始化变量和define">
 				<input type="checkbox" id="pt_preload_worldinfo">
-				<span data-i18n="[PT] Enable Preload">Preload world info</span>
+				<span data-i18n="[PT] Enable Preload">立即加载世界书</span>
 				<span class="fa-solid fa-circle-question note-link-span"></span>
 			</label>
 			
-			<label class="flex-container" title="执行模板处理时禁用with语句">
+			<label class="flex-container" title="用来解决getvar is not defined的问题\n开启会导致define和const冲突">
 				<input type="checkbox" id="pt_with_context_disabled">
-				<span data-i18n="[PT] Disabling with statement">Disabling with statement</span>
+				<span data-i18n="[PT] Disabling with statement">禁用with语句块</span>
 				<span class="fa-solid fa-circle-question note-link-span"></span>
 			</label>
 			
-			<label class="flex-container" title="发生错误时输出更详细的信息">
+			<label class="flex-container" title="控制台显示详细日志\n日志非常多">
 				<input type="checkbox" id="pt_debug_enabled">
-				<span data-i18n="[PT] Enable debug logging">Enable debug logging</span>
+				<span data-i18n="[PT] Enable debug logging">控制台显示详细信息</span>
 				<span class="fa-solid fa-circle-question note-link-span"></span>
 			</label>
-			</label>
 			
-			<label class="flex-container" title="启用提示词缓存">
+			<label class="flex-container" title="模板编译缓存，可以提速\n目前存在一些问题">
 				<input type="checkbox" id="pt_cache_enabled">
-				<span data-i18n="[PT] Enable cache">Enable cache</span>
+				<span data-i18n="[PT] Enable cache">启用缓存（实验性）</span>
 				<span class="fa-solid fa-circle-question note-link-span"></span>
 			</label>
 		</div>
