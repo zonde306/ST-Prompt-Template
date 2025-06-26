@@ -307,6 +307,7 @@ export async function prepareContext(end?: number, env: Record<string, unknown> 
         faker: fakerEnv.faker,
         userName: name1,
         assistantName: name2,
+        charName: name2,
         chatId: getCurrentChatId(),
         characterId: this_chid,
 
