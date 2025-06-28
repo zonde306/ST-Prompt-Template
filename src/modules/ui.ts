@@ -13,7 +13,7 @@ const DEFAULT_SETTINGS : Record<string, { name: string, value: boolean }> = {
     '#pt_preload_worldinfo': { name: 'preload_worldinfo_enabled', value: true },
     '#pt_code_blocks': { name: 'code_blocks_enabled', value: true },
     '#pt_world_active': { name: 'world_active_enabled', value: true },
-    '#pt_permanent_evaluation': { name: 'raw_message_evaluation_enabled', value: false },
+    '#pt_permanent_evaluation': { name: 'raw_message_evaluation_enabled', value: true },
     '#pt_filter_chat_message': { name: 'filter_message_enabled', value: true },
     '#pt_cache_enabled': { name: 'cache_enabled', value: false },
 };

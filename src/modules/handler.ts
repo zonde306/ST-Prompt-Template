@@ -251,6 +251,7 @@ export async function handlePreloadWorldInfo(chat_filename? : string, force: boo
     STATE.isDryRun = true;
     const start = Date.now();
 
+    console.log(`[Prompt Template] *** PRELOADING WORLD INFO ***`);
     const worldInfoData = (await getEnabledWorldInfoEntries()).filter(data => !data.disable);
 
     const env = await prepareContext(65535, {
@@ -266,6 +267,7 @@ export async function handlePreloadWorldInfo(chat_filename? : string, force: boo
     });
 
     let prompts = '';
+    console.log(`[Prompt Template] *** EVALUATING ${worldInfoData.length} WORLD INFO ***`);
 
     if(settings.generate_loader_enabled)
         prompts += await processSpecialEntities(env, '[GENERATE:BEFORE]');
