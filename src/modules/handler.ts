@@ -242,6 +242,7 @@ export async function handlePreloadWorldInfo(chat_filename? : string, force: boo
     // clean old content
     deactivateRegex();
     deactivateActivateWorldInfo();
+    deactivatePromptInjection();
 
     if(settings.preload_worldinfo_enabled === false && !force)
         return;
