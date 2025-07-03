@@ -133,7 +133,7 @@ async function handleMessageRender(message_id: string, isDryRun?: boolean) {
 
     const container = $(`div.mes[mesid="${message_id}"]`)?.find('.mes_text');
     // don't render if the message is swping (with generating)
-    if (!container?.text() || message.mes === message.swipes?.[message.swipe_id - 1]) {
+    if (!container?.text() || !message.mes || message.mes === message.swipes?.[message.swipe_id - 1]) {
         console.info(`chat message #${message_id}.${message.swipe_id} is generating`);
         return;
     }
@@ -212,7 +212,7 @@ async function handleMessageRender(message_id: string, isDryRun?: boolean) {
 
     if (hasHTML && isDryRun) {
         isFakeRun = true; // prevent multiple updates
-        console.debug(`[HTML] rendering #${message_idx} messages`);
+        console.debug(`[HTML] rendering #${message_idx} message`);
         if (message.is_user) {
             await eventSource.emit(event_types.USER_MESSAGE_RENDERED, message_idx);
         } else if (!message.is_system) {
