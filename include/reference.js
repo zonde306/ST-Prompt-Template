@@ -315,6 +315,7 @@ function getChatMessages(start, end, role);
  * @property {boolean} [assistant=true] - Apply to AI output
  * @property {boolean} [worldinfo=false] - Apply to World Info
  * @property {boolean} [reasoning=true] - Apply to reasoning
+ * @property {boolean} [message=true] - Apply to chat message (permanent)
  */
 /**
  * Create temporary regex for message processing
@@ -334,13 +335,30 @@ function activateRegex(pattern, replace, opts = {});
  * @param {string} [uid=''] - Unique ID
  */
 function injectPrompt(key, prompt, order = 100, sticky = 0, uid = '');
+
 /**
- * Get injected prompts by key
+ * Content processor
+ * @typedef {Object} PostProcess
+ * @property {(string|RegExp)} search - Search content
+ * @property {string} replace - Replace content
+ */
+
+/**
+ * Read merged prompt injection
  *
  * @param {string} key - Injection key (group)
- * @returns {string} Concatenated injected prompt content
+ * @param {PostProcess[]} [postprocess=[]] - Content processor
+ * @returns {string} - Merged injection prompt words
  */
-function getPromptsInjected(key);
+function getPromptsInjected(key, postprocess = []);
+
+/**
+* Check if prompt injection exists
+*
+* @param {string} key - injection key (group)
+* @returns {boolean} - whether prompt injection exists
+*/
+function hasPromptsInjected(key);
 
 /**
  * Collection of all variables

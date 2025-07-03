@@ -99,3 +99,7 @@ export function deactivatePromptInjection(count: number = 1): void {
         }
     }
 }
+
+export function hasPromptsInjected(key: string) {
+    return promptInjected.has(key);
+}

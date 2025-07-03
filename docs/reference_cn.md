@@ -398,6 +398,14 @@ function injectPrompt(key, prompt, order = 100, sticky = 0, uid = '');
  * @returns {string} - 已注入的提示词内容
  */
 function getPromptsInjected(key, postprocess = []);
+
+/**
+ * 检查提示词注入是否存在
+ *
+ * @param {string} key - 注入键(组)
+ * @returns {boolean} - 提示词注入是否存在
+ */
+function hasPromptsInjected(key);
 ```
 
 > `flags` 类型:

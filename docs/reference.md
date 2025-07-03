@@ -354,6 +354,14 @@ function injectPrompt(key, prompt, order = 100, sticky = 0, uid = '');
  * @returns {string} - Merged injection prompt words
  */
 function getPromptsInjected(key, postprocess = []);
+
+/**
+* Check if prompt injection exists
+*
+* @param {string} key - injection key (group)
+* @returns {boolean} - whether prompt injection exists
+*/
+function hasPromptsInjected(key);
 ```
 
 > `flags` types:

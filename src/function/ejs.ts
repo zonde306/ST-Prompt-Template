@@ -14,7 +14,7 @@ import check from 'syntax-error';
 import { settings } from '../modules/ui';
 import { activateRegex } from './regex';
 import { h64 } from 'xxhashjs';
-import { injectPrompt, getPromptsInjected } from './inject';
+import { injectPrompt, getPromptsInjected, hasPromptsInjected } from './inject';
 import { power_user } from '../../../../../power-user.js';
 import { METADATA_KEY } from '../../../../../world-info.js';
 
@@ -55,6 +55,7 @@ const SHARE_CONTEXT: Record<string, unknown> = {
     getPromptsInjected,
     activateWorldInfoByKeywords,
     getEnabledLoreBooks,
+    hasPromptsInjected,
 };
 
 const CODE_TEMPLATE = `
