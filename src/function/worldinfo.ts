@@ -459,9 +459,6 @@ function worldInfoSorter(a: WorldInfoData, b: WorldInfoData, top: number = DEFAU
                     // In-chat @ Depth
                     // @ts-expect-error: 2339
                     return (chat_metadata.note_depth ?? DEFAULT_DEPTH) + (entry.depth ?? DEFAULT_DEPTH);
-                default:
-                     // @ts-expect-error: 2339
-                    throw new Error(`Unknown note_position: ${chat_metadata.note_position}`);
             }
         }
 
