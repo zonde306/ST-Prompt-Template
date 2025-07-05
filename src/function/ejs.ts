@@ -116,7 +116,7 @@ export async function evalTemplate(content: string, data: Record<string, unknown
         return content;
     }
     if(!content.includes(`${opts?.options?.openDelimiter ?? '<'}${opts?.options?.delimiter ?? '%'}`)) {
-        console.info(`[Prompt Template] no available ${opts?.options?.openDelimiter ?? '<'}${opts?.options?.delimiter ?? '%'} to evaluate`);
+        console.info(`[Prompt Template] no available ${opts?.options?.openDelimiter ?? '<'}${opts?.options?.delimiter ?? '%'} to evaluate ${content.slice(0, 25)}...`);
         return content;
     }
 
