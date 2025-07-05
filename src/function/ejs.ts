@@ -115,6 +115,10 @@ export async function evalTemplate(content: string, data: Record<string, unknown
         console.error(`[Prompt Template] content is not a string`);
         return content;
     }
+    if(!content.includes(`${opts?.options?.openDelimiter ?? '<'}${opts?.options?.delimiter ?? '%'}`)) {
+        console.info(`[Prompt Template] no available ${opts?.options?.openDelimiter ?? '<'}${opts?.options?.delimiter ?? '%'} to evaluate`);
+        return content;
+    }
 
     // await eventSource.emit('prompt_template_evaluation', { content, data });
 
