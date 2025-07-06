@@ -38,7 +38,7 @@ export async function evalTemplateHandler(content: string,
 }
 
 // Process world info based on prefix
-export async function processSpecialEntities(
+export async function processWorldinfoEntities(
     env: Record<string, unknown>,
     prefix : string,
     keywords : string = '',
@@ -50,7 +50,14 @@ export async function processSpecialEntities(
             substituteParams(data.content),
             _.merge(env, { world_info: data }),
             `worldinfo ${data.world}.${data.comment}`,
-            options,
+            {
+                options: {
+                    filename: `worldinfo/${data.world}/${data.uid}`,
+                    cache: settings.cache_enabled === 1 || settings.cache_enabled === 2, // enable for all or worldinfo
+                    ...(options.options ?? {}),
+                },
+                ...(options ?? {}),
+            },
         );
         if(result != null)
             prompt += result;

@@ -11,7 +11,7 @@ import { settings } from './ui';
 import { activateRegex, deactivateRegex, deactivateMessageRegex, applyMessageRegex } from '../function/regex';
 import { deactivatePromptInjection } from '../function/inject';
 import { updateTokens, removeHtmlTagsInsideBlock, escapePreContent, cleanPreContent, escapeReasoningBlocks, unescapePreContent } from '../utils/prompts';
-import { evalTemplateHandler, processSpecialEntities } from '../utils/evaluate';
+import { evalTemplateHandler, processWorldinfoEntities } from '../utils/evaluate';
 
 let runID = 0;
 let isFakeRun = false;
@@ -51,15 +51,25 @@ async function handleGenerating(data: GenerateAfterData) {
         isDryRun: false,
     });
 
-    const before = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:BEFORE]');
+    const before = settings.generate_loader_enabled === false ? '' : await processWorldinfoEntities(env, '[GENERATE:BEFORE]');
 
     let prompts = before;
     for (const [idx, message] of chat.entries()) {
-        const beforeMessage =  settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:BEFORE]`);
+        const beforeMessage =  settings.generate_loader_enabled === false ? '' : await processWorldinfoEntities(env, `[GENERATE:${idx}:BEFORE]`);
 
         if(typeof message.content === 'string') {
-            const prompt = await evalTemplateHandler(message.content, env, `message #${idx + 1}(${message.role})`);
-            const afterMessage = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
+            const prompt = await evalTemplateHandler(
+                message.content,
+                env,
+                `message #${idx + 1}(${message.role})`,
+                {
+                    options: {
+                        filename: `generate/${idx}`,
+                        cache: settings.cache_enabled === 1, // enable for all
+                    }
+                }
+            );
+            const afterMessage = settings.generate_loader_enabled === false ? '' : await processWorldinfoEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
 
             if (prompt != null) {
                 message.content = beforeMessage + prompt + afterMessage;
@@ -68,8 +78,18 @@ async function handleGenerating(data: GenerateAfterData) {
         } else if (_.isArray(message.content)) {
             for(const content of message.content) {
                 if(content.type === 'text') {
-                    const prompt = await evalTemplateHandler(content.text, env, `message #${idx + 1}(${message.role})`);
-                    const afterMessage = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
+                    const prompt = await evalTemplateHandler(
+                        content.text,
+                        env,
+                        `message #${idx + 1}(${message.role})`,
+                        {
+                            options: {
+                                filename: `generate/${idx}`,
+                                cache: settings.cache_enabled === 1, // enable for all
+                            }
+                        }
+                    );
+                    const afterMessage = settings.generate_loader_enabled === false ? '' : await processWorldinfoEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
 
                     if (prompt != null) {
                         content.text = beforeMessage + prompt + afterMessage;
@@ -80,7 +100,7 @@ async function handleGenerating(data: GenerateAfterData) {
         }
     }
 
-    const after = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:AFTER]', prompts);
+    const after = settings.generate_loader_enabled === false ? '' : await processWorldinfoEntities(env, '[GENERATE:AFTER]', prompts);
     prompts += after;
 
     if(typeof data.prompt === 'string') {
@@ -160,14 +180,20 @@ async function handleMessageRender(message_id: string, isDryRun?: boolean) {
         return messageFormatting(markup, message.name, message.is_system, message.is_user, message_idx);
     }
 
-    const before = settings.render_loader_enabled === false ? '' : await processSpecialEntities(env, '[RENDER:BEFORE]', '', { escaper });
+    const before = settings.render_loader_enabled === false ? '' : await processWorldinfoEntities(env, '[RENDER:BEFORE]', '', { escaper });
 
     if(!isDryRun && settings.raw_message_evaluation_enabled) {
         env.runType = 'render_permanent';
         const newContent = await evalTemplateHandler(
             escapeReasoningBlocks(applyMessageRegex(message.mes)),
             env,
-            `chat #${message_idx}.${message.swipe_id} raw`
+            `chat #${message_idx}.${message.swipe_id} raw`,
+            {
+                options: {
+                    filename: `render_permanent/${message_id}/${message.swipe_id}`,
+                    cache: settings.cache_enabled === 1, // enable for all
+                }
+            }
         );
         deactivateMessageRegex();
         env.runType = 'render';
@@ -187,6 +213,8 @@ async function handleMessageRender(message_id: string, isDryRun?: boolean) {
         options: {
             openDelimiter: '&lt;',
             closeDelimiter: '&gt;',
+            filename: `render/${message_id}/${message.swipe_id}`,
+            cache: settings.cache_enabled === 1, // enable for all
         },
     };
 
@@ -202,7 +230,7 @@ async function handleMessageRender(message_id: string, isDryRun?: boolean) {
         newContent = unescapePreContent(newContent);
     }
 
-    const after = settings.render_loader_enabled === false ? '' : await processSpecialEntities(env, '[RENDER:AFTER]', newContent || '', { escaper });
+    const after = settings.render_loader_enabled === false ? '' : await processWorldinfoEntities(env, '[RENDER:AFTER]', newContent || '', { escaper });
     if(newContent != null)
         newContent = before + newContent + after;
 
@@ -271,27 +299,40 @@ export async function handlePreloadWorldInfo(chat_filename? : string, force: boo
     console.log(`[Prompt Template] *** EVALUATING ${worldInfoData.length} WORLD INFO ***`);
 
     if(settings.generate_loader_enabled)
-        prompts += await processSpecialEntities(env, '[GENERATE:BEFORE]');
+        prompts += await processWorldinfoEntities(env, '[GENERATE:BEFORE]');
 
     for (const data of worldInfoData) {
         prompts += await evalTemplateHandler(
             substituteParams(data.content),
             _.merge(env, { world_info: data }),
             `worldinfo ${data.world}.${data.comment}`,
-
-            // avoid massive cache invalidations
-            { options: { cache: false } },
+            {
+                options: {
+                    filename: `worldinfo/${data.world}/${data.uid}`,
+                    cache: settings.cache_enabled === 1 || settings.cache_enabled === 2, // enable for all or worldinfo
+                }
+            },
         );
     }
 
     const charaDef = getCharaDefs();
     if (charaDef?.description || charaDef?.scenario) {
         const content = (charaDef.description || '') + '\n---\n' + (charaDef.scenario || '');
-        prompts += await evalTemplateHandler(content, env, `character ${charaDef.name}`);
+        prompts += await evalTemplateHandler(
+            content,
+            env,
+            `character ${charaDef.name}`,
+            {
+                options: {
+                    filename: `character/${charaDef.name}`,
+                    cache: settings.cache_enabled === 1, // enable for all
+                }
+            }
+        );
     }
 
     if(settings.generate_loader_enabled)
-        await processSpecialEntities(env, '[GENERATE:AFTER]', prompts);
+        await processWorldinfoEntities(env, '[GENERATE:AFTER]', prompts);
 
     const end = Date.now() - start;
     console.log(`[Prompt Template] processing ${worldInfoData.length} world info in ${end}ms`);
@@ -336,21 +377,24 @@ async function handleRefreshWorldInfo(name: string, data: WorldInfoData) {
     let prompts = '';
 
     if(settings.generate_loader_enabled)
-        prompts += await processSpecialEntities(env, '[GENERATE:BEFORE]');
+        prompts += await processWorldinfoEntities(env, '[GENERATE:BEFORE]');
 
     for (const data of worldInfoData) {
         prompts += await evalTemplateHandler(
             substituteParams(data.content),
             _.merge(env, { world_info: data }),
             `worldinfo ${data.world}.${data.comment}`,
-
-            // avoid massive cache invalidations
-            { options: { cache: false } },
+            {
+                options: {
+                    filename: `worldinfo/${data.world}/${data.uid}`,
+                    cache: settings.cache_enabled === 1 || settings.cache_enabled === 2, // enable for all or worldinfo
+                }
+            },
         );
     }
 
     if(settings.generate_loader_enabled)
-        await processSpecialEntities(env, '[GENERATE:AFTER]', prompts);
+        await processWorldinfoEntities(env, '[GENERATE:AFTER]', prompts);
 
     const end = Date.now() - start;
     console.log(`[Prompt Template] processing ${worldInfoData.length} world info in ${end}ms`);
@@ -390,19 +434,39 @@ async function handleActivator(data: GenerateAfterData) {
         isDryRun: true,
     });
 
-    let prompts = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, '[GENERATE:BEFORE]');
+    let prompts = settings.generate_loader_enabled === false ? '' : await processWorldinfoEntities(env, '[GENERATE:BEFORE]');
     for (const [idx, message] of chat.entries()) {
-        const beforeMessage = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:BEFORE]`);
+        const beforeMessage = settings.generate_loader_enabled === false ? '' : await processWorldinfoEntities(env, `[GENERATE:${idx}:BEFORE]`);
 
         if (typeof message.content === 'string') {
-            const prompt = await evalTemplateHandler(message.content, env, `message #${idx + 1}(${message.role})`);
-            const afterMessage = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
+            const prompt = await evalTemplateHandler(
+                message.content,
+                env,
+                `message #${idx + 1}(${message.role})`,
+                {
+                    options: {
+                        filename: `generate/${idx}`,
+                        cache: settings.cache_enabled === 1, // enable for all
+                    }
+                }
+            );
+            const afterMessage = settings.generate_loader_enabled === false ? '' : await processWorldinfoEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
             prompts += beforeMessage + (prompt || '') + afterMessage;
         } else if (_.isArray(message.content)) {
             for(const content of message.content) {
                 if(content.type === 'text') {
-                    const prompt = await evalTemplateHandler(content.text, env, `message #${idx + 1}(${message.role})`);
-                    const afterMessage = settings.generate_loader_enabled === false ? '' : await processSpecialEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
+                    const prompt = await evalTemplateHandler(
+                        content.text,
+                        env,
+                        `message #${idx + 1}(${message.role})`,
+                        {
+                            options: {
+                                filename: `generate/${idx}`,
+                                cache: settings.cache_enabled === 1, // enable for all
+                            }
+                        }
+                    );
+                    const afterMessage = settings.generate_loader_enabled === false ? '' : await processWorldinfoEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
                     prompts += beforeMessage + (prompt || '') + afterMessage;
                 }
             }
@@ -410,7 +474,7 @@ async function handleActivator(data: GenerateAfterData) {
     }
 
     if(settings.generate_loader_enabled)
-        await processSpecialEntities(env, '[GENERATE:AFTER]', prompts);
+        await processWorldinfoEntities(env, '[GENERATE:AFTER]', prompts);
 
     const end = Date.now() - start;
     console.log(`[Prompt Template] processing ${chat.length} messages in ${end}ms`);

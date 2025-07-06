@@ -137,15 +137,12 @@ export async function evalTemplate(content: string, data: Record<string, unknown
             opts.options.destructuredLocals = Object.keys(data);
     }
 
-    if(settings.cache_enabled && opts.options?.cache !== false) {
-        if(opts.options?.filename) {
-            opts.options.cache = true;
-        } else {
-            if(!opts.options)
-                opts.options = {};
-            opts.options.cache = true;
-            opts.options.filename = h64(content, 0x1337).toString();
+    if(opts.options?.cache) {
+        if(!opts.options.filename) {
+            opts.options.filename = 'unk';
         }
+
+        opts.options.filename += '/' + h64(content, 0x1337).toString(16);
     }
     
     try {
