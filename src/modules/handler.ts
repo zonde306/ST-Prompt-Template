@@ -1,7 +1,7 @@
 // @ts-expect-error
 import vm from 'vm-browserify';
 import { Message, GenerateAfterData, CombinedPromptData } from './defines';
-import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock, substituteParams, this_chid } from '../../../../../../script.js';
+import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock, substituteParams, this_chid, getCurrentChatId } from '../../../../../../script.js';
 import { prepareContext } from '../function/ejs';
 import { STATE, checkAndSave } from '../function/variables';
 import { extension_settings } from '../../../../../extensions.js';
@@ -64,7 +64,7 @@ async function handleGenerating(data: GenerateAfterData) {
                 `message #${idx + 1}(${message.role})`,
                 {
                     options: {
-                        filename: `generate/${idx}`,
+                        filename: `generate/${getCurrentChatId()}/${idx}`,
                         cache: settings.cache_enabled === 1, // enable for all
                     }
                 }
@@ -84,7 +84,7 @@ async function handleGenerating(data: GenerateAfterData) {
                         `message #${idx + 1}(${message.role})`,
                         {
                             options: {
-                                filename: `generate/${idx}`,
+                                filename: `generate/${getCurrentChatId()}/${idx}`,
                                 cache: settings.cache_enabled === 1, // enable for all
                             }
                         }
@@ -190,7 +190,7 @@ async function handleMessageRender(message_id: string, isDryRun?: boolean) {
             `chat #${message_idx}.${message.swipe_id} raw`,
             {
                 options: {
-                    filename: `render_permanent/${message_id}/${message.swipe_id}`,
+                    filename: `render_permanent/${getCurrentChatId()}/${message_id}/${message.swipe_id}`,
                     cache: settings.cache_enabled === 1, // enable for all
                 }
             }
@@ -213,7 +213,7 @@ async function handleMessageRender(message_id: string, isDryRun?: boolean) {
         options: {
             openDelimiter: '&lt;',
             closeDelimiter: '&gt;',
-            filename: `render/${message_id}/${message.swipe_id}`,
+            filename: `render/${getCurrentChatId()}/${message_id}/${message.swipe_id}`,
             cache: settings.cache_enabled === 1, // enable for all
         },
     };
@@ -445,7 +445,7 @@ async function handleActivator(data: GenerateAfterData) {
                 `message #${idx + 1}(${message.role})`,
                 {
                     options: {
-                        filename: `generate/${idx}`,
+                        filename: `generate/${getCurrentChatId()}/${idx}`,
                         cache: settings.cache_enabled === 1, // enable for all
                     }
                 }
@@ -461,7 +461,7 @@ async function handleActivator(data: GenerateAfterData) {
                         `message #${idx + 1}(${message.role})`,
                         {
                             options: {
-                                filename: `generate/${idx}`,
+                                filename: `generate/${getCurrentChatId()}/${idx}`,
                                 cache: settings.cache_enabled === 1, // enable for all
                             }
                         }
