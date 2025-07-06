@@ -105,18 +105,12 @@ function setOption(id: string, value: boolean | string) {
         $(id).prop('checked', value ?? defaults.value);
     } else {
         $(id).val(value ?? defaults?.value);
-        $(`*[for="${id}"]`).val(value ?? defaults?.value);
+        $(`*[data-for="${id}"]`).val(value ?? defaults?.value);
     }
 }
 
 export async function init() {
     $('#extensions_settings').append(await renderExtensionTemplateAsync('third-party/ST-Prompt-Template', 'settings'));
-
-    $('#pt_cache_size').off('change').on('change', () => {
-        // @ts-expect-error: 2339
-        extension_settings.EjsTemplate.cache_size = Number($('#pt_cache_size').val());
-        saveSettingsDebounced();
-    });
 
     function changeHandler(
         id : string,
