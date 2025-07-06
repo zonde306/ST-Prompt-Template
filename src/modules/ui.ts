@@ -105,7 +105,7 @@ function setOption(id: string, value: boolean | string) {
         $(id).prop('checked', value ?? defaults.value);
     } else {
         $(id).val(value ?? defaults?.value);
-        $(`*[data-for="${id}"]`).val(value ?? defaults?.value);
+        $(`*[data-for="${id.slice(1)}"]`).val(value ?? defaults?.value);
     }
 }
 
@@ -124,7 +124,7 @@ export async function init() {
             extension_settings.EjsTemplate = {};
         }
 
-        const ref = $(`*[data-for="${id}"]`);
+        const ref = $(`*[data-for="${id.slice(1)}"]`);
         if(ref.length && ref.val() != $(id).val()) {
             ref.off('change');
             ref.val($(id).val());
@@ -145,7 +145,7 @@ export async function init() {
             $(id).off('click').on('click', () => changeHandler(id, setting));
         } else {
             $(id).off('change').on('change', () => changeHandler(id, setting));
-            $(`*[data-for="${id}"]`).off('change').on('change', () => changeHandler(id, setting));
+            $(`*[data-for="${id.slice(1)}"]`).off('change').on('change', () => changeHandler(id, setting));
         }
     }
 
