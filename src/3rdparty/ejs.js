@@ -1150,7 +1150,7 @@ exports.cache = {
     if (this._data.has(key))
       this._data.delete(key);
     this._data.set(key, val);
-    if (this._data.size > this._capacity) {
+    while (this._capacity > 0 && this._data.size > this._capacity) {
       const first = this._data.keys().next().value;
       this._data.delete(first);
     }

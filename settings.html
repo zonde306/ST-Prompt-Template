@@ -94,15 +94,27 @@
 				<span data-i18n="[PT] Enable debug logging">控制台显示详细信息</span>
 				<span class="fa-solid fa-circle-question note-link-span"></span>
 			</label>
+
+			<hr>
 			
 			<label class="flex-container" title="模板编译缓存，可以提速&#10;目前存在一些问题">
-				<div class="flex-container gap5px flexnowrap marginBot5">
 				<span data-i18n="[PT] Enable cache">缓存（实验性）</span>
 				<select id="pt_cache_enabled">
 					<option value="0" data-i18n="Disable">禁用</option>
 					<option value="1" data-i18n="Enable">启用</option>
 					<option value="2" data-i18n="Only worldinfo">仅世界书</option>
 				</select>
+			</label>
+			
+			<label title="缓存大小限制&#10;0则不限制">
+				<span data-i18n="[PT] Enable cache">缓存大小</span>
+				<div class="flex-container">
+					<div class="range-block-range">
+						<input type="range" id="pt_cache_size" name="cache_size" min="0" max="512" step="1" data-for="#pt_cache_size_counter">
+					</div>
+					<div class="range-block-counter" data-randomization-disabled="true">
+						<input type="number" min="0" max="512" step="1" data-for="#pt_cache_size" id="pt_cache_size_counter">
+					</div>
 				</div>
 			</label>
 		</div>
