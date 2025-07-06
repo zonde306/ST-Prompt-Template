@@ -308,7 +308,7 @@ export async function handlePreloadWorldInfo(chat_filename? : string, force: boo
             `worldinfo ${data.world}.${data.comment}`,
             {
                 options: {
-                    filename: `worldinfo/${data.world}/${data.uid}`,
+                    filename: `worldinfo/${data.world}/${data.uid}-${data.comment}`,
                     cache: settings.cache_enabled === 1 || settings.cache_enabled === 2, // enable for all or worldinfo
                 }
             },
@@ -386,7 +386,7 @@ async function handleRefreshWorldInfo(name: string, data: WorldInfoData) {
             `worldinfo ${data.world}.${data.comment}`,
             {
                 options: {
-                    filename: `worldinfo/${data.world}/${data.uid}`,
+                    filename: `worldinfo/${data.world}/${data.uid}-${data.comment}`,
                     cache: settings.cache_enabled === 1 || settings.cache_enabled === 2, // enable for all or worldinfo
                 }
             },

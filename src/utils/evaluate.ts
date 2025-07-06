@@ -52,7 +52,7 @@ export async function processWorldinfoEntities(
             `worldinfo ${data.world}.${data.comment}`,
             {
                 options: {
-                    filename: `worldinfo/${data.world}/${data.uid}`,
+                    filename: `worldinfo/${data.world}/${data.uid}-${data.comment}`,
                     cache: settings.cache_enabled === 1 || settings.cache_enabled === 2, // enable for all or worldinfo
                     ...(options.options ?? {}),
                 },
