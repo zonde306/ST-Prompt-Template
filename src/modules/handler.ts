@@ -191,7 +191,7 @@ async function handleMessageRender(message_id: string, isDryRun?: boolean) {
             {
                 options: {
                     filename: `render_permanent/${getCurrentChatId()}/${message_id}/${message.swipe_id}`,
-                    cache: settings.cache_enabled === 1, // enable for all
+                    cache: false, // evaluate only once, no caching required
                 }
             }
         );
