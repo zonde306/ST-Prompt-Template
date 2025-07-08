@@ -13,7 +13,7 @@ import { fakerEnv } from './faker';
 import check from 'syntax-error';
 import { settings } from '../modules/ui';
 import { activateRegex } from './regex';
-import { h32 } from 'xxhashjs';
+import xxhash from 'xxhash-wasm';
 import { injectPrompt, getPromptsInjected, hasPromptsInjected } from './inject';
 import { power_user } from '../../../../../power-user.js';
 import { METADATA_KEY } from '../../../../../world-info.js';
@@ -143,7 +143,8 @@ export async function evalTemplate(content: string, data: Record<string, unknown
             opts.options.filename = 'unk';
         }
 
-        opts.options.filename += '/' + h32(content, 0x1337).toString(16);
+        const hasher = await xxhash();
+        opts.options.filename += '/' + hasher.h32ToString(content, 0x1337);
     }
     
     try {
