@@ -94,7 +94,7 @@
 				<span data-i18n="[PT] Enable debug logging">控制台显示详细信息</span>
 				<span class="fa-solid fa-circle-question note-link-span"></span>
 			</label>
-
+			
 			<hr>
 			
 			<label class="flex-container" title="模板编译缓存，可以提速&#10;目前存在一些问题">
@@ -108,7 +108,7 @@
 			</label>
 			
 			<label title="缓存大小限制&#10;0则不限制">
-				<span data-i18n="[PT] Enable cache">缓存大小</span>
+				<span data-i18n="[PT] cache size">缓存大小</span>
 				<span class="fa-solid fa-circle-question note-link-span"></span>
 				<div class="flex-container">
 					<div class="range-block-range">
@@ -118,6 +118,15 @@
 						<input type="number" min="0" max="512" step="8" data-for="pt_cache_size" id="pt_cache_size_counter">
 					</div>
 				</div>
+			</label>
+
+			<label class="flex-container" title="缓存hash算法&#10;不同算法性能会有差异">
+				<span data-i18n="[PT] cache hasher">缓存 hash 模式</span>
+				<span class="fa-solid fa-circle-question note-link-span"></span>
+				<select id="pt_cache_hasher">
+					<option value="h32ToString" data-i18n="h32ToString">h32</option>
+					<option value="h64ToString" data-i18n="h64ToString">h64</option>
+				</select>
 			</label>
 		</div>
 	</div>

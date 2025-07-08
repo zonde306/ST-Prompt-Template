@@ -18,6 +18,7 @@ const DEFAULT_SETTINGS : Record<string, { name: string, value: boolean | string 
     '#pt_filter_chat_message': { name: 'filter_message_enabled', value: true },
     '#pt_cache_enabled': { name: 'cache_enabled', value: 0 },
     '#pt_cache_size': { name: 'cache_size', value: 64 },
+    '#pt_cache_hasher': { name: 'cache_hasher', value: 'h32ToString' },
 };
 
 interface EjsSettings extends Record<string, boolean | string | number> {
@@ -36,6 +37,7 @@ interface EjsSettings extends Record<string, boolean | string | number> {
     filter_message_enabled: boolean;
     cache_enabled: number;
     cache_size: number;
+    cache_hasher: string;
 };
 
 export const settings = {} as EjsSettings;

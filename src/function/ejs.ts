@@ -157,7 +157,14 @@ export async function evalTemplate(content: string, data: Record<string, unknown
             opts.options.filename = 'unk';
         }
 
-        opts.options.filename += '/' + xxhasher.h32ToString(content, 0x1337);
+        if(settings.cache_hasher === 'h32ToString') {
+            opts.options.filename += '/' + xxhasher.h32ToString(content, 0x1337);
+        } else if(settings.cache_hasher === 'h64ToString') {
+            opts.options.filename += '/' + xxhasher.h64ToString(content, 0x1337n);
+        } else {
+            console.error(`hasher ${settings.cache_hasher} not supported`);
+            opts.options.cache = false;
+        }
     }
     
     try {
