@@ -109,6 +109,20 @@ export interface EvalTemplateOptions {
     disableMarkup?: string;
 }
 
+let xxhasher : null | Awaited<ReturnType<typeof xxhash>> = null;
+$(async () => {
+    // lazy load faker
+    window.setTimeout(() => {
+        xxhash().then(hasher => {
+            xxhasher = hasher;
+            console.log(`[Prompt Template] xxhash loaded`);
+        }).catch(err => {
+            console.error(`[Prompt Template] cannot load xxhash-wasm`);
+            console.error(err);
+        });
+    }, 100);
+});
+
 export async function evalTemplate(content: string, data: Record<string, unknown>,
     opts : EvalTemplateOptions = {}) {
     if (typeof content !== 'string') {
@@ -138,13 +152,12 @@ export async function evalTemplate(content: string, data: Record<string, unknown
             opts.options.destructuredLocals = Object.keys(data);
     }
 
-    if(opts.options?.cache) {
+    if(opts.options?.cache && xxhasher) {
         if(!opts.options.filename) {
             opts.options.filename = 'unk';
         }
 
-        const hasher = await xxhash();
-        opts.options.filename += '/' + hasher.h32ToString(content, 0x1337);
+        opts.options.filename += '/' + xxhasher.h32ToString(content, 0x1337);
     }
     
     try {

@@ -8,8 +8,8 @@ $(async () => {
     window.setTimeout(() => {
         import('../../libs/faker.mjs').then(module => {
             fakerEnv.faker = module;
-            console.log('Faker loaded');
-            console.log(module);
+            console.log('[Prompt Template] Faker loaded');
+            console.log(Object.keys(module));
         }).catch(err => {
             console.log('cannot load faker');
             console.error(err);
