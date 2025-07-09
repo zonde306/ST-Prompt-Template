@@ -337,11 +337,14 @@ export async function handlePreloadWorldInfo(chat_filename? : string, force: boo
     const end = Date.now() - start;
     console.log(`[Prompt Template] processing ${worldInfoData.length} world info in ${end}ms`);
 
-    console.log('[Prompt Template] *** UPDATE ALL MESSAGES ***');
-    for (const mes of $('div.mes[mesid]')) {
-        const message_id = $(mes).attr('mesid');
-        if (message_id) {
-            await handleMessageRender(message_id, true);
+    // avoid multiple updates
+    if(chat.length > 1) {
+        console.log('[Prompt Template] *** UPDATE ALL MESSAGES ***');
+        for (const mes of $('div.mes[mesid]')) {
+            const message_id = $(mes).attr('mesid');
+            if (message_id) {
+                await handleMessageRender(message_id, true);
+            }
         }
     }
 }
