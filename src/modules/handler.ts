@@ -122,7 +122,7 @@ async function handleGenerating(data: GenerateAfterData) {
     deactivatePromptInjection();
 }
 
-async function handleMessageRender(message_id: string, isDryRun?: boolean) {
+async function handleMessageRender(message_id: string, _type?: string, isDryRun?: boolean) {
     if(settings.enabled === false)
         return;
     if(settings.render_enabled === false)
@@ -343,7 +343,7 @@ export async function handlePreloadWorldInfo(chat_filename? : string, force: boo
         for (const mes of $('div.mes[mesid]')) {
             const message_id = $(mes).attr('mesid');
             if (message_id) {
-                await handleMessageRender(message_id, true);
+                await handleMessageRender(message_id, 'preload', true);
             }
         }
     }
