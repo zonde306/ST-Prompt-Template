@@ -242,9 +242,9 @@ async function handleMessageRender(message_id: string, _type?: string, isDryRun?
         isFakeRun = true; // prevent multiple updates
         console.debug(`[HTML] rendering #${message_idx} message`);
         if (message.is_user) {
-            await eventSource.emit(event_types.USER_MESSAGE_RENDERED, message_idx);
+            await eventSource.emit(event_types.USER_MESSAGE_RENDERED, message_id);
         } else if (!message.is_system) {
-            await eventSource.emit(event_types.CHARACTER_MESSAGE_RENDERED, message_idx, _type);
+            await eventSource.emit(event_types.CHARACTER_MESSAGE_RENDERED, message_id, _type);
         }
         isFakeRun = false;
     }
