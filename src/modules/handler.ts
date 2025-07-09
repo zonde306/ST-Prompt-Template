@@ -153,7 +153,7 @@ async function handleMessageRender(message_id: string, _type?: string, isDryRun?
 
     const container = $(`div.mes[mesid="${message_id}"]`)?.find('.mes_text');
     // don't render if the message is swping (with generating)
-    if (!container?.text() || !message.mes || message.mes === message.swipes?.[message.swipe_id - 1]) {
+    if (!container?.text() || !message.mes || message.mes === '...' || message.mes === message.swipes?.[message.swipe_id - 1]) {
         console.info(`chat message #${message_id}.${message.swipe_id} is generating`);
         return;
     }
