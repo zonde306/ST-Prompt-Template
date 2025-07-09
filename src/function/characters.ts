@@ -1,4 +1,4 @@
-import { characters, this_chid } from '../../../../../../script.js';
+import { characters, this_chid, user_avatar, getThumbnailUrl, getUserAvatar } from '../../../../../../script.js';
 import { v1CharData } from '../../../../../char-data.js';
 
 export function getCharaData(name : string | RegExp | number | undefined = this_chid) : v1CharData | null {
@@ -102,4 +102,16 @@ export function getCharaDefs(name : string | RegExp | number | undefined = this_
         depth_prompt: char?.data?.depth_prompt,
         creator: char?.data?.creator,
     };
+}
+
+export function getPersonaAvatar() : string {
+    return getUserAvatar(user_avatar);
+}
+
+export function getCharaAvater(char: string | undefined = this_chid) : string {
+    if(!char)
+        return '';
+
+    // @ts-expect-error: 7015
+    return getThumbnailUrl('avatar', characters[char].avatar);
 }

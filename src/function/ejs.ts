@@ -4,7 +4,7 @@ import vm from 'vm-browserify';
 import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.js';
 import { getWorldInfoData, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries, selectActivatedEntries, activateWorldInfo, getWorldInfoEntry, WorldInfoData, activateWorldInfoByKeywords, getEnabledLoreBooks } from './worldinfo';
 import { allVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption } from './variables';
-import { getCharaDefs, DEFAULT_CHAR_DEFINE, getCharaData } from './characters';
+import { getCharaDefs, DEFAULT_CHAR_DEFINE, getCharaData, getCharaAvater, getPersonaAvatar } from './characters';
 import { substituteParams, eventSource, this_chid, characters, chat_metadata, name1, name2, getCurrentChatId } from '../../../../../../script.js';
 import { getPresetPromptsContent } from './presets';
 import { getQuickReply, getQuickReplyData } from './quickreply';
@@ -13,10 +13,10 @@ import { fakerEnv } from './faker';
 import check from 'syntax-error';
 import { settings } from '../modules/ui';
 import { activateRegex } from './regex';
-import xxhash from 'xxhash-wasm';
 import { injectPrompt, getPromptsInjected, hasPromptsInjected } from './inject';
 import { power_user } from '../../../../../power-user.js';
 import { METADATA_KEY } from '../../../../../world-info.js';
+import { hasher } from './hasher'
 
 // @ts-expect-error: 7034
 import { groups, selected_group } from '../../../../../group-chats.js';
@@ -109,20 +109,6 @@ export interface EvalTemplateOptions {
     disableMarkup?: string;
 }
 
-let xxhasher : null | Awaited<ReturnType<typeof xxhash>> = null;
-$(async () => {
-    // lazy load faker
-    window.setTimeout(() => {
-        xxhash().then(hasher => {
-            xxhasher = hasher;
-            console.log(`[Prompt Template] xxhash loaded`);
-        }).catch(err => {
-            console.error(`[Prompt Template] cannot load xxhash-wasm`);
-            console.error(err);
-        });
-    }, 100);
-});
-
 export async function evalTemplate(content: string, data: Record<string, unknown>,
     opts : EvalTemplateOptions = {}) {
     if (typeof content !== 'string') {
@@ -152,15 +138,15 @@ export async function evalTemplate(content: string, data: Record<string, unknown
             opts.options.destructuredLocals = Object.keys(data);
     }
 
-    if(opts.options?.cache && xxhasher) {
+    if(opts.options?.cache && hasher.xxhash) {
         if(!opts.options.filename) {
             opts.options.filename = 'unk';
         }
 
         if(settings.cache_hasher === 'h32ToString') {
-            opts.options.filename += '/' + xxhasher.h32ToString(content, 0x1337);
+            opts.options.filename += '/' + hasher.xxhash.h32ToString(content, 0x1337);
         } else if(settings.cache_hasher === 'h64ToString') {
-            opts.options.filename += '/' + xxhasher.h64ToString(content, 0x1337n);
+            opts.options.filename += '/' + hasher.xxhash.h64ToString(content, 0x1337n);
         } else {
             console.error(`hasher ${settings.cache_hasher} not supported`);
             opts.options.cache = false;
@@ -334,6 +320,8 @@ export async function prepareContext(end?: number, env: Record<string, unknown> 
         charName: name2,
         chatId: getCurrentChatId(),
         characterId: this_chid,
+        charAvatar: getCharaAvater(),
+        userAvatar: getPersonaAvatar(),
 
         // @ts-expect-error: 7005
         groups,

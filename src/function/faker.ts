@@ -1,4 +1,4 @@
-export let fakerEnv = {
+export const fakerEnv = {
     faker: undefined as any
 };
 
