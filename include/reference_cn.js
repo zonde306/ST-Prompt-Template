@@ -361,6 +361,7 @@ function getChatMessages(start, end, role);
  * @property {boolean} [message=false] - 对原始楼层消息应用正则（提示词模板扩展实现、支持替换函数）
  * @property {boolean} [generate=false] - 对生成消息应用正则（提示词模板扩展、支持替换函数）
  * @property {boolean} [basic=true] - 使用酒馆内置正则（酒馆实现、不支持替换函数）
+ * @property {number} [order=100] - 执行顺序，升序执行
  */
 
 /**

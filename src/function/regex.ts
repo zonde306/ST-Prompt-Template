@@ -1,11 +1,21 @@
 import { extension_settings } from '../../../../../extensions.js';
 
-interface Regex {
-    generateRegex: Map<string, { search: RegExp | string, replace: string | ((substring: string, ...args: any[]) => string), user: boolean, assistant: boolean, system: boolean, worldinfo: boolean }>;
-    messageRegex: Map<string, { search: RegExp | string, replace: string | ((substring: string, ...args: any[]) => string), user: boolean, assistant: boolean, system: boolean, reasoning: boolean, worldinfo: boolean, minDepth: number, maxDepth: number }>;
+interface RegexEntry {
+    search: RegExp | string,
+    replace: string | ((substring: string, ...args: any[]) => string),
+    user: boolean,
+    assistant: boolean,
+    system: boolean,
+    worldinfo: boolean,
+    order: number,
 }
 
-export const REGEX : Regex = {
+interface Regex {
+    generateRegex: Map<string, RegexEntry>;
+    messageRegex: Map<string, RegexEntry & { reasoning: boolean, minDepth: number, maxDepth: number }>;
+}
+
+const REGEX : Regex = {
     generateRegex: new Map(),
     messageRegex: new Map(),
 };
@@ -25,6 +35,7 @@ export interface RegexOptions extends RegexFlags {
     message?: boolean;
     generate?: boolean;
     basic?: boolean;
+    order?: number;
 }
 
 export function activateRegex(
@@ -82,6 +93,7 @@ export function activateRegex(
                 assistant: opts.assistant ?? true,
                 system: opts.system ?? true,
                 worldinfo: opts.worldinfo ?? false,
+                order: opts.order ?? 100,
             }
         );
     }
@@ -97,6 +109,7 @@ export function activateRegex(
                 system: opts.system ?? true,
                 reasoning: opts.reasoning ?? false,
                 worldinfo: opts.worldinfo ?? false,
+                order: opts.order ?? 100,
                 minDepth: opts.minDepth ?? NaN,
                 maxDepth: opts.minDepth ?? NaN,
             }
@@ -141,7 +154,7 @@ export function applyRegex(
             content = content.replace(generate.search, generate.replace);
     } else {
         if(selector.message) {
-            for(const regex of REGEX.messageRegex.values()) {
+            for(const regex of Array.from(REGEX.messageRegex.values()).sort((a, b) => a.order - b.order)) {
                 if(flags.assistant != null && flags.assistant != null && regex.assistant !== flags.assistant)
                     continue;
                 if(flags.user != null && flags.user != null && regex.user !== flags.user)
@@ -164,7 +177,7 @@ export function applyRegex(
             }
         }
         if(selector.generate) {
-            for(const regex of REGEX.generateRegex.values()) {
+            for(const regex of Array.from(REGEX.generateRegex.values()).sort((a, b) => a.order - b.order)) {
                 if(flags.role != null) {
                     if(flags.role === 'user' && regex.user === false)
                         continue;
