@@ -166,19 +166,19 @@ export function applyRegex(
     } else {
         if(selector.message) {
             for(const regex of Array.from(REGEX.messageRegex.values()).sort((a, b) => a.order - b.order)) {
-                if(flags.assistant != null && flags.assistant != null && regex.assistant !== flags.assistant)
+                if(flags.assistant && regex.assistant === false)
                     continue;
-                if(flags.user != null && flags.user != null && regex.user !== flags.user)
+                if(flags.user && regex.user === false)
                     continue;
-                if(flags.reasoning != null && flags.reasoning != null && regex.reasoning !== flags.reasoning)
+                if(flags.reasoning && regex.reasoning === false)
                     continue;
-                if(flags.worldinfo != null && regex.worldinfo != null && regex.worldinfo !== flags.worldinfo)
+                if(flags.worldinfo && regex.worldinfo === false)
                     continue;
-                if(flags.system != null && regex.system != null && regex.system !== flags.system)
+                if(flags.system && regex.system === false)
                     continue;
-                if(flags.raw != null && regex.raw != null && regex.raw !== flags.raw)
+                if(flags.raw && regex.raw === false)
                     continue;
-                if(flags.display != null && regex.display != null && regex.display !== flags.display)
+                if(flags.display && regex.display === false)
                     continue;
                 if(flags.depth != null && Number.isSafeInteger(flags.depth)) {
                     if(flags.minDepth != null && Number.isSafeInteger(flags.minDepth) && flags.depth > flags.minDepth)
@@ -193,15 +193,13 @@ export function applyRegex(
         }
         if(selector.generate) {
             for(const regex of Array.from(REGEX.generateRegex.values()).sort((a, b) => a.order - b.order)) {
-                if(flags.role != null) {
-                    if(flags.role === 'user' && regex.user === false)
-                        continue;
-                    if(flags.role === 'assistant' && regex.assistant === false)
-                        continue;
-                    if(flags.role === 'system' && regex.system === false)
-                        continue;
-                }
-                if(flags.worldinfo != null && regex.worldinfo != null && regex.worldinfo !== flags.worldinfo)
+                if(flags.role === 'user' && regex.user === false)
+                    continue;
+                if(flags.role === 'assistant' && regex.assistant === false)
+                    continue;
+                if(flags.role === 'system' && regex.system === false)
+                    continue;
+                if(flags.worldinfo && regex.worldinfo === false)
                     continue;
                 
                 // @ts-expect-error: string.replace replaceValue is allow to pass a function
