@@ -8,7 +8,7 @@ import { extension_settings } from '../../../../../extensions.js';
 import { getEnabledWorldInfoEntries, applyActivateWorldInfo, deactivateActivateWorldInfo, WorldInfo as WorldInfoData, getEnabledLoreBooks } from '../function/worldinfo';
 import { getCharaDefs } from '../function/characters';
 import { settings } from './ui';
-import { activateRegex, deactivateRegex, deactivateMessageRegex, applyMessageRegex } from '../function/regex';
+import { activateRegex, deactivateRegex, applyRegex } from '../function/regex';
 import { deactivatePromptInjection } from '../function/inject';
 import { updateTokens, removeHtmlTagsInsideBlock, escapePreContent, cleanPreContent, escapeReasoningBlocks, unescapePreContent } from '../utils/prompts';
 import { evalTemplateHandler, processWorldinfoEntities } from '../utils/evaluate';
@@ -29,7 +29,7 @@ async function handleGenerating(data: GenerateAfterData) {
     const chat = typeof data.prompt === 'string' ? [{ role: '', content: data.prompt }] : data.prompt;
 
     // No longer available here
-    deactivateRegex();
+    deactivateRegex({ basic: true });
     deactivateActivateWorldInfo();
 
     if(settings.generate_enabled === false)
@@ -59,7 +59,7 @@ async function handleGenerating(data: GenerateAfterData) {
 
         if(typeof message.content === 'string') {
             const prompt = await evalTemplateHandler(
-                message.content,
+                applyRegex(message.content, { generate: true }, { role: message.role, worldinfo: false }),
                 env,
                 `message #${idx + 1}(${message.role})`,
                 {
@@ -79,7 +79,7 @@ async function handleGenerating(data: GenerateAfterData) {
             for(const content of message.content) {
                 if(content.type === 'text') {
                     const prompt = await evalTemplateHandler(
-                        content.text,
+                        applyRegex(content.text, { generate: true }, { role: message.role, worldinfo: false }),
                         env,
                         `message #${idx + 1}(${message.role})`,
                         {
@@ -118,7 +118,7 @@ async function handleGenerating(data: GenerateAfterData) {
 
     // cleanup
     deactivateActivateWorldInfo();
-    deactivateRegex();
+    deactivateRegex({ generate: true, basic: true });
     deactivatePromptInjection();
 }
 
@@ -185,7 +185,18 @@ async function handleMessageRender(message_id: string, _type?: string, isDryRun?
     if(!isDryRun && settings.raw_message_evaluation_enabled) {
         env.runType = 'render_permanent';
         const newContent = await evalTemplateHandler(
-            escapeReasoningBlocks(applyMessageRegex(message.mes)),
+            escapeReasoningBlocks(applyRegex(
+                message.mes,
+                {
+                    message: true
+                },
+                {
+                    user: message.is_user,
+                    assistant: !message.is_user && !message.is_system,
+                    system: message.is_system,
+                    worldinfo: false,
+                }
+            )),
             env,
             `chat #${message_idx}.${message.swipe_id} raw`,
             {
@@ -195,7 +206,7 @@ async function handleMessageRender(message_id: string, _type?: string, isDryRun?
                 }
             }
         );
-        deactivateMessageRegex();
+        deactivateRegex({ message: true });
         env.runType = 'render';
         if(newContent != null) {
             // Permanent modification
@@ -494,7 +505,7 @@ async function handleFilterInstall(_type: string, _options : GenerateOptions, dr
         activateRegex('/<%(?![%])([\\s\\S]*?)(?<!%)%>/g', '', { uuid: regexFilterUUID });
         console.debug('[Prompt Template] inject regex filter');
     } else if(!settings.filter_message_enabled && idx > -1) {
-        deactivateRegex(regexFilterUUID);
+        deactivateRegex({ uuid: regexFilterUUID});
         console.debug('[Prompt Template] remove regex filter');
     }
 }

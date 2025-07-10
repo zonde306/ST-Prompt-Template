@@ -1,31 +1,45 @@
 import { extension_settings } from '../../../../../extensions.js';
 
 interface Regex {
-    generateRegex: Set<string>;
-    messageRegex: Map<string, { search: RegExp | string, replace: string | Function }>;
+    generateRegex: Map<string, { search: RegExp | string, replace: string | ((substring: string, ...args: any[]) => string), user: boolean, assistant: boolean, system: boolean, worldinfo: boolean }>;
+    messageRegex: Map<string, { search: RegExp | string, replace: string | ((substring: string, ...args: any[]) => string), user: boolean, assistant: boolean, system: boolean, reasoning: boolean, worldinfo: boolean, minDepth: number, maxDepth: number }>;
 }
 
 export const REGEX : Regex = {
-    generateRegex: new Set(),
+    generateRegex: new Map(),
     messageRegex: new Map(),
 };
 
-interface RegexOptions {
-    uuid?: string;
-    minDepth?: number;
-    maxDepth?: number;
+export interface RegexFlags {
     user?: boolean;
     assistant?: boolean;
-    worldinfo?: boolean;
     reasoning?: boolean;
-    message?: boolean;
+    system?: boolean;
+    minDepth?: number;
+    maxDepth?: number;
+    worldinfo?: boolean;
 }
 
-export function activateRegex(pattern: string | RegExp, replace: string | Function, opts: RegexOptions = {}) {
+export interface RegexOptions extends RegexFlags {
+    uuid?: string;
+    message?: boolean;
+    generate?: boolean;
+    basic?: boolean;
+}
+
+export function activateRegex(
+    pattern: string | RegExp,
+    replace: string | ((substring: string, ...args: any[]) => string),
+    opts: RegexOptions = {}
+) {
     const uuid = opts.uuid || 'regex-' + Math.random().toString(36).substring(2, 9);
-    if(REGEX.generateRegex.has(uuid)) {
+    if(opts.basic !== false) {
+        if(typeof replace !== 'string') {
+            throw new Error('Basic mode regexes must have a string replace value.');
+        }
+
         const regex = extension_settings.regex.find(x => x.id === uuid);
-        if(regex && typeof replace === 'string') {
+        if(regex) {
             regex.findRegex = pattern instanceof RegExp ? `/${pattern.source}/${pattern.flags}` : pattern;
             regex.replaceString = replace;
             regex.placement = _.compact([
@@ -34,65 +48,139 @@ export function activateRegex(pattern: string | RegExp, replace: string | Functi
                 opts.worldinfo ?? true ? 5 : 0,
                 opts.reasoning ?? true ? 6 : 0,
             ]);
+        } else {
+            extension_settings.regex.push({
+                id: uuid,
+                scriptName: `\u200b${uuid}`,
+                findRegex: pattern instanceof RegExp ? pattern.source : pattern,
+                replaceString: replace,
+                trimStrings: [],
+                placement: _.compact([
+                    opts.user ?? true ? 1 : 0,
+                    opts.assistant ?? true ? 2 : 0,
+                    opts.worldinfo ?? false ? 5 : 0,
+                    opts.reasoning ?? true ? 6 : 0,
+                ]),
+                disabled: false,
+                markdownOnly: false,
+                promptOnly: true,
+                runOnEdit: false,
+                substituteRegex: 0,
+                minDepth: opts.minDepth ?? NaN,
+                maxDepth: opts.minDepth ?? NaN,
+            });
         }
-    } else if(opts.message) {
+    }
+
+    if(opts.generate) {
+        REGEX.generateRegex.set(
+            uuid,
+            {
+                search: pattern,
+                replace,
+                user: opts.user ?? true,
+                assistant: opts.assistant ?? true,
+                system: opts.system ?? true,
+                worldinfo: opts.worldinfo ?? false,
+            }
+        );
+    }
+
+    if(opts.message) {
         REGEX.messageRegex.set(
             uuid,
             {
                 search: pattern,
-                replace
+                replace,
+                user: opts.user ?? true,
+                assistant: opts.assistant ?? true,
+                system: opts.system ?? true,
+                reasoning: opts.reasoning ?? false,
+                worldinfo: opts.worldinfo ?? false,
+                minDepth: opts.minDepth ?? NaN,
+                maxDepth: opts.minDepth ?? NaN,
             }
         );
-    } else if(typeof replace === 'string') {
-        extension_settings.regex.push({
-            id: uuid,
-            scriptName: `\u200b${uuid}`,
-            findRegex: pattern instanceof RegExp ? pattern.source : pattern,
-            replaceString: replace,
-            trimStrings: [],
-            placement: _.compact([
-                opts.user ?? true ? 1 : 0,
-                opts.assistant ?? true ? 2 : 0,
-                opts.worldinfo ?? false ? 5 : 0,
-                opts.reasoning ?? true ? 6 : 0,
-            ]),
-            disabled: false,
-            markdownOnly: false,
-            promptOnly: true,
-            runOnEdit: false,
-            substituteRegex: 0,
-            minDepth: opts.minDepth ?? NaN,
-            maxDepth: opts.minDepth ?? NaN,
-        });
-        REGEX.generateRegex.add(uuid);
     }
 }
 
-export function deactivateRegex(uuid?: string) {
-    if(uuid) {
-        if(REGEX.generateRegex.has(uuid)) {
-            const idx = extension_settings.regex.findLastIndex(x => x.id === uuid);
-            if(idx > -1)
-                extension_settings.regex.splice(idx, 1);
+export interface RegexSelector {
+    uuid?: string;
+    basic?: boolean;
+    message?: boolean;
+    generate?: boolean;
+}
 
-            REGEX.generateRegex.delete(uuid);
+export function deactivateRegex(selector: RegexSelector = {}) {
+    if(selector.uuid) {
+        extension_settings.regex = extension_settings.regex.filter(x => x.id !== selector.uuid);
+        REGEX.generateRegex.delete(selector.uuid);
+        REGEX.messageRegex.delete(selector.uuid);
+    } else {
+        if(selector.basic)
+            extension_settings.regex = extension_settings.regex.filter(x => !x.scriptName.startsWith('\u200b'));
+        if(selector.generate)
+            REGEX.generateRegex.clear();
+        if(selector.message)
+            REGEX.messageRegex.clear();
+    }
+}
+
+export function applyRegex(
+    content : string,
+    selector: RegexSelector = {},
+    flags: RegexFlags & { depth?: number, role?: string } = {}
+) : string {
+    if(selector.uuid) {
+        const message = REGEX.messageRegex.get(selector.uuid);
+        if(message) // @ts-expect-error: string.replace replaceValue is allow to pass a function
+            content = content.replace(message.search, message.replace);
+        
+        const generate = REGEX.generateRegex.get(selector.uuid);
+        if(generate) // @ts-expect-error: string.replace replaceValue is allow to pass a function
+            content = content.replace(generate.search, generate.replace);
+    } else {
+        if(selector.message) {
+            for(const regex of REGEX.messageRegex.values()) {
+                if(flags.assistant != null && flags.assistant != null && regex.assistant !== flags.assistant)
+                    continue;
+                if(flags.user != null && flags.user != null && regex.user !== flags.user)
+                    continue;
+                if(flags.reasoning != null && flags.reasoning != null && regex.reasoning !== flags.reasoning)
+                    continue;
+                if(flags.worldinfo != null && regex.worldinfo != null && regex.worldinfo !== flags.worldinfo)
+                    continue;
+                if(flags.system != null && regex.system != null && regex.system !== flags.system)
+                    continue;
+                if(flags.depth != null && Number.isSafeInteger(flags.depth)) {
+                    if(flags.minDepth != null && Number.isSafeInteger(flags.minDepth) && flags.depth > flags.minDepth)
+                        continue;
+                    if(flags.maxDepth != null && Number.isSafeInteger(flags.maxDepth) && flags.depth < flags.maxDepth)
+                        continue;
+                }
+                
+                // @ts-expect-error: string.replace replaceValue is allow to pass a function
+                content = content.replace(regex.search, regex.replace);
+            }
         }
-    } else {
-        extension_settings.regex = extension_settings.regex.filter(x => !x.scriptName.startsWith('\u200b'));
-        REGEX.generateRegex.clear();
+        if(selector.generate) {
+            for(const regex of REGEX.generateRegex.values()) {
+                if(flags.role != null) {
+                    if(flags.role === 'user' && regex.user === false)
+                        continue;
+                    if(flags.role === 'assistant' && regex.assistant === false)
+                        continue;
+                    if(flags.role === 'system' && regex.system === false)
+                        continue;
+                }
+                if(flags.worldinfo != null && regex.worldinfo != null && regex.worldinfo !== flags.worldinfo)
+                    continue;
+                
+                // @ts-expect-error: string.replace replaceValue is allow to pass a function
+                content = content.replace(regex.search, regex.replace);
+            }
+        }
     }
-}
 
-export function deactivateMessageRegex(uuid?: string) {
-    if(uuid) {
-        REGEX.messageRegex.delete(uuid);
-    } else {
-        REGEX.messageRegex.clear();
-    }
-}
-
-export function applyMessageRegex(content: string) {
-    // @ts-expect-error: string.replace replaceValue is allow to pass a function
-    REGEX.messageRegex.forEach(x => content = content.replace(x.search, x.replace));
     return content;
 }

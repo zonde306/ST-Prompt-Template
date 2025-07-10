@@ -2,6 +2,7 @@ import { EvalTemplateOptions, getSyntaxErrorInfo, evalTemplate } from '../functi
 import { settings } from '../modules/ui';
 import { selectActivatedEntries, getEnabledWorldInfoEntries } from '../function/worldinfo';
 import { substituteParams } from '../../../../../../script.js';
+import { applyRegex } from '../function/regex';
 
 // error handling for evalTemplate
 export async function evalTemplateHandler(content: string,
@@ -47,7 +48,20 @@ export async function processWorldinfoEntities(
     let prompt = '';
     for(const data of worldInfoData) {
         const result = await evalTemplateHandler(
-            substituteParams(data.content),
+            applyRegex(
+                substituteParams(data.content),
+                {
+                    generate: prefix.startsWith('[GENERATE'),
+                    message: prefix.startsWith('[RENDER'),
+                },
+                {
+                    worldinfo: true,
+                    user: false,
+                    assistant: false,
+                    system: false,
+                    reasoning: false,
+                }
+            ),
             _.merge(env, { world_info: data }),
             `worldinfo ${data.world}.${data.comment}`,
             {

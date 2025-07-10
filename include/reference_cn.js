@@ -347,6 +347,9 @@ function getChatMessages(start, end, role);
 
 /**
  * 正则表达式选项
+ * 执行顺序：开始生成 -> basic -> generate -> 处理模板 -> LLM响应 -> message -> 处理模板 -> 渲染楼层消息
+ * 提示词处理完毕后会自动删除basic模式注入的正则
+ *
  * @typedef {Object} RegexOptions
  * @property {string} [uuid=undefined] - 唯一ID，相同则修改，不同则创建
  * @property {number} [minDepth=NaN] - 最小深度
@@ -354,16 +357,17 @@ function getChatMessages(start, end, role);
  * @property {boolean} [user=true] - 对用户输入生效
  * @property {boolean} [assistant=true] - 对AI输出生效
  * @property {boolean} [worldinfo=false] - 对世界信息生效
- * @property {boolean} [reasoning=true] - 对推理生效
- * @property {boolean} [message=true] - 对楼层消息生效（会永久修改）
+ * @property {boolean} [reasoning=false] - 对推理生效
+ * @property {boolean} [message=false] - 对原始楼层消息应用正则（提示词模板扩展实现、支持替换函数）
+ * @property {boolean} [generate=false] - 对生成消息应用正则（提示词模板扩展、支持替换函数）
+ * @property {boolean} [basic=true] - 使用酒馆内置正则（酒馆实现、不支持替换函数）
  */
 
 /**
  * 在生成时创建临时正则表达式，对聊天消息内容进行处理
- * 提示词处理完毕后会自动删除
  *
  * @param {string | RegExp} pattern - 正则表达式
- * @param {string} replace - 替换内容
+ * @param {string | ((substring: string, ...args: any[]) => string) } replace - 替换内容/替换函数
  * @param {RegexOptions} opts - 选项
  */
 function activateRegex(pattern, string, opts = {});
