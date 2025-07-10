@@ -3,6 +3,7 @@ import { settings } from '../modules/ui';
 import { selectActivatedEntries, getEnabledWorldInfoEntries } from '../function/worldinfo';
 import { substituteParams } from '../../../../../../script.js';
 import { applyRegex } from '../function/regex';
+import { copyText } from '../../../../../utils.js';
 
 // error handling for evalTemplate
 export async function evalTemplateHandler(content: string,
@@ -32,7 +33,7 @@ export async function evalTemplateHandler(content: string,
         console.error(err);
 
         // @ts-expect-error
-        toastr.error(err.message, `EJS Error`, {  onclick: () => navigator.clipboard.writeText(err.message).then(() => toastr.success('Copied to clipboard!') )});
+        toastr.error(err.message, `EJS Error`, {  onclick: () => copyText(err.message).then(() => toastr.success('Copied to clipboard!') )});
     }
 
     return null;
