@@ -1,7 +1,7 @@
 // @ts-expect-error
 import vm from 'vm-browserify';
 import { Message, GenerateAfterData, CombinedPromptData } from './defines';
-import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock, substituteParams, this_chid, getCurrentChatId } from '../../../../../../script.js';
+import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock, substituteParams, this_chid, getCurrentChatId, appendMediaToMessage, addCopyToCodeBlocks } from '../../../../../../script.js';
 import { prepareContext } from '../function/ejs';
 import { STATE, checkAndSave } from '../function/variables';
 import { extension_settings } from '../../../../../extensions.js';
@@ -12,6 +12,7 @@ import { activateRegex, deactivateRegex, applyRegex } from '../function/regex';
 import { deactivatePromptInjection } from '../function/inject';
 import { updateTokens, removeHtmlTagsInsideBlock, escapePreContent, cleanPreContent, escapeReasoningBlocks, unescapePreContent } from '../utils/prompts';
 import { evalTemplateHandler, processWorldinfoEntities } from '../utils/evaluate';
+import { updateReasoningUI } from '../../../../../reasoning.js';
 
 let runID = 0;
 let isFakeRun = false;
@@ -151,7 +152,8 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
         return;
     }
 
-    const container = $(`div.mes[mesid="${message_id}"]`)?.find('.mes_text');
+    const parent = $(`div.mes[mesid="${message_id}"]`);
+    const container = parent?.find('.mes_text');
     // don't render if the message is swping (with generating)
     if (!container?.text() || !message.mes || message.mes === '...' || message.mes === message.swipes?.[message.swipe_id - 1]) {
         console.info(`chat message #${message_id}.${message.swipe_id} is generating`);
@@ -263,8 +265,12 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
         newContent = before + newContent + after;
 
     // update if changed
-    if (newContent && newContent !== content)
+    if (newContent && newContent !== content) {
         container.html(newContent);
+        updateReasoningUI(parent);
+        addCopyToCodeBlocks(parent);
+        appendMediaToMessage(message, parent);
+    }
 
     if (hasHTML && isDryRun) {
         isFakeRun = true; // prevent multiple updates
