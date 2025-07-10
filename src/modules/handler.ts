@@ -60,7 +60,7 @@ async function handleGenerating(data: GenerateAfterData) {
 
         if (typeof message.content === 'string') {
             const prompt = await evalTemplateHandler(
-                applyRegex(message.content, { generate: true }, { role: message.role, worldinfo: false }),
+                applyRegex.call(env, message.content, { generate: true }, { role: message.role, worldinfo: false }),
                 env,
                 `message #${idx + 1}(${message.role})`,
                 {
@@ -80,7 +80,7 @@ async function handleGenerating(data: GenerateAfterData) {
             for (const content of message.content) {
                 if (content.type === 'text') {
                     const prompt = await evalTemplateHandler(
-                        applyRegex(content.text, { generate: true }, { role: message.role, worldinfo: false }),
+                        applyRegex.call(env, content.text, { generate: true }, { role: message.role, worldinfo: false }),
                         env,
                         `message #${idx + 1}(${message.role})`,
                         {
@@ -187,7 +187,8 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
     if (!isDryRun && settings.raw_message_evaluation_enabled) {
         env.runType = 'render_permanent';
         const newContent = await evalTemplateHandler(
-            escapeReasoningBlocks(applyRegex(
+            escapeReasoningBlocks(applyRegex.call(
+                env,
                 message.mes,
                 {
                     message: true
@@ -235,7 +236,8 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
     };
 
     let newContent = await evalTemplateHandler(
-        escapeReasoningBlocks(removeHtmlTagsInsideBlock(applyRegex(
+        escapeReasoningBlocks(removeHtmlTagsInsideBlock(applyRegex.call(
+            env,
             content,
             { message: true },
             {

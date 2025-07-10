@@ -49,7 +49,8 @@ export async function processWorldinfoEntities(
     let prompt = '';
     for(const data of worldInfoData) {
         const result = await evalTemplateHandler(
-            applyRegex(
+            applyRegex.call(
+                env,
                 substituteParams(data.content),
                 {
                     generate: prefix.startsWith('[GENERATE'),

@@ -150,6 +150,7 @@ export function deactivateRegex(selector: RegexSelector = {}) {
 }
 
 export function applyRegex(
+    this: Record<string, unknown>,
     content : string,
     selector: RegexSelector = {},
     flags: RegexFlags & { depth?: number, role?: string } = {}
@@ -187,7 +188,7 @@ export function applyRegex(
                 }
                 
                 // @ts-expect-error: string.replace replaceValue is allow to pass a function
-                content = content.replace(regex.search, regex.replace);
+                content = content.replace(regex.search, typeof regex.replace === 'function' ? regex.replace.bind(this) : regex.replace);
             }
         }
         if(selector.generate) {
@@ -204,7 +205,7 @@ export function applyRegex(
                     continue;
                 
                 // @ts-expect-error: string.replace replaceValue is allow to pass a function
-                content = content.replace(regex.search, regex.replace);
+                content = content.replace(regex.search, typeof regex.replace === 'function' ? regex.replace.bind(this) : regex.replace);
             }
         }
     }
