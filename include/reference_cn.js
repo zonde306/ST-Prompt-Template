@@ -358,10 +358,12 @@ function getChatMessages(start, end, role);
  * @property {boolean} [assistant=true] - 对AI输出生效
  * @property {boolean} [worldinfo=false] - 对世界信息生效
  * @property {boolean} [reasoning=false] - 对推理生效
- * @property {boolean} [message=false] - 对原始楼层消息应用正则（提示词模板扩展实现、支持替换函数）
+ * @property {boolean} [message=false] - 对楼层消息应用正则（提示词模板扩展实现、支持替换函数）
  * @property {boolean} [generate=false] - 对生成消息应用正则（提示词模板扩展、支持替换函数）
  * @property {boolean} [basic=true] - 使用酒馆内置正则（酒馆实现、不支持替换函数）
  * @property {number} [order=100] - 执行顺序，升序执行
+ * @property {boolean} [raw=true] - 允许对原始楼层消息进行处理，需要开启 message 项
+ * @property {boolean} [display=false] - 允许对楼层消息HTML进行处理，需要开启 message 项
  */
 
 /**

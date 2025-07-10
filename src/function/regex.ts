@@ -12,7 +12,13 @@ interface RegexEntry {
 
 interface Regex {
     generateRegex: Map<string, RegexEntry>;
-    messageRegex: Map<string, RegexEntry & { reasoning: boolean, minDepth: number, maxDepth: number }>;
+    messageRegex: Map<string, RegexEntry & {
+        reasoning: boolean,
+        minDepth: number,
+        maxDepth: number,
+        raw: boolean,
+        display: boolean,
+    }>;
 }
 
 const REGEX : Regex = {
@@ -28,6 +34,8 @@ export interface RegexFlags {
     minDepth?: number;
     maxDepth?: number;
     worldinfo?: boolean;
+    raw?: boolean;
+    display?: boolean;
 }
 
 export interface RegexOptions extends RegexFlags {
@@ -112,6 +120,8 @@ export function activateRegex(
                 order: opts.order ?? 100,
                 minDepth: opts.minDepth ?? NaN,
                 maxDepth: opts.minDepth ?? NaN,
+                raw: opts.raw ?? true,
+                display: opts.display ?? false,
             }
         );
     }
@@ -164,6 +174,10 @@ export function applyRegex(
                 if(flags.worldinfo != null && regex.worldinfo != null && regex.worldinfo !== flags.worldinfo)
                     continue;
                 if(flags.system != null && regex.system != null && regex.system !== flags.system)
+                    continue;
+                if(flags.raw != null && regex.raw != null && regex.raw !== flags.raw)
+                    continue;
+                if(flags.display != null && regex.display != null && regex.display !== flags.display)
                     continue;
                 if(flags.depth != null && Number.isSafeInteger(flags.depth)) {
                     if(flags.minDepth != null && Number.isSafeInteger(flags.minDepth) && flags.depth > flags.minDepth)

@@ -365,6 +365,8 @@ function getChatMessages(start, end, role);
  * @property {boolean} [generate=false] - Applies regex to generated messages (prompt template, supports replace functions).
  * @property {boolean} [basic=true] - Uses SillyTavern's built-in regex (SillyTavern implementation, does not support replace functions).
  * @property {number} [order=100] - Execution order, ascending
+ * @property {boolean} [raw=true] - Allows processing of raw floor messages, requires enabling the message item
+ * @property {boolean} [display=false] - Allows processing of floor message HTML, requires enabling the message item
  */
 
 /**

@@ -60,6 +60,8 @@ export async function processWorldinfoEntities(
                     assistant: false,
                     system: false,
                     reasoning: false,
+                    raw: false,
+                    display: true,
                 }
             ),
             _.merge(env, { world_info: data }),

@@ -21,9 +21,9 @@ let isDryRun = false;
 const regexFilterUUID = "a8ff1bc7-15f2-4122-b43b-ded692560538";
 
 async function handleGenerating(data: GenerateAfterData) {
-    if(isDryRun)
+    if (isDryRun)
         return;
-    if(settings.enabled === false)
+    if (settings.enabled === false)
         return;
 
     const chat = typeof data.prompt === 'string' ? [{ role: '', content: data.prompt }] : data.prompt;
@@ -32,7 +32,7 @@ async function handleGenerating(data: GenerateAfterData) {
     deactivateRegex({ basic: true });
     deactivateActivateWorldInfo();
 
-    if(settings.generate_enabled === false)
+    if (settings.generate_enabled === false)
         return;
 
     STATE.isDryRun = false;
@@ -55,9 +55,9 @@ async function handleGenerating(data: GenerateAfterData) {
 
     let prompts = before;
     for (const [idx, message] of chat.entries()) {
-        const beforeMessage =  settings.generate_loader_enabled === false ? '' : await processWorldinfoEntities(env, `[GENERATE:${idx}:BEFORE]`);
+        const beforeMessage = settings.generate_loader_enabled === false ? '' : await processWorldinfoEntities(env, `[GENERATE:${idx}:BEFORE]`);
 
-        if(typeof message.content === 'string') {
+        if (typeof message.content === 'string') {
             const prompt = await evalTemplateHandler(
                 applyRegex(message.content, { generate: true }, { role: message.role, worldinfo: false }),
                 env,
@@ -76,8 +76,8 @@ async function handleGenerating(data: GenerateAfterData) {
                 prompts += beforeMessage + prompt + afterMessage;
             }
         } else if (_.isArray(message.content)) {
-            for(const content of message.content) {
-                if(content.type === 'text') {
+            for (const content of message.content) {
+                if (content.type === 'text') {
                     const prompt = await evalTemplateHandler(
                         applyRegex(content.text, { generate: true }, { role: message.role, worldinfo: false }),
                         env,
@@ -103,7 +103,7 @@ async function handleGenerating(data: GenerateAfterData) {
     const after = settings.generate_loader_enabled === false ? '' : await processWorldinfoEntities(env, '[GENERATE:AFTER]', prompts);
     prompts += after;
 
-    if(typeof data.prompt === 'string') {
+    if (typeof data.prompt === 'string') {
         data.prompt = before + chat[0].content + after;
     } else {
         chat[0].content = before + chat[0].content;
@@ -122,10 +122,10 @@ async function handleGenerating(data: GenerateAfterData) {
     deactivatePromptInjection();
 }
 
-async function handleMessageRender(message_id: string, _type?: string, isDryRun?: boolean) {
-    if(settings.enabled === false)
+async function handleMessageRender(message_id: string, type?: string, isDryRun?: boolean) {
+    if (settings.enabled === false)
         return;
-    if(settings.render_enabled === false)
+    if (settings.render_enabled === false)
         return;
 
     if (isFakeRun) return;
@@ -161,7 +161,7 @@ async function handleMessageRender(message_id: string, _type?: string, isDryRun?
     // initialize at least once
     if (isDryRun && !message?.is_ejs_processed?.[message.swipe_id || 0])
         STATE.isDryRun = isDryRun = false;
-    
+
     const env = await prepareContext(message_idx + 1, {
         runType: 'render',
         message_id: message_idx,
@@ -182,7 +182,7 @@ async function handleMessageRender(message_id: string, _type?: string, isDryRun?
 
     const before = settings.render_loader_enabled === false ? '' : await processWorldinfoEntities(env, '[RENDER:BEFORE]', '', { escaper });
 
-    if(!isDryRun && settings.raw_message_evaluation_enabled) {
+    if (!isDryRun && settings.raw_message_evaluation_enabled) {
         env.runType = 'render_permanent';
         const newContent = await evalTemplateHandler(
             escapeReasoningBlocks(applyRegex(
@@ -195,6 +195,9 @@ async function handleMessageRender(message_id: string, _type?: string, isDryRun?
                     assistant: !message.is_user && !message.is_system,
                     system: message.is_system,
                     worldinfo: false,
+                    depth: chat.length - message_idx - 1,
+                    raw: true,
+                    display: false,
                 }
             )),
             env,
@@ -208,7 +211,7 @@ async function handleMessageRender(message_id: string, _type?: string, isDryRun?
         );
         deactivateRegex({ message: true });
         env.runType = 'render';
-        if(newContent != null) {
+        if (newContent != null) {
             // Permanent modification
             message.mes = newContent;
             updateMessageBlock(message_idx, message, { rerenderMessage: true });
@@ -230,24 +233,38 @@ async function handleMessageRender(message_id: string, _type?: string, isDryRun?
     };
 
     let newContent = await evalTemplateHandler(
-        escapeReasoningBlocks(removeHtmlTagsInsideBlock(content), opts),
+        escapeReasoningBlocks(removeHtmlTagsInsideBlock(applyRegex(
+            content,
+            { message: true },
+            {
+                user: message.is_user,
+                assistant: !message.is_user && !message.is_system,
+                system: message.is_system,
+                worldinfo: false,
+                depth: chat.length - message_idx - 1,
+                raw: false,
+                display: true,
+            }
+        )),
+            opts
+        ),
         env,
         `chat #${message_idx}.${message.swipe_id}`,
         opts
     );
 
-    if(settings.code_blocks_enabled === false) {
+    if (settings.code_blocks_enabled === false) {
         // unpatch
         newContent = unescapePreContent(newContent);
     }
 
     const after = settings.render_loader_enabled === false ? '' : await processWorldinfoEntities(env, '[RENDER:AFTER]', newContent || '', { escaper });
-    if(newContent != null)
+    if (newContent != null)
         newContent = before + newContent + after;
 
     // update if changed
     if (newContent && newContent !== content)
-        container.empty().append(newContent);
+        container.html(newContent);
 
     if (hasHTML && isDryRun) {
         isFakeRun = true; // prevent multiple updates
@@ -255,7 +272,7 @@ async function handleMessageRender(message_id: string, _type?: string, isDryRun?
         if (message.is_user) {
             await eventSource.emit(event_types.USER_MESSAGE_RENDERED, message_id);
         } else if (!message.is_system) {
-            await eventSource.emit(event_types.CHARACTER_MESSAGE_RENDERED, message_id, _type);
+            await eventSource.emit(event_types.CHARACTER_MESSAGE_RENDERED, message_id, type);
         }
         isFakeRun = false;
     }
@@ -274,8 +291,8 @@ async function handleMessageRender(message_id: string, _type?: string, isDryRun?
 }
 
 // export for command
-export async function handlePreloadWorldInfo(chat_filename? : string, force: boolean = false) {
-    if(settings.enabled === false)
+export async function handlePreloadWorldInfo(chat_filename?: string, force: boolean = false) {
+    if (settings.enabled === false)
         return;
 
     // clean old content
@@ -283,9 +300,9 @@ export async function handlePreloadWorldInfo(chat_filename? : string, force: boo
     deactivateActivateWorldInfo();
     deactivatePromptInjection();
 
-    if(settings.preload_worldinfo_enabled === false && !force)
+    if (settings.preload_worldinfo_enabled === false && !force)
         return;
-    if(!chat_filename && !force)
+    if (!chat_filename && !force)
         return;
 
     STATE.isDryRun = true;
@@ -309,7 +326,7 @@ export async function handlePreloadWorldInfo(chat_filename? : string, force: boo
     let prompts = '';
     console.log(`[Prompt Template] *** EVALUATING ${worldInfoData.length} WORLD INFO ***`);
 
-    if(settings.generate_loader_enabled)
+    if (settings.generate_loader_enabled)
         prompts += await processWorldinfoEntities(env, '[GENERATE:BEFORE]');
 
     for (const data of worldInfoData) {
@@ -342,14 +359,14 @@ export async function handlePreloadWorldInfo(chat_filename? : string, force: boo
         );
     }
 
-    if(settings.generate_loader_enabled)
+    if (settings.generate_loader_enabled)
         await processWorldinfoEntities(env, '[GENERATE:AFTER]', prompts);
 
     const end = Date.now() - start;
     console.log(`[Prompt Template] processing ${worldInfoData.length} world info in ${end}ms`);
 
     // avoid multiple updates
-    if(chat.length > 1) {
+    if (chat.length > 1) {
         console.log('[Prompt Template] *** UPDATE ALL MESSAGES ***');
         for (const mes of $('div.mes[mesid]')) {
             const message_id = $(mes).attr('mesid');
@@ -361,17 +378,17 @@ export async function handlePreloadWorldInfo(chat_filename? : string, force: boo
 }
 
 async function handleRefreshWorldInfo(name: string, data: WorldInfoData) {
-    if(settings.enabled === false)
+    if (settings.enabled === false)
         return;
-    if(settings.preload_worldinfo_enabled === false)
+    if (settings.preload_worldinfo_enabled === false)
         return;
-    if(!this_chid)
+    if (!this_chid)
         return;
 
     const start = Date.now();
-    
+
     const enabled = getEnabledLoreBooks();
-    if(!enabled.includes(name))
+    if (!enabled.includes(name))
         return;
 
     const worldInfoData = Object.values(data.entries).filter(data => !data.disable);
@@ -390,7 +407,7 @@ async function handleRefreshWorldInfo(name: string, data: WorldInfoData) {
 
     let prompts = '';
 
-    if(settings.generate_loader_enabled)
+    if (settings.generate_loader_enabled)
         prompts += await processWorldinfoEntities(env, '[GENERATE:BEFORE]');
 
     for (const data of worldInfoData) {
@@ -407,27 +424,27 @@ async function handleRefreshWorldInfo(name: string, data: WorldInfoData) {
         );
     }
 
-    if(settings.generate_loader_enabled)
+    if (settings.generate_loader_enabled)
         await processWorldinfoEntities(env, '[GENERATE:AFTER]', prompts);
 
     const end = Date.now() - start;
     console.log(`[Prompt Template] processing ${worldInfoData.length} world info in ${end}ms`);
 }
 
-async function handleWorldInfoActivation(_type: string, _options : GenerateOptions, dryRun: boolean) {
-    if(settings.enabled === false)
+async function handleWorldInfoActivation(_type: string, _options: GenerateOptions, dryRun: boolean) {
+    if (settings.enabled === false)
         return;
 
-    if(dryRun) return;
+    if (dryRun) return;
     await applyActivateWorldInfo(true);
 }
 
 async function handleActivator(data: GenerateAfterData) {
-    if(!isDryRun)
+    if (!isDryRun)
         return;
-    if(settings.enabled === false)
+    if (settings.enabled === false)
         return;
-    if(settings.world_active_enabled === false)
+    if (settings.world_active_enabled === false)
         return;
 
     const chat = typeof data.prompt === 'string' ? [{ role: '', content: data.prompt }] : data.prompt;
@@ -467,8 +484,8 @@ async function handleActivator(data: GenerateAfterData) {
             const afterMessage = settings.generate_loader_enabled === false ? '' : await processWorldinfoEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
             prompts += beforeMessage + (prompt || '') + afterMessage;
         } else if (_.isArray(message.content)) {
-            for(const content of message.content) {
-                if(content.type === 'text') {
+            for (const content of message.content) {
+                if (content.type === 'text') {
                     const prompt = await evalTemplateHandler(
                         content.text,
                         env,
@@ -487,25 +504,25 @@ async function handleActivator(data: GenerateAfterData) {
         }
     }
 
-    if(settings.generate_loader_enabled)
+    if (settings.generate_loader_enabled)
         await processWorldinfoEntities(env, '[GENERATE:AFTER]', prompts);
 
     const end = Date.now() - start;
     console.log(`[Prompt Template] processing ${chat.length} messages in ${end}ms`);
 }
 
-async function handleFilterInstall(_type: string, _options : GenerateOptions, dryRun: boolean) {
-    if(settings.enabled === false)
+async function handleFilterInstall(_type: string, _options: GenerateOptions, dryRun: boolean) {
+    if (settings.enabled === false)
         return;
-    if(dryRun)
+    if (dryRun)
         return;
 
     const idx = extension_settings.regex.findIndex(x => x.id === regexFilterUUID);
-    if(settings.filter_message_enabled && idx === -1) {
+    if (settings.filter_message_enabled && idx === -1) {
         activateRegex('/<%(?![%])([\\s\\S]*?)(?<!%)%>/g', '', { uuid: regexFilterUUID });
         console.debug('[Prompt Template] inject regex filter');
-    } else if(!settings.filter_message_enabled && idx > -1) {
-        deactivateRegex({ uuid: regexFilterUUID});
+    } else if (!settings.filter_message_enabled && idx > -1) {
+        deactivateRegex({ uuid: regexFilterUUID });
         console.debug('[Prompt Template] remove regex filter');
     }
 }
