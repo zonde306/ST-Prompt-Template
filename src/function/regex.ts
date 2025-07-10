@@ -181,9 +181,9 @@ export function applyRegex(
                 if(flags.display && regex.display === false)
                     continue;
                 if(flags.depth != null && Number.isSafeInteger(flags.depth)) {
-                    if(flags.minDepth != null && Number.isSafeInteger(flags.minDepth) && flags.depth > flags.minDepth)
+                    if(Number.isSafeInteger(regex.minDepth) && regex.minDepth >= -1 && flags.depth < regex.minDepth)
                         continue;
-                    if(flags.maxDepth != null && Number.isSafeInteger(flags.maxDepth) && flags.depth < flags.maxDepth)
+                    if(Number.isSafeInteger(regex.maxDepth) && regex.maxDepth >= 0 && flags.depth > regex.maxDepth)
                         continue;
                 }
                 
