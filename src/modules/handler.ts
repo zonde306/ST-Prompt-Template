@@ -1,7 +1,7 @@
 // @ts-expect-error
 import vm from 'vm-browserify';
 import { Message, GenerateAfterData, CombinedPromptData } from './defines';
-import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock, substituteParams, this_chid, getCurrentChatId, appendMediaToMessage, addCopyToCodeBlocks } from '../../../../../../script.js';
+import { eventSource, event_types, chat, GenerateOptions, updateMessageBlock, substituteParams, this_chid, getCurrentChatId, appendMediaToMessage, addCopyToCodeBlocks } from '../../../../../../script.js';
 import { prepareContext } from '../function/ejs';
 import { STATE, checkAndSave } from '../function/variables';
 import { extension_settings } from '../../../../../extensions.js';
@@ -10,9 +10,10 @@ import { getCharaDefs } from '../function/characters';
 import { settings } from './ui';
 import { activateRegex, deactivateRegex, applyRegex } from '../function/regex';
 import { deactivatePromptInjection } from '../function/inject';
-import { updateTokens, removeHtmlTagsInsideBlock, escapePreContent, cleanPreContent, escapeReasoningBlocks, unescapePreContent } from '../utils/prompts';
-import { evalTemplateHandler, processWorldinfoEntities } from '../utils/evaluate';
+import { updateTokens, escapeXmlReasoningBlocks, unescapePreContent, escapeInCodeBlocks } from '../utils/prompts';
+import { evalTemplateEx, processWorldinfoEntities } from '../utils/evaluate';
 import { updateReasoningUI } from '../../../../../reasoning.js';
+import { _messageFormattingAfter, _messageFormattingBefore } from '../utils/process';
 
 let runID = 0;
 let isFakeRun = false;
@@ -59,7 +60,7 @@ async function handleGenerating(data: GenerateAfterData) {
         const beforeMessage = settings.generate_loader_enabled === false ? '' : await processWorldinfoEntities(env, `[GENERATE:${idx}:BEFORE]`);
 
         if (typeof message.content === 'string') {
-            const prompt = await evalTemplateHandler(
+            const prompt = await evalTemplateEx(
                 applyRegex.call(env, message.content, { generate: true }, { role: message.role, worldinfo: false }),
                 env,
                 `message #${idx + 1}(${message.role})`,
@@ -79,7 +80,7 @@ async function handleGenerating(data: GenerateAfterData) {
         } else if (_.isArray(message.content)) {
             for (const content of message.content) {
                 if (content.type === 'text') {
-                    const prompt = await evalTemplateHandler(
+                    const prompt = await evalTemplateEx(
                         applyRegex.call(env, content.text, { generate: true }, { role: message.role, worldinfo: false }),
                         env,
                         `message #${idx + 1}(${message.role})`,
@@ -179,15 +180,15 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
     let hasHTML = false;
     function escaper(markup: string): string {
         hasHTML = true;
-        return messageFormatting(markup, message.name, message.is_system, message.is_user, message_idx);
+        return `@#${encodeURIComponent(markup)}#@`;
     }
 
     const before = settings.render_loader_enabled === false ? '' : await processWorldinfoEntities(env, '[RENDER:BEFORE]', '', { escaper });
 
     if (!isDryRun && settings.raw_message_evaluation_enabled) {
         env.runType = 'render_permanent';
-        const newContent = await evalTemplateHandler(
-            escapeReasoningBlocks(applyRegex.call(
+        const newContent = await evalTemplateEx(
+            escapeXmlReasoningBlocks(applyRegex.call(
                 env,
                 message.mes,
                 {
@@ -209,6 +210,7 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
                 options: {
                     filename: `render_permanent/${getCurrentChatId()}/${message_id}/${message.swipe_id}`,
                     cache: false, // evaluate only once, no caching required
+                    escape: escaper,
                 }
             }
         );
@@ -221,22 +223,22 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
         }
     }
 
-    const html = container.html();
-
-    // patch
-    const content = settings.code_blocks_enabled === false ? escapePreContent(html) : cleanPreContent(html);
     const opts = {
         escaper,
         options: {
-            openDelimiter: '&lt;',
-            closeDelimiter: '&gt;',
             filename: `render/${getCurrentChatId()}/${message_id}/${message.swipe_id}`,
             cache: settings.cache_enabled === 1, // enable for all
         },
     };
 
-    let newContent = await evalTemplateHandler(
-        escapeReasoningBlocks(removeHtmlTagsInsideBlock(applyRegex.call(
+    let content = message.mes;
+    if(settings.code_blocks_enabled === false)
+        content = escapeInCodeBlocks(content, opts);
+    content = escapeXmlReasoningBlocks(content, opts);
+    content = _messageFormattingBefore(content, message.name, message.is_system, message.is_user, message_idx, false);
+
+    let newContent = await evalTemplateEx(
+        applyRegex.call(
             env,
             content,
             { message: true },
@@ -249,40 +251,40 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
                 raw: false,
                 display: true,
             }
-        )),
-            opts
         ),
         env,
         `chat #${message_idx}.${message.swipe_id}`,
         opts
     );
 
-    if (settings.code_blocks_enabled === false) {
-        // unpatch
-        newContent = unescapePreContent(newContent);
-    }
-
     const after = settings.render_loader_enabled === false ? '' : await processWorldinfoEntities(env, '[RENDER:AFTER]', newContent || '', { escaper });
-    if (newContent != null)
+
+    if(newContent) {
+        newContent = _messageFormattingAfter(newContent, message.name, message.is_system, message.is_user);
         newContent = before + newContent + after;
 
-    // update if changed
-    if (newContent && newContent !== content) {
+        if(hasHTML) {
+            newContent = newContent.replace(
+                /@#([\s\S]+)#@/g,
+                (_match, markup) => decodeURIComponent(markup)
+            );
+        }
+
         container.html(newContent);
         updateReasoningUI(parent);
         addCopyToCodeBlocks(parent);
         appendMediaToMessage(message, parent);
-    }
 
-    if (hasHTML && isDryRun) {
-        isFakeRun = true; // prevent multiple updates
-        console.debug(`[HTML] rendering #${message_idx} message`);
-        if (message.is_user) {
-            await eventSource.emit(event_types.USER_MESSAGE_RENDERED, message_id);
-        } else if (!message.is_system) {
-            await eventSource.emit(event_types.CHARACTER_MESSAGE_RENDERED, message_id, type);
+        if (hasHTML && isDryRun) {
+            isFakeRun = true; // prevent multiple updates
+            console.debug(`[HTML] rendering #${message_idx} message`);
+            if (message.is_user) {
+                await eventSource.emit(event_types.USER_MESSAGE_RENDERED, message_id);
+            } else if (!message.is_system) {
+                await eventSource.emit(event_types.CHARACTER_MESSAGE_RENDERED, message_id, type);
+            }
+            isFakeRun = false;
         }
-        isFakeRun = false;
     }
 
     if (!message.is_ejs_processed)
@@ -338,7 +340,7 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
         prompts += await processWorldinfoEntities(env, '[GENERATE:BEFORE]');
 
     for (const data of worldInfoData) {
-        prompts += await evalTemplateHandler(
+        prompts += await evalTemplateEx(
             substituteParams(data.content),
             _.merge(env, { world_info: data }),
             `worldinfo ${data.world}.${data.comment}`,
@@ -354,7 +356,7 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
     const charaDef = getCharaDefs();
     if (charaDef?.description || charaDef?.scenario) {
         const content = (charaDef.description || '') + '\n---\n' + (charaDef.scenario || '');
-        prompts += await evalTemplateHandler(
+        prompts += await evalTemplateEx(
             content,
             env,
             `character ${charaDef.name}`,
@@ -419,7 +421,7 @@ async function handleRefreshWorldInfo(name: string, data: WorldInfoData) {
         prompts += await processWorldinfoEntities(env, '[GENERATE:BEFORE]');
 
     for (const data of worldInfoData) {
-        prompts += await evalTemplateHandler(
+        prompts += await evalTemplateEx(
             substituteParams(data.content),
             _.merge(env, { world_info: data }),
             `worldinfo ${data.world}.${data.comment}`,
@@ -478,7 +480,7 @@ async function handleActivator(data: GenerateAfterData) {
         const beforeMessage = settings.generate_loader_enabled === false ? '' : await processWorldinfoEntities(env, `[GENERATE:${idx}:BEFORE]`);
 
         if (typeof message.content === 'string') {
-            const prompt = await evalTemplateHandler(
+            const prompt = await evalTemplateEx(
                 message.content,
                 env,
                 `message #${idx + 1}(${message.role})`,
@@ -494,7 +496,7 @@ async function handleActivator(data: GenerateAfterData) {
         } else if (_.isArray(message.content)) {
             for (const content of message.content) {
                 if (content.type === 'text') {
-                    const prompt = await evalTemplateHandler(
+                    const prompt = await evalTemplateEx(
                         content.text,
                         env,
                         `message #${idx + 1}(${message.role})`,

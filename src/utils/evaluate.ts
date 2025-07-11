@@ -6,7 +6,7 @@ import { applyRegex } from '../function/regex';
 import { copyText } from '../../../../../utils.js';
 
 // error handling for evalTemplate
-export async function evalTemplateHandler(content: string,
+export async function evalTemplateEx(content: string,
     env: Record<string, unknown>,
     where: string = '',
     opt: EvalTemplateOptions = {}):
@@ -48,7 +48,7 @@ export async function processWorldinfoEntities(
     const worldInfoData = selectActivatedEntries((await getEnabledWorldInfoEntries()).filter(x => x.comment.startsWith(prefix)), keywords, { withConstant: true, withDisabled: true, onlyDisabled: true });
     let prompt = '';
     for(const data of worldInfoData) {
-        const result = await evalTemplateHandler(
+        const result = await evalTemplateEx(
             applyRegex.call(
                 env,
                 substituteParams(data.content),

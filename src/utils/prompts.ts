@@ -57,7 +57,7 @@ export function updateTokens(prompts: string, type: 'send' | 'receive') {
 }
 
 // Replace <% ... %> in HTML tags with <%% ... %%>, only for the specified HTML block
-export function escapeEjsInDisabledBlocks(str : string, options : EjsOptions = {}, markup: string = 'escape-ejs') {
+export function escapeInXmlBlocks(str : string, options : EjsOptions = {}, markup: string = 'escape-ejs') {
     const openDelimiter = options.openDelimiter || '<';
     const closeDelimiter = options.closeDelimiter || '>';
     const delimiter = options.delimiter || '%';
@@ -69,10 +69,25 @@ export function escapeEjsInDisabledBlocks(str : string, options : EjsOptions = {
     );
 }
 
-export function escapeReasoningBlocks(content : string, opts : EvalTemplateOptions = {}) : string {
-    content = escapeEjsInDisabledBlocks(content, opts.options || {}, opts.disableMarkup || 'escape-ejs');
-    content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'thinking');
-    content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'think');
-    content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'reasoning');
+export function escapeXmlReasoningBlocks(content : string, opts : EvalTemplateOptions = {}) : string {
+    content = escapeInXmlBlocks(content, opts.options || {}, opts.disableMarkup || 'escape-ejs');
+    content = escapeInXmlBlocks(content, opts.options || {}, 'thinking');
+    content = escapeInXmlBlocks(content, opts.options || {}, 'think');
+    content = escapeInXmlBlocks(content, opts.options || {}, 'reasoning');
     return content;
+}
+
+export function escapeInCodeBlocks(markdown: string, opts : EvalTemplateOptions = {}) {
+    const open = opts.options?.openDelimiter || '<';
+    const close = opts.options?.closeDelimiter || '>';
+    const delimiter = opts.options?.delimiter || '%';
+    return markdown.replace(
+        /^```([^\s]*)?[^\S\r\n]*$([\s\S]*?)^```$/gm,
+        function(_match, lang, content) {
+            const newContent = content
+                .replaceAll(`${open}${delimiter}`, `${open}${delimiter}${delimiter}`)
+                .replaceAll(`${delimiter}${close}`, `${delimiter}${delimiter}${close}`);
+            return '```' + (lang || '') + '\n' + newContent + '\n```';
+        }
+    );
 }
