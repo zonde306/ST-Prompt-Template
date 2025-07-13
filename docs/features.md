@@ -72,6 +72,150 @@ Supported prefixes:
 
 ---
 
+## Message Injection
+
+The `@INJECT` feature allows you to insert specific prompt messages at precise positions in the conversation. Unlike traditional world/knowledge book entries, this feature provides fine-grained control, supporting absolute position, relative position, and regex-based insertion.
+
+**Key Points:**
+- The world info entry must be **inactive** to take effect.
+- The entry title should be the injection command, and the content is what will actually be sent.
+- Supports EJS template rendering and regex replacement.
+- Affected by **trigger probability**, **order**, and other world info parameters.
+- Supports three insertion modes: absolute position, target message, and regex matching.
+- The final message structure sent to the LLM may differ from the internal structure.
+- Please read the "Prompt Post-Processing" section for best practices.
+
+> Regardless of 🔵 or 🟢, world info always triggers. 🟢 effect is not implemented.
+>
+> Sticky and cooldown are not implemented.
+
+### Basic Syntax
+
+All injection commands start with `@INJECT`, followed by parameters:
+
+```
+@INJECT [parameter1=value1, parameter2=value2, ...]
+```
+
+### Insertion Modes
+
+#### 1. Absolute Position (pos)
+
+Insert at a specific position in the message array.
+
+**Syntax:** `@INJECT pos=position,role=role`
+
+- `pos`: Position (starts from 1, supports negative indices, 0 is treated as the first message)
+- `role`: user/assistant/system
+
+**Examples:**
+- `@INJECT pos=1,role=system` — Insert at the first message
+- `@INJECT pos=-1,role=user` — Insert at the last message
+- `@INJECT pos=3,role=assistant` — Insert at the third message
+
+**Zero/Negative Index:**
+- `pos=0`: Treated as the first message
+- `pos=-1`: Last message
+- `pos=-2`: Second-to-last message
+
+#### 2. Target Message (target)
+
+Insert relative to a specific role's message.
+
+**Syntax:** `@INJECT target=role,index=number,at=position,role=role`
+
+- `target`: user/assistant/system
+- `index`: Message number (starts from 1, supports negative)
+- `at`: before/after (default: before)
+- `role`: user/assistant/system
+
+**Examples:**
+- `@INJECT target=user,index=1,at=before,role=system` — Before the first user message
+- `@INJECT target=assistant,index=-1,at=after,role=user` — After the last assistant message
+- `@INJECT target=user,role=system` — Before the first user message (default)
+
+#### 3. Regex (regex)
+
+Insert based on regex match in message content.
+
+**Syntax:** `@INJECT regex=pattern,at=position,role=role`
+
+- `regex`: Pattern (supports single/double/no quotes)
+- `at`: before/after (default: before)
+- `role`: user/assistant/system
+
+**Examples:**
+- `@INJECT regex=hello,at=before,role=system`
+- `@INJECT regex="^user.*",at=after,role=assistant`
+- `@INJECT regex='\\b(help|帮助)\\b',role=system`
+
+### Sorting and Priority
+
+1. **Position Priority:** Insert from back to front by position
+2. **Order Parameter:** Same position sorted by world info order (smaller first)
+3. **Type Priority:** pos > target > regex
+
+### Trigger Probability
+
+- If `probability%` is set, the system randomly decides whether to trigger.
+- Entries without probability always trigger.
+- Results are logged in the console.
+
+### Usage Examples
+
+#### Example 1: Insert system prompt at start
+```
+World info title: @INJECT pos=0,role=system
+World info content:
+You are a professional AI assistant, please answer questions in a friendly and professional manner.
+```
+
+#### Example 2: Insert context after user question
+```
+World info title: @INJECT target=user,at=after,role=assistant
+World info content:
+Based on the user's question, I provide the following background information:
+<%- world_info.content %>
+```
+
+#### Example 3: Insert based on keyword
+```
+World info title: @INJECT regex=urgent,role=system
+World info content:
+Emergency keyword detected, please provide timely and accurate assistance.
+```
+
+#### Example 4: With trigger probability
+```
+World info title: @INJECT target=assistant,at=before,role=system,order=5
+World info content:
+This is a randomly triggered prompt with only 30% probability.
+```
+(Enable trigger probability in world info settings, set to 30%)
+
+### Important Notes
+
+1. **Position calculation** happens after template rendering and regex replacement.
+2. **Content** is processed with template rendering and regex replacement.
+3. **Data consistency** is maintained in the message array.
+4. **Debug info** is output to the browser console.
+5. **Error handling**: Invalid regex or missing target messages will log warnings.
+
+### Prompt Post-Processing
+
+```
+This feature is powerful, but its effect depends on the API's prompt format. For strict APIs (Gemini, Claude), ensure your most important system instructions (e.g., character settings) are injected at the very beginning (pos=0 or lowest order). Otherwise, they may be treated as user messages and not work as expected.
+```
+
+**⚠️ Please ensure system messages are at the beginning!!!**
+
+> Consecutive messages with the same role may be merged.
+
+See the API connection documentation for more details:  
+https://docs.sillytavern.app/usage/api-connections/openai/#prompt-post-processing
+
+---
+
 ## Chat Rendering
 
 Differences from regular prompt processing:

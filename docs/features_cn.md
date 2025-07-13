@@ -97,6 +97,39 @@
 	>
 	> 例如 `[GENERATE:1:BEFORE]`为将提示词注入到第1条messages中（首条为0）
 
+### 正则表达式语法示例
+
+- `[GENERATE:REGEX:你好]` - 当消息包含"你好"时注入内容
+- `[GENERATE:REGEX:^用户.*]` - 当消息以"用户"开头时注入内容  
+- `[GENERATE:REGEX:.*问题.*]` - 当消息包含"问题"时注入内容
+- `[GENERATE:REGEX:\\b(help|帮助)\\b]` - 当消息包含"help"或"帮助"单词时注入内容
+
+> 正则表达式匹配不区分大小写，支持所有标准正则表达式语法
+
+### 正则表达式语法使用说明
+
+1. **语法格式**: `[GENERATE:REGEX:pattern]`
+   - `pattern` 是标准的正则表达式模式
+   - 支持所有 JavaScript 正则表达式语法
+
+2. **匹配逻辑**: 
+   - 系统会遍历所有消息内容
+   - 当消息内容匹配指定的正则表达式时，会执行对应的世界书条目
+   - 匹配的内容会注入到对应消息之前
+
+3. **可用变量**:
+   - `matched_message`: 匹配的消息内容
+   - `matched_message_index`: 匹配消息的索引
+   - `matched_message_role`: 匹配消息的角色
+
+4. **使用示例**:
+   ```
+   世界书条目标题: [GENERATE:REGEX:你好]
+   世界书条目内容: 
+   检测到问候语！当前消息: <%- matched_message %>
+   消息索引: <%- matched_message_index %>
+   ```
+
 ---
 
 ## 楼层渲染
@@ -149,6 +182,246 @@
 - 代码高亮与此扩展发生冲突
 
 > 由于代码高亮会修改实际的HTML代码，在`<`、`>`以及`%`之间插入额外的HTML标记，导致此扩展无法正确地处理内容，因此会导致代码块内的`<% ... %>`无法执行
+
+---
+
+## Prompt 注入
+
+`@INJECT` 功能允许您将特定的提示词消息以类似 **{role: 'user', content: '[Start a new Chat]'}** 的格式直接插入到Prompt中。与传统的世界书条目不同，此功能提供了更精确的位置控制，支持按绝对位置、相对位置和正则表达式匹配进行插入。
+
+上面提示词注入功能只允许你修改消息，你所有提交给 SillyTavern 的消息都由提示词模版决定。如果你安装了酒馆助手，你在控制台输入 `window.TavernHelper.Context.getAllActivatedPrompt()` 来获得激活中的提示词列表（暂时无效，作者的 PR 审核中...）
+
+默认情况下，所有世界书条目都会被合并成一条 `System` 消息发送，以换行符`\n`分隔，这意味着状态栏会与普通条目混杂在一起。
+
+假设存在这样的**条目1**
+
+```
+<Format>
+输出格式强调:
+rule:
+- The following must be inserted to the end of each reply, and cannot be omitted
+1.<zhengwenkaishi></zhengwenjiesu>(中间填写正文内容).
+2.  You must insert <UpdateVariable> tag,update the variables refer to <Analysis> rule, Ignore summary content when evaluate.
+format: |-
+
+<zhengwenkaishi>
+
+正文内容
+
+</zhengwenjiesu>
+
+<UpdateVariable>
+<Analysis>
+...
+</Analysis>
+...
+</UpdateVariable>
+</Format>
+
+```
+
+以及**条目2**：
+
+```
+花音kanon是一个可爱的小姑娘。
+```
+
+和**条目3**：
+```
+花音kanon最心水的牌子是 Mayla Classic
+```
+
+最终发送给 LLM 的内容是
+`[{role: 'system', context: '...\n</UpdateVariable>\n</Format>\n花音是一个可爱的小姑娘。\n花音kanon最心水的牌子是 Mayla Classic'},...]`
+
+根据 LLM 的说法，即使手动在格式信息里添加分隔符，效果仍然不如独立的`system`块。指令类信息应该独立于知识类信息，而知识类信息（世界书）不应该被分割。
+
+以 `Gemini` 为例，一个合理的发送格式是
+
+```
+[  ...
+   systemInstruction: {
+    parts: [
+      { text: '...\n</UpdateVariable>\n</Format>' },
+      { text: '花音是一个可爱的小姑娘。\n花音kanon最心水的牌子是 Mayla Classic' }
+    ]
+  }
+]
+```
+
+Sillytavern 在设计上不允许角色卡直接修改提示词预设，本模块提供了直接插入提示词功能的办法。
+
+
+**重要说明**：
+- 必须将世界书条目设置为**未激活**状态才会生效
+- 将世界书条目名设置为注入语句，内容则是你需要实际发送的内容
+- 支持EJS模板渲染和正则替换处理
+- 会受到**触发概率**、**顺序**等世界书参数影响
+- 支持三种插入模式：绝对位置、目标消息、正则匹配
+- 最终发送给 LLM 的消息结构与本模块处理后的消息结构不同
+- 能力越大，责任越大，请仔细阅读 `提示词后处理` 部分
+
+> 不论论设置为🔵还是🟢，世界书总是触发，🟢效果未实现
+
+> 黏性与冷却未实现
+
+### 基本语法
+
+所有注入指令都以 `@INJECT` 开头，后跟参数配置：
+
+```
+@INJECT [参数1=值1, 参数2=值2, ...]
+```
+
+### 插入模式
+
+#### 1. 绝对位置插入 (pos)
+
+按消息数组的绝对位置进行插入。
+
+**语法**：`@INJECT pos=位置,role=角色`
+
+**参数说明**：
+- `pos`：插入位置（从1开始，支持负数索引）
+- `role`：插入消息的角色（user/assistant/system）
+
+**示例**：
+- `@INJECT pos=1,role=system` - 在第一条消息位置插入系统消息
+- `@INJECT pos=-1,role=user` - 在最后一条消息位置插入用户消息
+- `@INJECT pos=3,role=assistant` - 在第三条消息位置插入助手消息
+
+**零与负数索引说明**：
+- `pos=0`：按照第一条消息处理
+- `pos=-1`：最后一条消息位置
+- `pos=-2`：倒数第二条消息位置
+- 以此类推
+
+#### 2. 目标消息插入 (target)
+
+相对于特定角色的消息进行插入。
+
+**语法**：`@INJECT target=角色,index=序号,at=位置,role=角色`
+
+**参数说明**：
+- `target`：目标角色（user/assistant/system）
+- `index`：目标消息的序号（从1开始，支持负数）
+- `at`：插入位置（before/after，默认为before）
+- `role`：插入消息的角色
+
+**示例**：
+- `@INJECT target=user,index=1,at=before,role=system` - 在第一条用户消息前插入系统消息
+- `@INJECT target=assistant,index=-1,at=after,role=user` - 在最后一条助手消息后插入用户消息
+- `@INJECT target=user,role=system` - 在第一条用户消息前插入系统消息（使用默认值）
+
+**负数索引说明**：
+- `index=-1`：该角色的最后一条消息
+- `index=-2`：该角色的倒数第二条消息
+
+#### 3. 正则表达式插入 (regex)
+
+根据消息内容的正则表达式匹配进行插入。
+
+**语法**：`@INJECT regex=模式,at=位置,role=角色`
+
+**参数说明**：
+- `regex`：正则表达式模式（支持单引号包围、双引号包围与无包围）
+- `at`：插入位置（before/after，默认为before）
+- `role`：插入消息的角色
+
+**示例**：
+- `@INJECT regex=你好,at=before,role=system` - 在包含"你好"的消息前插入系统消息
+- `@INJECT regex="^用户.*",at=after,role=assistant` - 在以"用户"开头的消息后插入助手消息
+- `@INJECT regex='\\b(help|帮助)\\b',role=system` - 在包含"help"或"帮助"单词的消息前插入系统消息
+
+**正则表达式语法**：
+- 支持所有 JavaScript 正则表达式语法
+- 可以使用单引号或双引号包围模式
+- 不区分大小写匹配
+
+### 排序和优先级
+
+注入消息的执行顺序由以下规则决定：
+
+1. **位置优先级**：按插入位置从后往前执行
+2. **顺序参数**：相同位置按世界书顺序参数排序（较小的值优先插在前面）
+3. **类型优先级**：`pos` > `target` > `regex`
+
+### 触发概率
+
+支持世界书的触发概率功能：
+
+- 如果设置了`概率%`，系统会随机决定是否触发该注入
+- 未设置概率的条目会直接触发
+- 触发结果会在控制台输出详细日志
+
+### 使用示例
+
+#### 示例1：在对话开始插入系统提示
+```
+世界书条目标题: @INJECT pos=0,role=system
+世界书条目内容: 
+你是一个专业的AI助手，请用友好和专业的语气回答问题。
+```
+
+#### 示例2：在用户问题后插入上下文
+```
+世界书条目标题: @INJECT target=user,at=after,role=assistant
+世界书条目内容: 
+基于用户的问题，我提供以下背景信息：
+<%- world_info.content %>
+```
+
+#### 示例3：根据关键词插入特定内容
+```
+世界书条目标题: @INJECT regex=紧急,role=system
+世界书条目内容: 
+检测到紧急情况关键词，请注意提供及时和准确的帮助。
+```
+
+#### 示例4：使用触发概率
+```
+世界书条目标题: @INJECT target=assistant,at=before,role=system,order=5
+世界书条目内容: 
+这是一个随机触发的提示，只有30%的概率会出现。
+```
+（需要在世界书设置中启用触发概率，设置为30%）
+
+### 注意事项
+
+1. **位置计算**：所有位置计算都在模板渲染和正则替换之后进行
+2. **内容处理**：注入的内容会经过模板渲染和正则替换处理
+3. **数据一致性**：插入操作会保持消息数组的数据结构一致性
+4. **调试信息**：详细的操作日志会输出到浏览器控制台
+5. **错误处理**：无效的正则表达式或找不到目标消息时会输出警告
+
+### 提示词后处理 
+
+```
+本注入功能非常强大，但它的最终效果取决于你所连接的 API 对提示词格式的要求。对于像 Gemini 或 Claude 这样使用严格格式的 API，请确保将你最重要的系统级指令（如角色设定）通过 pos=0 或 order 最小的方式，注入到对话的最开头。否则，它们可能会在 SillyTavern 的内置格式化处理中被当作普通用户消息，从而达不到预期的效果。
+```
+
+**⚠️请保证system消息在开头！！！**
+
+**⚠️请保证system消息在开头！！！**
+
+**⚠️请保证system消息在开头！！！**
+
+> 连续的消息相同role的消息可能被合并
+
+在 `API连接配置` 页，你可以找到提示词后处理选项。它完成了 Sillytavern 格式至 大模型 API要求的格式的转换。
+| | | 
+| --- | --- | 
+Chatgpt | system 消息通常只放一条，位于对话最前，用于设定助手的整体行为。不要求严格两两交替，但如果你插入多条 user，模型就会认为这是用户连续的输入。连续2条 system 也是允许的。system 不硬性要求放在最前面，但强烈建议放在最前面。|
+Gemini | 独立systemInstruction，user/model 严格交替，user 开头，所有 system 消息将被转发至systemInstruction结构 |
+Anthropic Claude | user/assistant 严格交替，最后一条消息通常应该是 user 角色，system 消息可以在任何位置，但通常放在开头最有效 |
+Deepseek | user/assistant 建议交替，最后一条消息必须是 user |
+其他兼容OpenAI的 | 通常同上，但有时将 system 合并到 user 效果更好 |
+本地模型 (Kobold等) | 只需要一个巨大的纯文本块 |
+
+
+你可以在以下链接找到提示词后处理的详细说明：
+
+https://docs.sillytavern.app/usage/api-connections/openai/#prompt-post-processing
 
 ---
 
