@@ -57,7 +57,7 @@ async function handleGenerating(data: GenerateAfterData) {
     const before = settings.generate_loader_enabled === false
         ? ''
         : await processWorldinfoEntities(env, '[GENERATE:BEFORE]');
-    
+
     let prompts = before;
     for (const [idx, message] of chat.entries()) {
         // Before a specific message
@@ -80,9 +80,8 @@ async function handleGenerating(data: GenerateAfterData) {
 
             // After a specific message
             const afterMessage = settings.generate_loader_enabled === false
-                ?
-                '' :
-                await processWorldinfoEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
+                ? ''
+                : await processWorldinfoEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
 
             if (prompt != null) {
                 message.content = beforeMessage + prompt + afterMessage;
@@ -203,7 +202,9 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
         return messageFormatting(markup, message.name, message.is_system, message.is_user, message_idx);
     }
 
-    const before = settings.render_loader_enabled === false ? '' : await processWorldinfoEntities(env, '[RENDER:BEFORE]', '', { escaper });
+    const before = settings.render_loader_enabled === false
+        ? ''
+        : await processWorldinfoEntities(env, '[RENDER:BEFORE]', '', { escaper });
 
     if (!isDryRun && settings.raw_message_evaluation_enabled) {
         env.runType = 'render_permanent';
@@ -283,7 +284,10 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
         newContent = unescapePreContent(newContent);
     }
 
-    const after = settings.render_loader_enabled === false ? '' : await processWorldinfoEntities(env, '[RENDER:AFTER]', newContent || '', { escaper });
+    const after = settings.render_loader_enabled === false
+        ? ''
+        : await processWorldinfoEntities(env, '[RENDER:AFTER]', newContent || '', { escaper });
+
     if (newContent != null)
         newContent = before + newContent + after;
 
