@@ -1,13 +1,14 @@
 import { extension_settings } from '../../../../../extensions.js';
 
 interface RegexEntry {
-    search: RegExp | string,
-    replace: string | ((substring: string, ...args: any[]) => string),
-    user: boolean,
-    assistant: boolean,
-    system: boolean,
-    worldinfo: boolean,
-    order: number,
+    search: RegExp | string;
+    replace: string | ((substring: string, ...args: any[]) => string);
+    user: boolean;
+    assistant: boolean;
+    system: boolean;
+    worldinfo: boolean;
+    order: number;
+    sticky: number;
 }
 
 interface Regex {
@@ -44,6 +45,7 @@ export interface RegexOptions extends RegexFlags {
     generate?: boolean; // Generating
     basic?: boolean; // Built-in RegExp, Only string replacers are allowed
     order?: number; // Execution order, ascending
+    sticky?: number; // times to keep active
 }
 
 /**
@@ -112,6 +114,7 @@ export function activateRegex(
                 system: opts.system ?? true,
                 worldinfo: opts.worldinfo ?? false,
                 order: opts.order ?? 100,
+                sticky: opts.sticky ?? 0,
             }
         );
     }
@@ -132,6 +135,7 @@ export function activateRegex(
                 maxDepth: opts.minDepth ?? NaN,
                 raw: opts.raw ?? true,
                 display: opts.display ?? false,
+                sticky: opts.sticky ?? 0,
             }
         );
     }
@@ -144,18 +148,39 @@ export interface RegexSelector {
     generate?: boolean;
 }
 
-export function deactivateRegex(selector: RegexSelector = {}) {
+export function deactivateRegex(selector: RegexSelector = {}, count : number = 1) {
     if(selector.uuid) {
         extension_settings.regex = extension_settings.regex.filter(x => x.id !== selector.uuid);
-        REGEX.generateRegex.delete(selector.uuid);
-        REGEX.messageRegex.delete(selector.uuid);
+        const generate = REGEX.generateRegex.get(selector.uuid);
+        if(generate) {
+            generate.sticky -= count;
+            if(generate.sticky <= 0)
+                REGEX.generateRegex.delete(selector.uuid);
+        }
+
+        const message = REGEX.messageRegex.get(selector.uuid);
+        if(message) {
+            message.sticky -= count;
+            if(message.sticky <= 0)
+                REGEX.messageRegex.delete(selector.uuid);
+        }
     } else {
         if(selector.basic)
             extension_settings.regex = extension_settings.regex.filter(x => !x.scriptName.startsWith('\u200b'));
-        if(selector.generate)
-            REGEX.generateRegex.clear();
-        if(selector.message)
-            REGEX.messageRegex.clear();
+        if(selector.generate) {
+            for(const [uuid, regex] of Array.from(REGEX.generateRegex.entries())) {
+                regex.sticky -= count;
+                if(regex.sticky <= 0)
+                    REGEX.generateRegex.delete(uuid);
+            }
+        }
+        if(selector.message) {
+            for(const [uuid, regex] of Array.from(REGEX.messageRegex.entries())) {
+                regex.sticky -= count;
+                if(regex.sticky <= 0)
+                    REGEX.messageRegex.delete(uuid);
+            }
+        }
     }
 }
 

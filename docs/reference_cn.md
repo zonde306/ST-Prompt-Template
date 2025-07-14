@@ -367,6 +367,7 @@ function getChatMessages(start, end, role);
  * @property {number} [order=100] - 执行顺序，升序执行
  * @property {boolean} [raw=true] - 允许对原始楼层消息进行处理，需要开启 message 项
  * @property {boolean} [display=false] - 允许对楼层消息HTML进行处理，需要开启 message 项
+ * @property {number} [sticky=0] - 粘性
  */
 
 /**

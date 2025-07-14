@@ -330,7 +330,7 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
         return;
 
     // clean old content
-    deactivateRegex({ basic: true, message: true, generate: true });
+    deactivateRegex({ basic: true, message: true, generate: true }, 999);
     deactivateActivateWorldInfo();
     deactivatePromptInjection(999);
 
