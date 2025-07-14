@@ -109,6 +109,15 @@ export interface EvalTemplateOptions {
     disableMarkup?: string;
 }
 
+/**
+ * use EJS template engine to process content
+ * @see prepareContext
+ * 
+ * @param content prompt content
+ * @param data Execution Context, see prepareContext
+ * @param opts EJS options
+ * @returns Processing results
+ */
 export async function evalTemplate(content: string, data: Record<string, unknown>,
     opts : EvalTemplateOptions = {}) {
     if (typeof content !== 'string') {
@@ -182,6 +191,91 @@ export async function evalTemplate(content: string, data: Record<string, unknown
 
     // await eventSource.emit('prompt_template_evaluation_post', { result, data });
     return result;
+}
+
+/**
+ * Creating an Execution Context
+ * @see evalTemplate
+ * 
+ * @param end Maximum number of combined messages
+ * @param env Override context
+ * @returns Context
+ */
+export async function prepareContext(end?: number, env: Record<string, unknown> = {}): Promise<Record<string, unknown>> {
+    let vars = allVariables(end);
+    STATE.cache = vars;
+    let context = {
+        ...SHARE_CONTEXT,
+        variables: vars,
+        execute: async (cmd: string) => (await executeSlashCommandsWithOptions(cmd)).pipe,
+        SillyTavern: SillyTavern.getContext(),
+        faker: fakerEnv.faker,
+        userName: name1,
+        assistantName: name2,
+        charName: name2,
+        chatId: getCurrentChatId(),
+        characterId: this_chid,
+        charAvatar: getCharaAvater(),
+        userAvatar: getPersonaAvatar(),
+
+        // @ts-expect-error: 7005
+        groups,
+        
+        // @ts-expect-error: 7005
+        groupId: selected_group,
+        
+        // @ts-expect-error: 2538
+        charaLoreBook: characters[this_chid]?.data?.extensions?.world,
+        personaLoreBook: power_user.persona_description_lorebook,
+        // @ts-expect-error: 7053
+        chatLoreBook: chat_metadata[METADATA_KEY],
+
+        ...env,
+        
+        get vars() {
+            return new WeakRef(STATE.cache);
+        }
+    };
+
+    _.merge(context, {
+        getwi: boundedReadWorldinfo.bind(context),
+        getWorldInfo: boundedReadWorldinfo.bind(context),
+        getchr: boundedCharDef.bind(context),
+        getChara: boundedCharDef.bind(context),
+        getprp: boundedPresetPrompt.bind(context),
+        getPresetPrompt: boundedPresetPrompt.bind(context),
+        define: boundedDefine.bind(context),
+        setvar: setVariable.bind(context),
+        setLocalVar: (k: string, v: unknown, o : SetVarOption = {}) => setVariable.call(context, k, v, { ...o, scope: 'local' }),
+        setGlobalVar: (k: string, v: unknown, o : SetVarOption = {}) => setVariable.call(context, k, v, { ...o, scope: 'global' }),
+        setMessageVar: (k: string, v: unknown, o : SetVarOption = {}) => setVariable.call(context, k, v, { ...o, scope: 'message' }),
+        getvar: getVariable.bind(context),
+        getLocalVar: (k: string, o : GetVarOption = {}) => getVariable.call(context, k, { ...o, scope: 'local' }),
+        getGlobalVar: (k: string, o : GetVarOption = {}) => getVariable.call(context, k, { ...o, scope: 'global' }),
+        getMessageVar: (k: string, o : GetVarOption = {}) => getVariable.call(context, k, { ...o, scope: 'message' }),
+        incvar: increaseVariable.bind(context),
+        incLocalVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => increaseVariable.call(context, k, v, { ...o, outscope: 'local' }),
+        incGlobalVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => increaseVariable.call(context, k, v, { ...o, outscope: 'global' }),
+        incMessageVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => increaseVariable.call(context, k, v, { ...o, outscope: 'message' }),
+        decvar: decreaseVariable.bind(context),
+        decLocalVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'local' }),
+        decGlobalVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'global' }),
+        decMessageVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'message' }),
+        getqr: boundedQuickReply.bind(context),
+        getQuickReply: boundedQuickReply.bind(context),
+        evalTemplate: boundedEvalTemplate.bind(context),
+        ...boundCloneDefines(context, SharedDefines),
+        ref: new WeakRef(context),
+    });
+
+    await eventSource.emit('prompt_template_prepare', context);
+
+    if(settings.debug_enabled) {
+        console.debug(`[Prompt Template] context prepared:`);
+        console.debug(context);
+    }
+
+    return context;
 }
 
 async function boundedReadWorldinfo(this: Record<string, unknown>,
@@ -306,83 +400,6 @@ async function boundedEvalTemplate(this: Record<string, unknown>, content: strin
     ));
 }
 
-export async function prepareContext(end?: number, env: Record<string, unknown> = {}): Promise<Record<string, unknown>> {
-    let vars = allVariables(end);
-    STATE.cache = vars;
-    let context = {
-        ...SHARE_CONTEXT,
-        variables: vars,
-        execute: async (cmd: string) => (await executeSlashCommandsWithOptions(cmd)).pipe,
-        SillyTavern: SillyTavern.getContext(),
-        faker: fakerEnv.faker,
-        userName: name1,
-        assistantName: name2,
-        charName: name2,
-        chatId: getCurrentChatId(),
-        characterId: this_chid,
-        charAvatar: getCharaAvater(),
-        userAvatar: getPersonaAvatar(),
-
-        // @ts-expect-error: 7005
-        groups,
-        
-        // @ts-expect-error: 7005
-        groupId: selected_group,
-        
-        // @ts-expect-error: 2538
-        charaLoreBook: characters[this_chid]?.data?.extensions?.world,
-        personaLoreBook: power_user.persona_description_lorebook,
-        // @ts-expect-error: 7053
-        chatLoreBook: chat_metadata[METADATA_KEY],
-
-        ...env,
-        
-        get vars() {
-            return new WeakRef(STATE.cache);
-        }
-    };
-
-    _.merge(context, {
-        getwi: boundedReadWorldinfo.bind(context),
-        getWorldInfo: boundedReadWorldinfo.bind(context),
-        getchr: boundedCharDef.bind(context),
-        getChara: boundedCharDef.bind(context),
-        getprp: boundedPresetPrompt.bind(context),
-        getPresetPrompt: boundedPresetPrompt.bind(context),
-        define: boundedDefine.bind(context),
-        setvar: setVariable.bind(context),
-        setLocalVar: (k: string, v: unknown, o : SetVarOption = {}) => setVariable.call(context, k, v, { ...o, scope: 'local' }),
-        setGlobalVar: (k: string, v: unknown, o : SetVarOption = {}) => setVariable.call(context, k, v, { ...o, scope: 'global' }),
-        setMessageVar: (k: string, v: unknown, o : SetVarOption = {}) => setVariable.call(context, k, v, { ...o, scope: 'message' }),
-        getvar: getVariable.bind(context),
-        getLocalVar: (k: string, o : GetVarOption = {}) => getVariable.call(context, k, { ...o, scope: 'local' }),
-        getGlobalVar: (k: string, o : GetVarOption = {}) => getVariable.call(context, k, { ...o, scope: 'global' }),
-        getMessageVar: (k: string, o : GetVarOption = {}) => getVariable.call(context, k, { ...o, scope: 'message' }),
-        incvar: increaseVariable.bind(context),
-        incLocalVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => increaseVariable.call(context, k, v, { ...o, outscope: 'local' }),
-        incGlobalVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => increaseVariable.call(context, k, v, { ...o, outscope: 'global' }),
-        incMessageVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => increaseVariable.call(context, k, v, { ...o, outscope: 'message' }),
-        decvar: decreaseVariable.bind(context),
-        decLocalVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'local' }),
-        decGlobalVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'global' }),
-        decMessageVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'message' }),
-        getqr: boundedQuickReply.bind(context),
-        getQuickReply: boundedQuickReply.bind(context),
-        evalTemplate: boundedEvalTemplate.bind(context),
-        ...boundCloneDefines(context, SharedDefines),
-        ref: new WeakRef(context),
-    });
-
-    await eventSource.emit('prompt_template_prepare', context);
-
-    if(settings.debug_enabled) {
-        console.debug(`[Prompt Template] context prepared:`);
-        console.debug(context);
-    }
-
-    return context;
-}
-
 const EJS_INCLUDE_REGEX = /^\s*include\s+(\S+)/;
 
 // from: https://github.com/RyanZim/EJS-Lint/blob/master/index.js
@@ -448,6 +465,12 @@ function padWhitespace(text: string) {
     return res;
 }
 
+/**
+ * Get code syntax error information
+ * @param code the code
+ * @param count number of lines near the error message
+ * @returns error message
+ */
 export function getSyntaxErrorInfo(code : string, count : number = 4) : string {
     const error = lint(code);
     if(!error) return '';

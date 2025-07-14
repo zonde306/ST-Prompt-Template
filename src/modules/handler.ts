@@ -15,8 +15,8 @@ import { evalTemplateHandler, processWorldinfoEntities } from '../utils/evaluate
 import { updateReasoningUI } from '../../../../../reasoning.js';
 
 let runID = 0;
-let isFakeRun = false;
-let isDryRun = false;
+let isFakeRun = false; // Avoid recursive processing
+let isDryRun = false; // Is it preparation stage?
 
 // just a randomly generated value
 const regexFilterUUID = "a8ff1bc7-15f2-4122-b43b-ded692560538";
@@ -27,6 +27,7 @@ async function handleGenerating(data: GenerateAfterData) {
     if (settings.enabled === false)
         return;
 
+    // OAI/non-OAI have different formats
     const chat = typeof data.prompt === 'string' ? [{ role: '', content: data.prompt }] : data.prompt;
 
     // No longer available here
@@ -52,13 +53,19 @@ async function handleGenerating(data: GenerateAfterData) {
         isDryRun: false,
     });
 
-    const before = settings.generate_loader_enabled === false ? '' : await processWorldinfoEntities(env, '[GENERATE:BEFORE]');
-
+    // Inject [GENERATE:BEFORE] (Before all messages)
+    const before = settings.generate_loader_enabled === false
+        ? ''
+        : await processWorldinfoEntities(env, '[GENERATE:BEFORE]');
+    
     let prompts = before;
     for (const [idx, message] of chat.entries()) {
-        const beforeMessage = settings.generate_loader_enabled === false ? '' : await processWorldinfoEntities(env, `[GENERATE:${idx}:BEFORE]`);
+        // Before a specific message
+        const beforeMessage = settings.generate_loader_enabled === false
+            ? ''
+            : await processWorldinfoEntities(env, `[GENERATE:${idx}:BEFORE]`);
 
-        if (typeof message.content === 'string') {
+        if (typeof message.content === 'string') { // Plain text message
             const prompt = await evalTemplateHandler(
                 applyRegex.call(env, message.content, { generate: true }, { role: message.role, worldinfo: false }),
                 env,
@@ -70,14 +77,20 @@ async function handleGenerating(data: GenerateAfterData) {
                     }
                 }
             );
-            const afterMessage = settings.generate_loader_enabled === false ? '' : await processWorldinfoEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
+
+            // After a specific message
+            const afterMessage = settings.generate_loader_enabled === false
+                ?
+                '' :
+                await processWorldinfoEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
 
             if (prompt != null) {
                 message.content = beforeMessage + prompt + afterMessage;
                 prompts += beforeMessage + prompt + afterMessage;
             }
-        } else if (_.isArray(message.content)) {
+        } else if (_.isArray(message.content)) { // Text mixed with attachments messages
             for (const content of message.content) {
+                // OAI format
                 if (content.type === 'text') {
                     const prompt = await evalTemplateHandler(
                         applyRegex.call(env, content.text, { generate: true }, { role: message.role, worldinfo: false }),
@@ -90,7 +103,11 @@ async function handleGenerating(data: GenerateAfterData) {
                             }
                         }
                     );
-                    const afterMessage = settings.generate_loader_enabled === false ? '' : await processWorldinfoEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
+
+                    // After a specific message
+                    const afterMessage = settings.generate_loader_enabled === false
+                        ? ''
+                        : await processWorldinfoEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
 
                     if (prompt != null) {
                         content.text = beforeMessage + prompt + afterMessage;
@@ -101,7 +118,11 @@ async function handleGenerating(data: GenerateAfterData) {
         }
     }
 
-    const after = settings.generate_loader_enabled === false ? '' : await processWorldinfoEntities(env, '[GENERATE:AFTER]', prompts);
+    // Inject [GENERATE:AFTER] (After all messages)
+    const after = settings.generate_loader_enabled === false
+        ? ''
+        : await processWorldinfoEntities(env, '[GENERATE:AFTER]', prompts);
+
     prompts += after;
 
     if (typeof data.prompt === 'string') {

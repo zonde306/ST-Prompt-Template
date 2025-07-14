@@ -10,6 +10,16 @@ export interface PromptInjected {
 
 let promptInjected = new Map<string, Map<string, PromptInjected>>();
 
+/**
+ * Add prompts to the injection list and use getPromptsInjected to read the list
+ * @see getPromptsInjected
+ * 
+ * @param key List Name
+ * @param prompt prompts
+ * @param order Order in list, ascending
+ * @param sticky The number of times a call will continue to generate
+ * @param uid Unique ID, automatically generated if not filled in
+ */
 export function injectPrompt(
     key: string,
     prompt: string,
@@ -20,6 +30,8 @@ export function injectPrompt(
     if (!promptInjected.has(key)) {
         promptInjected.set(key, new Map<string, PromptInjected>());
     }
+
+    // Generate uid
     if(!uid && hasher.xxhash) {
         if(settings.cache_hasher === 'h32ToString')
             uid = hasher.xxhash.h32ToString(`${key}#${prompt}`, 0x1984);
@@ -28,6 +40,7 @@ export function injectPrompt(
         else
             console.error(`hasher ${settings.cache_hasher} not supported`);
     }
+
     promptInjected.get(key)!.set(uid, { prompt, order, sticky, uid: uid });
 }
 
@@ -36,33 +49,19 @@ export interface PostProcess {
     replace: string;
 }
 
+/**
+ * Get the prompts in the injectPrompt list and merge them in order
+ * @see injectPrompt
+ * 
+ * @param key List Name
+ * @param postprocess Process the content
+ * @returns prompts
+ */
 export function getPromptsInjected(key: string, postprocess: PostProcess[] = []): string {
     const innerMap = promptInjected.get(key);
     if (!innerMap) {
         return '';
     }
-
-    /*
-    return [
-            // a string
-            Array.from(innerMap.values())
-                .sort((a, b) => a.order - b.order)
-                .map(p => p.prompt)
-                .join('\n'),
-        
-            // some postprocessing
-            ...postprocess
-        ]
-        .reduce(
-            (left: string | PostProcess, right: PostProcess | string) => {
-            // left always a string
-            // right always a PostProcess
-            return (left as string).replace(
-                (right as PostProcess).search,
-                (right as PostProcess).replace
-            );
-        }) as string; // final always a string
-    */
 
     let combinedPrompt = Array.from(innerMap.values())
         .sort((a, b) => a.order - b.order)
@@ -107,6 +106,10 @@ export function deactivatePromptInjection(count: number = 1): void {
     }
 }
 
-export function hasPromptsInjected(key: string) {
+/**
+ * Check if injectPrompt exists
+ * @param key List Name
+ */
+export function hasPromptsInjected(key: string) : boolean {
     return promptInjected.has(key);
 }

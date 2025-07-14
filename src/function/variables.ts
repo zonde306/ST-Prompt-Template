@@ -10,7 +10,12 @@ export let STATE = {
     traceId: 0,
 };
 
-export function allVariables(end? : number) {
+/**
+ * Combine all variables
+ * @param end Maximum number of combined messages
+ * @returns variables tree
+ */
+export function allVariables(end? : number) : Record<string, unknown> {
     return _.mergeWith({},
         // @ts-expect-error: 2339
         getCharaData()?.data?.extensions?.variables || {},
@@ -23,6 +28,9 @@ export function allVariables(end? : number) {
     );
 }
 
+/**
+ * messages filter
+ */
 export interface MessageFilter {
     role?: 'system' | 'user' | 'assistant' | 'any';
     id?: number;
@@ -40,7 +48,14 @@ export interface SetVarOption {
     noCache?: boolean;
 }
 
-function evalFilter(filter? : MessageFilter, msgid? : number, swipeid?: number) {
+/**
+ * Select messages based on filter
+ * @param filter filters
+ * @param msgid current message ID
+ * @param swipeid swipe ID of the current message ID
+ * @returns [message_id, swipe_id] selected message ID and swipe ID
+ */
+function evalFilter(filter? : MessageFilter, msgid? : number, swipeid?: number): [number?, number?] {
     let message_id = -1;
     if(filter?.id !== undefined) {
         message_id = filter.id > -1 ? filter.id : chat.length + filter.id;
@@ -53,6 +68,14 @@ function evalFilter(filter? : MessageFilter, msgid? : number, swipeid?: number) 
         );
     } else if(msgid === undefined) {
         message_id = chat.findLastIndex(msg => !msg.is_user && !msg.is_system);
+        if(message_id === -1) {
+            console.warn(`No assistant message`);
+            message_id = chat.findLastIndex(msg => msg.is_user);
+            if(message_id === -1) {
+                console.warn(`No user message`);
+                message_id = chat.length - 1;
+            }
+        }
     } else {
         message_id = msgid;
     }

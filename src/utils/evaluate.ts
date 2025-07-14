@@ -5,7 +5,14 @@ import { substituteParams } from '../../../../../../script.js';
 import { applyRegex } from '../function/regex';
 import { copyText } from '../../../../../utils.js';
 
-// error handling for evalTemplate
+/**
+ * Wrap an error display for evalTemplate
+ * @param content prompts
+ * @param env Execution Context, see prepareContext
+ * @param where Error message location
+ * @param opt EJS options
+ * @returns Processing results
+ */
 export async function evalTemplateHandler(content: string,
     env: Record<string, unknown>,
     where: string = '',
@@ -39,13 +46,35 @@ export async function evalTemplateHandler(content: string,
     return null;
 }
 
-// Process world info based on prefix
+/**
+ * According to the currently enabled WI,
+ * select all entries with the specified prefix,
+ * perform activation calculations with keywords,
+ * process the content with EJS templates,
+ * and return the processing results
+ * 
+ * @param env Execution Context, see prepareContext
+ * @param prefix WI entry prefix
+ * @param keywords Content used to activate WI entry
+ * @param options EJS options
+ * @returns The result after all WI entries come out
+ */
 export async function processWorldinfoEntities(
     env: Record<string, unknown>,
     prefix : string,
     keywords : string = '',
     options : EvalTemplateOptions = {}) {
-    const worldInfoData = selectActivatedEntries((await getEnabledWorldInfoEntries()).filter(x => x.comment.startsWith(prefix)), keywords, { withConstant: true, withDisabled: true, onlyDisabled: true });
+    const allEntries = await getEnabledWorldInfoEntries();
+    const worldInfoData = selectActivatedEntries(
+        allEntries.filter(x => x.comment.startsWith(prefix)),
+        keywords,
+        {
+            withConstant: true,
+            withDisabled: true,
+            onlyDisabled: true
+        }
+    );
+    
     let prompt = '';
     for(const data of worldInfoData) {
         const result = await evalTemplateHandler(

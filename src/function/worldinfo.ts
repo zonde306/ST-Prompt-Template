@@ -57,6 +57,12 @@ export interface ActivateWorldInfoCondition {
 
 let activatedWorldEntries = new Map<string, WorldinfoForceActivate>();
 
+/**
+ * Activate the specified WI entry
+ * @param world 
+ * @param uid 
+ * @returns 
+ */
 export async function activateWorldInfo(world : string, uid : string | RegExp | number) {
     const entry = await getWorldInfoEntry(world, uid);
     if(entry)
@@ -64,6 +70,12 @@ export async function activateWorldInfo(world : string, uid : string | RegExp | 
     return entry;
 }
 
+/**
+ * Activate WI entries by keywords, from all activatable WIs
+ * @param keywords Content used for activation (e.g. prompts)
+ * @param condition Activation conditions
+ * @returns WI entry
+ */
 export async function activateWorldInfoByKeywords(
     keywords: string | string[],
     condition: ActivateWorldInfoCondition = {}
@@ -84,9 +96,14 @@ export function deactivateActivateWorldInfo() {
     activatedWorldEntries.clear();
 }
 
+/**
+ * Gets the WI by name, or selects a suitable WI if name is not provided.
+ * @param name WI name
+ * @returns WI entries
+ */
 export async function getWorldInfoData(name: string): Promise<WorldInfoData[]> {
     // @ts-expect-error
-    const lorebook: WorldInfo | null = await loadWorldInfo(name || characters[this_chid]?.data?.extensions?.world || power_user.persona_description_lorebook || chat_metadata[METADATA_KEY] || '');
+    const lorebook = await loadWorldInfo(name || characters[this_chid]?.data?.extensions?.world || power_user.persona_description_lorebook || chat_metadata[METADATA_KEY] || '') as WorldInfo;
     if (!lorebook)
         return [];
 
@@ -94,10 +111,21 @@ export async function getWorldInfoData(name: string): Promise<WorldInfoData[]> {
     return entries.sort(getWorldInfoSorter(entries));
 }
 
+/**
+ * Get the names of all entries in WI
+ * @param name WI name
+ * @returns WI entry names
+ */
 export async function getWorldInfoTitles(name: string): Promise<string[]> {
     return (await getWorldInfoData(name)).map(data => data.comment);
 }
 
+/**
+ * Get the specified WI entry data
+ * @param name WI name
+ * @param title entry name
+ * @returns entry data
+ */
 export async function getWorldInfoEntry(name: string, title: string | RegExp | number): Promise<WorldInfoData | null> {
     for (const data of await getWorldInfoData(name))
         // @ts-expect-error
@@ -107,6 +135,12 @@ export async function getWorldInfoEntry(name: string, title: string | RegExp | n
     return null;
 }
 
+/**
+ * Get the specified WI entry content
+ * @param name WI name
+ * @param title entry name
+ * @returns entry content
+ */
 export async function getWorldInfoEntryContent(name: string, title: string | RegExp | number): Promise<string | null> {
     const data = await getWorldInfoEntry(name, title);
     if (!data) return null;
@@ -114,6 +148,13 @@ export async function getWorldInfoEntryContent(name: string, title: string | Reg
     return data.content;
 }
 
+/**
+ * Get a list of entries activated based on keywords from the specified WI
+ * @param name WI name
+ * @param keywords Content used for activation (e.g. prompts)
+ * @param condition Activation conditions
+ * @returns WI entries
+ */
 export async function getWorldInfoActivatedEntries(name: string,
     keywords: string | string[],
     condition: ActivateWorldInfoCondition = {}) {
@@ -122,13 +163,20 @@ export async function getWorldInfoActivatedEntries(name: string,
     return selectActivatedEntries(entries, keywords, condition);
 }
 
+/**
+ * Filter all activated WI entries
+ * @param entries WI entries
+ * @param keywords Content used for activation (e.g. prompts)
+ * @param condition Activation conditions
+ * @returns WI entries
+ */
 export function selectActivatedEntries(
     entries: WorldInfoData[],
     keywords: string | string[],
     condition: ActivateWorldInfoCondition = {}) : WorldInfoData[] {
     const { withConstant, withDisabled, onlyDisabled } = condition;
     let activated: Set<WorldInfoData> = new Set<WorldInfoData>();
-    keywords = _.castArray(keywords).join('\n\n');
+    const trigger = _.castArray(keywords).join('\n\n') as string;
     for (const data of entries) {
         if(!withConstant && data.constant)
             continue;
@@ -141,16 +189,19 @@ export function selectActivatedEntries(
         if(data.vectorized)
             continue;
 
+        // Trigger probability
         if(data.useProbability && data.probability < _.random(1, 100))
             continue;
 
+        // 🔵 Constant
         if(data.constant) {
             // Constant entries are always activated
             activated.add(data);
             continue;
         }
 
-        const matchedKey = data.key.map(k => substituteParams(k)).find(k => matchKeys(keywords, k, data));
+        // Primary Keywords
+        const matchedKey = data.key.map(k => substituteParams(k)).find(k => matchKeys(trigger, k, data));
         if (!matchedKey)
             continue;
 
@@ -161,12 +212,13 @@ export function selectActivatedEntries(
             continue;
         }
 
+        // Optional Filter
         const selectiveLogic = data.selectiveLogic ?? 0;
         let hasAnyMatch = false;
         let hasAllMatch = true;
         for (const secondary of data.keysecondary) {
             const secondarySubstituted = substituteParams(secondary);
-            const hasSecondaryMatch = secondarySubstituted && matchKeys(keywords, secondarySubstituted.trim(), data);
+            const hasSecondaryMatch = secondarySubstituted && matchKeys(trigger, secondarySubstituted.trim(), data);
 
             if (hasSecondaryMatch) hasAnyMatch = true;
             if (!hasSecondaryMatch) hasAllMatch = false;
@@ -197,18 +249,24 @@ export function selectActivatedEntries(
         }
     }
 
-    if (activated.size === 0)
+    if (activated.size <= 0)
         return [];
 
-    const grouped = _.groupBy(Array.from(activated), data => data.group);
+    // Inclusion Group
+    const grouped = _.groupBy(
+        Array.from(activated),
+        (data: WorldInfoData) => data.group
+    ) as { [key: string]: WorldInfoData[] };
     const ungrouped = grouped[''] || [];
+
+    // No grouping required
     if (ungrouped.length > 0 && _.size(grouped) <= 1) {
-        // No grouping required
         return ungrouped.sort(getWorldInfoSorter(ungrouped));
     }
 
+    // Select the best match based on grouping
     let matched: WorldInfoData[] = [];
-    for (const [group, datas] of _.entries(grouped)) {
+    for (const [group, datas] of Object.entries(grouped)) {
         if (group === '') continue;
 
         if(datas.length === 1) {
@@ -217,10 +275,10 @@ export function selectActivatedEntries(
         }
 
         // Group prioritization
-        const usePrioritize = datas.filter(data => data.groupOverride);
+        const usePrioritize = datas.filter((data: WorldInfoData) => data.groupOverride);
         if (usePrioritize.length > 0) {
-            const orders = datas.map(data => data.order);
-            const top = _.min(orders);
+            const orders = datas.map((data: WorldInfoData) => data.order);
+            const top = Math.min(...orders);
             if (top) {
                 matched.push(datas[Math.max(orders.findIndex(order => order <= top), 0)]);
                 continue;
@@ -230,8 +288,8 @@ export function selectActivatedEntries(
         // Use Group Scoring
         const useScores = datas.filter(data => data.useGroupScoring ?? world_info_use_group_scoring);
         if (useScores.length > 0) {
-            const scores = datas.map(data => getScore(keywords, data));
-            const top = _.max(scores);
+            const scores = datas.map(data => getScore(trigger, data));
+            const top = Math.max(...scores);
             if (top) {
                 matched.push(datas[Math.max(scores.findIndex(score => score >= top), 0)]);
                 continue;
@@ -250,15 +308,17 @@ export function selectActivatedEntries(
         }
     }
 
-    const unsorted = _.concat(ungrouped, matched);
+    const unsorted = ungrouped.concat(matched);
     return unsorted.sort(getWorldInfoSorter(unsorted));
 }
 
+// Ignore Case
 function transformString(str: string, entry: WorldInfoData) {
     const caseSensitive = entry.caseSensitive ?? world_info_case_sensitive;
     return caseSensitive ? str : str.toLowerCase();
 }
 
+// Keyword matching
 function matchKeys(haystack: string, needle: string, entry: WorldInfoData) {
     const keyRegex = parseRegexFromString(needle);
     if (keyRegex) {
@@ -274,8 +334,7 @@ function matchKeys(haystack: string, needle: string, entry: WorldInfoData) {
 
         if (keyWords.length > 1) {
             return haystack.includes(transformedString);
-        }
-        else {
+        } else {
             const regex = new RegExp(`(?:^|\\W)(${_.escapeRegExp(transformedString)})(?:$|\\W)`);
             if (regex.test(haystack)) {
                 return true;
@@ -288,6 +347,7 @@ function matchKeys(haystack: string, needle: string, entry: WorldInfoData) {
     return false;
 }
 
+// Group Scoring
 function getScore(haystack: string, entry: WorldInfoData) {
     const bufferState = haystack;
     let numberOfPrimaryKeys = 0;
@@ -329,6 +389,15 @@ function getScore(haystack: string, entry: WorldInfoData) {
     return primaryScore;
 }
 
+/**
+ * Get all enabled WI entries in the current context and sort them
+ * @param chara includes character Primary Lorebook
+ * @param global includes Active World(s) for all chats
+ * @param persona includes Persona Lorebook
+ * @param charaExtra includes character Additional Lorebooks
+ * @param chat includes chat bounded lorebooks
+ * @returns WI entries names
+ */
 export function getEnabledLoreBooks(
     chara : boolean = true, global : boolean = true,
     persona : boolean = true, charaExtra : boolean = true,
@@ -364,12 +433,11 @@ export function getEnabledLoreBooks(
     }
 
     if (charaExtra) {
-        // @ts-expect-error: 2345
         const fileName = getCharaFilename(this_chid);
         if (fileName) {
             // @ts-expect-error
             const extraCharLore = world_info.charLore?.find((e) => e.name === fileName);
-            if (extraCharLore && _.isArray(extraCharLore.extraBooks)) {
+            if (extraCharLore && Array.isArray(extraCharLore.extraBooks)) {
                 // @ts-expect-error
                 const primaryBook : string = characters[this_chid]?.data?.extensions?.world;
                 for(const book of extraCharLore.extraBooks) {
@@ -386,7 +454,7 @@ export function getEnabledLoreBooks(
             if (file) {
                 // @ts-expect-error
                 const extraCharLore = world_info.charLore?.find((e) => e.name === file);
-                if (extraCharLore && _.isArray(extraCharLore.extraBooks)) {
+                if (extraCharLore && Array.isArray(extraCharLore.extraBooks)) {
                     // @ts-expect-error
                     const primaryBook : string = member?.data?.extensions?.world;
                     for(const book of extraCharLore.extraBooks) {
@@ -408,6 +476,15 @@ export function getEnabledLoreBooks(
     return results;
 }
 
+/**
+ * Get all enabled WI entries for the current context and sort them. Only return enabled entries
+ * @param chara includes character Primary Lorebook
+ * @param global includes Active World(s) for all chats
+ * @param persona includes Persona Lorebook
+ * @param charaExtra includes character Additional Lorebooks
+ * @param chat includes chat bounded lorebooks
+ * @returns WI entries
+ */
 export async function getEnabledWorldInfoEntries(
     chara : boolean = true, global : boolean = true,
     persona : boolean = true, charaExtra : boolean = true,
@@ -425,7 +502,7 @@ export async function getEnabledWorldInfoEntries(
     return results.sort(getWorldInfoSorter(results));
 }
 
-// guess
+// Sorting offset table
 const DEPTH_MAPPING = {
     [world_info_position.before]: 4, // Before Char Defs
     [world_info_position.after]: 3, // After Char Defs
@@ -460,6 +537,8 @@ function worldInfoSorter(a: WorldInfoData, b: WorldInfoData, top: number = DEFAU
                     // @ts-expect-error: 2339
                     return (chat_metadata.note_depth ?? DEFAULT_DEPTH) + (entry.depth ?? DEFAULT_DEPTH);
             }
+
+            // note_position may be an unknown value, so ignore it
         }
 
         // relative to chat history with preset
@@ -469,7 +548,5 @@ function worldInfoSorter(a: WorldInfoData, b: WorldInfoData, top: number = DEFAU
     // Sort by depth (desc), then order (asc), then uid (desc)
     return calcDepth(b) - calcDepth(a) ||
         a.order - b.order ||
-        b.uid - a.uid;
-    
-    // return a.position - b.position || a.order - b.order || (b.depth || DEFAULT_DEPTH) - (a.depth || DEFAULT_DEPTH) || a.uid - b.uid;
+        b.uid - a.uid;   
 }

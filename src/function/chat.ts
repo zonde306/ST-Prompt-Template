@@ -10,10 +10,49 @@ function processMessage(message: Message) : string {
     }));
 }
 
+/**
+ * Get the specified chat message content
+ * 
+ * @param idx Message offset
+ * @param role Role Filters
+ * @returns Message content
+ */
 export function getChatMessage(idx: number, role?: 'user' | 'assistant' | 'system') : string {
     const messages : Message[] = chat.filter(x => !role || (role === 'user' && x.is_user) || (role === 'system' && x.is_system) || (role === 'assistant' && !x.is_user && !x.is_system));
     return processMessage(messages[idx > -1 ? idx : messages.length + idx] || '');
 }
+
+/**
+ * Get the first N messages in the message list
+ * @param end End position
+ * @returns Message content
+ */
+export function getChatMessages(end : number) : string[];
+
+/**
+ * Get the first N messages in a message list, selecting only specific roles
+ * @param end End position
+ * @param role role
+ * @returns Message content
+ */
+export function getChatMessages(end : number, role: 'user' | 'assistant' | 'system') : string[];
+
+/**
+ * Get the messages from start to end
+ * @param start Start position
+ * @param end End position
+ * @returns Message content
+ */
+export function getChatMessages(start : number, end : number) : string[];
+
+/**
+ * Get the messages from start to end, selecting only specific roles
+ * @param start Start position
+ * @param end End position
+ * @param role role
+ * @returns Message content
+ */
+export function getChatMessages(start : number, end : number, role: 'user' | 'assistant' | 'system') : string[];
 
 export function getChatMessages(startOrCount: number = chat.length,
     endOrRole?: number | 'user' | 'assistant' | 'system',

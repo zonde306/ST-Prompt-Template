@@ -1,6 +1,11 @@
 import { characters, this_chid, user_avatar, getThumbnailUrl, getUserAvatar } from '../../../../../../script.js';
 import { v1CharData } from '../../../../../char-data.js';
 
+/**
+ * Get the data of the specified character.
+ * @param name Role name/ID/regexp match
+ * @returns character data
+ */
 export function getCharaData(name : string | RegExp | number | undefined = this_chid) : v1CharData | null {
     name = name || this_chid;
     if(name == null)
@@ -20,6 +25,12 @@ function hasAny(tags: string[], matchs: Set<string>) {
     return false;
 }
 
+/**
+ * Get the names of all characters
+ * @param include Included list
+ * @param exclude Excluded list
+ * @returns character names
+ */
 export function* getChars(include: Set<string> = new Set<string>(),
                           exclude: Set<string> = new Set<string>()) : Generator<string> {
     for (const char of characters)
@@ -104,10 +115,19 @@ export function getCharaDefs(name : string | RegExp | number | undefined = this_
     };
 }
 
+/**
+ * Get the user avatar URL
+ * @returns URL
+ */
 export function getPersonaAvatar() : string {
     return getUserAvatar(user_avatar);
 }
 
+/**
+ * Get the character avatar URL
+ * @param char character name
+ * @returns URL
+ */
 export function getCharaAvater(char: string | undefined = this_chid) : string {
     if(!char)
         return '';

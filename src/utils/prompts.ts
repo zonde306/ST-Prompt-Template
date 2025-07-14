@@ -2,7 +2,11 @@ import { EvalTemplateOptions, EjsOptions } from "../function/ejs";
 import { getTokenCountAsync } from '../../../../../tokenizers.js';
 import { extension_settings } from '../../../../../extensions.js';
 
-// Delete the HTML markup inside <% ... %>
+/**
+ * Delete the HTML markup inside <% ... %>
+ * @param text content
+ * @returns processed content
+ */
 export function removeHtmlTagsInsideBlock(text: string) {
     return text.replace(/&lt;%((?:[^%]|%[^>])*)%&gt;/g, (_match, content : string) => {
         const cleanedContent = content.replace(/<[^>]+>/g, '');
@@ -10,21 +14,33 @@ export function removeHtmlTagsInsideBlock(text: string) {
     });
 }
 
-// Avoid evaluating the <pre> block by replacing its contents
+/**
+ * Replace all <% and %> in the <pre> block with <%% and %%>
+ * @param text content
+ * @returns processed content
+ */
 export function escapePreContent(html: string) {
     return html.replace(/(<pre\b[^>]*>)([\s\S]*?)(<\/pre>)/gi, (_m, p1, p2, p3) => {
         return p1 + p2.replace(/&lt;/g, '&lt;').replace(/&gt;/g, '#gt#') + p3;
     })
 }
 
-// Revert changes made by escapePreContent
+/**
+ * Revert changes made by escapePreContent
+ * @param html content
+ * @returns processed content
+ */
 export function unescapePreContent(html: string | null) : string | null {
     return html?.replace(/(<pre\b[^>]*>)([\s\S]*?)(<\/pre>)/gi, (_m, p1, p2, p3) => {
         return p1 + p2.replace(/#lt#/g, '&lt;').replace(/#gt#/g, '&gt;') + p3;
     }) ?? null;
 }
 
-// Remove HTML tags within <% ... %>, only within <pre> blocks
+/**
+ * Delete all HTML blocks within the <% ... %> block in the <pre> block
+ * @param html content
+ * @returns processed content
+ */
 export function cleanPreContent(html : string) {
     return html.replace(/<pre\b[^>]*>([\s\S]*?)<\/pre>/gi, (_preMatch, preContent : string) => {
         const cleanedContent = preContent.replace(/&lt;%([\s\S]*?)%&gt;/g, (_blockMatch, content : string) => {
@@ -34,6 +50,11 @@ export function cleanPreContent(html : string) {
     });
 }
 
+/**
+ * Calculating tokens
+ * @param prompts content
+ * @param type classify
+ */
 export function updateTokens(prompts: string, type: 'send' | 'receive') {
     window.setTimeout(() => {
         getTokenCountAsync(prompts).then(count => {
@@ -56,7 +77,13 @@ export function updateTokens(prompts: string, type: 'send' | 'receive') {
     });
 }
 
-// Replace <% ... %> in HTML tags with <%% ... %%>, only for the specified HTML block
+/**
+ * Replace <% ... %> in HTML tags with <%% ... %%>, only for the specified HTML block
+ * @param str content
+ * @param options EJS Options
+ * @param markup HTML block
+ * @returns processed content
+ */
 export function escapeEjsInDisabledBlocks(str : string, options : EjsOptions = {}, markup: string = 'escape-ejs') {
     const openDelimiter = options.openDelimiter || '<';
     const closeDelimiter = options.closeDelimiter || '>';
@@ -69,6 +96,12 @@ export function escapeEjsInDisabledBlocks(str : string, options : EjsOptions = {
     );
 }
 
+/**
+ * Apply escapeEjsInDisabledBlocks for all reasoning-like blocks
+ * @param content content
+ * @param opts EJS Options
+ * @returns processed content
+ */
 export function escapeReasoningBlocks(content : string, opts : EvalTemplateOptions = {}) : string {
     content = escapeEjsInDisabledBlocks(content, opts.options || {}, opts.disableMarkup || 'escape-ejs');
     content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'thinking');
