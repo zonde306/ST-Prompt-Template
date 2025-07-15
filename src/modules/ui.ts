@@ -19,6 +19,7 @@ const DEFAULT_SETTINGS : Record<string, { name: string, value: boolean | string 
     '#pt_cache_enabled': { name: 'cache_enabled', value: 0 },
     '#pt_cache_size': { name: 'cache_size', value: 64 },
     '#pt_cache_hasher': { name: 'cache_hasher', value: 'h32ToString' },
+    '#pt_inject_loader_enabled': { name: 'inject_loader_enabled', value: true },
 };
 
 interface EjsSettings extends Record<string, boolean | string | number> {
@@ -38,6 +39,7 @@ interface EjsSettings extends Record<string, boolean | string | number> {
     cache_enabled: number;
     cache_size: number;
     cache_hasher: string;
+    inject_loader_enabled: boolean;
 };
 
 export const settings = {} as EjsSettings;
