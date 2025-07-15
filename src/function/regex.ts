@@ -1,13 +1,14 @@
 import { extension_settings } from '../../../../../extensions.js';
 
 interface RegexEntry {
-    search: RegExp | string,
-    replace: string | ((substring: string, ...args: any[]) => string),
-    user: boolean,
-    assistant: boolean,
-    system: boolean,
-    worldinfo: boolean,
-    order: number,
+    search: RegExp | string;
+    replace: string | ((substring: string, ...args: any[]) => string);
+    user: boolean;
+    assistant: boolean;
+    system: boolean;
+    worldinfo: boolean;
+    order: number;
+    sticky: number;
 }
 
 interface Regex {
@@ -34,34 +35,44 @@ export interface RegexFlags {
     minDepth?: number;
     maxDepth?: number;
     worldinfo?: boolean;
-    raw?: boolean;
-    display?: boolean;
+    raw?: boolean; // Original message content (for chat messages)
+    display?: boolean; // Display message HTML content (for chat messages)
 }
 
 export interface RegexOptions extends RegexFlags {
-    uuid?: string;
-    message?: boolean;
-    generate?: boolean;
-    basic?: boolean;
-    order?: number;
+    uuid?: string; // Unique ID, duplicates will be replaced, if not provided, a random ID will be generated
+    message?: boolean; // chat messages
+    generate?: boolean; // Generating
+    basic?: boolean; // Built-in RegExp, Only string replacers are allowed
+    order?: number; // Execution order, ascending
+    sticky?: number; // times to keep active
 }
 
+/**
+ * Inject RegExp
+ * @param pattern Search RegExp
+ * @param replace Replace content or function
+ * @param opts Options
+ */
 export function activateRegex(
     pattern: string | RegExp,
     replace: string | ((substring: string, ...args: any[]) => string),
     opts: RegexOptions = {}
 ) {
+    // If not provided, randomly generated
     const uuid = opts.uuid || 'regex-' + Math.random().toString(36).substring(2, 9);
-    if(opts.basic !== false) {
+
+    // By default, the built-in Regex is used.
+    if(opts.basic || (opts.basic == null && opts.message == null && opts.generate == null)) {
         if(typeof replace !== 'string') {
             throw new Error('Basic mode regexes must have a string replace value.');
         }
 
-        const regex = extension_settings.regex.find(x => x.id === uuid);
-        if(regex) {
-            regex.findRegex = pattern instanceof RegExp ? `/${pattern.source}/${pattern.flags}` : pattern;
-            regex.replaceString = replace;
-            regex.placement = _.compact([
+        const exist = extension_settings.regex.find(x => x.id === uuid);
+        if(exist) {
+            exist.findRegex = pattern instanceof RegExp ? `/${pattern.source}/${pattern.flags}` : pattern;
+            exist.replaceString = replace;
+            exist.placement = _.compact([
                 opts.user ?? true ? 1 : 0,
                 opts.assistant ?? true ? 2 : 0,
                 opts.worldinfo ?? true ? 5 : 0,
@@ -70,6 +81,7 @@ export function activateRegex(
         } else {
             extension_settings.regex.push({
                 id: uuid,
+                // use \u200b to mark temporary rules, which will be cleaned up later based on this mark
                 scriptName: `\u200b${uuid}`,
                 findRegex: pattern instanceof RegExp ? pattern.source : pattern,
                 replaceString: replace,
@@ -102,6 +114,7 @@ export function activateRegex(
                 system: opts.system ?? true,
                 worldinfo: opts.worldinfo ?? false,
                 order: opts.order ?? 100,
+                sticky: opts.sticky ?? 0,
             }
         );
     }
@@ -122,6 +135,7 @@ export function activateRegex(
                 maxDepth: opts.minDepth ?? NaN,
                 raw: opts.raw ?? true,
                 display: opts.display ?? false,
+                sticky: opts.sticky ?? 0,
             }
         );
     }
@@ -134,21 +148,50 @@ export interface RegexSelector {
     generate?: boolean;
 }
 
-export function deactivateRegex(selector: RegexSelector = {}) {
+export function deactivateRegex(selector: RegexSelector = {}, count : number = 1) {
     if(selector.uuid) {
         extension_settings.regex = extension_settings.regex.filter(x => x.id !== selector.uuid);
-        REGEX.generateRegex.delete(selector.uuid);
-        REGEX.messageRegex.delete(selector.uuid);
+        const generate = REGEX.generateRegex.get(selector.uuid);
+        if(generate) {
+            generate.sticky -= count;
+            if(generate.sticky <= 0)
+                REGEX.generateRegex.delete(selector.uuid);
+        }
+
+        const message = REGEX.messageRegex.get(selector.uuid);
+        if(message) {
+            message.sticky -= count;
+            if(message.sticky <= 0)
+                REGEX.messageRegex.delete(selector.uuid);
+        }
     } else {
         if(selector.basic)
             extension_settings.regex = extension_settings.regex.filter(x => !x.scriptName.startsWith('\u200b'));
-        if(selector.generate)
-            REGEX.generateRegex.clear();
-        if(selector.message)
-            REGEX.messageRegex.clear();
+        if(selector.generate) {
+            for(const [uuid, regex] of Array.from(REGEX.generateRegex.entries())) {
+                regex.sticky -= count;
+                if(regex.sticky <= 0)
+                    REGEX.generateRegex.delete(uuid);
+            }
+        }
+        if(selector.message) {
+            for(const [uuid, regex] of Array.from(REGEX.messageRegex.entries())) {
+                regex.sticky -= count;
+                if(regex.sticky <= 0)
+                    REGEX.messageRegex.delete(uuid);
+            }
+        }
     }
 }
 
+/**
+ * Apply RegExp to process the prompts
+ * @param this EJS Execution Context
+ * @param content prompts
+ * @param selector RegExp to be executed
+ * @param flags processing environment
+ * @returns Processed content
+ */
 export function applyRegex(
     this: Record<string, unknown>,
     content : string,
@@ -156,6 +199,7 @@ export function applyRegex(
     flags: RegexFlags & { depth?: number, role?: string } = {}
 ) : string {
     if(selector.uuid) {
+        // specified will not to be considered for filtering
         const message = REGEX.messageRegex.get(selector.uuid);
         if(message) // @ts-expect-error: string.replace replaceValue is allow to pass a function
             content = content.replace(message.search, message.replace);
