@@ -286,53 +286,161 @@ line 3
 
 ## Setting Options
 
-Descriptions of individual configuration options:
+Description of each setting option
 
-- **Enable Prompt template**  
-  Master toggle to control whether this extension is enabled.
+---
 
-- **Generate-time evaluation**  
-  Whether to process prompts during LLM generation.  
-  Functions such as world books, presets, and character card data are processed here.
+### Enable Extension
 
-- **[GENERATE] evaluation**  
-- **[RENDER] evaluation**  
-  Enable corresponding [Prompt Injection](#Prompt Injection) features.
+Master switch for the extension. Disabling it will disable all extension features (except commands). `<% ... %>` statements will be sent to LLM as-is.
 
-- **Chat message evaluation**  
-  Process chat messages (displayed content).
+---
 
-- **Evaluate inside a code block**  
-  Process content within `<pre>` tags in chat messages (displayed content).  
-  Keep disabled unless necessary, as it may conflict with other extensions.
+### Process Generation Content
 
-- **Evaluate raw message (AND SAVE)**  
-  Whether to allow processing of raw chat message content.  
-  **Raw message content is not processed by regex or macros.**  
-  Execution order:  
-  1. After generation completes (and displays)/editing messages/sliding messages/opening character cards  
-  2. Execute this feature (`Evaluate raw message (AND SAVE)`)  
-  3. Process displayed content (`Chat message evaluation`)  
+Process all `<% ... %>` statements during generation
 
-  > This feature only takes effect when `Chat message evaluation` is enabled.
+Subsequent options depend on this setting - disabling this will treat all following options as disabled
 
-- **Enable activewi to take effect this time**  
-  Whether to allow `activewi` and its alias functions to take effect during the same generation cycle.  
-  Disabling reduces generation time consumption, but `activewi` and its aliases will only take effect in the next generation cycle.
+#### Inject [GENERATE] Worldbook Entries During Generation
 
-- **Save variables after updating**  
-  Save chat messages after this extension finishes processing and updates variables.
+During generation, it will iterate through **all enabled** worldbook entries and filter entries with `[GENERATE:*]` prefix for processing
 
-- **Preload world info**  
-  Immediately load (pre-warm) required world books when opening character cards.  
-  Process world books immediately.  
+This process will first sort entries, then process them in order
 
-  > Preloading reduces initial generation time but may slow down character card opening.  
-  > This feature is primarily used to load `define` functions.
+#### Process During Dry Run Generation
 
-- **Use strict mode**  
-  Enforce JavaScript "strict mode" when processing template code.  
-  See [Strict Mode](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode) for details.
+SillyTavern has two generation modes: **normal generation** (results sent to LLM) and **dry run generation** (results not sent to LLM)
 
-- **Enable debug logging**  
-  Enable debug logging. When active, this extension outputs extensive debug logs to the console.
+Enabling this option will process template prompts during **dry run generation**
+
+#### Inject @INJECT Worldbook Entries
+
+See [Prompt Injection](#Prompt-Injection)
+
+---
+
+### Process Floor Messages
+
+Process all `<% ... %>` statements in message floors
+
+Subsequent options depend on this setting - disabling this will treat all following options as disabled
+
+#### Inject [RENDER] Worldbook Entries During Floor Rendering
+
+During rendering, it will iterate through **all enabled** worldbook entries and filter entries with `[RENDER:*]` prefix for processing
+
+This process will first sort entries, then process them in order
+
+#### Process Code Blocks
+
+Allow template processing for content within `<pre>` code blocks
+
+#### Process Raw Message Content
+
+Process the original message content (as displayed in editor) before rendering
+
+After processing, write the result back to the message's raw content (equivalent to direct message editing)
+
+> This process will NOT go through any **regex** or **macro** processing in advance  
+> This will permanently modify the message content
+
+#### Skip Floor Message Processing During Generation
+
+Hide all `<% ... %>` statements in messages before generation to prevent sending them to LLM for processing
+
+---
+
+### Auto-save Variable Updates
+
+Immediately save (to file) any modified variables after processing content
+
+> Enabling this will cause additional performance overhead. SillyTavern already has auto-save functionality, so this is generally not needed
+
+---
+
+### Preload Worldbook
+
+Immediately load all enabled worldbook entries after opening character card/chat, and process their content with templates
+
+---
+
+### Disable With Statement Block
+
+ejs internally uses the deprecated `with(...) { ... }` statement
+
+Enabling this option will disable this statement, using `const variables, ...` parameter unpacking instead
+
+---
+
+### Show Detailed Console Info
+
+Enable this option to output extensive debug information in console
+
+---
+
+### Caching (Experimental)
+
+Enable this feature to cache compiled prompts, avoiding time-consuming recompilation and slightly improving speed
+
+However, due to caching mechanisms, sometimes cached prompts may fail to update
+
+---
+
+### Cache Size
+
+Control the size of the cache pool
+
+---
+
+### Cache Hash Function
+
+Minimal performance impact
+
+---
+
+## Prompt Injection
+
+The prompt injection feature implements dependency inversion through **tag keys** to import prompts, rather than importing through specific entries
+
+For example, we can import **CoT** (Chain of Thought) defined in the worldbook into the preset's **CoT** block
+
+Since LLMs pay stronger attention to formatted, compact prompts, using traditional worldbook entries to add custom CoT would cause LLM to ignore either the preset CoT or worldbook CoT
+
+### Example
+
+In worldbook:
+```javascript
+<%
+injectPrompt("CoT", `
+# Affinity
+Q: What is <char>'s affinity level?
+Q: How will the upcoming generation affect affinity?
+Q: What is the affinity level after changes?
+# Summarize affinity changes and output new level in generation
+`)
+%>
+```
+
+In preset:
+```javascript
+Follow the steps below for <thinking>.
+<thinking>
+// Read CoT defined in worldbook
+<%- getPromptsInjected("CoT") %>
+</thinking>
+```
+
+Resulting in:
+```javascript
+Follow the steps below for <thinking>.
+<thinking>
+
+# Affinity
+Q: What is <char>'s affinity level?
+Q: How will the upcoming generation affect affinity?
+Q: What is the affinity level after changes?
+# Summarize affinity changes and output new level in generation
+
+</thinking>
+```
