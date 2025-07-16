@@ -631,98 +631,100 @@ Available only during `render` phase:
 
 ```javascript
 /**
- * Aggregated variables collection
- * Merges variables in the following priority order (highest to lowest):
- * 1. Message variables (from latest to earliest floor)
- * 2. Local (chat) variables
+ * Collection of all variables
+ * Variables are merged according to the following priority order (highest to lowest):
+ * 1. Message variables (floor numbers from end to start)
+ * 2. Local (chat) variables 
  * 3. Global variables
- * 
- * @note: During message processing, this excludes variables from current/subsequent floors
- *        Conflict resolution: Merge if both types are [] or {}, otherwise replace
- * @see: https://lodash.com/docs/4.17.15 #merge
+ *
+ * @note: When processing message variables, this value excludes current and subsequent floor variables
+ *        Conflict resolution: If both values are of type [] or {}, they are merged; otherwise, higher priority replaces lower
+ * @see: https://lodash.com/docs/4.17.15#merge
  * @type {object}
  */
 variables = {}
 
 /**
- * SillyTavern.getContext() return value
- * Check console output of SillyTavern.getContext() for full details
+ * Content returned by SillyTavern.getContext() in the Tavern
+ * Detailed content can be viewed by entering SillyTavern.getContext() in the console
  */
 SillyTavern = SillyTavern.getContext()
 
 /**
- * Faker library for generating random content
+ * Faker library content for generating random data
  * Usage: faker.fakerEN, faker.fakerCN, etc.
- * Example: faker.fakerEN.lastName() for random English surname
- * @see: https://fakerjs.dev/api/   
+ * Example: faker.fakerEN.lastName() gets a random English surname
+ * @see:  https://fakerjs.dev/api/ 
+ * @type {object}
  */
 faker = require("faker")
 
 /*
- * Lodash utility library
+ * Lodash library
  * Usage: _.get, _.set, etc.
- * Example: _.toArray('abc') returns ['a','b','c']
- * @see: https://lodash.com/docs/4.17.15   
+ * Example: _.toArray('abc') outputs ['a','b','c']
+ * @see: https://lodash.com/docs/4.17.15 
  */
 _ = require("lodash")
 
 /*
- * jQuery library
+ * JQuery library 
  * Usage: $()
- * Example: $('.mes_text') selects message text elements
- * @see: https://api.jquery.com/   
+ * Example: $('.mes_text') gets text box
+ * @see: https://api.jquery.com/ 
  */
 $ = require("JQuery")
 
 /*
- * Toastr notification library
+ * Toastr library
  * Usage: toastr.info, toastr.error
  * Example: toastr.info('hello world')
- * @see: https://codeseven.github.io/toastr/   
+ * @see: https://codeseven.github.io/toastr/ 
  */
 toastr = require("toastr")
 
 /**
- * Template processing phase indicator
- * generate: Content generation phase
- * preparation: Preprocessing phase
- * render: Message rendering phase
+ * Template calculation phase
+ * generate: Generation phase
+ * preparation: Preparation phase 
+ * render: Rendering (message floor) phase
  * @type {(String|undefined)}
  */
 runType = 'generate' | 'preparation' | 'render'
 
 /*
- * Character card embedded World Info name
- * undefined when unbound
+ * Character card embedded world book name
+ * Undefined when not bound
  * @type {(String|undefined)}
  */
 charaLoreBook = ''
 
 /*
- * User persona bound World Info name
- * undefined when unbound
+ * User character bound world book name
+ * Undefined when not bound
  * @type {(String|undefined)}
  */
 personaLoreBook = ''
 
 /*
- * Chat file bound World Info name
- * undefined when unbound
+ * Chat file bound world book name
+ * Undefined when not bound
  * @type {(String|undefined)}
  */
 chatLoreBook = ''
 
 /*
- * User role name
+ * User character name
  * @type {String}
  */
 userName = 'User'
 
 /*
- * Character card role name
+ * Character card character name
  * @type {String}
  */
 assistantName = 'SillyTavern System'
+charName = 'SillyTavern System'
 
 /*
  * Chat session ID
@@ -747,6 +749,18 @@ groupId = null
  * @type {array}
  */
 groups = []
+
+/*
+ * Character card avatar
+ * @type {string}
+ */
+charAvatar = ""
+
+/*
+ * User avatar
+ * @type {string}
+ */
+userAvatar = ""
 ```
 
 ---
@@ -791,29 +805,38 @@ LAST_RECEIVE_CHARS = 0
 /ejs [ctx=object]? [block=boolean]? code
 ```
 
-Executes EJS (Embedded JavaScript) code
+Executes `ejs` code.
 
 Named parameters:
 
-- `ctx` Execution context (input parameters). Example: `ctx={ a: 1, b: 2 }` allows accessing `a` and `b` in code like `<%= a %>`
-- `block` If true, automatically wraps the code in `<%= ... %>` tags. When `block=true`, `variables.a` becomes `<%= variables.a %>`
+- `ctx` Execution context (input parameters). Example: `ctx={ a: 1, b: 2 }` allows accessing values in the code: `a's value: <%= a %>, b's value: <%= b %>`
 
-Unnamed parameters:
+- `block` Whether to treat the input as a complete code block. If `true`, automatically wraps the `code` parameter with ` <%= ... %> ` delimiters. Example: When `block=true`, `variables.a` becomes `<%= variables.a %>`
 
-- `code` The actual EJS code content
+Unnamed parameter:
+
+- `code` The actual code content.
 
 ### Examples
 
 ```
 // Outputs "hello world"
-/ejs <%= "hello world" %>
+/ejs <%= hello world %>
 
 // Outputs a=1
 /ejs ctx="{ a : 1 }" "a=<%= a %>"
 
-// Outputs b=2 using template literals
+// Outputs b=2
 /ejs ctx="{ b : 2 }" "`b=${b}`"
 ```
+
+---
+
+## /ejs-refresh
+
+Re-reads all world books and reprocesses them.
+
+> Generally not required, as modifications to world books automatically trigger reloading and processing.
 
 ---
 
@@ -825,58 +848,85 @@ These functions reside within the `globalThis.EjsTemplate` scope
 
 ```javascript
 /**
- * Processes template syntax in text
- * @note Context data is typically obtained from prepareContext. To modify, directly alter the original object
+ * Process text using template syntax
+ * @note data is usually obtained from prepareContext. To modify, directly edit the original object.
  *
  * @param {string} code - Template code
- * @param {object} [context={}] - Execution context
- * @param {Object} [options={}] - ejs options
- * @returns {string} Processed template content
+ * @param {object} [context={}] - Execution context/environment
+ * @param {Object} [options={}] - EJS parameters
+ * @returns {string} Processed content after evaluating the template
  */
 async function evalTemplate(code, context = {}, options = {});
 
 /**
- * Creates execution context for template processing
+ * Create execution context/environment for template processing
  *
- * @param {object} [context={}] - Additional context data
- * @param {number} [last_message_id=65535] - Maximum message ID for merging message variables
- * @returns {object} Prepared execution context
+ * @param {object} [context={}] - Additional execution context
+ * @param {last_message_id} [number=65535] - Maximum ID for merging message variables
+ * @returns {object} Execution context/environment
  */
 async function prepareContext(context = {}, last_message_id = 65535);
 
 /**
- * Checks for template syntax errors without execution
+ * Check template for syntax errors
+ * Does not execute the template
  *
  * @param {string} content - Template code
- * @param {number} [max_lines=4] - Number of surrounding lines to show for errors
- * @returns {string} Syntax error message, empty if no errors
+ * @param {number} [max_lines=4] - Number of lines to show around errors
+ * @returns {string} Syntax error details, empty string if no errors
  */
 async function getSyntaxErrorInfo(code, max_lines = 4);
 
 /**
  * @typedef {Object} EjsSettings
- * @property {boolean} enabled - Enable Prompt template
- * @property {boolean} generate_enabled - Generate-time evaluation
- * @property {boolean} generate_loader_enabled - [GENERATE] evaluation
- * @property {boolean} render_enabled - Chat message evaluation
- * @property {boolean} render_loader_enabled - [RENDER] evaluation
- * @property {boolean} with_context_disabled - Disabling with statement
- * @property {boolean} debug_enabled - Enable debug logging
- * @property {boolean} autosave_enabled - Save variables after updating
- * @property {boolean} preload_worldinfo_enabled - Preload world info
- * @property {boolean} code_blocks_enabled - Evaluate inside a code block
- * @property {boolean} world_active_enabled - Enable activewi to take effect this time
- * @property {boolean} raw_message_evaluation_enabled - Evaluate raw message
- * @property {boolean} filter_message_enabled - Filter chat messages when generating
- * @property {boolean} cache_enabled - Enable cache
+ * @property {boolean} enabled - Whether the extension is enabled
+ * @property {boolean} generate_enabled - Process generation content
+ * @property {boolean} generate_loader_enabled - Inject [GENERATE] worldbook entries during generation
+ * @property {boolean} render_enabled - Process message floor content
+ * @property {boolean} render_loader_enabled - Inject [RENDER] worldbook entries during floor rendering
+ * @property {boolean} with_context_disabled - Disable with() statement blocks
+ * @property {boolean} debug_enabled - Show detailed console information
+ * @property {boolean} autosave_enabled - Auto-save variable updates
+ * @property {boolean} preload_worldinfo_enabled - Preload worldbook immediately
+ * @property {boolean} code_blocks_enabled - Process code blocks
+ * @property {boolean} world_active_enabled - Process during fictional generation
+ * @property {boolean} raw_message_evaluation_enabled - Process raw message content
+ * @property {boolean} filter_message_enabled - Skip floor message processing during generation
+ * @property {number} cache_enabled - Caching (experimental) (0=Contextual, 1=All, 2=Worldbook only)
+ * @property {number} cache_size - Cache size limit
+ * @property {string} cache_hasher - Cache hashing function (h32ToString, h64ToString)
+ * @property {boolean} inject_loader_enabled - Inject @INJECT worldbook entries during generation
  */
 
 /**
- * Turn features on or off
+ * Modify extension settings (enable/disable features) externally
  *
- * @param {EjsSettings} features - setting options
+ * @param {EjsSettings} features - Feature settings
  */
 function setFeatures(features = {});
+
+/**
+ * Get the variables object
+ *
+ * @param {number} end - End floor number
+ * @returns {object} Variables object
+ */
+function allVariables(end = Infinity);
+
+/**
+ * Reset all settings to default values
+ */
+function resetFeatures();
+
+/**
+ * Reload all worldbook entries and reprocess
+ */
+async function refreshWorldInfo();
+
+/*
+ * Global variables/functions created via define
+ */
+defines = {};
 ```
 
 > Access via `globalThis.EjsTemplate` (e.g., `EjsTemplate.evalTemplate`)

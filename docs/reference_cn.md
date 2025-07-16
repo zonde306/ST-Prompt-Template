@@ -665,6 +665,7 @@ userName = 'User'
  * @type {String}
  */
 assistantName = 'SillyTavern System'
+charName = 'SillyTavern System'
 
 /*
  * 聊天会话ID
@@ -689,6 +690,18 @@ groupId = null
  * @type {array}
  */
 groups = []
+
+/*
+ * 角色卡头像
+ * @type {string}
+ */
+charAvatar = ""
+
+/*
+ * 用户头像
+ * @type {string}
+ */
+userAvatar = ""
 ```
 
 只有在 `runType` 为 `render` 时才会出现的字段
@@ -799,6 +812,14 @@ LAST_RECEIVE_CHARS = 0
 
 ---
 
+## /ejs-refresh
+
+重新读取全部世界书，并重新进行处理
+
+> 一般不需要使用，因为修改世界书后会自动重新加载并进行处理
+
+---
+
 # 导出函数
 
 扩展导出的函数，可在其他扩展中访问
@@ -838,20 +859,23 @@ async function getSyntaxErrorInfo(code, max_lines = 4);
 
 /**
  * @typedef {Object} EjsSettings
- * @property {boolean} enabled - Enable Prompt template
- * @property {boolean} generate_enabled - Generate-time evaluation
- * @property {boolean} generate_loader_enabled - [GENERATE] evaluation
- * @property {boolean} render_enabled - Chat message evaluation
- * @property {boolean} render_loader_enabled - [RENDER] evaluation
- * @property {boolean} with_context_disabled - Disabling with statement
- * @property {boolean} debug_enabled - Enable debug logging
- * @property {boolean} autosave_enabled - Save variables after updating
- * @property {boolean} preload_worldinfo_enabled - Preload world info
- * @property {boolean} code_blocks_enabled - Evaluate inside a code block
- * @property {boolean} world_active_enabled - Enable activewi to take effect this time
- * @property {boolean} raw_message_evaluation_enabled - Evaluate raw message
- * @property {boolean} filter_message_enabled - Filter chat messages when generating
- * @property {boolean} cache_enabled - Enable cache
+ * @property {boolean} enabled - 是否启用扩展
+ * @property {boolean} generate_enabled - 处理生成内容
+ * @property {boolean} generate_loader_enabled - 生成时注入 [GENERATE] 世界书条目
+ * @property {boolean} render_enabled - 处理楼层消息
+ * @property {boolean} render_loader_enabled - 渲染楼层时注入 [RENDER] 世界书条目
+ * @property {boolean} with_context_disabled - 禁用with语句块
+ * @property {boolean} debug_enabled - 控制台显示详细信息
+ * @property {boolean} autosave_enabled - 自动保存变量更新
+ * @property {boolean} preload_worldinfo_enabled - 立即加载世界书
+ * @property {boolean} code_blocks_enabled - 处理代码块
+ * @property {boolean} world_active_enabled - 在虚拟生成时进行处理
+ * @property {boolean} raw_message_evaluation_enabled - 处理原始消息内容
+ * @property {boolean} filter_message_enabled - 生成时忽略楼层消息处理
+ * @property {number} cache_enabled - 缓存（实验性） (0=经验, 1=全部, 2=仅世界书)
+ * @property {number} cache_size - 缓存大小
+ * @property {string} cache_hasher - 缓存Hash函数 (h32ToString, h64ToString)
+ * @property {boolean} inject_loader_enabled - 生成时注入 @INJECT 世界书条目
  */
 
 /**
@@ -860,6 +884,29 @@ async function getSyntaxErrorInfo(code, max_lines = 4);
  * @param {EjsSettings} features - 设置选项
  */
 function setFeatures(features = {});
+
+/**
+ * 获取 variables 对象
+ *
+ * @param {number} end - 结束楼层
+ * @returns {object} 变量对象
+ */
+function allVariables(end = Infinity);
+
+/**
+ * 将所有设置恢复到默认状态
+ */
+function resetFeatures();
+
+/**
+ * 重新加载所有世界书，并重新进行处理
+ */
+async function refreshWorldInfo();
+
+/*
+ * 所有通过 define 创建的全局变量/函数
+*/
+defines = {};
 ```
 
 > 可通过 `globalThis.EjsTemplate`访问这些函数（如 `EjsTemplate.evalTemplate`）
