@@ -206,7 +206,9 @@ export async function prepareContext(end?: number, env: Record<string, unknown> 
     STATE.cache = vars;
     let context = {
         ...SHARE_CONTEXT,
-        variables: vars,
+        get variables() {
+            return STATE.cache;
+        },
         execute: async (cmd: string) => (await executeSlashCommandsWithOptions(cmd)).pipe,
         SillyTavern: SillyTavern.getContext(),
         faker: fakerEnv.faker,
@@ -217,7 +219,7 @@ export async function prepareContext(end?: number, env: Record<string, unknown> 
         characterId: this_chid,
         charAvatar: getCharaAvater(),
         userAvatar: getPersonaAvatar(),
-
+        
         // @ts-expect-error: 7005
         groups,
         
@@ -231,10 +233,6 @@ export async function prepareContext(end?: number, env: Record<string, unknown> 
         chatLoreBook: chat_metadata[METADATA_KEY],
 
         ...env,
-        
-        get vars() {
-            return new WeakRef(STATE.cache);
-        }
     };
 
     _.merge(context, {
@@ -265,7 +263,6 @@ export async function prepareContext(end?: number, env: Record<string, unknown> 
         getQuickReply: boundedQuickReply.bind(context),
         evalTemplate: boundedEvalTemplate.bind(context),
         ...boundCloneDefines(context, SharedDefines),
-        ref: new WeakRef(context),
     });
 
     await eventSource.emit('prompt_template_prepare', context);
