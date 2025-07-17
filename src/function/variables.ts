@@ -16,7 +16,8 @@ export let STATE = {
  * @returns variables tree
  */
 export function allVariables(end? : number) : Record<string, unknown> {
-    return _.mergeWith({},
+    return _.mergeWith(
+        {},
         // @ts-expect-error: 2339
         getCharaData()?.data?.extensions?.variables || {},
         extension_settings.variables.global,
@@ -139,7 +140,7 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                 newValue = _.concat(oldValue, value);
             } else {
                 newValue = _.mergeWith(
-                    results === 'old' ? _.cloneDeep(oldValue) : oldValue,
+                    _.cloneDeep(oldValue),
                     value, (_dst: unknown, src: unknown) => _.isArray(src) ? src : undefined);
             }
         }
@@ -204,7 +205,7 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                 newValue = _.concat(oldValue, value);
             else
                 newValue = _.mergeWith(
-                    results === 'old' ? _.cloneDeep(oldValue) : oldValue,
+                    _.cloneDeep(oldValue),
                     value, (_dst: unknown, src: unknown) => _.isArray(src) ? src : undefined);
         }
 
