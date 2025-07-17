@@ -210,7 +210,9 @@ export async function prepareContext(end?: number, env: Record<string, unknown> 
             return STATE.cache;
         },
         execute: async (cmd: string) => (await executeSlashCommandsWithOptions(cmd)).pipe,
-        SillyTavern: SillyTavern.getContext(),
+        get SillyTavern() {
+            return SillyTavern.getContext();
+        },
         faker: fakerEnv.faker,
         userName: name1,
         assistantName: name2,
