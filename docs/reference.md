@@ -46,10 +46,12 @@ function setMessageVar(key, value, options = {});
  * @property {any} [defaults=undefined] - Default value (returned if the variable does not exist).
  * @property {MessageFilter} [withMsg=undefined] - Message selection filter.
  * @property {boolean} [noCache=false] - Disable caching (e.g., for immediate read after setting a variable).
+ * @property {boolean} [clone=false] - Returns a deep copy of the object (otherwise returns an object reference)
  */
 
 /**
  * Read a variable
+ * @note: Modifying object references should be avoided
  *
  * @param {string} key - Variable name.
  * @param {GetVarOption} [options={}] - Options for getting the variable.

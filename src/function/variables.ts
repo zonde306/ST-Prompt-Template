@@ -242,6 +242,7 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                 if(message_id !== undefined && swipe_id !== undefined) {
                     if(!chat[message_id].variables) chat[message_id].variables = {};
                     if(!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
+
                     if(newValue === undefined)
                         _.unset(chat[message_id].variables[swipe_id], key);
                     else
@@ -272,6 +273,7 @@ export interface GetVarOption {
     defaults?: unknown;
     withMsg?: MessageFilter;
     noCache?: boolean;
+    clone?: boolean;
 }
 
 export function getVariable(this : Record<string, unknown>, key : string,
@@ -286,6 +288,7 @@ export function getVariable(this : Record<string, unknown>, key : string,
         }
     }
 
+    let result = null;
     const { index, scope, defaults, withMsg } = options;
 
     switch(scope || 'cache') {
@@ -295,7 +298,8 @@ export function getVariable(this : Record<string, unknown>, key : string,
                 const idx = Number(index);
                 return _.get(data, Number.isNaN(idx) ? index : idx, defaults);
             }
-            return _.get(extension_settings.variables.global, key, defaults);
+            result = _.get(extension_settings.variables.global, key, defaults);
+            return options.clone ? _.cloneDeep(result) : result;
         case 'local':
             // @ts-expect-error: TS2322
             if(!chat_metadata.variables)
@@ -307,7 +311,8 @@ export function getVariable(this : Record<string, unknown>, key : string,
                 return _.get(data, Number.isNaN(idx) ? index : idx, defaults);
             }
             // @ts-expect-error: TS2322
-            return _.get(chat_metadata.variables, key, defaults);
+            result = _.get(chat_metadata.variables, key, defaults);
+            return options.clone ? _.cloneDeep(result) : result;
         case 'message':
             // @ts-expect-error
             const [message_id, swipe_id] = evalFilter(withMsg, this?.message_id, this?.swipe_id);
@@ -319,7 +324,9 @@ export function getVariable(this : Record<string, unknown>, key : string,
                     const idx = Number(index);
                     return _.get(data, Number.isNaN(idx) ? index : idx, defaults);
                 }
-                return _.get(chat[message_id].variables[swipe_id], key, defaults);
+                
+                result = _.get(chat[message_id].variables[swipe_id], key, defaults);
+                return options.clone ? _.cloneDeep(result) : result;
             }
             return defaults;
     }

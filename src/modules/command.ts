@@ -69,6 +69,9 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({
     // @ts-expect-error: 2322
     callback: async (args, value) => {
         await handlePreloadWorldInfo(getCurrentChatId(), true);
+        
+        // fix warns
+        return '';
     },
     helpString: 'Preload world info',
 }));

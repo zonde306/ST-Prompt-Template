@@ -46,10 +46,12 @@ function setMessageVar(key, value, options = {});
  * @property {any} [defaults=undefined] - 默认值(如果变量不存在时返回)
  * @property {MessageFilter} [withMsg=undefined] - 消息选择过滤器
  * @property {boolean} [noCache=false] - 禁用缓存(例如在设置变量后立即读取)
+ * @property {boolean} [clone=false] - 返回深拷贝对象(否则返回引用)
  */
 
 /**
  * 读取变量
+ * @note: 应该避免修改对象引用
  *
  * @param {string} key - 变量名
  * @param {GetVarOption} [options={}] - 获取变量选项
