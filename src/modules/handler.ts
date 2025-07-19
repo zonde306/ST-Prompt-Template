@@ -10,7 +10,7 @@ import { getCharaDefs } from '../function/characters';
 import { settings } from './ui';
 import { activateRegex, deactivateRegex, applyRegex } from '../function/regex';
 import { deactivatePromptInjection } from '../function/inject';
-import { updateTokens, removeHtmlTagsInsideBlock, escapePreContent, cleanPreContent, escapeReasoningBlocks, unescapePreContent } from '../utils/prompts';
+import { updateTokens, removeHtmlTagsInsideBlock, escapePreContent, cleanPreContent, escapeReasoningBlocks, unescapePreContent, unescapeHtmlEntities } from '../utils/prompts';
 import { evalTemplateHandler, processWorldinfoEntities } from '../utils/evaluate';
 import { updateReasoningUI } from '../../../../../reasoning.js';
 import { handleInjectPrompt } from '../features/inject-prompt';
@@ -263,7 +263,7 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
     };
 
     let newContent = await evalTemplateHandler(
-        escapeReasoningBlocks(removeHtmlTagsInsideBlock(applyRegex.call(
+        escapeReasoningBlocks(unescapeHtmlEntities(removeHtmlTagsInsideBlock(applyRegex.call(
             env,
             content,
             { message: true },
@@ -276,7 +276,7 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
                 raw: false,
                 display: true,
             }
-        )),
+        ))),
             opts
         ),
         env,

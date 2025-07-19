@@ -4,13 +4,24 @@ import { extension_settings } from '../../../../../extensions.js';
 
 /**
  * Delete the HTML markup inside <% ... %>
- * @param text content
+ * @param html content
  * @returns processed content
  */
-export function removeHtmlTagsInsideBlock(text: string) {
-    return text.replace(/&lt;%((?:[^%]|%[^>])*)%&gt;/g, (_match, content : string) => {
+export function removeHtmlTagsInsideBlock(html: string) {
+    return html.replace(/&lt;%((?:[^%]|%[^>])*)%&gt;/gi, (_match, content : string) => {
         const cleanedContent = content.replace(/<[^>]+>/g, '');
         return `&lt;%${cleanedContent}%&gt;`;
+    });
+}
+
+/**
+ * unescape HTML entities inside <% ... %>
+ * @param html content
+ * @returns processed content
+ */
+export function unescapeHtmlEntities(html: string) {
+    return html.replace(/&lt;%([\s\S]*?)%&gt;/gi, (_match, content : string) => {
+        return `&lt;%${_.unescape(content)}%&gt;`;
     });
 }
 
