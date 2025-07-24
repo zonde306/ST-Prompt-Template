@@ -18,11 +18,41 @@ import { handleInjectPrompt } from '../features/inject-prompt';
 let runID = 0;
 let isFakeRun = false; // Avoid recursive processing
 let isDryRun = false; // Is it preparation stage?
+let generateBefore = '';
 
 // just a randomly generated value
 const regexFilterUUID = "a8ff1bc7-15f2-4122-b43b-ded692560538";
 
-async function handleGenerating(data: GenerateAfterData) {
+async function handleGenerateBefore(_type: string, _data: GenerateOptions, dryRun: boolean) {
+    if (settings.enabled === false)
+        return;
+
+    isDryRun = dryRun;
+    if(dryRun)
+        return;
+
+    console.log(`[Prompt Template] start generate before on dryRun=${dryRun}`);
+
+    if(settings.generate_loader_enabled) {
+        const env = await prepareContext(65535, {
+            runType: 'generate',
+            runID: runID++,
+            message_id: undefined,
+            swipe_id: undefined,
+            is_last: undefined,
+            is_user: undefined,
+            is_system: undefined,
+            name: undefined,
+            isDryRun: false,
+        });
+
+        generateBefore = await processWorldinfoEntities(env, '[GENERATE:BEFORE]');
+    }
+
+    await applyActivateWorldInfo(true);
+}
+
+async function handleGenerateAfter(data: GenerateAfterData) {
     if (isDryRun)
         return;
     if (settings.enabled === false)
@@ -40,7 +70,7 @@ async function handleGenerating(data: GenerateAfterData) {
 
     STATE.isDryRun = false;
     const start = Date.now();
-    console.log(`[Prompt Template] start generating ${chat.length} messages`);
+    console.log(`[Prompt Template] start generate after ${chat.length} messages`);
 
     const env = await prepareContext(65535, {
         runType: 'generate',
@@ -54,12 +84,7 @@ async function handleGenerating(data: GenerateAfterData) {
         isDryRun: false,
     });
 
-    // Inject [GENERATE:BEFORE] (Before all messages)
-    const before = settings.generate_loader_enabled === false
-        ? ''
-        : await processWorldinfoEntities(env, '[GENERATE:BEFORE]');
-
-    let prompts = before;
+    let prompts = generateBefore;
     for (const [idx, message] of chat.entries()) {
         // Before a specific message
         const beforeMessage = settings.generate_loader_enabled === false
@@ -118,7 +143,6 @@ async function handleGenerating(data: GenerateAfterData) {
         }
     }
 
-    // Inject [GENERATE:AFTER] (After all messages)
     const after = settings.generate_loader_enabled === false
         ? ''
         : await processWorldinfoEntities(env, '[GENERATE:AFTER]', prompts);
@@ -126,9 +150,9 @@ async function handleGenerating(data: GenerateAfterData) {
     prompts += after;
 
     if (typeof data.prompt === 'string') {
-        data.prompt = before + chat[0].content + after;
+        data.prompt = generateBefore + chat[0].content + after;
     } else {
-        chat[0].content = before + chat[0].content;
+        chat[0].content = generateBefore + chat[0].content;
         chat[chat.length - 1].content += after;
     }
 
@@ -136,6 +160,8 @@ async function handleGenerating(data: GenerateAfterData) {
         // Inject prompt
         await handleInjectPrompt(data, env);
     }
+
+    generateBefore = '';
 
     const end = Date.now() - start;
     console.log(`[Prompt Template] processing ${chat.length} messages in ${end}ms`);
@@ -471,97 +497,6 @@ async function handleRefreshWorldInfo(name: string, data: WorldInfoData) {
     console.log(`[Prompt Template] processing ${worldInfoData.length} world info in ${end}ms`);
 }
 
-async function handleWorldInfoActivation(_type: string, _options: GenerateOptions, dryRun: boolean) {
-    if (settings.enabled === false)
-        return;
-
-    if (dryRun) return;
-    await applyActivateWorldInfo(true);
-}
-
-async function handleActivator(data: GenerateAfterData) {
-    if (!isDryRun)
-        return;
-    if (settings.enabled === false)
-        return;
-    if (settings.world_active_enabled === false)
-        return;
-
-    const chat = typeof data.prompt === 'string' ? [{ role: '', content: data.prompt }] : data.prompt;
-
-    STATE.isDryRun = true;
-    const start = Date.now();
-    console.log(`[Prompt Template] start activator ${chat.length} messages`);
-
-    const env = await prepareContext(65535, {
-        runType: 'preparation',
-        runID: runID++,
-        message_id: undefined,
-        swipe_id: undefined,
-        is_last: undefined,
-        is_user: undefined,
-        is_system: undefined,
-        name: undefined,
-        isDryRun: true,
-    });
-
-    let prompts = settings.generate_loader_enabled === false
-        ? ''
-        : await processWorldinfoEntities(env, '[GENERATE:BEFORE]');
-
-    for (const [idx, message] of chat.entries()) {
-        const beforeMessage = settings.generate_loader_enabled === false
-            ? ''
-            : await processWorldinfoEntities(env, `[GENERATE:${idx}:BEFORE]`);
-
-        if (typeof message.content === 'string') {
-            const prompt = await evalTemplateHandler(
-                message.content,
-                env,
-                `message #${idx + 1}(${message.role})`,
-                {
-                    options: {
-                        filename: `generate/${getCurrentChatId()}/${idx}`,
-                        cache: settings.cache_enabled === 1, // enable for all
-                    }
-                }
-            );
-            const afterMessage = settings.generate_loader_enabled === false
-                ? ''
-                : await processWorldinfoEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
-            
-            prompts += beforeMessage + (prompt || '') + afterMessage;
-        } else if (_.isArray(message.content)) {
-            for (const content of message.content) {
-                if (content.type === 'text') {
-                    const prompt = await evalTemplateHandler(
-                        content.text,
-                        env,
-                        `message #${idx + 1}(${message.role})`,
-                        {
-                            options: {
-                                filename: `generate/${getCurrentChatId()}/${idx}`,
-                                cache: settings.cache_enabled === 1, // enable for all
-                            }
-                        }
-                    );
-                    const afterMessage = settings.generate_loader_enabled === false
-                        ? ''
-                        : await processWorldinfoEntities(env, `[GENERATE:${idx}:AFTER]`, prompt || '');
-                    
-                    prompts += beforeMessage + (prompt || '') + afterMessage;
-                }
-            }
-        }
-    }
-
-    if (settings.generate_loader_enabled)
-        await processWorldinfoEntities(env, '[GENERATE:AFTER]', prompts);
-
-    const end = Date.now() - start;
-    console.log(`[Prompt Template] processing ${chat.length} messages in ${end}ms`);
-}
-
 async function handleFilterInstall(_type: string, _options: GenerateOptions, dryRun: boolean) {
     if (settings.enabled === false)
         return;
@@ -588,26 +523,17 @@ const MESSAGE_RENDER_EVENTS = [
 
 export async function init() {
     eventSource.makeFirst(event_types.CHAT_CHANGED, handlePreloadWorldInfo);
-    eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleWorldInfoActivation);
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleFilterInstall);
     eventSource.on(event_types.WORLDINFO_UPDATED, handleRefreshWorldInfo);
-    eventSource.on(event_types.GENERATE_AFTER_COMBINE_PROMPTS,
-        (data: CombinedPromptData) => {
-            isDryRun = data.dryRun;
-            console.log(`[Prompt Template] dry run: ${isDryRun}`);
-        }
-    );
-    eventSource.on(event_types.GENERATE_AFTER_DATA, handleActivator);
-    eventSource.on(event_types.GENERATE_AFTER_DATA, handleGenerating);
+    eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleGenerateBefore);
+    eventSource.on(event_types.GENERATE_AFTER_DATA, handleGenerateAfter);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.on(e, handleMessageRender));
 }
 
 export async function exit() {
     eventSource.removeListener(event_types.CHAT_CHANGED, handlePreloadWorldInfo);
-    eventSource.removeListener(event_types.GENERATION_AFTER_COMMANDS, handleWorldInfoActivation);
-    eventSource.removeListener(event_types.GENERATION_AFTER_COMMANDS, handleFilterInstall);
     eventSource.removeListener(event_types.WORLDINFO_UPDATED, handleRefreshWorldInfo);
-    eventSource.removeListener(event_types.GENERATE_AFTER_DATA, handleActivator);
-    eventSource.removeListener(event_types.GENERATE_AFTER_DATA, handleGenerating);
+    eventSource.removeListener(event_types.GENERATION_AFTER_COMMANDS, handleGenerateBefore);
+    eventSource.removeListener(event_types.GENERATE_AFTER_DATA, handleGenerateAfter);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.removeListener(e, handleMessageRender));
 }

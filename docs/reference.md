@@ -891,7 +891,7 @@ async function getSyntaxErrorInfo(code, max_lines = 4);
  * @property {boolean} autosave_enabled - Auto-save variable updates
  * @property {boolean} preload_worldinfo_enabled - Preload worldbook immediately
  * @property {boolean} code_blocks_enabled - Process code blocks
- * @property {boolean} world_active_enabled - Process during fictional generation
+ * @property {boolean} worldactive_enabled - Process during fictional generation
  * @property {boolean} raw_message_evaluation_enabled - Process raw message content
  * @property {boolean} filter_message_enabled - Skip floor message processing during generation
  * @property {number} cache_enabled - Caching (experimental) (0=Contextual, 1=All, 2=Worldbook only)

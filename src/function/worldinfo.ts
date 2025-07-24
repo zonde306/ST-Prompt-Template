@@ -4,14 +4,51 @@ import { power_user } from '../../../../../power-user.js';
 import { getCharaFilename } from '../../../../../utils.js';
 import { getGroupMembers } from '../../../../../group-chats.js';
 
+interface WorldInfoExtension {
+    position: number;
+    exclude_recursion: boolean;
+    display_index: number;
+    probability: number;
+    useProbability: boolean;
+    depth: number;
+    selectiveLogic: number;
+    group: string;
+    group_override: boolean;
+    group_weight: number;
+    prevent_recursion: boolean;
+    delay_until_recursion: boolean;
+    scan_depth: number | null;
+    match_whole_words: boolean | null;
+    use_group_scoring: boolean | null;
+    case_sensitive: boolean | null;
+    automation_id: string;
+    role: null | number;
+    vectorized: boolean;
+    sticky: number;
+    cooldown: number;
+    delay: number;
+    match_persona_description: boolean;
+    match_character_description: boolean;
+    match_character_personality: boolean;
+    match_character_depth_prompt: boolean;
+    match_scenario: boolean;
+    match_creator_notes: boolean;
+}
+
+interface WorldInfoFilter {
+    isExclude: boolean;
+    names: string[];
+    tags: string[];
+}
+
 export interface WorldInfoData {
     uid: number;
     key: string[];
     keysecondary: string[];
-    comment: string;            // title
+    comment: string; // Title/Memo
     content: string;
-    constant: boolean;
-    vectorized: boolean;
+    constant: boolean; // 🔵 Constant
+    vectorized: boolean; // 🔗 Vectorized
     selective: boolean;
     selectiveLogic: number;
     addMemo: boolean;
@@ -38,7 +75,22 @@ export interface WorldInfoData {
     delay: number;
     displayIndex: number;
     world: string;
-    decorators: string[];
+    decorators: string[]; // A list of identifiers starting with @@ extracted from `content`
+    extensions: WorldInfoExtension;
+
+    // Filter to Characters or Tags
+    characterFilter: WorldInfoFilter;
+    characterFilterNames: string[];
+    characterFilterTags: string[];
+    characterFilterExclude: boolean;
+
+    // Additional Matching Sources
+    matchPersonaDescription: boolean;
+    matchCharacterDescription: boolean;
+    matchCharacterPersonality: boolean;
+    matchCharacterDepthPrompt: boolean;
+    matchScenario: boolean;
+    matchCreatorNotes: boolean;
 }
 
 export interface WorldInfo {

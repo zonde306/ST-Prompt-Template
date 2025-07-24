@@ -871,7 +871,6 @@ async function getSyntaxErrorInfo(code, max_lines = 4);
  * @property {boolean} autosave_enabled - 自动保存变量更新
  * @property {boolean} preload_worldinfo_enabled - 立即加载世界书
  * @property {boolean} code_blocks_enabled - 处理代码块
- * @property {boolean} world_active_enabled - 在虚拟生成时进行处理
  * @property {boolean} raw_message_evaluation_enabled - 处理原始消息内容
  * @property {boolean} filter_message_enabled - 生成时忽略楼层消息处理
  * @property {number} cache_enabled - 缓存（实验性） (0=经验, 1=全部, 2=仅世界书)
