@@ -108,7 +108,9 @@ export async function getWorldInfoData(name: string): Promise<WorldInfoData[]> {
     if (!lorebook)
         return [];
 
-    const entries = Object.values(lorebook.entries).map(({ uid, ...rest }) => ({ ...rest, uid: Number(uid), world: name }));
+    const entries = Object.values(lorebook.entries)
+        .map(({ uid, ...rest }) => ({ ...rest, uid: Number(uid), world: name }))
+        .map(({ content, ...rest }) => { const [ decorators, cont ] = parseDecorators(content); return { ...rest, content: cont, decorators } });
     return entries.sort(getWorldInfoSorter(entries));
 }
 
@@ -561,4 +563,63 @@ function worldInfoSorter(a: WorldInfoData, b: WorldInfoData, top: number = DEFAU
     return calcDepth(b) - calcDepth(a) ||
         a.order - b.order ||
         b.uid - a.uid;   
+}
+
+const KNOWN_DECORATORS = [
+    '@@activate',
+    '@@dont_activate',
+];
+
+/**
+ * Parse decorators from worldinfo content
+ * @param content The content to parse
+ * @returns The decorators found in the content and the content without decorators
+*/
+function parseDecorators(content: string): [string[], string] {
+    /**
+     * Check if the decorator is known
+     * @param data string to check
+     * @returns true if the decorator is known
+    */
+    const isKnownDecorator = (data: string): boolean => {
+        if (data.startsWith('@@@')) {
+            data = data.substring(1);
+        }
+
+        for (const decorator of KNOWN_DECORATORS) {
+            if (data.startsWith(decorator)) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    if (content.startsWith('@@')) {
+        let newContent = content;
+        const splited = content.split('\n');
+        let decorators = [];
+        let fallbacked = false;
+
+        for (let i = 0; i < splited.length; i++) {
+            if (splited[i].startsWith('@@')) {
+                if (splited[i].startsWith('@@@') && !fallbacked) {
+                    continue;
+                }
+
+                if (isKnownDecorator(splited[i])) {
+                    decorators.push(splited[i].startsWith('@@@') ? splited[i].substring(1) : splited[i]);
+                    fallbacked = false;
+                }
+                else {
+                    fallbacked = true;
+                }
+            } else {
+                newContent = splited.slice(i).join('\n');
+                break;
+            }
+        }
+        return [decorators, newContent];
+    }
+
+    return [[], content];
 }
