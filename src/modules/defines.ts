@@ -1,4 +1,5 @@
 import { ReasoningType } from "../../../../../reasoning.js";
+import { WorldInfoData } from "../function/worldinfo.js";
 
 type TextContent = {
     type: "text";
@@ -145,4 +146,11 @@ export interface CombinedPromptData {
 
 export interface GenerateAfterData {
     prompt: string | Chat[];
+}
+
+export interface WorldInfoLoaded {
+    globalLore: WorldInfoData[];
+    characterLore: WorldInfoData[];
+    chatLore: WorldInfoData[];
+    personaLore: WorldInfoData[];
 }

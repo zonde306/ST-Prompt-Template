@@ -1,11 +1,11 @@
 // @ts-expect-error
 import vm from 'vm-browserify';
-import { Message, GenerateAfterData, CombinedPromptData } from './defines';
+import { Message, GenerateAfterData, WorldInfoLoaded } from './defines';
 import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock, substituteParams, this_chid, getCurrentChatId, appendMediaToMessage, addCopyToCodeBlocks } from '../../../../../../script.js';
 import { prepareContext } from '../function/ejs';
 import { STATE, checkAndSave } from '../function/variables';
 import { extension_settings } from '../../../../../extensions.js';
-import { getEnabledWorldInfoEntries, applyActivateWorldInfo, deactivateActivateWorldInfo, WorldInfo as WorldInfoData, getEnabledLoreBooks } from '../function/worldinfo';
+import { getEnabledWorldInfoEntries, applyActivateWorldInfo, deactivateActivateWorldInfo, WorldInfo as WorldInfoData, getEnabledLoreBooks, getActivateWorldInfo } from '../function/worldinfo';
 import { getCharaDefs } from '../function/characters';
 import { settings } from './ui';
 import { activateRegex, deactivateRegex, applyRegex } from '../function/regex';
@@ -50,6 +50,23 @@ async function handleGenerateBefore(_type: string, _data: GenerateOptions, dryRu
     }
 
     await applyActivateWorldInfo(true);
+}
+
+async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
+    const enabled = await getEnabledWorldInfoEntries();
+
+    for(const entry of getActivateWorldInfo()) {
+        if(entry.disable || entry.decorators.includes('@@dont_activate')) {
+            data.chatLore.push({ ...entry, disable: false });
+            continue;
+        }
+
+        const idx = enabled.findIndex(x => x.world === entry.world && x.uid === entry.uid);
+        if(idx < 0) {
+            data.chatLore.push({ ...entry, disable: false });
+            continue;
+        }
+    }
 }
 
 async function handleGenerateAfter(data: GenerateAfterData) {
@@ -528,6 +545,7 @@ export async function init() {
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleGenerateBefore);
     eventSource.on(event_types.GENERATE_AFTER_DATA, handleGenerateAfter);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.on(e, handleMessageRender));
+    eventSource.on(event_types.WORLDINFO_ENTRIES_LOADED, handleWorldInfoLoaded);
 }
 
 export async function exit() {
@@ -536,4 +554,5 @@ export async function exit() {
     eventSource.removeListener(event_types.GENERATION_AFTER_COMMANDS, handleGenerateBefore);
     eventSource.removeListener(event_types.GENERATE_AFTER_DATA, handleGenerateAfter);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.removeListener(e, handleMessageRender));
+    eventSource.removeListener(event_types.WORLDINFO_ENTRIES_LOADED, handleWorldInfoLoaded);
 }

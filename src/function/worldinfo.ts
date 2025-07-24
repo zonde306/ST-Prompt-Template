@@ -97,18 +97,13 @@ export interface WorldInfo {
     entries: Record<string, WorldInfoData>;
 }
 
-export interface WorldinfoForceActivate {
-    world: string;
-    uid: string | number;
-}
-
 export interface ActivateWorldInfoCondition {
     withConstant?: boolean; 
     withDisabled?: boolean;
     onlyDisabled?: boolean;
 }
 
-let activatedWorldEntries = new Map<string, WorldinfoForceActivate>();
+let activatedWorldEntries = new Map<string, WorldInfoData>();
 
 /**
  * Activate the specified WI entry
@@ -147,6 +142,10 @@ export async function applyActivateWorldInfo(deactivate : boolean = true) {
 
 export function deactivateActivateWorldInfo() {
     activatedWorldEntries.clear();
+}
+
+export function getActivateWorldInfo(): WorldInfoData[] {
+    return Array.from(activatedWorldEntries.values());
 }
 
 /**
