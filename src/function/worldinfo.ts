@@ -38,6 +38,7 @@ export interface WorldInfoData {
     delay: number;
     displayIndex: number;
     world: string;
+    decorators: string[];
 }
 
 export interface WorldInfo {
@@ -197,6 +198,17 @@ export function selectActivatedEntries(
         if(data.constant) {
             // Constant entries are always activated
             activated.add(data);
+            continue;
+        }
+
+        if(data.decorators.includes('@@activate')) {
+            // activated by @@activate decorator
+            activated.add(data);
+            continue;
+        }
+
+        if(data.decorators.includes('@@dont_activate')) {
+            // suppressed by @@dont_activate decorator
             continue;
         }
 
