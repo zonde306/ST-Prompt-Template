@@ -57,13 +57,13 @@ async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
 
     for(const entry of getActivateWorldInfo()) {
         if(entry.disable || entry.decorators.includes('@@dont_activate')) {
-            data.chatLore.push({ ...entry, disable: false });
+            data.chatLore.push({ ...entry, disable: false, decorators: []});
             continue;
         }
 
         const idx = enabled.findIndex(x => x.world === entry.world && x.uid === entry.uid);
         if(idx < 0) {
-            data.chatLore.push({ ...entry, disable: false });
+            data.chatLore.push({ ...entry, disable: false, decorators: [] });
             continue;
         }
     }
