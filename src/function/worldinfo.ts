@@ -165,8 +165,10 @@ export async function getWorldInfoData(name?: string): Promise<WorldInfoData[]> 
     // @ts-expect-error
     const lore = (name || characters[this_chid]?.data?.extensions?.world || power_user.persona_description_lorebook || chat_metadata[METADATA_KEY] || '') as string;
     const lorebook = await loadWorldInfo(lore) as WorldInfo;
-    if (!lorebook)
+    if (!lorebook) {
+        console.log(`[Prompt Template] lorebook not found: ${lore} (${name})`);
         return [];
+    }
 
     const entries = Object.values(lorebook.entries).map(entry => {
         const clone = { ...entry };
