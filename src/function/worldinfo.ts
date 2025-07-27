@@ -113,10 +113,8 @@ let activatedWorldEntries = new Map<string, WorldInfoData>();
  */
 export async function activateWorldInfo(world : string, uid : string | RegExp | number) {
     const entry = await getWorldInfoEntry(world, uid);
-    if(entry) {
+    if(entry)
         activatedWorldEntries.set(`${world}.${uid}`, entry);
-        entry.disable = false; // temporarily enable
-    }
     return entry;
 }
 
@@ -141,8 +139,6 @@ export async function applyActivateWorldInfo() {
 }
 
 export function deactivateActivateWorldInfo() {
-    // disable all activated entries
-    activatedWorldEntries.values().forEach(x => x.disable = true);
     activatedWorldEntries.clear();
 }
 

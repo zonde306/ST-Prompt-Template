@@ -5,7 +5,7 @@ import { eventSource, event_types, chat, messageFormatting, GenerateOptions, upd
 import { prepareContext } from '../function/ejs';
 import { STATE, checkAndSave } from '../function/variables';
 import { extension_settings } from '../../../../../extensions.js';
-import { getEnabledWorldInfoEntries, applyActivateWorldInfo, deactivateActivateWorldInfo, WorldInfo as WorldInfoData, getEnabledLoreBooks, getActivateWorldInfo } from '../function/worldinfo';
+import { getEnabledWorldInfoEntries, deactivateActivateWorldInfo, WorldInfo as WorldInfoData, getEnabledLoreBooks, getActivateWorldInfo } from '../function/worldinfo';
 import { getCharaDefs } from '../function/characters';
 import { settings } from './ui';
 import { activateRegex, deactivateRegex, applyRegex } from '../function/regex';
@@ -48,8 +48,6 @@ async function handleGenerateBefore(_type: string, _data: GenerateOptions, dryRu
 
         generateBefore = await processWorldinfoEntities(env, '[GENERATE:BEFORE]');
     }
-
-    await applyActivateWorldInfo();
 }
 
 async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
