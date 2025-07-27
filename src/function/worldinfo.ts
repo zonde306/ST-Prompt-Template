@@ -107,11 +107,21 @@ let activatedWorldEntries = new Map<string, WorldInfoData>();
 
 /**
  * Activate the specified WI entry
- * @param world 
- * @param uid 
- * @returns 
+ * @param world lore book
+ * @param uid WI name/uid
+ * @returns WI entry
  */
-export async function activateWorldInfo(world : string, uid : string | RegExp | number) {
+export async function activateWorldInfo(world : string | RegExp | number, uid: string | RegExp | number): Promise<WorldInfoData | null>;
+
+/**
+ * Activate the specified WI entry
+ * @param uid WI name/uid
+ * @returns WI entry
+ */
+export async function activateWorldInfo(uid: string | RegExp | number): Promise<WorldInfoData | null>;
+
+export async function activateWorldInfo(world : string | RegExp | number, uid?: string | RegExp | number): Promise<WorldInfoData | null> {
+    // @ts-expect-error: 2345
     const entry = await getWorldInfoEntry(world, uid);
     if(entry)
         activatedWorldEntries.set(`${world}.${uid}`, entry);
@@ -151,18 +161,22 @@ export function getActivateWorldInfo(): WorldInfoData[] {
  * @param name WI name
  * @returns WI entries
  */
-export async function getWorldInfoData(name: string): Promise<WorldInfoData[]> {
+export async function getWorldInfoData(name?: string): Promise<WorldInfoData[]> {
     // @ts-expect-error
-    const lorebook = await loadWorldInfo(name || characters[this_chid]?.data?.extensions?.world || power_user.persona_description_lorebook || chat_metadata[METADATA_KEY] || '') as WorldInfo;
+    const lore = (name || characters[this_chid]?.data?.extensions?.world || power_user.persona_description_lorebook || chat_metadata[METADATA_KEY] || '') as string;
+    const lorebook = await loadWorldInfo(lore) as WorldInfo;
     if (!lorebook)
         return [];
 
     const entries = Object.values(lorebook.entries).map(entry => {
+        const clone = { ...entry };
         // modify in place
-        entry.uid = Number(entry.uid);
-        const [ decorators, _ ] = parseDecorators(entry.content);
-        entry.decorators = decorators;
-        return entry;
+        clone.uid = Number(entry.uid);
+        const [ decorators, content ] = parseDecorators(entry.content);
+        clone.decorators = decorators;
+        clone.content = content;
+        clone.world = lore;
+        return clone;
     });
 
     return entries.sort(getWorldInfoSorter(entries));
@@ -173,7 +187,7 @@ export async function getWorldInfoData(name: string): Promise<WorldInfoData[]> {
  * @param name WI name
  * @returns WI entry names
  */
-export async function getWorldInfoTitles(name: string): Promise<string[]> {
+export async function getWorldInfoTitles(name?: string): Promise<string[]> {
     return (await getWorldInfoData(name)).map(data => data.comment);
 }
 
@@ -183,11 +197,29 @@ export async function getWorldInfoTitles(name: string): Promise<string[]> {
  * @param title entry name
  * @returns entry data
  */
-export async function getWorldInfoEntry(name: string, title: string | RegExp | number): Promise<WorldInfoData | null> {
-    for (const data of await getWorldInfoData(name))
-        // @ts-expect-error
-        if (data.comment === title || data.uid === title || data.comment.match(title))   // String.match(number) will returns null
+export async function getWorldInfoEntry(name: string, title: string | RegExp | number): Promise<WorldInfoData | null>;
+
+/**
+ * Get the specified WI entry data
+ * @param title entry name
+ * @returns entry data
+ */
+export async function getWorldInfoEntry(title: string | RegExp | number): Promise<WorldInfoData | null>;
+
+export async function getWorldInfoEntry(name: string | RegExp | number, title?: string | RegExp | number): Promise<WorldInfoData | null> {
+    let entries = [];
+    if(title != null) {
+        entries = await getWorldInfoData(name as string);
+    } else {
+        entries = await getWorldInfoData();
+        title = name;
+    }
+
+    for (const data of entries) {
+        // @ts-expect-error: String.match(number) will returns null
+        if (data.comment === title || data.uid === title || data.comment.match(title))
             return data;
+    }
 
     return null;
 }
@@ -198,10 +230,19 @@ export async function getWorldInfoEntry(name: string, title: string | RegExp | n
  * @param title entry name
  * @returns entry content
  */
-export async function getWorldInfoEntryContent(name: string, title: string | RegExp | number): Promise<string | null> {
+export async function getWorldInfoEntryContent(name: string | RegExp | number, title: string | RegExp | number): Promise<string | null>;
+
+/**
+ * Get the specified WI entry content
+ * @param title entry name
+ * @returns entry content
+ */
+export async function getWorldInfoEntryContent(title: string | RegExp | number): Promise<string | null>;
+
+export async function getWorldInfoEntryContent(name: string | RegExp | number, title?: string | RegExp | number): Promise<string | null> {
+    // @ts-expect-error: 2345
     const data = await getWorldInfoEntry(name, title);
     if (!data) return null;
-
     return data.content;
 }
 

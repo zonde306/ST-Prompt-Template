@@ -118,13 +118,13 @@ async function execute(cmd);
 /**
  * 读取世界书条目内容
  *
- * @param {string} worldinfo - 世界书名(递归时可传递空值，自动推断为当前世界书)
+ * @param {string} lorebook - 世界书名(递归时可传递空值，自动推断为当前世界书)
  * @param {string | RegExp | number} title - 条目uid/标题
  * @param {Record<string, any>} [data={}] - 传递的数据
  * @returns {Promise<string>} - 世界书条目的内容
  */
-async function getwi(worldinfo, title, data = {});
-async function getWorldInfo(worldinfo, title, data = {});
+async function getwi(lorebook, title, data = {});
+async function getWorldInfo(lorebook, title, data = {});
 async function getwi(title, data = {});
 async function getWorldInfo(title, data = {});
 
@@ -281,12 +281,14 @@ function print(...args);
  * 激活世界书
  * 需要提具体条目
  *
- * @param {string} worldinfo - 世界书名
+ * @param {string} lorebook - 世界书名
  * @param {string | RegExp | number} title - 条目uid/标题
  * @returns {Promise<WorldInfoData | null>} - 激活的世界书的条目
  */
-async function activewi(worldinfo, title);
-async function activateWorldInfo(worldinfo, title);
+async function activewi(lorebook, title);
+async function activateWorldInfo(lorebook, title);
+async function activewi(title);
+async function activateWorldInfo( title);
 
 /**
  * 激活世界书条件

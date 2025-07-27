@@ -43,10 +43,12 @@ function setMessageVar(key, value, options = {});
  * @property {any} [defaults=undefined] - Default value (returned if the variable does not exist).
  * @property {MessageFilter} [withMsg=undefined] - Message selection filter.
  * @property {boolean} [noCache=false] - Disable caching (e.g., for immediate read after setting a variable).
+ * @property {boolean} [clone=false] - Returns a deep copy of the object (otherwise returns an object reference)
  */
 
 /**
  * Read a variable
+ * @note: Modifying object references should be avoided
  *
  * @param {string} key - Variable name.
  * @param {GetVarOption} [options={}] - Options for getting the variable.
@@ -113,13 +115,13 @@ async function execute(cmd);
 /**
  * Read World Info entry content
  *
- * @param {string} worldinfo - World Info name (can be empty for recursion, automatically infers current World Info).
+ * @param {string} lorebook - World Info name (can be empty for recursion, automatically infers current World Info).
  * @param {string | RegExp | number} title - Entry UID/title.
  * @param {Record<string, any>} [data={}] - Data to pass.
  * @returns {Promise<string>} - The content of the World Info entry.
  */
-async function getwi(worldinfo, title, data = {});
-async function getWorldInfo(worldinfo, title, data = {});
+async function getwi(lorebook, title, data = {});
+async function getWorldInfo(lorebook, title, data = {});
 async function getwi(title, data = {});
 async function getWorldInfo(title, data = {});
 
@@ -276,12 +278,12 @@ function print(...args);
  * Activate World Info.
  * Requires a specific entry.
  *
- * @param {string} worldinfo - World Info name.
+ * @param {string} lorebook - World Info name.
  * @param {string | RegExp | number} title - Entry UID/title.
  * @returns {Promise<WorldInfoData | null>} - The activated World Info entry.
  */
-async function activewi(worldinfo, title);
-async function activateWorldInfo(worldinfo, title);
+async function activewi(lorebook, title);
+async function activateWorldInfo(lorebook, title);
 
 /**
  * Activate World Info conditions.
@@ -364,6 +366,7 @@ function getChatMessages(start, end, role);
  * @property {number} [order=100] - Execution order, ascending
  * @property {boolean} [raw=true] - Allows processing of raw floor messages, requires enabling the message item
  * @property {boolean} [display=false] - Allows processing of floor message HTML, requires enabling the message item
+ * @property {number} [sticky=0] - Stickiness.
  */
 
 /**

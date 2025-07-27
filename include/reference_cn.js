@@ -43,10 +43,12 @@ function setMessageVar(key, value, options = {});
  * @property {any} [defaults=undefined] - 默认值(如果变量不存在时返回)
  * @property {MessageFilter} [withMsg=undefined] - 消息选择过滤器
  * @property {boolean} [noCache=false] - 禁用缓存(例如在设置变量后立即读取)
+ * @property {boolean} [clone=false] - 返回深拷贝对象(否则返回引用)
  */
 
 /**
  * 读取变量
+ * @note: 应该避免修改对象引用
  *
  * @param {string} key - 变量名
  * @param {GetVarOption} [options={}] - 获取变量选项
@@ -113,13 +115,13 @@ async function execute(cmd);
 /**
  * 读取世界书条目内容
  *
- * @param {string} worldinfo - 世界书名(递归时可传递空值，自动推断为当前世界书)
+ * @param {string} lorebook - 世界书名(递归时可传递空值，自动推断为当前世界书)
  * @param {string | RegExp | number} title - 条目uid/标题
  * @param {Record<string, any>} [data={}] - 传递的数据
  * @returns {Promise<string>} - 世界书条目的内容
  */
-async function getwi(worldinfo, title, data = {});
-async function getWorldInfo(worldinfo, title, data = {});
+async function getwi(lorebook, title, data = {});
+async function getWorldInfo(lorebook, title, data = {});
 async function getwi(title, data = {});
 async function getWorldInfo(title, data = {});
 
@@ -276,12 +278,14 @@ function print(...args);
  * 激活世界书
  * 需要提具体条目
  *
- * @param {string} worldinfo - 世界书名
+ * @param {string} lorebook - 世界书名
  * @param {string | RegExp | number} title - 条目uid/标题
  * @returns {Promise<WorldInfoData | null>} - 激活的世界书的条目
  */
-async function activewi(worldinfo, title);
-async function activateWorldInfo(worldinfo, title);
+async function activewi(lorebook, title);
+async function activateWorldInfo(lorebook, title);
+async function activewi(title);
+async function activateWorldInfo( title);
 
 /**
  * 激活世界书条件
@@ -364,6 +368,7 @@ function getChatMessages(start, end, role);
  * @property {number} [order=100] - 执行顺序，升序执行
  * @property {boolean} [raw=true] - 允许对原始楼层消息进行处理，需要开启 message 项
  * @property {boolean} [display=false] - 允许对楼层消息HTML进行处理，需要开启 message 项
+ * @property {number} [sticky=0] - 粘性
  */
 
 /**
