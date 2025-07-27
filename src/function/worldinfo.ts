@@ -113,8 +113,10 @@ let activatedWorldEntries = new Map<string, WorldInfoData>();
  */
 export async function activateWorldInfo(world : string, uid : string | RegExp | number) {
     const entry = await getWorldInfoEntry(world, uid);
-    if(entry)
+    if(entry) {
         activatedWorldEntries.set(`${world}.${uid}`, entry);
+        entry.disable = false; // temporarily enable
+    }
     return entry;
 }
 
@@ -134,13 +136,13 @@ export async function activateWorldInfoByKeywords(
     return activated;
 }
 
-export async function applyActivateWorldInfo(deactivate : boolean = true) {
+export async function applyActivateWorldInfo() {
     await eventSource.emit(event_types.WORLDINFO_FORCE_ACTIVATE, activatedWorldEntries.values());
-    if(deactivate)
-        deactivateActivateWorldInfo();
 }
 
 export function deactivateActivateWorldInfo() {
+    // disable all activated entries
+    activatedWorldEntries.values().forEach(x => x.disable = true);
     activatedWorldEntries.clear();
 }
 
@@ -159,9 +161,14 @@ export async function getWorldInfoData(name: string): Promise<WorldInfoData[]> {
     if (!lorebook)
         return [];
 
-    const entries = Object.values(lorebook.entries)
-        .map(({ uid, ...rest }) => ({ ...rest, uid: Number(uid), world: name }))
-        .map(({ content, ...rest }) => { const [ decorators, cont ] = parseDecorators(content); return { ...rest, content: cont, decorators } });
+    const entries = Object.values(lorebook.entries).map(entry => {
+        // modify in place
+        entry.uid = Number(entry.uid);
+        const [ decorators, _ ] = parseDecorators(entry.content);
+        entry.decorators = decorators;
+        return entry;
+    });
+
     return entries.sort(getWorldInfoSorter(entries));
 }
 

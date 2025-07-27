@@ -49,7 +49,7 @@ async function handleGenerateBefore(_type: string, _data: GenerateOptions, dryRu
         generateBefore = await processWorldinfoEntities(env, '[GENERATE:BEFORE]');
     }
 
-    await applyActivateWorldInfo(true);
+    await applyActivateWorldInfo();
 }
 
 async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
