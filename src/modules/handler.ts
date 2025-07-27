@@ -67,8 +67,6 @@ async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
             continue;
         }
     }
-
-    deactivateActivateWorldInfo();
 }
 
 async function handleGenerateAfter(data: GenerateAfterData) {
