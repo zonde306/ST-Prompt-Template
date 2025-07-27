@@ -223,6 +223,7 @@ export async function getWorldInfoEntry(name: string | RegExp | number, title?: 
             return data;
     }
 
+    console.log(`[Prompt Template] entry not found: ${title} (${name})`);
     return null;
 }
 
