@@ -47,7 +47,6 @@ export interface SetVarOption {
     merge?: boolean;
     dryRun?: boolean;
     noCache?: boolean;
-    defaults?: unknown; // only for merge === true or results === 'old'
 }
 
 /**
@@ -120,7 +119,7 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
         }
     }
     
-    const { index, scope, flags, results, withMsg, merge, dryRun, defaults } = options;
+    const { index, scope, flags, results, withMsg, merge, dryRun } = options;
     if(!dryRun && STATE.isDryRun) return undefined;
     
     let oldValue;
@@ -136,14 +135,14 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
         if(flags === 'xxs' && getVariable.call(this, key, options) === undefined) return undefined;
 
         if(results === 'old' || merge)
-            oldValue = _.get(data, idx, defaults);
+            oldValue = _.get(data, idx, undefined);
 
         if(merge) {
-            if(_.isArray(oldValue) && _.isArray(value)) {
-                newValue = _.concat(oldValue, value);
+            if((oldValue === undefined || _.isArray(oldValue)) && _.isArray(value)) {
+                newValue = _.concat(oldValue ?? [], value);
             } else {
                 newValue = _.mergeWith(
-                    _.cloneDeep(oldValue),
+                    _.cloneDeep(oldValue ?? {}),
                     value, (_dst: unknown, src: unknown) => _.isArray(src) ? src : undefined);
             }
         }
@@ -203,14 +202,14 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
         if(flags === 'xxs' && getVariable.call(this, key, options) === undefined) return undefined;
 
         if(results === 'old' || merge)
-            oldValue = _.get(STATE.cache, key, defaults);
+            oldValue = _.get(STATE.cache, key, undefined);
 
         if(merge) {
             if(_.isArray(oldValue) && _.isArray(value))
-                newValue = _.concat(oldValue, value);
+                newValue = _.concat(oldValue ?? [], value);
             else
                 newValue = _.mergeWith(
-                    _.cloneDeep(oldValue),
+                    _.cloneDeep(oldValue ?? {}),
                     value, (_dst: unknown, src: unknown) => _.isArray(src) ? src : undefined);
         }
 

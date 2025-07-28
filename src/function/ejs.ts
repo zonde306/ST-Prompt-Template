@@ -345,9 +345,9 @@ function boundedDefine(this: Record<string, unknown>, name: string, value: unkno
     const oldValue = _.get(SharedDefines, name, undefined);
     if (merge) {
         if((oldValue === undefined || _.isArray(oldValue)) && _.isArray(value))
-            value = _.concat(oldValue || [], value);
+            value = _.concat(oldValue ?? [], value);
         else if((oldValue === undefined || _.isPlainObject(oldValue)) && _.isPlainObject(value))
-            value = _.mergeWith(oldValue || {}, value, (_dst: unknown, src: unknown) => _.isArray(src) ? src : undefined);
+            value = _.mergeWith(oldValue ?? {}, value, (_dst: unknown, src: unknown) => _.isArray(src) ? src : undefined);
     }
 
     _.set(SharedDefines, name, value);
