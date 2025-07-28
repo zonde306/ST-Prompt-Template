@@ -342,12 +342,12 @@ export let SharedDefines: Record<string, unknown> = {};
 
 function boundedDefine(this: Record<string, unknown>, name: string, value: unknown, merge: boolean = false) {
     // console.debug(`[Prompt Template] global ${name} defined: ${value}`);
-    const oldValue = _.get(SharedDefines, name);
+    const oldValue = _.get(SharedDefines, name, undefined);
     if (merge) {
-        if(_.isArray(oldValue) && _.isArray(value))
-            value = _.concat(oldValue, value);
-        else if(_.isPlainObject(oldValue) && _.isPlainObject(value))
-            value = _.mergeWith(oldValue, value, (_dst: unknown, src: unknown) => _.isArray(src) ? src : undefined);
+        if((oldValue === undefined || _.isArray(oldValue)) && _.isArray(value))
+            value = _.concat(oldValue || [], value);
+        else if((oldValue === undefined || _.isPlainObject(oldValue)) && _.isPlainObject(value))
+            value = _.mergeWith(oldValue || {}, value, (_dst: unknown, src: unknown) => _.isArray(src) ? src : undefined);
     }
 
     _.set(SharedDefines, name, value);
