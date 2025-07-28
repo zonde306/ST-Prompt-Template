@@ -47,6 +47,7 @@ export interface SetVarOption {
     merge?: boolean;
     dryRun?: boolean;
     noCache?: boolean;
+    defaults?: unknown; // only for merge === true or results === 'old'
 }
 
 /**
@@ -119,7 +120,7 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
         }
     }
     
-    const { index, scope, flags, results, withMsg, merge, dryRun } = options;
+    const { index, scope, flags, results, withMsg, merge, dryRun, defaults } = options;
     if(!dryRun && STATE.isDryRun) return undefined;
     
     let oldValue;
@@ -134,7 +135,9 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
         if(flags === 'nxs' && getVariable.call(this, key, options) !== undefined) return undefined;
         if(flags === 'xxs' && getVariable.call(this, key, options) === undefined) return undefined;
 
-        if(results === 'old' || merge) oldValue = _.get(data, idx, undefined);
+        if(results === 'old' || merge)
+            oldValue = _.get(data, idx, defaults);
+
         if(merge) {
             if(_.isArray(oldValue) && _.isArray(value)) {
                 newValue = _.concat(oldValue, value);
@@ -199,7 +202,9 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
         if(flags === 'nxs' && getVariable.call(this, key, options) !== undefined) return undefined;
         if(flags === 'xxs' && getVariable.call(this, key, options) === undefined) return undefined;
 
-        if(results === 'old' || merge) oldValue = _.get(STATE.cache, key, undefined);
+        if(results === 'old' || merge)
+            oldValue = _.get(STATE.cache, key, defaults);
+
         if(merge) {
             if(_.isArray(oldValue) && _.isArray(value))
                 newValue = _.concat(oldValue, value);

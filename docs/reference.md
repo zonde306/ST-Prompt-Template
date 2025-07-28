@@ -21,6 +21,7 @@
  * @property {boolean} [merge=false] - Whether to use merge (_.merge) to set the variable.
  * @property {boolean} [dryRun=false] - Whether to allow setting variables during the preparation phase.
  * @property {boolean} [noCache=false] - Disable caching (e.g., for immediate read after setting a variable).
+ * @property {any} [defaults=undefined] - default value when not present (for merge=true or results='old')
  */
 
 /**

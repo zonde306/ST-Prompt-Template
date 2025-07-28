@@ -21,6 +21,7 @@
  * @property {boolean} [merge=false] - 是否使用合并来设置(_.merge)变量
  * @property {boolean} [dryRun=false] - 是否允许在准备阶段设置变量
  * @property {boolean} [noCache=false] - 禁用缓存(例如在设置变量后立即读取)
+ * @property {any} [defaults=undefined] - 不存在时的默认值(用于merge=true或者results='old')
  */
 
 /**
