@@ -205,7 +205,7 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
             oldValue = _.get(STATE.cache, key, undefined);
 
         if(merge) {
-            if(_.isArray(oldValue) && _.isArray(value))
+            if((oldValue === undefined || _.isArray(oldValue)) && _.isArray(value))
                 newValue = _.concat(oldValue ?? [], value);
             else
                 newValue = _.mergeWith(
