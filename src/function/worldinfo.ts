@@ -3,6 +3,7 @@ import { substituteParams, chat_metadata, this_chid, characters, eventSource, ev
 import { power_user } from '../../../../../power-user.js';
 import { getCharaFilename } from '../../../../../utils.js';
 import { getGroupMembers } from '../../../../../group-chats.js';
+import { settings } from '../modules/ui';
 
 interface WorldInfoExtension {
     position: number;
@@ -111,20 +112,28 @@ let activatedWorldEntries = new Map<string, WorldInfoData>();
  * @param uid WI name/uid
  * @returns WI entry
  */
-export async function activateWorldInfo(world : string | RegExp | number, uid: string | RegExp | number): Promise<WorldInfoData | null>;
+export async function activateWorldInfo(world : string | RegExp | number, uid: string | RegExp | number, constant?: boolean): Promise<WorldInfoData | null>;
 
 /**
  * Activate the specified WI entry
  * @param uid WI name/uid
  * @returns WI entry
  */
-export async function activateWorldInfo(uid: string | RegExp | number): Promise<WorldInfoData | null>;
+export async function activateWorldInfo(uid: string | RegExp | number, constant?: boolean): Promise<WorldInfoData | null>;
 
-export async function activateWorldInfo(world : string | RegExp | number, uid?: string | RegExp | number): Promise<WorldInfoData | null> {
-    // @ts-expect-error: 2345
-    const entry = await getWorldInfoEntry(world, uid);
-    if(entry)
-        activatedWorldEntries.set(`${world}.${uid}`, entry);
+export async function activateWorldInfo(world : string | RegExp | number, uid?: string | RegExp | number | boolean, constant?: boolean): Promise<WorldInfoData | null> {
+    // @ts-expect-error: overload
+    const entry = await getWorldInfoEntry(world, typeof uid === 'boolean' ? undefined : uid);
+    if(entry) {
+        constant = typeof uid === 'boolean' ? uid : constant;
+        activatedWorldEntries.set(`${world}.${uid}`, { ...entry, disable: false, constant: constant ?? entry.constant });
+        if(settings.debug_enabled) {
+            if(uid != null && typeof uid !== 'boolean')
+                console.log(`[Prompt Template] Activated WI entry ${world}.${uid} (constant: ${constant}`);
+            else
+                console.log(`[Prompt Template] Activated WI entry ${world} (constant: ${constant}`);
+        }
+    }
     return entry;
 }
 

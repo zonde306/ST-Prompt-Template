@@ -51,22 +51,7 @@ async function handleGenerateBefore(_type: string, _data: GenerateOptions, dryRu
 }
 
 async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
-    const enabled = await getEnabledWorldInfoEntries();
-
-    for(const entry of getActivateWorldInfo()) {
-        if(entry.disable || entry.decorators.includes('@@dont_activate')) {
-            data.chatLore.push({ ...entry, disable: false, constant: true });
-            console.debug(`[Prompt Template] activate ${entry.world}.${entry.comment} #${entry.uid}`);
-            continue;
-        }
-
-        const idx = enabled.findIndex(x => x.world === entry.world && x.uid === entry.uid);
-        if(idx < 0) {
-            data.chatLore.push({ ...entry, disable: false, constant: true });
-            console.debug(`[Prompt Template] activate ${entry.world}.${entry.comment} #${entry.uid}`);
-            continue;
-        }
-    }
+    getActivateWorldInfo().forEach(x => data.chatLore.push(x));
 }
 
 async function handleGenerateAfter(data: GenerateAfterData) {

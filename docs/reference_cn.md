@@ -283,12 +283,13 @@ function print(...args);
  *
  * @param {string} lorebook - 世界书名
  * @param {string | RegExp | number} title - 条目uid/标题
+ * @param {boolean | undefined} constant - 强制蓝灯🔵模式
  * @returns {Promise<WorldInfoData | null>} - 激活的世界书的条目
  */
-async function activewi(lorebook, title);
-async function activateWorldInfo(lorebook, title);
-async function activewi(title);
-async function activateWorldInfo( title);
+async function activewi(lorebook, title, constant = undefined);
+async function activateWorldInfo(lorebook, title, constant = undefined);
+async function activewi(title, constant = undefined);
+async function activateWorldInfo(title, constant = undefined);
 
 /**
  * 激活世界书条件
