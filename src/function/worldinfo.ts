@@ -78,6 +78,7 @@ export interface WorldInfoData {
     world: string;
     decorators: string[]; // A list of identifiers starting with @@ extracted from `content`
     extensions: WorldInfoExtension;
+    hash: number | undefined; // getStringHash(JSON.stringify(entry))
 
     // Filter to Characters or Tags
     characterFilter: WorldInfoFilter;
@@ -110,28 +111,36 @@ let activatedWorldEntries = new Map<string, WorldInfoData>();
  * Activate the specified WI entry
  * @param world lore book
  * @param uid WI name/uid
+ * @param force force activation entry
  * @returns WI entry
  */
-export async function activateWorldInfo(world : string | RegExp | number, uid: string | RegExp | number, constant?: boolean): Promise<WorldInfoData | null>;
+export async function activateWorldInfo(world : string | RegExp | number, uid: string | RegExp | number, force?: boolean): Promise<WorldInfoData | null>;
 
 /**
  * Activate the specified WI entry
  * @param uid WI name/uid
+ * @param force force activation entry
  * @returns WI entry
  */
-export async function activateWorldInfo(uid: string | RegExp | number, constant?: boolean): Promise<WorldInfoData | null>;
+export async function activateWorldInfo(uid: string | RegExp | number, force?: boolean): Promise<WorldInfoData | null>;
 
-export async function activateWorldInfo(world : string | RegExp | number, uid?: string | RegExp | number | boolean, constant?: boolean): Promise<WorldInfoData | null> {
+export async function activateWorldInfo(world : string | RegExp | number, uid?: string | RegExp | number | boolean, force?: boolean): Promise<WorldInfoData | null> {
     // @ts-expect-error: overload
     const entry = await getWorldInfoEntry(world, typeof uid === 'boolean' ? undefined : uid);
     if(entry) {
-        constant = typeof uid === 'boolean' ? uid : constant;
-        activatedWorldEntries.set(`${world}.${uid}`, { ...entry, disable: false, constant: constant ?? entry.constant });
+        force = typeof uid === 'boolean' ? uid : force;
+        activatedWorldEntries.set(`${world}.${uid}`, {
+            ...entry,
+            disable: false,
+            constant: force ? true : entry.constant,
+            cooldown: force ? 0 : entry.cooldown,
+            hash: force ? Math.random() + 1 : undefined, // fuck the hash
+        });
         if(settings.debug_enabled) {
             if(uid != null && typeof uid !== 'boolean')
-                console.log(`[Prompt Template] Activated WI entry ${world}.${uid} (constant: ${constant}`);
+                console.log(`[Prompt Template] Activated WI entry ${world}.${uid} (force: ${force}`);
             else
-                console.log(`[Prompt Template] Activated WI entry ${world} (constant: ${constant}`);
+                console.log(`[Prompt Template] Activated WI entry ${world} (force: ${force}`);
         }
     }
     return entry;
@@ -154,7 +163,7 @@ export async function activateWorldInfoByKeywords(
 }
 
 export async function applyActivateWorldInfo() {
-    await eventSource.emit(event_types.WORLDINFO_FORCE_ACTIVATE, activatedWorldEntries.values());
+    await eventSource.emit(event_types.WORLDINFO_FORCE_ACTIVATE, activatedWorldEntries.values().filter(e => e.hash));
 }
 
 export function deactivateActivateWorldInfo() {

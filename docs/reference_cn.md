@@ -278,18 +278,17 @@ async function getEnabledWorldInfoEntries(chara = true, global = true, persona =
 function print(...args);
 
 /**
- * 激活世界书
- * 需要提具体条目
+ * 激活世界书条目
  *
  * @param {string} lorebook - 世界书名
  * @param {string | RegExp | number} title - 条目uid/标题
- * @param {boolean | undefined} constant - 强制蓝灯🔵模式
- * @returns {Promise<WorldInfoData | null>} - 激活的世界书的条目
+ * @param {boolean} [force=false] - 强制激活世界书
+ * @returns {Promise<WorldInfoData | null>} - 激活的世界书的条目，找不到条目返回 null
  */
-async function activewi(lorebook, title, constant = undefined);
-async function activateWorldInfo(lorebook, title, constant = undefined);
-async function activewi(title, constant = undefined);
-async function activateWorldInfo(title, constant = undefined);
+async function activewi(lorebook, title, force = false);
+async function activateWorldInfo(lorebook, title, force = false);
+async function activewi(title, force = false);
+async function activateWorldInfo(title, force = false);
 
 /**
  * 激活世界书条件

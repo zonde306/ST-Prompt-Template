@@ -283,13 +283,13 @@ function print(...args);
  *
  * @param {string} lorebook - World Info name.
  * @param {string | RegExp | number} title - Entry UID/title.
- * @param {boolean | undefined} constant - Force constant
+ * @param {boolean} [force=false] - Force activation
  * @returns {Promise<WorldInfoData | null>} - The activated World Info entry.
  */
-async function activewi(lorebook, title, constant = undefined);
-async function activateWorldInfo(lorebook, title, constant = undefined);
-async function activewi(title, constant = undefined);
-async function activateWorldInfo(title, constant = undefined);
+async function activewi(lorebook, title, force = false);
+async function activateWorldInfo(lorebook, title, force = false);
+async function activewi(title, force = false);
+async function activateWorldInfo(title, force = false);
 
 /**
  * Activate World Info conditions.

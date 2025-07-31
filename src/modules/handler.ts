@@ -48,10 +48,38 @@ async function handleGenerateBefore(_type: string, _data: GenerateOptions, dryRu
 
         generateBefore = await processWorldinfoEntities(env, '[GENERATE:BEFORE]');
     }
+
+    // await applyActivateWorldInfo();
 }
 
 async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
-    getActivateWorldInfo().forEach(x => data.chatLore.push(x));
+    for(const enrty of getActivateWorldInfo()) {
+        let idx = data.characterLore.findIndex(e => e.world === enrty.world && e.uid == enrty.uid);
+        if(idx > -1) {
+            data.characterLore.splice(idx, 1);
+            console.debug(`[Prompt Template] Remove chara lore of ${enrty.world}/${enrty.uid} from context`);
+        }
+
+        idx = data.globalLore.findIndex(e => e.world === enrty.world && e.uid == enrty.uid);
+        if(idx > -1) {
+            data.globalLore.splice(idx, 1);
+            console.debug(`[Prompt Template] Remove global lore of ${enrty.world}/${enrty.uid} from context`);
+        }
+
+        idx = data.personaLore.findIndex(e => e.world === enrty.world && e.uid == enrty.uid);
+        if(idx > -1) {
+            data.personaLore.splice(idx, 1);
+            console.debug(`[Prompt Template] Remove persona lore of ${enrty.world}/${enrty.uid} from context`);
+        }
+
+        idx = data.chatLore.findIndex(e => e.world === enrty.world && e.uid == enrty.uid);
+        if(idx > -1) {
+            data.chatLore.splice(idx, 1);
+            console.debug(`[Prompt Template] Remove chat lore of ${enrty.world}/${enrty.uid} from context`);
+        }
+
+        data.chatLore.push(enrty);
+    }
 }
 
 async function handleGenerateAfter(data: GenerateAfterData) {
