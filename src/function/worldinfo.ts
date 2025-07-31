@@ -79,6 +79,7 @@ export interface WorldInfoData {
     decorators: string[]; // A list of identifiers starting with @@ extracted from `content`
     extensions: WorldInfoExtension;
     hash: number | undefined; // getStringHash(JSON.stringify(entry))
+    triggers: string[];
 
     // Filter to Characters or Tags
     characterFilter: WorldInfoFilter;
@@ -134,7 +135,12 @@ export async function activateWorldInfo(world : string | RegExp | number, uid?: 
             disable: false,
             constant: force ? true : entry.constant,
             cooldown: force ? 0 : entry.cooldown,
+            delay: force ? 0 : entry.delay,
+            vectorized: force ? false : entry.vectorized,
+            delayUntilRecursion: force ? false : entry.vectorized,
+            triggers: force ? [] : entry.triggers,
             hash: force ? Math.random() + 1 : undefined, // fuck the hash
+            content: force ? entry.content.replace("@@dont_activate", "") : entry.content,
         });
         if(settings.debug_enabled) {
             if(uid != null && typeof uid !== 'boolean')

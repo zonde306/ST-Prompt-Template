@@ -57,25 +57,25 @@ async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
         let idx = data.characterLore.findIndex(e => e.world === enrty.world && e.uid == enrty.uid);
         if(idx > -1) {
             data.characterLore.splice(idx, 1);
-            console.debug(`[Prompt Template] Remove chara lore of ${enrty.world}/${enrty.uid} from context`);
+            console.debug(`[Prompt Template] Remove chara lore of ${enrty.world}/${enrty.comment}/${enrty.uid} from context`);
         }
 
         idx = data.globalLore.findIndex(e => e.world === enrty.world && e.uid == enrty.uid);
         if(idx > -1) {
             data.globalLore.splice(idx, 1);
-            console.debug(`[Prompt Template] Remove global lore of ${enrty.world}/${enrty.uid} from context`);
+            console.debug(`[Prompt Template] Remove global lore of ${enrty.world}/${enrty.comment}/${enrty.uid} from context`);
         }
 
         idx = data.personaLore.findIndex(e => e.world === enrty.world && e.uid == enrty.uid);
         if(idx > -1) {
             data.personaLore.splice(idx, 1);
-            console.debug(`[Prompt Template] Remove persona lore of ${enrty.world}/${enrty.uid} from context`);
+            console.debug(`[Prompt Template] Remove persona lore of ${enrty.world}/${enrty.comment}/${enrty.uid} from context`);
         }
 
         idx = data.chatLore.findIndex(e => e.world === enrty.world && e.uid == enrty.uid);
         if(idx > -1) {
             data.chatLore.splice(idx, 1);
-            console.debug(`[Prompt Template] Remove chat lore of ${enrty.world}/${enrty.uid} from context`);
+            console.debug(`[Prompt Template] Remove chat lore of ${enrty.world}/${enrty.comment}/${enrty.uid} from context`);
         }
 
         data.chatLore.push(enrty);
