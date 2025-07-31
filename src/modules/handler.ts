@@ -54,31 +54,37 @@ async function handleGenerateBefore(_type: string, _data: GenerateOptions, dryRu
 
 async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
     for(const enrty of getActivateWorldInfo()) {
+        let position = 'chatLore';
         let idx = data.characterLore.findIndex(e => e.world === enrty.world && e.uid == enrty.uid);
         if(idx > -1) {
             data.characterLore.splice(idx, 1);
             console.debug(`[Prompt Template] Remove chara lore of ${enrty.world}/${enrty.comment}/${enrty.uid} from context`);
+            position = 'characterLore';
         }
 
         idx = data.globalLore.findIndex(e => e.world === enrty.world && e.uid == enrty.uid);
         if(idx > -1) {
             data.globalLore.splice(idx, 1);
             console.debug(`[Prompt Template] Remove global lore of ${enrty.world}/${enrty.comment}/${enrty.uid} from context`);
+            position = 'globalLore';
         }
 
         idx = data.personaLore.findIndex(e => e.world === enrty.world && e.uid == enrty.uid);
         if(idx > -1) {
             data.personaLore.splice(idx, 1);
             console.debug(`[Prompt Template] Remove persona lore of ${enrty.world}/${enrty.comment}/${enrty.uid} from context`);
+            position = 'personaLore';
         }
 
         idx = data.chatLore.findIndex(e => e.world === enrty.world && e.uid == enrty.uid);
         if(idx > -1) {
             data.chatLore.splice(idx, 1);
             console.debug(`[Prompt Template] Remove chat lore of ${enrty.world}/${enrty.comment}/${enrty.uid} from context`);
+            position = 'chatLore';
         }
 
-        data.chatLore.push(enrty);
+        // @ts-expect-error: 7053
+        data[position].push(enrty);
     }
 }
 
