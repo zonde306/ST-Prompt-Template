@@ -28,12 +28,12 @@ async function handleGenerateBefore(_type: string, _data: GenerateOptions, dryRu
         return;
 
     isDryRun = dryRun;
-    if(dryRun)
+    if (dryRun)
         return;
 
     console.log(`[Prompt Template] start generate before on dryRun=${dryRun}`);
 
-    if(settings.generate_loader_enabled) {
+    if (settings.generate_loader_enabled) {
         const env = await prepareContext(65535, {
             runType: 'generate',
             runID: runID++,
@@ -53,71 +53,80 @@ async function handleGenerateBefore(_type: string, _data: GenerateOptions, dryRu
 }
 
 async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
-    for(let i = data.characterLore.length - 1; i >= 0; i--) {
-        const title = data.characterLore[i].comment;
-        if(title.startsWith('[GENERATE:') ||
-        title.startsWith('[RENDER:') ||
-        title.startsWith('@INJECT')) {
+    for (let i = data.characterLore.length - 1; i >= 0; i--) {
+        const entry = data.characterLore[i];
+        const title = entry.comment;
+        if (title.startsWith('[GENERATE:') ||
+            title.startsWith('[RENDER:') ||
+            title.startsWith('@INJECT')) {
             data.characterLore.splice(i, 1);
+            console.debug(`[Prompt Template] Remove chara lore of ${entry.world}/${title}/${entry.uid} from context`);
         }
     }
-    for(let i = data.globalLore.length - 1; i >= 0; i--) {
-        const title = data.globalLore[i].comment;
-        if(title.startsWith('[GENERATE:') ||
-        title.startsWith('[RENDER:') ||
-        title.startsWith('@INJECT')) {
+    for (let i = data.globalLore.length - 1; i >= 0; i--) {
+        const entry = data.globalLore[i];
+        const title = entry.comment;
+        if (title.startsWith('[GENERATE:') ||
+            title.startsWith('[RENDER:') ||
+            title.startsWith('@INJECT')) {
             data.globalLore.splice(i, 1);
+            console.debug(`[Prompt Template] Remove global lore of ${entry.world}/${title}/${entry.uid} from context`);
         }
     }
-    for(let i = data.personaLore.length - 1; i >= 0; i--) {
-        const title = data.personaLore[i].comment;
-        if(title.startsWith('[GENERATE:') ||
-        title.startsWith('[RENDER:') ||
-        title.startsWith('@INJECT')) {
+    for (let i = data.personaLore.length - 1; i >= 0; i--) {
+        const entry = data.personaLore[i];
+        const title = entry.comment;
+        if (title.startsWith('[GENERATE:') ||
+            title.startsWith('[RENDER:') ||
+            title.startsWith('@INJECT')) {
             data.personaLore.splice(i, 1);
+            console.debug(`[Prompt Template] Remove persona lore of ${entry.world}/${title}/${entry.uid} from context`);
         }
     }
-    for(let i = data.chatLore.length - 1; i >= 0; i--) {
-        const title = data.chatLore[i].comment;
-        if(title.startsWith('[GENERATE:') ||
-        title.startsWith('[RENDER:') ||
-        title.startsWith('@INJECT')) {
+    for (let i = data.chatLore.length - 1; i >= 0; i--) {
+        const entry = data.chatLore[i];
+        const title = entry.comment;
+        if (title.startsWith('[GENERATE:') ||
+            title.startsWith('[RENDER:') ||
+            title.startsWith('@INJECT')) {
             data.chatLore.splice(i, 1);
+            console.debug(`[Prompt Template] Remove chat lore of ${entry.world}/${title}/${entry.uid} from context`);
         }
     }
 
-    for(const enrty of getActivateWorldInfo()) {
+    for (const entry of getActivateWorldInfo()) {
         let position = 'chatLore';
-        let idx = data.characterLore.findIndex(e => e.world === enrty.world && e.uid == enrty.uid);
-        if(idx > -1) {
+        let idx = data.characterLore.findIndex(e => e.world === entry.world && e.uid == entry.uid);
+        if (idx > -1) {
             data.characterLore.splice(idx, 1);
-            console.debug(`[Prompt Template] Remove chara lore of ${enrty.world}/${enrty.comment}/${enrty.uid} from context`);
+            console.debug(`[Prompt Template] Remove chara lore of ${entry.world}/${entry.comment}/${entry.uid} from context`);
             position = 'characterLore';
         }
 
-        idx = data.globalLore.findIndex(e => e.world === enrty.world && e.uid == enrty.uid);
-        if(idx > -1) {
+        idx = data.globalLore.findIndex(e => e.world === entry.world && e.uid == entry.uid);
+        if (idx > -1) {
             data.globalLore.splice(idx, 1);
-            console.debug(`[Prompt Template] Remove global lore of ${enrty.world}/${enrty.comment}/${enrty.uid} from context`);
+            console.debug(`[Prompt Template] Remove global lore of ${entry.world}/${entry.comment}/${entry.uid} from context`);
             position = 'globalLore';
         }
 
-        idx = data.personaLore.findIndex(e => e.world === enrty.world && e.uid == enrty.uid);
-        if(idx > -1) {
+        idx = data.personaLore.findIndex(e => e.world === entry.world && e.uid == entry.uid);
+        if (idx > -1) {
             data.personaLore.splice(idx, 1);
-            console.debug(`[Prompt Template] Remove persona lore of ${enrty.world}/${enrty.comment}/${enrty.uid} from context`);
+            console.debug(`[Prompt Template] Remove persona lore of ${entry.world}/${entry.comment}/${entry.uid} from context`);
             position = 'personaLore';
         }
 
-        idx = data.chatLore.findIndex(e => e.world === enrty.world && e.uid == enrty.uid);
-        if(idx > -1) {
+        idx = data.chatLore.findIndex(e => e.world === entry.world && e.uid == entry.uid);
+        if (idx > -1) {
             data.chatLore.splice(idx, 1);
-            console.debug(`[Prompt Template] Remove chat lore of ${enrty.world}/${enrty.comment}/${enrty.uid} from context`);
+            console.debug(`[Prompt Template] Remove chat lore of ${entry.world}/${entry.comment}/${entry.uid} from context`);
             position = 'chatLore';
         }
 
         // @ts-expect-error: 7053
-        data[position].push(enrty);
+        data[position].push(entry);
+        console.debug(`[Prompt Template] Inject ${entry.world}/${entry.comment}/${entry.uid} to context as ${position}`);
     }
 }
 
