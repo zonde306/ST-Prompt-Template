@@ -53,6 +53,39 @@ async function handleGenerateBefore(_type: string, _data: GenerateOptions, dryRu
 }
 
 async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
+    for(let i = data.characterLore.length - 1; i >= 0; i--) {
+        const title = data.characterLore[i].comment;
+        if(title.startsWith('[GENERATE:') ||
+        title.startsWith('[RENDER:') ||
+        title.startsWith('@INJECT')) {
+            data.characterLore.splice(i, 1);
+        }
+    }
+    for(let i = data.globalLore.length - 1; i >= 0; i--) {
+        const title = data.globalLore[i].comment;
+        if(title.startsWith('[GENERATE:') ||
+        title.startsWith('[RENDER:') ||
+        title.startsWith('@INJECT')) {
+            data.globalLore.splice(i, 1);
+        }
+    }
+    for(let i = data.personaLore.length - 1; i >= 0; i--) {
+        const title = data.personaLore[i].comment;
+        if(title.startsWith('[GENERATE:') ||
+        title.startsWith('[RENDER:') ||
+        title.startsWith('@INJECT')) {
+            data.personaLore.splice(i, 1);
+        }
+    }
+    for(let i = data.chatLore.length - 1; i >= 0; i--) {
+        const title = data.chatLore[i].comment;
+        if(title.startsWith('[GENERATE:') ||
+        title.startsWith('[RENDER:') ||
+        title.startsWith('@INJECT')) {
+            data.chatLore.splice(i, 1);
+        }
+    }
+
     for(const enrty of getActivateWorldInfo()) {
         let position = 'chatLore';
         let idx = data.characterLore.findIndex(e => e.world === enrty.world && e.uid == enrty.uid);
