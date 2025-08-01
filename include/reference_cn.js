@@ -275,18 +275,17 @@ async function getEnabledWorldInfoEntries(chara = true, global = true, persona =
 function print(...args);
 
 /**
- * 激活世界书
- * 需要提具体条目
+ * 激活世界书条目
  *
  * @param {string} lorebook - 世界书名
  * @param {string | RegExp | number} title - 条目uid/标题
- * @param {boolean | undefined} constant - 强制永久🔵模式
- * @returns {Promise<WorldInfoData | null>} - 激活的世界书的条目
+ * @param {boolean} [force=false] - 强制激活世界书
+ * @returns {Promise<WorldInfoData | null>} - 激活的世界书的条目，找不到条目返回 null
  */
-async function activewi(lorebook, title, constant = undefined);
-async function activateWorldInfo(lorebook, title, constant = undefined);
-async function activewi(title, constant = undefined);
-async function activateWorldInfo(title, constant = undefined);
+async function activewi(lorebook, title, force = false);
+async function activateWorldInfo(lorebook, title, force = false);
+async function activewi(title, force = false);
+async function activateWorldInfo(title, force = false);
 
 /**
  * 激活世界书条件
@@ -427,6 +426,7 @@ function hasPromptsInjected(key);
  * @note: 处理楼层消息变量时此值不包含当前以及之后的楼层变量
  *        冲突处理: 类型同为 [] 或者 {} 则合并，否则替换
  * @see: https://lodash.com/docs/4.17.15#merge
+ * @type {object}
  */
 variables = {}
 
@@ -441,6 +441,7 @@ SillyTavern = SillyTavern.getContext()
  * 使用方式: faker.fakerEN, faker.fakerCN 等
  * 例如: faker.fakerEN.lastName() 获取一个随机英文名
  * @see: https://fakerjs.dev/api/
+ * @type {object}
  */
 faker = require("faker")
 
@@ -473,5 +474,87 @@ toastr = require("toastr")
  * generate: 生成阶段
  * preparation: 准备阶段
  * render: 渲染(楼层消息)阶段
+ * @type {(String|undefined)}
  */
 runType = 'generate' | 'preparation' | 'render'
+
+/*
+ * 角色卡内嵌的世界书名字
+ * 未绑定时为 undefined
+ * @type {(String|undefined)}
+ */
+charLoreBook = ''
+
+/*
+ * 用户角色绑定的世界书名字
+ * 未绑定时为 undefined
+ * @type {(String|undefined)}
+ */
+userLoreBook = ''
+
+/*
+ * 聊天文件绑定的世界书名字
+ * 未绑定时为 undefined
+ * @type {(String|undefined)}
+ */
+chatLoreBook = ''
+
+/*
+ * 用户角色名字
+ * @type {String}
+ */
+userName = 'User'
+
+/*
+ * 角色卡角色名字
+ * @type {String}
+ */
+charName = 'SillyTavern System'
+
+/*
+ * 聊天会话ID
+ * @type {String}
+ */
+chatId = ''
+
+/*
+ * 角色卡ID
+ * @type {String}
+ */
+characterId = ''
+
+/*
+ * 群聊ID
+ * @type {(String|null)}
+ */
+groupId = null
+
+/*
+ * 群聊状态信息
+ * @type {array}
+ */
+groups = []
+
+/*
+ * 角色卡头像
+ * @type {string}
+ */
+charAvatar = ""
+
+/*
+ * 用户头像
+ * @type {string}
+ */
+userAvatar = ""
+
+/*
+ * 最新用户消息ID
+ * @type {number}
+ */
+lastUserMessageId = 0
+
+/*
+ * 最新角色消息ID
+ * @type {number}
+ */
+lastCharMessageId = 0

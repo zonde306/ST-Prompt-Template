@@ -5,7 +5,7 @@ import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.j
 import { getWorldInfoData, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries, selectActivatedEntries, activateWorldInfo, getWorldInfoEntry, WorldInfoData, activateWorldInfoByKeywords, getEnabledLoreBooks } from './worldinfo';
 import { allVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption } from './variables';
 import { getCharaDefs, DEFAULT_CHAR_DEFINE, getCharaData, getCharaAvater, getPersonaAvatar } from './characters';
-import { substituteParams, eventSource, this_chid, characters, chat_metadata, name1, name2, getCurrentChatId } from '../../../../../../script.js';
+import { substituteParams, eventSource, this_chid, characters, chat_metadata, name1, name2, getCurrentChatId, chat } from '../../../../../../script.js';
 import { getPresetPromptsContent } from './presets';
 import { getQuickReply, getQuickReplyData } from './quickreply';
 import { getChatMessage, getChatMessages } from './chat';
@@ -217,9 +217,13 @@ export async function prepareContext(end?: number, env: Record<string, unknown> 
         userName: name1,
         assistantName: name2,
         charName: name2,
-        chatId: getCurrentChatId(),
+        get chatId() {
+            return getCurrentChatId();
+        },
         characterId: this_chid,
-        charAvatar: getCharaAvater(),
+        get charAvatar() {
+            return getCharaAvater();
+        },
         userAvatar: getPersonaAvatar(),
         
         // @ts-expect-error: 7005
@@ -229,10 +233,18 @@ export async function prepareContext(end?: number, env: Record<string, unknown> 
         groupId: selected_group,
         
         // @ts-expect-error: 2538
-        charaLoreBook: characters[this_chid]?.data?.extensions?.world,
-        personaLoreBook: power_user.persona_description_lorebook,
+        charLoreBook: characters[this_chid]?.data?.extensions?.world,
+        userLoreBook: power_user.persona_description_lorebook,
         // @ts-expect-error: 7053
         chatLoreBook: chat_metadata[METADATA_KEY],
+        
+        get lastUserMessageId() {
+            return chat.findLastIndex(msg => msg.is_user);
+        },
+
+        get lastCharMessageId() {
+            return chat.findLastIndex(msg => !msg.is_user && !msg.is_system);
+        },
 
         ...env,
     };

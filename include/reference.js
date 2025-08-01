@@ -280,13 +280,13 @@ function print(...args);
  *
  * @param {string} lorebook - World Info name.
  * @param {string | RegExp | number} title - Entry UID/title.
- * @param {boolean | undefined} constant - Force constant
+ * @param {boolean} [force=false] - Force activation
  * @returns {Promise<WorldInfoData | null>} - The activated World Info entry.
  */
-async function activewi(lorebook, title, constant = undefined);
-async function activateWorldInfo(lorebook, title, constant = undefined);
-async function activewi(title, constant = undefined);
-async function activateWorldInfo(title, constant = undefined);
+async function activewi(lorebook, title, force = false);
+async function activateWorldInfo(lorebook, title, force = false);
+async function activewi(title, force = false);
+async function activateWorldInfo(title, force = false);
 
 /**
  * Activate World Info conditions.
@@ -418,60 +418,144 @@ function getPromptsInjected(key, postprocess = []);
 function hasPromptsInjected(key);
 
 /**
- * Collection of all variables
- * Variables are merged in the following order (priority), with higher priority overwriting lower priority variables of the same name:
- * 1. Message variables (floor numbers from end to start)
+ * Aggregated variables collection
+ * Merges variables in the following priority order (highest to lowest):
+ * 1. Message variables (from latest to earliest floor)
  * 2. Local (chat) variables
  * 3. Global variables
  * 
- * @note: When processing floor message variables, this value does not include the current and subsequent floor variables.
- *        Conflict handling: If the types are both [] or {}, they are merged; otherwise, they are replaced.
+ * @note: Excludes variables from current/subsequent floors during message processing
+ *        Conflict resolution: Merge if both types are [] or {}, otherwise replace
  * @see: https://lodash.com/docs/4.17.15#merge
+ * @type {object}
  */
 variables = {}
 
 /**
- * SillyTavern's SillyTavern.getContext() return content
- * Detailed content can be viewed by entering SillyTavern.getContext() in the console.
+ * SillyTavern.getContext() return value
+ * Check console output of SillyTavern.getContext() for full details
  */
 SillyTavern = SillyTavern.getContext()
 
 /**
- * faker library content, used to generate random content
+ * Faker library for generating random content
  * Usage: faker.fakerEN, faker.fakerCN, etc.
- * Example: faker.fakerEN.lastName() to get a random English last name.
- * @see: https://fakerjs.dev/api/
+ * Example: faker.fakerEN.lastName() for random English surname
+ * @see: https://fakerjs.dev/api/  
+ * @type {object}
  */
 faker = require("faker")
 
 /*
- * Lodash library
+ * Lodash utility library
  * Usage: _.get, _.set, etc.
- * Example: _.toArray('abc') outputs ['a','b','c'].
- * @see: https://lodash.com/docs/4.17.15
+ * Example: _.toArray('abc') returns ['a','b','c']
+ * @see: https://lodash.com/docs/4.17.15  
  */
 _ = require("lodash")
 
 /*
- * JQuery library
+ * jQuery library
  * Usage: $()
- * Example: $('.mes_text') to get the text box.
- * @see: https://api.jquery.com/
+ * Example: $('.mes_text') selects message text elements
+ * @see: https://api.jquery.com/  
  */
 $ = require("JQuery")
 
 /*
- * toastr library
+ * Toastr notification library
  * Usage: toastr.info, toastr.error
  * Example: toastr.info('hello world')
- * @see: https://codeseven.github.io/toastr/
+ * @see: https://codeseven.github.io/toastr/  
  */
 toastr = require("toastr")
 
 /**
- * Phase during template calculation
- * generate: Generation phase
- * preparation: Preparation phase
- * render: Rendering (floor message) phase
+ * Template processing phase indicator
+ * generate: Content generation phase
+ * preparation: Preprocessing phase
+ * render: Message rendering phase
+ * @type {(String|undefined)}
  */
 runType = 'generate' | 'preparation' | 'render'
+
+/*
+ * Character card embedded World Info name
+ * undefined when unbound
+ * @type {(String|undefined)}
+ */
+charLoreBook = ''
+
+/*
+ * User persona bound World Info name
+ * undefined when unbound
+ * @type {(String|undefined)}
+ */
+userLoreBook = ''
+
+/*
+ * Chat file bound World Info name
+ * undefined when unbound
+ * @type {(String|undefined)}
+ */
+chatLoreBook = ''
+
+/*
+ * User role name
+ * @type {String}
+ */
+userName = 'User'
+
+/*
+ * Character card role name
+ * @type {String}
+ */
+charName = 'SillyTavern System'
+
+/*
+ * Chat session ID
+ * @type {String}
+ */
+chatId = ''
+
+/*
+ * Character card ID
+ * @type {String}
+ */
+characterId = ''
+
+/*
+ * Group chat ID
+ * @type {(String|null)}
+ */
+groupId = null
+
+/*
+ * Group chat status information
+ * @type {array}
+ */
+groups = []
+
+/*
+ * Character card avatar
+ * @type {string}
+ */
+charAvatar = ""
+
+/*
+ * User avatar
+ * @type {string}
+ */
+userAvatar = ""
+
+/*
+ * Latest user message ID
+ * @type {number}
+ */
+lastUserMessageId = 0
+
+/*
+ * Latest character message ID
+ * @type {number}
+ */
+lastCharMessageId = 0

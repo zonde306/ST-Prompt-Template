@@ -642,14 +642,14 @@ runType = 'generate' | 'preparation' | 'render'
  * 未绑定时为 undefined
  * @type {(String|undefined)}
  */
-charaLoreBook = ''
+charLoreBook = ''
 
 /*
  * 用户角色绑定的世界书名字
  * 未绑定时为 undefined
  * @type {(String|undefined)}
  */
-personaLoreBook = ''
+userLoreBook = ''
 
 /*
  * 聊天文件绑定的世界书名字
@@ -668,7 +668,6 @@ userName = 'User'
  * 角色卡角色名字
  * @type {String}
  */
-assistantName = 'SillyTavern System'
 charName = 'SillyTavern System'
 
 /*
@@ -706,6 +705,18 @@ charAvatar = ""
  * @type {string}
  */
 userAvatar = ""
+
+/*
+ * 最新用户消息ID
+ * @type {number}
+ */
+lastUserMessageId = 0
+
+/*
+ * 最新角色消息ID
+ * @type {number}
+ */
+lastCharMessageId = 0
 ```
 
 只有在 `runType` 为 `render` 时才会出现的字段
