@@ -9,7 +9,7 @@ import { GenerateAfterData } from "../modules/defines";
 export async function handleInjectPrompt(data: GenerateAfterData, env: Record<string, unknown>) {
     // get All INJECT 世界书条目（只获取关闭的条目）
     const injectWorldInfoData = (await getEnabledWorldInfoEntries())
-        .filter(x => x.comment.startsWith('@INJECT') && x.disable !== settings.invert_enabled);
+        .filter(x => x.comment.startsWith('@INJECT') && x.disable === settings.invert_enabled);
 
     if (injectWorldInfoData && injectWorldInfoData.length > 0) {
         console.log('[Prompt Template] Found inject entries:', injectWorldInfoData.length);

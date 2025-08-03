@@ -66,7 +66,7 @@ export async function processWorldinfoEntities(
     options : EvalTemplateOptions = {}) {
     const allEntries = await getEnabledWorldInfoEntries();
     const worldInfoData = selectActivatedEntries(
-        allEntries.filter(x => x.comment.startsWith(prefix) && x.disable !== settings.invert_enabled),
+        allEntries.filter(x => x.comment.startsWith(prefix) && x.disable === settings.invert_enabled),
         keywords,
         { vectorized: false }
     );
