@@ -1,7 +1,7 @@
 import { chat, chat_metadata, saveChatConditional } from '../../../../../../script.js';
 import { extension_settings } from '../../../../../extensions.js';
 import { settings } from '../modules/ui';
-import { getCharaData } from './characters';
+import { getCharacterData } from './characters';
 
 export let STATE = {
     isDryRun: false,
@@ -19,7 +19,7 @@ export function allVariables(end? : number) : Record<string, unknown> {
     return _.mergeWith(
         {},
         // @ts-expect-error: 2339
-        getCharaData()?.data?.extensions?.variables || {},
+        getCharacterData()?.data?.extensions?.variables || {},
         extension_settings.variables.global,
         // @ts-expect-error: 2339
         chat_metadata.variables || {},

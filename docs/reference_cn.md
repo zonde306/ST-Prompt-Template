@@ -136,7 +136,7 @@ async function getWorldInfo(title, data = {});
  * @param {Object} [data={}] - 传递的数据
  * @returns {Promise<string>} - 角色卡定义的内容
  */
-async function getchr(name = this_chid, template = DEFAULT_CHAR_DEFINE, data = {});
+async function getchar(name = this_chid, template = DEFAULT_CHAR_DEFINE, data = {});
 async function getChara(name = this_chid, template = DEFAULT_CHAR_DEFINE, data = {});
 
 /**
@@ -146,7 +146,7 @@ async function getChara(name = this_chid, template = DEFAULT_CHAR_DEFINE, data =
  * @param {Object} [data={}] - 传递的数据
  * @returns {Promise<string>} - 预设的提示词的内容
  */
-async function getprp(name, data = {});
+async function getpreset(name, data = {});
 async function getPresetPrompt(name, data = {});
 
 /**
@@ -179,7 +179,7 @@ async function getQuickReply(name, label, data = {});
  * @param {string | RegExp | number} [name=this_chid] - 角色卡名字/ID
  * @returns {Promise<v1CharData | null>} - 角色卡的数据
  */
-async function getCharaData(name = this_chid);
+async function getCharData(name = this_chid);
 
 /**
  * @typedef {Object} WorldInfoData

@@ -9,6 +9,7 @@
  * @property {number} [id=null] - Select message by floor number, can be negative (negative numbers count from the end).
  * @property {number} [swipe_id=null] - Select message by swipe ID.
  */
+
 /**
  * Set variable options
  * @typedef {Object} SetVarOption
@@ -21,6 +22,7 @@
  * @property {boolean} [dryRun=false] - Whether to allow setting variables during preparation phase
  * @property {boolean} [noCache=false] - Disable cache (e.g., when reading immediately after setting)
  */
+
 /**
  * Set variable
  *
@@ -34,6 +36,7 @@ function setvar(key, value, options = {});
 function setLocalVar(key, value, options = {});
 function setGlobalVar(key, value, options = {});
 function setMessageVar(key, value, options = {});
+
 /**
  * Get variable options
  * @typedef {Object} GetVarOption
@@ -44,6 +47,7 @@ function setMessageVar(key, value, options = {});
  * @property {boolean} [noCache=false] - Disable cache (e.g., when reading immediately after setting)
  * @property {boolean} [clone=false] - Return deep cloned object (otherwise returns reference)
  */
+
 /**
  * Get variable
  * @note: Should avoid modifying object references
@@ -57,6 +61,7 @@ function getvar(key, options = {});
 function getLocalVar(key, options = {});
 function getGlobalVar(key, options = {});
 function getMessageVar(key, options = {});
+
 /**
  * Update variable options
  * @typedef {Object} GetSetVarOption
@@ -72,6 +77,7 @@ function getMessageVar(key, options = {});
  * @property {number} [min=null] - Minimum value
  * @property {number} [max=null] - Maximum value
  */
+
 /**
  * Increment variable value
  *
@@ -85,6 +91,7 @@ function incvar(key, value = 1, options = {});
 function incLocalVar(key, value = 1, options = {});
 function incGlobalVar(key, value = 1, options = {});
 function incMessageVar(key, value = 1, options = {});
+
 /**
  * Decrement variable value
  *
@@ -98,6 +105,7 @@ function decvar(key, value = 1, options = {});
 function decLocalVar(key, value = 1, options = {});
 function decGlobalVar(key, value = 1, options = {});
 function decMessageVar(key, value = 1, options = {});
+
 /**
  * Execute command, e.g., /setvar
  *
@@ -105,6 +113,7 @@ function decMessageVar(key, value = 1, options = {});
  * @returns {Promise<string>} - Command return value
  */
 async function execute(cmd);
+
 /**
  * Get world info entry content
  *
@@ -117,6 +126,7 @@ async function getwi(lorebook, title, data = {});
 async function getWorldInfo(lorebook, title, data = {});
 async function getwi(title, data = {});
 async function getWorldInfo(title, data = {});
+
 /**
  * Get character card definition
  *
@@ -125,8 +135,9 @@ async function getWorldInfo(title, data = {});
  * @param {Object} [data={}] - Data to pass
  * @returns {Promise<string>} - Content of character card definition
  */
-async function getchr(name = this_chid, template = DEFAULT_CHAR_DEFINE, data = {});
+async function getchar(name = this_chid, template = DEFAULT_CHAR_DEFINE, data = {});
 async function getChara(name = this_chid, template = DEFAULT_CHAR_DEFINE, data = {});
+
 /**
  * Get preset prompt content
  *
@@ -134,8 +145,9 @@ async function getChara(name = this_chid, template = DEFAULT_CHAR_DEFINE, data =
  * @param {Object} [data={}] - Data to pass
  * @returns {Promise<string>} - Content of preset prompt
  */
-async function getprp(name, data = {});
+async function getpreset(name, data = {});
 async function getPresetPrompt(name, data = {});
+
 /**
  * Define global variables/functions
  * @note Typically used for pre-definition in world info, then called during rendering
@@ -146,6 +158,7 @@ async function getPresetPrompt(name, data = {});
  * @note When defining functions, should use this to access context, e.g.: this.variables, this.getvar, this.setvar
  */
 function define(name, value, merge = false);
+
 /**
  * Get quick reply content
  * Can only read enabled quick reply sets
@@ -157,6 +170,7 @@ function define(name, value, merge = false);
  */
 async function getqr(name, label, data = {});
 async function getQuickReply(name, label, data = {});
+
 /**
  * Get character card data
  * @note Returns data without template processing
@@ -164,7 +178,8 @@ async function getQuickReply(name, label, data = {});
  * @param {string | RegExp | number} [name=this_chid] - Character card name/ID
  * @returns {Promise<v1CharData | null>} - Character card data
  */
-async function getCharaData(name = this_chid);
+async function getCharData(name = this_chid);
+
 /**
  * @typedef {Object} WorldInfoData
  * @property {number} uid
@@ -201,6 +216,7 @@ async function getCharaData(name = this_chid);
  * @property {number} displayIndex
  * @property {string} world
  */
+
 /**
  * Get world info data
  * @note Returns data without template processing
@@ -209,6 +225,7 @@ async function getCharaData(name = this_chid);
  * @returns {Promise<WorldInfoData[]>} - World info entry list
  */
 async function getWorldInfoData(name);
+
 /**
  * Get quick reply data
  * @note Returns data without template processing
@@ -217,6 +234,7 @@ async function getWorldInfoData(name);
  * @returns {QuickReplySetLink | null} - World info data
  */
 function getQuickReplyData(name);
+
 /**
  * Get world info data, containing only activated entries
  * @note Returns data without template processing
@@ -227,6 +245,7 @@ function getQuickReplyData(name);
  * @returns {Promise<WorldInfoData[]>} - World info entry list
  */
 async function getWorldInfoActivatedData(name, keyword, condition = {});
+
 /**
  * Process string content with template
  *
@@ -236,6 +255,7 @@ async function getWorldInfoActivatedData(name, keyword, condition = {});
  * @returns {Promise<string>} - Processed string content
  */
 async function evalTemplate(content, data = {}, options = {});
+
 /**
  * Get all potentially used world info entries
  * @note Even disabled entries will be returned
@@ -247,6 +267,7 @@ async function evalTemplate(content, data = {}, options = {});
  * @returns {Promise<WorldInfoData[]>} - World info entry list
  */
 async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true);
+
 /**
  * Output one or more strings
  * @note Cannot be used within <%- or <%= statement blocks
@@ -254,6 +275,7 @@ async function getEnabledWorldInfoEntries(chara = true, global = true, persona =
  * @param {string} args - String content
  */
 function print(...args);
+
 /**
  * Activate world info entry
  *
@@ -266,6 +288,7 @@ async function activewi(lorebook, title, force = false);
 async function activateWorldInfo(lorebook, title, force = false);
 async function activewi(title, force = false);
 async function activateWorldInfo(title, force = false);
+
 /**
  * Activate world info condition
  * null means no restriction
@@ -274,6 +297,7 @@ async function activateWorldInfo(title, force = false);
  * @property {boolean | null} [disabled=null] - Restrict to must be/NOT disabled entries
  * @property {boolean | null} [vectorized=null] - Restrict to must be/NOT vectorized (🔗) entries
  */
+
 /**
  * Activate world info
  * Activate through keywords
@@ -283,6 +307,7 @@ async function activateWorldInfo(title, force = false);
  * @returns {Promise<WorldInfoData[]>} - Activated world info entry list
  */
 async function activateWorldInfoByKeywords(keywords, condition = {});
+
 /**
  * Get all entries of currently enabled world info
  *
@@ -293,6 +318,7 @@ async function activateWorldInfoByKeywords(keywords, condition = {});
  * @returns {Promise<WorldInfoData[]>} - World info entry list
  */
 async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true);
+
 /**
  * Filter activated entries from world info entry list
  *
@@ -302,6 +328,7 @@ async function getEnabledWorldInfoEntries(chara = true, global = true, persona =
  * @returns {WorldInfoData[]} - Activated world info entry list
  */
 function selectActivatedEntries(entries, keywords, condition = {});
+
 /**
  * Get specified chat (floor) message content
  *
@@ -310,6 +337,7 @@ function selectActivatedEntries(entries, keywords, condition = {});
  * @returns {string} - Chat (floor) message content, returns empty string on failure
  */
 function getChatMessage(idx, role = undefined);
+
 /**
  * Get content list of chat (floor) messages within specified range
  *
@@ -323,6 +351,7 @@ function getChatMessages(count);
 function getChatMessages(count, role);
 function getChatMessages(start, end);
 function getChatMessages(start, end, role);
+
 /**
  * Regular expression options
  * Execution order: start generation -> basic -> generate -> process template -> LLM response -> message -> process template -> render floor message
@@ -344,6 +373,7 @@ function getChatMessages(start, end, role);
  * @property {boolean} [display=false] - Allow processing of floor message HTML, requires message option to be enabled
  * @property {number} [sticky=0] - Stickiness
  */
+
 /**
  * Create temporary regular expression during generation to process chat message content
  *
@@ -352,6 +382,7 @@ function getChatMessages(start, end, role);
  * @param {RegexOptions} opts - Options
  */
 function activateRegex(pattern, string, opts = {});
+
 /**
  * Add prompt injection
  * Functionality similar to world info, but manually activated and placed
@@ -363,12 +394,14 @@ function activateRegex(pattern, string, opts = {});
  * @param {string} [uid=''] - Unique ID
  */
 function injectPrompt(key, prompt, order = 100, sticky = 0, uid = '');
+
 /**
  * Content processor
  * @typedef {Object} PostProcess
  * @property {(string|RegExp)} search - Content to search for
  * @property {string} replace - Content to replace with
  */
+
 /**
  * Get injected prompt
  *
@@ -377,6 +410,7 @@ function injectPrompt(key, prompt, order = 100, sticky = 0, uid = '');
  * @returns {string} - Injected prompt content
  */
 function getPromptsInjected(key, postprocess = []);
+
 /**
  * Check if prompt injection exists
  *

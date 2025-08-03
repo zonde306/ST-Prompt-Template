@@ -1,4 +1,4 @@
-import { characters, this_chid, user_avatar, getThumbnailUrl, getUserAvatar } from '../../../../../../script.js';
+import { characters, this_chid, user_avatar, getThumbnailUrl, getUserAvatar as getPersonaAvatar } from '../../../../../../script.js';
 import { v1CharData } from '../../../../../char-data.js';
 
 /**
@@ -6,7 +6,7 @@ import { v1CharData } from '../../../../../char-data.js';
  * @param name Role name/ID/regexp match
  * @returns character data
  */
-export function getCharaData(name : string | RegExp | number | undefined = this_chid) : v1CharData | null {
+export function getCharacterData(name : string | RegExp | number | undefined = this_chid) : v1CharData | null {
     name = name || this_chid;
     if(name == null)
         return null;
@@ -18,21 +18,20 @@ export function getCharaData(name : string | RegExp | number | undefined = this_
     return char;
 }
 
-function hasAny(tags: string[], matchs: Set<string>) {
-    for (const tag of tags)
-        if (matchs.has(tag))
-            return true;
-    return false;
-}
-
 /**
  * Get the names of all characters
  * @param include Included list
  * @param exclude Excluded list
  * @returns character names
  */
-export function* getChars(include: Set<string> = new Set<string>(),
+export function* getCharacters(include: Set<string> = new Set<string>(),
                           exclude: Set<string> = new Set<string>()) : Generator<string> {
+    function hasAny(tags: string[], matchs: Set<string>) {
+        for (const tag of tags)
+            if (matchs.has(tag))
+                return true;
+        return false;
+    }
     for (const char of characters)
         if ((!include.size || hasAny(char.tags, include)) && !hasAny(char.tags, exclude))
             yield char.name;
@@ -62,8 +61,8 @@ System: <%- depth_prompt %>
 <% } %>\
 `;
 
-export function getCharaDefs(name : string | RegExp | number | undefined = this_chid) {
-    const char = getCharaData(name);
+export function getCharacterDefine(name : string | RegExp | number | undefined = this_chid) {
+    const char = getCharacterData(name);
     if (!char)
         return null;
 
@@ -119,8 +118,8 @@ export function getCharaDefs(name : string | RegExp | number | undefined = this_
  * Get the user avatar URL
  * @returns URL
  */
-export function getPersonaAvatar() : string {
-    return getUserAvatar(user_avatar);
+export function getUserAvatarURL() : string {
+    return getPersonaAvatar(user_avatar);
 }
 
 /**
@@ -128,7 +127,7 @@ export function getPersonaAvatar() : string {
  * @param char character name
  * @returns URL
  */
-export function getCharaAvater(char: string | undefined = this_chid) : string {
+export function getCharacterAvaterURL(char: string | undefined = this_chid) : string {
     if(!char)
         return '';
 

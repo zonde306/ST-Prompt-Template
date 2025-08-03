@@ -6,7 +6,7 @@ import { prepareContext } from '../function/ejs';
 import { STATE, checkAndSave } from '../function/variables';
 import { extension_settings } from '../../../../../extensions.js';
 import { getEnabledWorldInfoEntries, deactivateActivateWorldInfo, WorldInfo as WorldInfoData, getEnabledLoreBooks, getActivateWorldInfo } from '../function/worldinfo';
-import { getCharaDefs } from '../function/characters';
+import { getCharacterDefine } from '../function/characters';
 import { settings } from './ui';
 import { activateRegex, deactivateRegex, applyRegex } from '../function/regex';
 import { deactivatePromptInjection } from '../function/inject';
@@ -487,7 +487,7 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
         );
     }
 
-    const charaDef = getCharaDefs();
+    const charaDef = getCharacterDefine();
     if (charaDef?.description || charaDef?.scenario) {
         const content = (charaDef.description || '') + '\n---\n' + (charaDef.scenario || '');
         prompts += await evalTemplateHandler(

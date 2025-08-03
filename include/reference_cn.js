@@ -133,7 +133,7 @@ async function getWorldInfo(title, data = {});
  * @param {Object} [data={}] - 传递的数据
  * @returns {Promise<string>} - 角色卡定义的内容
  */
-async function getchr(name = this_chid, template = DEFAULT_CHAR_DEFINE, data = {});
+async function getchar(name = this_chid, template = DEFAULT_CHAR_DEFINE, data = {});
 async function getChara(name = this_chid, template = DEFAULT_CHAR_DEFINE, data = {});
 
 /**
@@ -143,7 +143,7 @@ async function getChara(name = this_chid, template = DEFAULT_CHAR_DEFINE, data =
  * @param {Object} [data={}] - 传递的数据
  * @returns {Promise<string>} - 预设的提示词的内容
  */
-async function getprp(name, data = {});
+async function getpreset(name, data = {});
 async function getPresetPrompt(name, data = {});
 
 /**
@@ -176,7 +176,7 @@ async function getQuickReply(name, label, data = {});
  * @param {string | RegExp | number} [name=this_chid] - 角色卡名字/ID
  * @returns {Promise<v1CharData | null>} - 角色卡的数据
  */
-async function getCharaData(name = this_chid);
+async function getCharData(name = this_chid);
 
 /**
  * @typedef {Object} WorldInfoData
@@ -289,10 +289,11 @@ async function activateWorldInfo(title, force = false);
 
 /**
  * 激活世界书条件
+ * null 表示不限制
  * @typedef {Object} ActivateWorldInfoCondition
- * @property {boolean} [withConstant=false] - 是否允许激活永久🔵条目
- * @property {boolean} [withDisabled=false] - 是否允许激活禁用条目
- * @property {boolean} [onlyDisabled=false] - 是否仅激活禁用条目(启用时强制启用withDisabled选项)
+ * @property {boolean | null} [constant=null] - 限制必须是/否 永久🔵 条目
+ * @property {boolean | null} [disabled=null] - 限制必须是/否 禁用 条目
+ * @property {boolean | null} [vectorized=null] - 限制必须是/否 🔗向量化 条目
  */
 
 /**

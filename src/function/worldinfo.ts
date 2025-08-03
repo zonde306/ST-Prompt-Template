@@ -86,7 +86,7 @@ export interface WorldInfoData {
     characterFilterNames: string[];
     characterFilterTags: string[];
     characterFilterExclude: boolean;
-
+    
     // Additional Matching Sources
     matchPersonaDescription: boolean;
     matchCharacterDescription: boolean;

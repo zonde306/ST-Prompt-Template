@@ -4,7 +4,7 @@ import vm from 'vm-browserify';
 import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.js';
 import { getWorldInfoData, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries, selectActivatedEntries, activateWorldInfo, getWorldInfoEntry, WorldInfoData, activateWorldInfoByKeywords, getEnabledLoreBooks } from './worldinfo';
 import { allVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption } from './variables';
-import { getCharaDefs, DEFAULT_CHAR_DEFINE, getCharaData, getCharaAvater, getPersonaAvatar } from './characters';
+import { getCharacterDefine, DEFAULT_CHAR_DEFINE, getCharacterData, getCharacterAvaterURL, getUserAvatarURL } from './characters';
 import { substituteParams, eventSource, this_chid, characters, chat_metadata, name1, name2, getCurrentChatId, chat } from '../../../../../../script.js';
 import { getPresetPromptsContent } from './presets';
 import { getQuickReply, getQuickReplyData } from './quickreply';
@@ -40,7 +40,8 @@ const SHARE_CONTEXT: Record<string, unknown> = {
     _,
     $,
     toastr,
-    getCharaData,
+    getCharaData: getCharacterData,
+    getCharData: getCharacterData,
     getWorldInfoData,
     getQuickReplyData,
     getWorldInfoActivatedData: getWorldInfoActivatedEntries,
@@ -222,9 +223,9 @@ export async function prepareContext(end?: number, env: Record<string, unknown> 
         },
         characterId: this_chid,
         get charAvatar() {
-            return getCharaAvater();
+            return getCharacterAvaterURL();
         },
-        userAvatar: getPersonaAvatar(),
+        userAvatar: getUserAvatarURL(),
         
         // @ts-expect-error: 7005
         groups,
@@ -253,8 +254,10 @@ export async function prepareContext(end?: number, env: Record<string, unknown> 
         getwi: boundedReadWorldinfo.bind(context),
         getWorldInfo: boundedReadWorldinfo.bind(context),
         getchr: boundedCharDef.bind(context),
+        getchar: boundedCharDef.bind(context),
         getChara: boundedCharDef.bind(context),
         getprp: boundedPresetPrompt.bind(context),
+        getpreset: boundedPresetPrompt.bind(context),
         getPresetPrompt: boundedPresetPrompt.bind(context),
         define: boundedDefine.bind(context),
         setvar: setVariable.bind(context),
@@ -320,7 +323,7 @@ async function boundedReadWorldinfo(this: Record<string, unknown>,
 async function boundedCharDef(this: Record<string, unknown>,
     name: string | RegExp, template: string = DEFAULT_CHAR_DEFINE,
     data: Record<string, unknown> = {}): Promise<string> {
-    const defs = getCharaDefs(name);
+    const defs = getCharacterDefine(name);
     if (!defs) {
         console.warn(`[Prompt Template] character ${name} not found`);
         return "";

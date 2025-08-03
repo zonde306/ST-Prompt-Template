@@ -1,32 +1,32 @@
 /**
  * Message selection filter
  * @interface MessageFilter
- * @property {('system' | 'user' | 'assistant' | 'any')} [role='assistant'] - Select a specific role.
- *      Can be 'system', 'user', 'assistant', or 'any'. Searches from the end. If 'id' is set, this option will be invalid.
- * @property {number} [id=null] - Select a specific message index. Can be negative (negative numbers search from the end).
- * @property {number} [swipe_id=null] - Select the swipe ID of a specific message.
+ * @property {('system' | 'user' | 'assistant' | 'any')} [role='assistant'] - Select messages of specified role.
+ *      Can be 'system', 'user', 'assistant', or 'any'. Searches from the end. If id is set, this option becomes ineffective.
+ * @property {number} [id=null] - Select message by floor number, can be negative (negative numbers count from the end).
+ * @property {number} [swipe_id=null] - Select message by swipe ID.
  */
 
 /**
  * Set variable options
  * @typedef {Object} SetVarOption
- * @property {number} [index=null] - Index of the variable, same as /setvar's index.
- * @property {'global' | 'local' | 'message' | 'cache'} [scope='message'] - Variable type (scope), see below for details.
- * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - Setting conditions; if not met, the variable is not set. See below for details.
- * @property {'old' | 'new' | 'fullcache'} [results='new'] - Return value type, see below for details.
- * @property {MessageFilter} [withMsg=null] - Message filter (if setting a message variable).
- * @property {boolean} [merge=false] - Whether to use merge (_.merge) to set the variable.
- * @property {boolean} [dryRun=false] - Whether to allow setting variables during the preparation phase.
- * @property {boolean} [noCache=false] - Disable caching (e.g., for immediate read after setting a variable).
+ * @property {number} [index=null] - Variable index, same as index in /setvar command.
+ * @property {'global' | 'local' | 'message' | 'cache'} [scope='message'] - Variable type (scope), see details below
+ * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - Set conditions, won't set if not met, see details below
+ * @property {'old' | 'new' | 'fullcache'} [results='new'] - Return value type, see details below
+ * @property {MessageFilter} [withMsg=null] - Message filter (if setting message variables)
+ * @property {boolean} [merge=false] - Whether to use merge (_.merge) when setting variables
+ * @property {boolean} [dryRun=false] - Whether to allow setting variables during preparation phase
+ * @property {boolean} [noCache=false] - Disable cache (e.g., when reading immediately after setting)
  */
 
 /**
- * Set a variable
+ * Set variable
  *
- * @param {string} key - Variable name.
- * @param {any} value - Variable value.
- * @param {SetVarOption} [options={}] - Options for setting the variable.
- * @returns Success determined by options.results, returns undefined on failure.
+ * @param {string} key - Variable name
+ * @param {any} value - Variable value
+ * @param {SetVarOption} [options={}] - Set variable options.
+ * @returns Success depends on options.results, returns undefined on failure
  */
 function setvar(key, value, options = {});
 // Aliases for specific options.scope
@@ -34,25 +34,24 @@ function setLocalVar(key, value, options = {});
 function setGlobalVar(key, value, options = {});
 function setMessageVar(key, value, options = {});
 
-
 /**
  * Get variable options
  * @typedef {Object} GetVarOption
- * @property {number} [index=null] - Index of the variable, same as /getvar's index.
- * @property {'global' | 'local' | 'message' | 'cache'} [scope='cache'] - Variable type (scope), see below for details.
- * @property {any} [defaults=undefined] - Default value (returned if the variable does not exist).
- * @property {MessageFilter} [withMsg=undefined] - Message selection filter.
- * @property {boolean} [noCache=false] - Disable caching (e.g., for immediate read after setting a variable).
- * @property {boolean} [clone=false] - Returns a deep copy of the object (otherwise returns an object reference)
+ * @property {number} [index=null] - Variable index, same as index in /getvar command
+ * @property {'global' | 'local' | 'message' | 'cache'} [scope='cache'] - Variable type (scope), see details below
+ * @property {any} [defaults=undefined] - Default value (returned when variable doesn't exist)
+ * @property {MessageFilter} [withMsg=undefined] - Message selection filter
+ * @property {boolean} [noCache=false] - Disable cache (e.g., when reading immediately after setting)
+ * @property {boolean} [clone=false] - Return deep cloned object (otherwise returns reference)
  */
 
 /**
- * Read a variable
- * @note: Modifying object references should be avoided
+ * Get variable
+ * @note: Should avoid modifying object references
  *
- * @param {string} key - Variable name.
- * @param {GetVarOption} [options={}] - Options for getting the variable.
- * @returns {any} - The variable's value, returns options.defaults if not found.
+ * @param {string} key - Variable name
+ * @param {GetVarOption} [options={}] - Get variable options
+ * @returns {any} - Variable value, returns options.defaults if not found
  */
 function getvar(key, options = {});
 // Aliases for specific options.scope
@@ -63,26 +62,26 @@ function getMessageVar(key, options = {});
 /**
  * Update variable options
  * @typedef {Object} GetSetVarOption
- * @property {number} [index=null] - Index of the variable, same as /getvar's index.
- * @property {unknown} [defaults=0] - Default value to use if the variable does not exist.
- * @property {'global' | 'local' | 'message' | 'cache'} [inscope='cache'] - Variable type (scope) for reading, see below for details.
- * @property {'global' | 'local' | 'message' | 'cache'} outscope='message'] - Variable type (scope) for setting, see below for details.
- * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - Update conditions; if not met, the variable is not updated. See below for details.
- * @property {'old' | 'new' | 'fullcache'} [results='new'] - Return value type, see below for details.
- * @property {MessageFilter} [withMsg=undefined] - Message filter (if setting a message variable).
- * @property {boolean} [dryRun=false] - Whether to allow updating variables during the preparation phase.
- * @property {boolean} [noCache=false] - Disable caching (e.g., for immediate read after setting a variable).
- * @property {number} [min=null] - Minimum value.
- * @property {number} [max=null] - Maximum value.
+ * @property {number} [index=null] - Variable index, same as index in /getvar command
+ * @property {unknown} [defaults=0] - Default value used when variable doesn't exist
+ * @property {'global' | 'local' | 'message' | 'cache'} [inscope='cache'] - Variable type (scope) for reading, see details below
+ * @property {'global' | 'local' | 'message' | 'cache'} [outscope='message'] - Variable type (scope) for setting, see details below
+ * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - Update conditions, won't update if not met, see details below
+ * @property {'old' | 'new' | 'fullcache'} [results='new'] - Return value type, see details below
+ * @property {MessageFilter} [withMsg=undefined] - Message filter (if setting message variables)
+ * @property {boolean} [dryRun=false] - Whether to allow updating variables during preparation phase
+ * @property {boolean} [noCache=false] - Disable cache (e.g., when reading immediately after setting)
+ * @property {number} [min=null] - Minimum value
+ * @property {number} [max=null] - Maximum value
  */
 
 /**
- * Increment the value of a variable
+ * Increment variable value
  *
- * @param {string} key - Variable name.
- * @param {number} [value=1] - Value to increment by.
- * @param {GetSetVarOption} [options={}] - Options for updating the variable.
- * @returns Determined by options.results, returns undefined on failure.
+ * @param {string} key - Variable name
+ * @param {number} [value=1] - Value to increment by
+ * @param {GetSetVarOption} [options={}] - Update variable options
+ * @returns Depends on options.results, returns undefined on failure.
  */
 function incvar(key, value = 1, options = {});
 // Aliases for specific options.outscope
@@ -91,12 +90,12 @@ function incGlobalVar(key, value = 1, options = {});
 function incMessageVar(key, value = 1, options = {});
 
 /**
- * Decrement the value of a variable
+ * Decrement variable value
  *
- * @param {string} key - Variable name.
- * @param {number} [value=1] - Value to decrement by.
- * @param {GetSetVarOption} [options={}] - Options for updating the variable.
- * @returns Determined by options.results, returns undefined on failure.
+ * @param {string} key - Variable name
+ * @param {number} [value=1] - Value to decrement by
+ * @param {GetSetVarOption} [options={}] - Update variable options
+ * @returns Depends on options.results, returns undefined on failure.
  */
 function decvar(key, value = 1, options = {});
 // Aliases for specific options.outscope
@@ -105,20 +104,20 @@ function decGlobalVar(key, value = 1, options = {});
 function decMessageVar(key, value = 1, options = {});
 
 /**
- * Execute a command, e.g., /setvar
+ * Execute command, e.g., /setvar
  *
- * @param {string} cmd - The command.
- * @returns {Promise<string>} - The return value of the command.
+ * @param {string} cmd - Command
+ * @returns {Promise<string>} - Command return value
  */
 async function execute(cmd);
 
 /**
- * Read World Info entry content
+ * Get world info entry content
  *
- * @param {string} lorebook - World Info name (can be empty for recursion, automatically infers current World Info).
- * @param {string | RegExp | number} title - Entry UID/title.
- * @param {Record<string, any>} [data={}] - Data to pass.
- * @returns {Promise<string>} - The content of the World Info entry.
+ * @param {string} lorebook - Lorebook name (can pass empty when recursive, will automatically infer current lorebook)
+ * @param {string | RegExp | number} title - Entry uid/title
+ * @param {Record<string, any>} [data={}] - Data to pass
+ * @returns {Promise<string>} - Content of the world info entry
  */
 async function getwi(lorebook, title, data = {});
 async function getWorldInfo(lorebook, title, data = {});
@@ -126,57 +125,57 @@ async function getwi(title, data = {});
 async function getWorldInfo(title, data = {});
 
 /**
- * Read character card definition
+ * Get character card definition
  *
- * @param {string | RegExp | number} [name=this_chid] - Character card name/ID.
- * @param {string} [template=DEFAULT_CHAR_DEFINE] - Output format.
- * @param {Object} [data={}] - Data to pass.
- * @returns {Promise<string>} - The content of the character card definition.
+ * @param {string | RegExp | number} [name=this_chid] - Character card name/ID
+ * @param {string} [template=DEFAULT_CHAR_DEFINE] - Output format
+ * @param {Object} [data={}] - Data to pass
+ * @returns {Promise<string>} - Content of character card definition
  */
-async function getchr(name = this_chid, template = DEFAULT_CHAR_DEFINE, data = {});
+async function getchar(name = this_chid, template = DEFAULT_CHAR_DEFINE, data = {});
 async function getChara(name = this_chid, template = DEFAULT_CHAR_DEFINE, data = {});
 
 /**
- * Read preset prompt content
+ * Get preset prompt content
  *
- * @param {string | RegExp} name - Name of the prompt.
- * @param {Object} [data={}] - Data to pass.
- * @returns {Promise<string>} - The content of the preset prompt.
+ * @param {string | RegExp} name - Prompt name
+ * @param {Object} [data={}] - Data to pass
+ * @returns {Promise<string>} - Content of preset prompt
  */
-async function getprp(name, data = {});
+async function getpreset(name, data = {});
 async function getPresetPrompt(name, data = {});
 
 /**
  * Define global variables/functions
- * @note Generally used for pre-defining in World Info, then calling during rendering.
+ * @note Typically used for pre-definition in world info, then called during rendering
  *
- * @param {string} name - Variable/function name.
- * @param {any} value - Variable/function content.
- * @param {boolean} [merge=false] - Whether to use merge (_.merge) to define.
- * @note When defining functions, 'this' should be used to access the context, e.g.: this.variables, this.getvar, this.setvar
+ * @param {string} name - Variable/function name
+ * @param {any} value - Content of variable/function
+ * @param {boolean} [merge=false] - Whether to use merge when defining (_.merge)
+ * @note When defining functions, should use this to access context, e.g.: this.variables, this.getvar, this.setvar
  */
 function define(name, value, merge = false);
 
 /**
- * Read Quick Reply content
- * Only enabled Quick Reply sets can be read.
+ * Get quick reply content
+ * Can only read enabled quick reply sets
  *
- * @param {string | RegExp} name - Quick Reply set name.
- * @param {string | RegExp} label - Quick Reply entry name.
- * @param {Object} [data={}] - Data to pass.
- * @returns {string} - The content of the Quick Reply.
+ * @param {string | RegExp} name - Quick reply set name
+ * @param {string | RegExp} label - Quick reply entry name
+ * @param {Object} [data={}] - Data to pass
+ * @returns {string} - Quick reply content
  */
 async function getqr(name, label, data = {});
 async function getQuickReply(name, label, data = {});
 
 /**
- * Read character card data
- * @note Returned data is not templated.
+ * Get character card data
+ * @note Returns data without template processing
  *
- * @param {string | RegExp | number} [name=this_chid] - Character card name/ID.
- * @returns {Promise<v1CharData | null>} - The character card data.
+ * @param {string | RegExp | number} [name=this_chid] - Character card name/ID
+ * @returns {Promise<v1CharData | null>} - Character card data
  */
-async function getCharaData(name = this_chid);
+async function getCharData(name = this_chid);
 
 /**
  * @typedef {Object} WorldInfoData
@@ -216,72 +215,71 @@ async function getCharaData(name = this_chid);
  */
 
 /**
- * Read World Info data
- * @note Returned data is not templated.
+ * Get world info data
+ * @note Returns data without template processing
  *
- * @param {string} name - World Info name/UID.
- * @returns {Promise<WorldInfoData[]>} - List of World Info entries.
+ * @param {string} name - World info name/uid
+ * @returns {Promise<WorldInfoData[]>} - World info entry list
  */
 async function getWorldInfoData(name);
 
 /**
- * Read Quick Reply data
- * @note Returned data is not templated.
+ * Get quick reply data
+ * @note Returns data without template processing
  *
- * @param {string | RegExp} name - Quick Reply set name/UID.
- * @returns {QuickReplySetLink | null} - The Quick Reply set data.
+ * @param {string | RegExp} name - World info name/uid
+ * @returns {QuickReplySetLink | null} - World info data
  */
 function getQuickReplyData(name);
 
 /**
- * Read World Info data, including only active parts.
- * @note Returned data is not templated.
+ * Get world info data, containing only activated entries
+ * @note Returns data without template processing
  *
- * @param {string} name - World Info name/UID.
- * @param {(string|string[])} keyword - Keyword (content) used to activate World Info.
- * @param {ActivateWorldInfoCondition} [condition={}] - Activation conditions.
- * @returns {Promise<WorldInfoData[]>} - List of activated World Info entries.
+ * @param {string} name - World info name/uid
+ * @param {(string|string[])} keyword - Keywords used to activate world info (content)
+ * @param {ActivateWorldInfoCondition} [condition={}] - Activation conditions
+ * @returns {Promise<WorldInfoData[]>} - World info entry list
  */
 async function getWorldInfoActivatedData(name, keyword, condition = {});
 
 /**
- * Process string content with a template.
+ * Process string content with template
  *
- * @param {string} content - String content to process.
- * @param {Object} [data={}] - Data to pass.
- * @param {Object} [options={}] - EJS parameters.
- * @returns {Promise<string>} - Processed string content.
+ * @param {string} content - String content to process
+ * @param {Object} [data={}] - Data to pass
+ * @param {Object} [options={}] - EJS parameters
+ * @returns {Promise<string>} - Processed string content
  */
 async function evalTemplate(content, data = {}, options = {});
 
 /**
- * Get all entries from World Info that might be used.
- * @note Even disabled entries are returned.
+ * Get all potentially used world info entries
+ * @note Even disabled entries will be returned
  *
- * @param {boolean} chara - Whether to include knowledge books embedded in character cards.
- * @param {boolean} global - Whether to include globally enabled World/Knowledge Books.
- * @param {boolean} persona - Whether to include the user persona's World Info.
- * @param {boolean} charaExtra - Whether to include additional knowledge books attached to character cards.
- * @returns {Promise<WorldInfoData[]>} - List of World Info entries.
+ * @param {boolean} chara - Whether to include knowledge books embedded in character cards
+ * @param {boolean} global - Whether to include globally enabled world/knowledge books
+ * @param {boolean} persona - Whether to include world books bound to user persona
+ * @param {boolean} charaExtra - Whether to include additional knowledge books from character cards
+ * @returns {Promise<WorldInfoData[]>} - World info entry list
  */
 async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true);
 
 /**
- * Output one or more strings.
- * @note Cannot be used inside <%- or <%= blocks.
+ * Output one or more strings
+ * @note Cannot be used within <%- or <%= statement blocks
  *
- * @param {string} args - String content.
+ * @param {string} args - String content
  */
 function print(...args);
 
 /**
- * Activate World Info.
- * Requires a specific entry.
+ * Activate world info entry
  *
- * @param {string} lorebook - World Info name.
- * @param {string | RegExp | number} title - Entry UID/title.
- * @param {boolean} [force=false] - Force activation
- * @returns {Promise<WorldInfoData | null>} - The activated World Info entry.
+ * @param {string} lorebook - Lorebook name
+ * @param {string | RegExp | number} title - Entry uid/title
+ * @param {boolean} [force=false] - Force activate world info
+ * @returns {Promise<WorldInfoData | null>} - Activated world info entry, returns null if entry not found
  */
 async function activewi(lorebook, title, force = false);
 async function activateWorldInfo(lorebook, title, force = false);
@@ -289,61 +287,62 @@ async function activewi(title, force = false);
 async function activateWorldInfo(title, force = false);
 
 /**
- * Activate World Info conditions.
+ * Activate world info condition
+ * null means no restriction
  * @typedef {Object} ActivateWorldInfoCondition
- * @property {boolean} [withConstant=false] - Whether to allow activating permanent 🔵 entries.
- * @property {boolean} [withDisabled=false] - Whether to allow activating disabled entries.
- * @property {boolean} [onlyDisabled=false] - Whether to activate only disabled entries (forces withDisabled option when enabled).
+ * @property {boolean | null} [constant=null] - Restrict to must be/NOT constant (blue) entries
+ * @property {boolean | null} [disabled=null] - Restrict to must be/NOT disabled entries
+ * @property {boolean | null} [vectorized=null] - Restrict to must be/NOT vectorized (🔗) entries
  */
 
 /**
- * Activate World Info.
- * Activated by keywords.
+ * Activate world info
+ * Activate through keywords
  *
- * @param {string} worldinfo - World Info name.
- * @param {ActivateWorldInfoCondition} [condition={}] - Activation options.
- * @returns {Promise<WorldInfoData[]>} - List of activated World Info entries.
+ * @param {string} worldinfo - World info name
+ * @param {ActivateWorldInfoCondition} [condition={}] - Activation options
+ * @returns {Promise<WorldInfoData[]>} - Activated world info entry list
  */
 async function activateWorldInfoByKeywords(keywords, condition = {});
 
 /**
- * Get all entries from currently enabled World Info sets.
+ * Get all entries of currently enabled world info
  *
- * @param {boolean} chara - Whether to include built-in World Info from character cards.
- * @param {boolean} global - Whether to include globally enabled World Info.
- * @param {boolean} persona - Whether to include World Info bound to the user persona.
- * @param {boolean} persona - Whether to include external World Info attached to character cards.
- * @returns {Promise<WorldInfoData[]>} - List of World Info entries.
+ * @param {boolean} chara - Whether to include character card's built-in world info
+ * @param {boolean} global - Whether to include globally enabled world info
+ * @param {boolean} persona - Whether to include user persona bound world info
+ * @param {boolean} charaExtra - Whether to include external world info from character cards
+ * @returns {Promise<WorldInfoData[]>} - World info entry list
  */
 async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true);
 
 /**
- * Filter activated entries from a list of World Info entries.
+ * Filter activated entries from world info entry list
  *
- * @param {WorldInfoData[]} entries - List of World Info entries.
- * @param {string | string[]} keywords - Content that activates the entries.
- * @param {ActivateWorldInfoCondition} [condition={}] - Activation conditions.
- * @returns {WorldInfoData[]} - List of activated World Info entries.
+ * @param {WorldInfoData[]} entries - World info entry list
+ * @param {string | string[]} keywords - User activated content
+ * @param {ActivateWorldInfoCondition} [condition={}] - Activation conditions
+ * @returns {WorldInfoData[]} - Activated world info entry list
  */
 function selectActivatedEntries(entries, keywords, condition = {});
 
 /**
- * Get message content from a specific chat (floor).
+ * Get specified chat (floor) message content
  *
- * @param {number} idx - Chat (floor) message ID.
- * @param {'user' | 'assistant' | 'system' | undefined} role - Only select messages of a specific role; no filtering if not provided.
- * @returns {string} - Chat (floor) message content, returns empty string on failure.
+ * @param {number} idx - Chat (floor) message ID
+ * @param {'user' | 'assistant' | 'system' | undefined} role - Only select messages of specified role, no filter if not provided
+ * @returns {string} - Chat (floor) message content, returns empty string on failure
  */
 function getChatMessage(idx, role = undefined);
 
 /**
- * Get a list of chat (floor) message contents within a specified range.
+ * Get content list of chat (floor) messages within specified range
  *
- * @param {number} count - Number of chat (floor) messages.
- * @param {'user' | 'assistant' | 'system'} role - Only select messages of a specific role.
- * @param {number} start - Starting ID of the chat (floor) messages.
- * @param {number} end - Ending ID of the chat (floor) messages.
- * @returns {string[]} - List of chat (floor) message contents.
+ * @param {number} count - Number of chat (floor) messages
+ * @param {'user' | 'assistant' | 'system'} role - Only select messages of specified role
+ * @param {number} start - Start position ID of chat (floor) messages
+ * @param {number} end - End position ID of chat (floor) messages
+ * @returns {string[]} - Chat (floor) message content list
  */
 function getChatMessages(count);
 function getChatMessages(count, role);
@@ -352,68 +351,68 @@ function getChatMessages(start, end, role);
 
 /**
  * Regular expression options
- * Execution order: Start Generation -> basic -> generate -> Process Template -> LLM Response -> message -> Process Template -> Render Floor Message
- * Regular expressions injected in basic mode are automatically removed after prompt processing is complete.
+ * Execution order: start generation -> basic -> generate -> process template -> LLM response -> message -> process template -> render floor message
+ * Basic mode injected regex will be automatically deleted after prompt processing is complete
  *
  * @typedef {Object} RegexOptions
- * @property {string} [uuid=undefined] - Unique ID; if same, modify, if different, create.
- * @property {number} [minDepth=NaN] - Minimum depth.
- * @property {number} [maxDepth=NaN] - Maximum depth.
- * @property {boolean} [user=true] - Applies to user input.
- * @property {boolean} [assistant=true] - Applies to AI output.
- * @property {boolean} [worldinfo=false] - Applies to World Info.
- * @property {boolean} [reasoning=false] - Applies to reasoning.
- * @property {boolean} [message=false] - Applies regex to raw floor messages (prompt template, supports replace functions).
- * @property {boolean} [generate=false] - Applies regex to generated messages (prompt template, supports replace functions).
- * @property {boolean} [basic=true] - Uses SillyTavern's built-in regex (SillyTavern implementation, does not support replace functions).
- * @property {number} [order=100] - Execution order, ascending
- * @property {boolean} [raw=true] - Allows processing of raw floor messages, requires enabling the message item
- * @property {boolean} [display=false] - Allows processing of floor message HTML, requires enabling the message item
- * @property {number} [sticky=0] - Stickiness.
+ * @property {string} [uuid=undefined] - Unique ID, same ID will modify existing, different ID will create new
+ * @property {number} [minDepth=NaN] - Minimum depth
+ * @property {number} [maxDepth=NaN] - Maximum depth
+ * @property {boolean} [user=true] - Apply to user input
+ * @property {boolean} [assistant=true] - Apply to AI output
+ * @property {boolean} [worldinfo=false] - Apply to world information
+ * @property {boolean} [reasoning=false] - Apply to reasoning
+ * @property {boolean} [message=false] - Apply regex to floor messages (implemented by prompt template extension, supports replacement functions)
+ * @property {boolean} [generate=false] - Apply regex to generated messages (prompt template extension, supports replacement functions)
+ * @property {boolean} [basic=true] - Use tavern built-in regex (implemented by tavern, doesn't support replacement functions)
+ * @property {number} [order=100] - Execution order, executed in ascending order
+ * @property {boolean} [raw=true] - Allow processing of raw floor messages, requires message option to be enabled
+ * @property {boolean} [display=false] - Allow processing of floor message HTML, requires message option to be enabled
+ * @property {number} [sticky=0] - Stickiness
  */
 
 /**
- * Create temporary regular expressions during generation to process chat message content.
+ * Create temporary regular expression during generation to process chat message content
  *
- * @param {string | RegExp} pattern - Regular expression.
- * @param {string | ((substring: string, ...args: any[]) => string) } replace - Replacement content/replace function.
- * @param {RegexOptions} opts - Options.
+ * @param {string | RegExp} pattern - Regular expression pattern
+ * @param {string | ((substring: string, ...args: any[]) => string) } replace - Replacement content/function
+ * @param {RegexOptions} opts - Options
  */
 function activateRegex(pattern, string, opts = {});
 
 /**
- * Add prompt injection.
- * Similar to World Info, but manually activated and placed.
+ * Add prompt injection
+ * Functionality similar to world info, but manually activated and placed
  *
- * @param {string} key - Injection key (group).
- * @param {string} prompt - Prompt content.
- * @param {number} [order=100] - Order.
- * @param {number} [sticky=0] - Stickiness.
- * @param {string} [uid=''] - Unique ID.
+ * @param {string} key - Injection key (group)
+ * @param {string} prompt - Prompt content
+ * @param {number} [order=100] - Order
+ * @param {number} [sticky=0] - Stickiness
+ * @param {string} [uid=''] - Unique ID
  */
 function injectPrompt(key, prompt, order = 100, sticky = 0, uid = '');
 
 /**
- * Content Processor
+ * Content processor
  * @typedef {Object} PostProcess
- * @property {(string|RegExp)} search - Content to search for.
- * @property {string} replace - Content to replace with.
+ * @property {(string|RegExp)} search - Content to search for
+ * @property {string} replace - Content to replace with
  */
 
 /**
- * Read injected prompt content.
+ * Get injected prompt
  *
- * @param {string} key - Injection key (group).
- * @param {PostProcess[]} [postprocess=[]] - Content processing.
- * @returns {string} - The content of the injected prompt.
+ * @param {string} key - Injection key (group)
+ * @param {PostProcess[]} [postprocess=[]] - Content processing
+ * @returns {string} - Injected prompt content
  */
 function getPromptsInjected(key, postprocess = []);
 
 /**
- * Check if a prompt injection exists.
+ * Check if prompt injection exists
  *
- * @param {string} key - Injection key (group).
- * @returns {boolean} - Whether the prompt injection exists.
+ * @param {string} key - Injection key (group)
+ * @returns {boolean} - Whether prompt injection exists
  */
 function hasPromptsInjected(key);
 
