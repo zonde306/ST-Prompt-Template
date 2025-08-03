@@ -463,7 +463,8 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
     const start = Date.now();
 
     console.log(`[Prompt Template] *** PRELOADING WORLD INFO ***`);
-    const worldInfoData = (await getEnabledWorldInfoEntries()).filter(data => !data.disable);
+    const worldInfoData = (await getEnabledWorldInfoEntries())
+        .filter(data => !data.disable && !data.decorators.includes('@@dont_preload'));
 
     const env = await prepareContext(65535, {
         runType: 'preparation',
