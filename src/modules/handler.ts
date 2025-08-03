@@ -326,7 +326,7 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
 
     const before = settings.render_loader_enabled === false
         ? ''
-        : await processWorldinfoEntities(env, '[RENDER:BEFORE]', '', { escaper, decorators: '@@render_before' });
+        : await processWorldinfoEntities(env, '[RENDER:BEFORE]', '', { escaper, msgId: message_idx, decorators: '@@render_before' });
 
     if (!isDryRun && settings.raw_message_evaluation_enabled) {
         env.runType = 'render_permanent';
@@ -409,7 +409,7 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
 
     const after = settings.render_loader_enabled === false
         ? ''
-        : await processWorldinfoEntities(env, '[RENDER:AFTER]', newContent || '', { escaper, decorators: '@@render_after' });
+        : await processWorldinfoEntities(env, '[RENDER:AFTER]', newContent || '', { escaper, msgId: message_idx, decorators: '@@render_after' });
 
     if (newContent != null)
         newContent = before + newContent + after;
