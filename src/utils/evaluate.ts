@@ -105,6 +105,9 @@ export async function processWorldinfoEntities(
         if(result != null)
             prompt += result;
     }
+    
+    if(settings.debug_enabled)
+        console.debug(`[Prompt Template] ${prefix} worldinfo templates applied.\n`, prompt, '\n', worldInfoData);
 
     return prompt;
 }
