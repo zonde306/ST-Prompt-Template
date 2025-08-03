@@ -1,9 +1,10 @@
 import { EvalTemplateOptions, getSyntaxErrorInfo, evalTemplate } from '../function/ejs';
 import { settings } from '../modules/ui';
 import { selectActivatedEntries, getEnabledWorldInfoEntries } from '../function/worldinfo';
-import { substituteParams } from '../../../../../../script.js';
+import { chat, messageFormatting, substituteParams } from '../../../../../../script.js';
 import { applyRegex } from '../function/regex';
 import { copyText } from '../../../../../utils.js';
+import { Message } from '../modules/defines';
 
 /**
  * Wrap an error display for evalTemplate
@@ -29,7 +30,7 @@ export async function evalTemplateHandler(content: string,
             },
         });
     } catch (err) {
-        if(settings.debug_enabled) {
+        if (settings.debug_enabled) {
             const contentWithLines = content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
             console.debug(`[Prompt Template] handling ${where} errors:\n${contentWithLines}`);
         }
@@ -40,7 +41,7 @@ export async function evalTemplateHandler(content: string,
         console.error(err);
 
         // @ts-expect-error
-        toastr.error(err.message, `EJS Error`, {  onclick: () => copyText(err.message).then(() => toastr.success('Copied to clipboard!') )});
+        toastr.error(err.message, `EJS Error`, { onclick: () => copyText(err.message).then(() => toastr.success('Copied to clipboard!')) });
     }
 
     return null;
@@ -61,19 +62,25 @@ export async function evalTemplateHandler(content: string,
  */
 export async function processWorldinfoEntities(
     env: Record<string, unknown>,
-    prefix : string,
-    keywords : string = '',
-    options : EvalTemplateOptions = {}) {
+    prefix: string,
+    keywords: string = '',
+    options: EvalTemplateOptions & { msgId?: number, decorators?: string } = {}) {
     const allEntries = await getEnabledWorldInfoEntries();
     const worldInfoData = selectActivatedEntries(
-        allEntries.filter(x => x.comment.startsWith(prefix) && x.disable === settings.invert_enabled),
+        allEntries.filter(x =>
+            x.disable === settings.invert_enabled &&
+            (
+                x.comment.startsWith(prefix) ||
+                x.decorators.includes(options.decorators ?? 'EMPTY'
+
+            ))),
         keywords,
         { vectorized: false }
     );
-    
+
     let prompt = '';
-    for(const data of worldInfoData) {
-        const result = await evalTemplateHandler(
+    for (const data of worldInfoData) {
+        let result = await evalTemplateHandler(
             applyRegex.call(
                 env,
                 substituteParams(data.content),
@@ -102,11 +109,16 @@ export async function processWorldinfoEntities(
                 ...(options ?? {}),
             },
         );
-        if(result != null)
+        if (result != null) {
+            if (options.msgId != null && data.decorators.includes('@@message_formatting')) {
+                const message: Message = chat[options.msgId];
+                result = messageFormatting(result, message.name, message.is_system, message.is_user, options.msgId);
+            }
             prompt += result;
+        }
     }
-    
-    if(settings.debug_enabled)
+
+    if (settings.debug_enabled)
         console.debug(`[Prompt Template] ${prefix} worldinfo templates applied.\n`, prompt, '\n', worldInfoData);
 
     return prompt;

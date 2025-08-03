@@ -46,7 +46,7 @@ async function handleGenerateBefore(_type: string, _data: GenerateOptions, dryRu
             isDryRun: false,
         });
 
-        generateBefore = await processWorldinfoEntities(env, '[GENERATE:BEFORE]');
+        generateBefore = await processWorldinfoEntities(env, '[GENERATE:BEFORE]', '', { decorators: '@@generate_before' });
     }
 
     // await applyActivateWorldInfo();
@@ -56,9 +56,12 @@ async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
     for (let i = data.characterLore.length - 1; i >= 0; i--) {
         const entry = data.characterLore[i];
         const title = entry.comment;
+        const decorators = entry.decorators.join(',');
         if (title.startsWith('[GENERATE:') ||
             title.startsWith('[RENDER:') ||
-            title.startsWith('@INJECT')) {
+            title.startsWith('@INJECT') ||
+            decorators.includes('@@generate') ||
+            decorators.includes('@@render')) {
             data.characterLore.splice(i, 1);
             console.debug(`[Prompt Template] Remove chara lore of ${entry.world}/${title}/${entry.uid} from context`);
         }
@@ -66,9 +69,12 @@ async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
     for (let i = data.globalLore.length - 1; i >= 0; i--) {
         const entry = data.globalLore[i];
         const title = entry.comment;
+        const decorators = entry.decorators.join(',');
         if (title.startsWith('[GENERATE:') ||
             title.startsWith('[RENDER:') ||
-            title.startsWith('@INJECT')) {
+            title.startsWith('@INJECT') ||
+            decorators.includes('@@generate') ||
+            decorators.includes('@@render')) {
             data.globalLore.splice(i, 1);
             console.debug(`[Prompt Template] Remove global lore of ${entry.world}/${title}/${entry.uid} from context`);
         }
@@ -76,9 +82,12 @@ async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
     for (let i = data.personaLore.length - 1; i >= 0; i--) {
         const entry = data.personaLore[i];
         const title = entry.comment;
+        const decorators = entry.decorators.join(',');
         if (title.startsWith('[GENERATE:') ||
             title.startsWith('[RENDER:') ||
-            title.startsWith('@INJECT')) {
+            title.startsWith('@INJECT') ||
+            decorators.includes('@@generate') ||
+            decorators.includes('@@render')) {
             data.personaLore.splice(i, 1);
             console.debug(`[Prompt Template] Remove persona lore of ${entry.world}/${title}/${entry.uid} from context`);
         }
@@ -86,9 +95,12 @@ async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
     for (let i = data.chatLore.length - 1; i >= 0; i--) {
         const entry = data.chatLore[i];
         const title = entry.comment;
+        const decorators = entry.decorators.join(',');
         if (title.startsWith('[GENERATE:') ||
             title.startsWith('[RENDER:') ||
-            title.startsWith('@INJECT')) {
+            title.startsWith('@INJECT') ||
+            decorators.includes('@@generate') ||
+            decorators.includes('@@render')) {
             data.chatLore.splice(i, 1);
             console.debug(`[Prompt Template] Remove chat lore of ${entry.world}/${title}/${entry.uid} from context`);
         }
@@ -223,7 +235,7 @@ async function handleGenerateAfter(data: GenerateAfterData) {
 
     const after = settings.generate_loader_enabled === false
         ? ''
-        : await processWorldinfoEntities(env, '[GENERATE:AFTER]', prompts);
+        : await processWorldinfoEntities(env, '[GENERATE:AFTER]', prompts, { decorators: '@@generate_after' });
 
     prompts += after;
 
@@ -314,7 +326,7 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
 
     const before = settings.render_loader_enabled === false
         ? ''
-        : await processWorldinfoEntities(env, '[RENDER:BEFORE]', '', { escaper });
+        : await processWorldinfoEntities(env, '[RENDER:BEFORE]', '', { escaper, decorators: '@@render_before' });
 
     if (!isDryRun && settings.raw_message_evaluation_enabled) {
         env.runType = 'render_permanent';
@@ -397,7 +409,7 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
 
     const after = settings.render_loader_enabled === false
         ? ''
-        : await processWorldinfoEntities(env, '[RENDER:AFTER]', newContent || '', { escaper });
+        : await processWorldinfoEntities(env, '[RENDER:AFTER]', newContent || '', { escaper, decorators: '@@render_after' });
 
     if (newContent != null)
         newContent = before + newContent + after;
@@ -471,7 +483,7 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
     console.log(`[Prompt Template] *** EVALUATING ${worldInfoData.length} WORLD INFO ***`);
 
     if (settings.generate_loader_enabled)
-        prompts += await processWorldinfoEntities(env, '[GENERATE:BEFORE]');
+        prompts += await processWorldinfoEntities(env, '[GENERATE:BEFORE]', '', { decorators: '@@generate_before' });
 
     for (const data of worldInfoData) {
         prompts += await evalTemplateHandler(
@@ -504,7 +516,7 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
     }
 
     if (settings.generate_loader_enabled)
-        await processWorldinfoEntities(env, '[GENERATE:AFTER]', prompts);
+        await processWorldinfoEntities(env, '[GENERATE:AFTER]', prompts, { decorators: '@@generate_after' });
 
     const end = Date.now() - start;
     console.log(`[Prompt Template] processing ${worldInfoData.length} world info in ${end}ms`);
@@ -552,7 +564,7 @@ async function handleRefreshWorldInfo(name: string, data: WorldInfoData) {
     let prompts = '';
 
     if (settings.generate_loader_enabled)
-        prompts += await processWorldinfoEntities(env, '[GENERATE:BEFORE]');
+        prompts += await processWorldinfoEntities(env, '[GENERATE:BEFORE]', '', { decorators: '@@generate_before' });
 
     for (const data of worldInfoData) {
         prompts += await evalTemplateHandler(
@@ -569,7 +581,7 @@ async function handleRefreshWorldInfo(name: string, data: WorldInfoData) {
     }
 
     if (settings.generate_loader_enabled)
-        await processWorldinfoEntities(env, '[GENERATE:AFTER]', prompts);
+        await processWorldinfoEntities(env, '[GENERATE:AFTER]', prompts, { decorators: '@@generate_after' });
 
     const end = Date.now() - start;
     console.log(`[Prompt Template] processing ${worldInfoData.length} world info in ${end}ms`);

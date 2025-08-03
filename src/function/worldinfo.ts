@@ -685,6 +685,11 @@ function worldInfoSorter(a: WorldInfoData, b: WorldInfoData, top: number = DEFAU
 const KNOWN_DECORATORS = [
     '@@activate',
     '@@dont_activate',
+    '@@message_formatting',
+    '@@generate_before',
+    '@@generate_after',
+    '@@render_before',
+    '@@render_after'
 ];
 
 /**
