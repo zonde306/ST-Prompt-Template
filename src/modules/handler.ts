@@ -318,9 +318,7 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
         isDryRun: isDryRun,
     });
 
-    let hasHTML = false;
     function escaper(markup: string): string {
-        hasHTML = true;
         return messageFormatting(markup, message.name, message.is_system, message.is_user, message_idx);
     }
 
@@ -422,7 +420,7 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
         appendMediaToMessage(message, parent);
     }
 
-    if (hasHTML && isDryRun) {
+    if (newContent?.includes('<pre>') && isDryRun) {
         isFakeRun = true; // prevent multiple updates
         console.debug(`[HTML] rendering #${message_idx} message`);
         if (message.is_user) {
