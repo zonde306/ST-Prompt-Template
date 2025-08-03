@@ -292,10 +292,11 @@ async function activateWorldInfo(title, force = false);
 
 /**
  * 激活世界书条件
+ * null 表示不限制
  * @typedef {Object} ActivateWorldInfoCondition
- * @property {boolean} [withConstant=false] - 是否允许激活永久🔵条目
- * @property {boolean} [withDisabled=false] - 是否允许激活禁用条目
- * @property {boolean} [onlyDisabled=false] - 是否仅激活禁用条目(启用时强制启用withDisabled选项)
+ * @property {boolean | null} [constant=null] - 限制必须是/否 永久🔵 条目
+ * @property {boolean | null} [disabled=null] - 限制必须是/否 禁用 条目
+ * @property {boolean | null} [vectorized=null] - 限制必须是/否 🔗向量化 条目
  */
 
 /**

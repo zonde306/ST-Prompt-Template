@@ -101,9 +101,9 @@ export interface WorldInfo {
 }
 
 export interface ActivateWorldInfoCondition {
-    withConstant?: boolean; 
-    withDisabled?: boolean;
-    onlyDisabled?: boolean;
+    constant?: boolean; 
+    disabled?: boolean;
+    vectorized?: boolean;
 }
 
 let activatedWorldEntries = new Map<string, WorldInfoData>();
@@ -299,21 +299,16 @@ export function selectActivatedEntries(
     entries: WorldInfoData[],
     keywords: string | string[],
     condition: ActivateWorldInfoCondition = {}) : WorldInfoData[] {
-    const { withConstant, withDisabled, onlyDisabled } = condition;
     let activated: Set<WorldInfoData> = new Set<WorldInfoData>();
     const trigger = _.castArray(keywords).join('\n\n') as string;
     for (const data of entries) {
-        if(!withConstant && data.constant)
+        if(condition.constant != null && data.constant !== condition.constant)
             continue;
-        if(onlyDisabled && !data.disable)
+        if(condition.disabled != null && data.disable !== condition.disabled)
             continue;
-        if(!withDisabled && !onlyDisabled && data.disable)
+        if(condition.vectorized != null && data.vectorized !== condition.vectorized)
             continue;
-
-        // unsupported
-        if(data.vectorized)
-            continue;
-
+        
         // Trigger probability
         if(data.useProbability && data.probability < _.random(1, 100))
             continue;
@@ -532,7 +527,7 @@ function getScore(haystack: string, entry: WorldInfoData) {
  * @param persona includes Persona Lorebook
  * @param charaExtra includes character Additional Lorebooks
  * @param chat includes chat bounded lorebooks
- * @returns WI entries names
+ * @returns lore books
  */
 export function getEnabledLoreBooks(
     chara : boolean = true, global : boolean = true,
