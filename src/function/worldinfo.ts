@@ -96,7 +96,7 @@ export interface WorldInfoData {
     matchCreatorNotes: boolean;
 }
 
-export interface WorldInfo {
+export interface LoreBook {
     entries: Record<string, WorldInfoData>;
 }
 
@@ -188,7 +188,7 @@ export function getActivateWorldInfo(): WorldInfoData[] {
 export async function getWorldInfoData(name?: string): Promise<WorldInfoData[]> {
     // @ts-expect-error
     const lore = (name || characters[this_chid]?.data?.extensions?.world || power_user.persona_description_lorebook || chat_metadata[METADATA_KEY] || '') as string;
-    const lorebook = await loadWorldInfo(lore) as WorldInfo;
+    const lorebook = await loadWorldInfo(lore) as LoreBook;
     if (!lorebook) {
         console.log(`[Prompt Template] lorebook not found: ${lore} (${name})`);
         return [];
@@ -691,6 +691,7 @@ const KNOWN_DECORATORS = [
     '@@render_before',
     '@@render_after',
     '@@dont_preload',
+    '@@initial_variables',
 ];
 
 /**
@@ -745,4 +746,21 @@ function parseDecorators(content: string): [string[], string] {
     }
 
     return [[], content];
+}
+
+export function isSpecialEntry(entry: WorldInfoData) : boolean {
+    const title = entry.comment;
+    if(title.startsWith('[GENERATE:') ||
+        title.startsWith('[RENDER:') ||
+        title.includes('@INJECT') ||
+        title.includes('[InitialVariables]'))
+        return true;
+    
+    const decorators = entry.decorators.join(',');
+    if(decorators.includes('@@generate') ||
+        decorators.includes('@@render') ||
+        decorators.includes('@@initial_variables'))
+        return true;
+    
+    return false;
 }

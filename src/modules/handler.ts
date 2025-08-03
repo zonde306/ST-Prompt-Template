@@ -3,9 +3,9 @@ import vm from 'vm-browserify';
 import { Message, GenerateAfterData, WorldInfoLoaded } from './defines';
 import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock, substituteParams, this_chid, getCurrentChatId, appendMediaToMessage, addCopyToCodeBlocks } from '../../../../../../script.js';
 import { prepareContext } from '../function/ejs';
-import { STATE, checkAndSave } from '../function/variables';
+import { STATE, checkAndSave, setVariable } from '../function/variables';
 import { extension_settings } from '../../../../../extensions.js';
-import { getEnabledWorldInfoEntries, deactivateActivateWorldInfo, WorldInfo as WorldInfoData, getEnabledLoreBooks, getActivateWorldInfo } from '../function/worldinfo';
+import { getEnabledWorldInfoEntries, deactivateActivateWorldInfo, LoreBook, getEnabledLoreBooks, getActivateWorldInfo, isSpecialEntry } from '../function/worldinfo';
 import { getCharacterDefine } from '../function/characters';
 import { settings } from './ui';
 import { activateRegex, deactivateRegex, applyRegex } from '../function/regex';
@@ -14,6 +14,10 @@ import { updateTokens, removeHtmlTagsInsideBlock, escapePreContent, cleanPreCont
 import { evalTemplateHandler, processWorldinfoEntities } from '../utils/evaluate';
 import { updateReasoningUI } from '../../../../../reasoning.js';
 import { handleInjectPrompt } from '../features/inject-prompt';
+import { parse as yamlParse } from 'yaml';
+import { parse as tomlParse } from 'toml';
+import JSON5 from 'json5';
+import { parse as iniParse } from 'ini';
 
 let runID = 0;
 let isFakeRun = false; // Avoid recursive processing
@@ -55,54 +59,30 @@ async function handleGenerateBefore(_type: string, _data: GenerateOptions, dryRu
 async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
     for (let i = data.characterLore.length - 1; i >= 0; i--) {
         const entry = data.characterLore[i];
-        const title = entry.comment;
-        const decorators = entry.decorators.join(',');
-        if (title.startsWith('[GENERATE:') ||
-            title.startsWith('[RENDER:') ||
-            title.startsWith('@INJECT') ||
-            decorators.includes('@@generate') ||
-            decorators.includes('@@render')) {
+        if (isSpecialEntry(entry)) {
             data.characterLore.splice(i, 1);
-            console.debug(`[Prompt Template] Remove chara lore of ${entry.world}/${title}/${entry.uid} from context`);
+            console.debug(`[Prompt Template] Remove chara lore of ${entry.world}/${entry.comment}/${entry.uid} from context`);
         }
     }
     for (let i = data.globalLore.length - 1; i >= 0; i--) {
         const entry = data.globalLore[i];
-        const title = entry.comment;
-        const decorators = entry.decorators.join(',');
-        if (title.startsWith('[GENERATE:') ||
-            title.startsWith('[RENDER:') ||
-            title.startsWith('@INJECT') ||
-            decorators.includes('@@generate') ||
-            decorators.includes('@@render')) {
+        if (isSpecialEntry(entry)) {
             data.globalLore.splice(i, 1);
-            console.debug(`[Prompt Template] Remove global lore of ${entry.world}/${title}/${entry.uid} from context`);
+            console.debug(`[Prompt Template] Remove global lore of ${entry.world}/${entry.comment}/${entry.uid} from context`);
         }
     }
     for (let i = data.personaLore.length - 1; i >= 0; i--) {
         const entry = data.personaLore[i];
-        const title = entry.comment;
-        const decorators = entry.decorators.join(',');
-        if (title.startsWith('[GENERATE:') ||
-            title.startsWith('[RENDER:') ||
-            title.startsWith('@INJECT') ||
-            decorators.includes('@@generate') ||
-            decorators.includes('@@render')) {
+        if (isSpecialEntry(entry)) {
             data.personaLore.splice(i, 1);
-            console.debug(`[Prompt Template] Remove persona lore of ${entry.world}/${title}/${entry.uid} from context`);
+            console.debug(`[Prompt Template] Remove persona lore of ${entry.world}/${entry.comment}/${entry.uid} from context`);
         }
     }
     for (let i = data.chatLore.length - 1; i >= 0; i--) {
         const entry = data.chatLore[i];
-        const title = entry.comment;
-        const decorators = entry.decorators.join(',');
-        if (title.startsWith('[GENERATE:') ||
-            title.startsWith('[RENDER:') ||
-            title.startsWith('@INJECT') ||
-            decorators.includes('@@generate') ||
-            decorators.includes('@@render')) {
+        if (isSpecialEntry(entry)) {
             data.chatLore.splice(i, 1);
-            console.debug(`[Prompt Template] Remove chat lore of ${entry.world}/${title}/${entry.uid} from context`);
+            console.debug(`[Prompt Template] Remove chat lore of ${entry.world}/${entry.comment}/${entry.uid} from context`);
         }
     }
 
@@ -463,8 +443,13 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
     const start = Date.now();
 
     console.log(`[Prompt Template] *** PRELOADING WORLD INFO ***`);
-    const worldInfoData = (await getEnabledWorldInfoEntries())
-        .filter(data => !data.disable && !data.decorators.includes('@@dont_preload'));
+    const worldInfos = await getEnabledWorldInfoEntries();
+    const enabledWorldInfo = worldInfos
+        .filter(data =>
+            !data.disable &&
+            !data.decorators.includes('@@dont_preload') &&
+            !isSpecialEntry(data)
+        );
 
     const env = await prepareContext(65535, {
         runType: 'preparation',
@@ -478,13 +463,63 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
         isDryRun: true,
     });
 
+    if(chat[0] != null) {
+        const firstMessage : Message = chat[0];
+        if(!firstMessage.variables)
+            firstMessage.variables = {};
+
+        worldInfos.filter(e =>
+                e.disable === settings.invert_enabled &&
+                (e.comment.startsWith('[InitialVariables]') || e.decorators.includes('@@initial_variables'))
+            )
+            .forEach(x => {
+                let data = {};
+                try {
+                    data = JSON.parse(x.content);
+                } catch(e1) {
+                    try {
+                        data = yamlParse(x.content);
+                    } catch(e2) {
+                        try {
+                            data = tomlParse(x.content);
+                        } catch(e3) {
+                            try {
+                                data = iniParse(x.content);
+                            } catch(e4) {
+                                try {
+                                    data = JSON5.parse(x.content);
+                                } catch(e5) {
+                                    toastr.error(`Can't parse initial variables ${x.world}/${x.comment}/${x.uid}`, 'Prompt Template');
+                                    console.error(`[Prompt Template] Can't parse initial variables ${x.world}/${x.comment}/${x.uid}: `, x.content);
+                                    console.error(e1);
+                                    console.error(e2);
+                                    console.error(e3);
+                                    console.error(e4);
+                                    console.error(e5);
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                for(let i = 0; i < firstMessage.swipes.length; i++) {
+                    if(!firstMessage.variables)
+                        firstMessage.variables = {};
+                    if(!firstMessage.variables[i])
+                        firstMessage.variables[i] = {};
+                    _.merge(firstMessage.variables[i], data);
+                }
+            });
+    }
+
     let prompts = '';
-    console.log(`[Prompt Template] *** EVALUATING ${worldInfoData.length} WORLD INFO ***`);
+    console.log(`[Prompt Template] *** EVALUATING ${enabledWorldInfo.length} WORLD INFO ***`);
 
     if (settings.generate_loader_enabled)
         prompts += await processWorldinfoEntities(env, '[GENERATE:BEFORE]', '', { decorators: '@@generate_before' });
 
-    for (const data of worldInfoData) {
+    for (const data of enabledWorldInfo) {
         prompts += await evalTemplateHandler(
             substituteParams(data.content),
             _.merge(env, { world_info: data }),
@@ -518,7 +553,7 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
         await processWorldinfoEntities(env, '[GENERATE:AFTER]', prompts, { decorators: '@@generate_after' });
 
     const end = Date.now() - start;
-    console.log(`[Prompt Template] processing ${worldInfoData.length} world info in ${end}ms`);
+    console.log(`[Prompt Template] processing ${enabledWorldInfo.length} world info in ${end}ms`);
 
     // avoid multiple updates
     if (chat.length > 1) {
@@ -532,7 +567,7 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
     }
 }
 
-async function handleRefreshWorldInfo(name: string, data: WorldInfoData) {
+async function handleRefreshWorldInfo(name: string, data: LoreBook) {
     if (settings.enabled === false)
         return;
     if (settings.preload_worldinfo_enabled === false)
