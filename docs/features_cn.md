@@ -589,6 +589,28 @@ line 3
 
 
 
+### GENERATE/RENDER/INJECT条目禁用视为启用
+
+- 作用范围：
+
+	> 所有特殊条目，即由扩展控制的条目
+	>
+	> 例如：[GENERATE]、[RENDER]、`@@generate`、`@@render`等
+
+- 开启时：
+
+	> 这些特殊条目只有在 **禁用** 时才会被扩展处理
+
+- 关闭时：
+
+	> 这些特殊条目只有在 **启用** 时才会被扩展处理
+
+开启后兼容旧设定，即「特殊条目需要**禁用**才会生效」
+
+关闭后使用新设定，即「特殊条目需要**启用**才会生效」
+
+
+
 ### 缓存（实验性）
 
 启用此功能后，会将编译后的提示词缓存起来，避免耗时的重复编译过程，可以稍微提升速度
@@ -678,7 +700,7 @@ Q: 变化后的好感度是多少？
 ### 可用装饰器列表
 
 - `@@activate`：视为🔵条目
-- `@@dont_activate`：不要激活这个条目
+- `@@dont_activate`：不要激活这个条目（会完全禁止激活，即使用`activewi`）
 - `@@message_formatting`：输出为HTML代码（仅限``[RENDER]`和`@@render`模式）
 - `@@generate_before`：相当于`[GENERATE:BEFORE]`
 - `@@generate_after`：相当于`[GENERATE:AFTER]`
@@ -687,19 +709,109 @@ Q: 变化后的好感度是多少？
 - `@@dont_preload`：不要在打开角色卡时处理这个条目
 - `@@initial_variables`：相当于`[InitialVariables]`
 
+例如，状态：
 
+```
+@@render_after
+@@message_formatting
+​```
+名字：<%- variables.状态栏.角色名 %>
+​```
+```
 
+---
 
+## 激活正则
 
+通过`activateRegex`函数，可以临时创建一个**正则表达式**来对**提示词**内容仅限额外处理
 
+它的优势是支持传递函数作为替换内容，比酒馆自带的**正则**功能更丰富
 
+当然，它也可以使用酒馆自带的**正则**框架来处理
 
+### 酒馆正则
 
+酒馆正则不支持传递函数，仅支持字符串
 
+同时也不支持**命名捕获组**
 
+仅在生成时生效
 
+示例：
 
+```javascript
+<%
+    // 隐藏楼层里的深度思考内容
+    activateRegex(/<think>[\s\S]*?<\/think>/gi, "");
+%>
+```
 
+> 上述代码通过注入一个临时的**酒馆正则**，对**发送给LLM**的内容进行处理
+>
+> 处理时先使用**酒馆正则**处理，然后才会由**提示词模板**进行处理
+
+### 预处理正则
+
+在进行**提示词模板**处理前，先应用这个正则，然后再进行**模板计算**
+
+生成、渲染都会生效
+
+```javascript
+<%
+    // 将 {{getvars::...}} 替换为变量内容
+    activateRegex(/\{\{\getvars::([a-zA-Z0-9_]+?)}\}/gi, function(match, varName) {
+    	return this.getvar(varName);
+	}, { generate: true });
+%>
+```
+
+> 上述代码模仿**酒馆宏**的功能，创建一个自定义宏`{{getvars}}`
+
+### 楼层正则
+
+楼层正则分为两种情况，一种是**原始消息内容**，另一种是**HTML内容**
+
+#### 原始消息内容
+
+原始消息内容正则会直接永久修改消息内容
+
+这个正则同样会在进行**提示词模板**处理前执行
+
+```javascript
+<%
+    // 将 <Variables> 块的内容作为变量，更新楼层变量
+    activateRegex(/<Variables>([\s\S]+?)<\/Variables>/gi, function(match, variables) {
+    	const self = this;
+    	variables
+            .split("\n")	// 按行分割
+            .filter(x => x.includes(":")) // 检查格式
+    		.map(x => x.split(":", 2))	// 拆分键值
+    		.forEach(([k, v]) => self.setvar(k.trim(), v.trim()));	// 写入变量
+    	
+    	// 删除变量块
+    	return "";
+	}, { message: true });
+%>
+```
+
+> 上述代码读取LLM输出的变量更新，将更新值写入到变量表里
+
+#### HTML内容
+
+这里的正则用于修改楼层HTML内容
+
+```javascript
+<%_
+	// 替换 catbox 图床链接为反代，解决无法加载图片的问题
+	activateRegex(
+        /files\.catbox\.moe/gi,
+        'catbox.***.net',
+        { message: true, display: true }
+    );
+_%>
+```
+
+> 上述代码直接修改楼层HTML中所有的`files.catbox.moe`为`catbox.***.net`
 
 
 

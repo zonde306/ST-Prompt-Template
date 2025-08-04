@@ -56,7 +56,7 @@ export interface RegexOptions extends RegexFlags {
  */
 export function activateRegex(
     pattern: string | RegExp,
-    replace: string | ((substring: string, ...args: any[]) => string),
+    replace: string | ((substring: string, ...args: string[]) => string),
     opts: RegexOptions = {}
 ) {
     // If not provided, randomly generated

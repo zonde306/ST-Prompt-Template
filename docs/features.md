@@ -55,20 +55,41 @@ New affection: 60/100
 
 ---
 
-## Prompt Injection
+## Content Injection
 
-Allows injecting prompts at specific positions using prefixes in **World/Knowledge Book** entry titles (memo). Requires entries to be **inactive** to take effect.
+In certain scenarios, the execution order of **lore books/world info** cannot be controlled. To ensure prompts are placed at designated positions, this feature allows injecting specific prompts into the **beginning** and **end** locations.
 
-Supported prefixes:
-- `[GENERATE:BEFORE]`: Inject at prompt start (🔵 only)
-- `[GENERATE:AFTER]`: Inject at prompt end (🔵 and 🟢)
-- `[RENDER:BEFORE]`: Inject at response start (🔵 only, rendering only)
-- `[RENDER:AFTER]`: Inject at response end (🔵 and 🟢, rendering only)
+Simply add prefixes to the **title (memo)** of **lore book/world info** entries to inject the entry's content into the corresponding sequence. Whether the injection takes effect when activated or deactivated depends on the settings.
 
-> Render-related injections follow [Floor Rendering](#floor-rendering) rules
+This feature is affected by **trigger strategy**, **order**, **inclusion groups**, **deterministic priority**, **trigger probability**, **group weight**, **primary keywords**, **logic**, and **optional filters**.
 
-- `[GENERATE:{idx}:BEFORE]`: Inject at message index start (0-based)
-- `[GENERATE:{idx}:AFTER]`: Inject at message index end
+> Sticky, cooldown, and delay are not implemented.
+
+- `[GENERATE:BEFORE]`: Inject this entry's content to the **beginning** of prompts sent to the **LLM** (🔵 only)
+
+- `[GENERATE:AFTER]`: Inject this entry's content to the **end** of prompts sent to the **LLM** (🔵 and 🟢)
+
+- `[RENDER:BEFORE]`: Inject this entry's content to the **beginning** of **LLM output** received (🔵 only)
+
+- `[RENDER:AFTER]`: Inject this entry's content to the **end** of **LLM output** received (🔵 and 🟢)
+
+	> `[RENDER:BEFORE]` and `[RENDER:AFTER]` are for rendering only and **not sent to the LLM**  
+	>
+	> They also follow [message rendering](#message-rendering) configurations
+
+- `[GENERATE:{idx}:BEFORE]`: Inject this entry to the **beginning** of the `{idx}`-th message sent to the **LLM** (🔵 only)
+
+- `[GENERATE:{idx}:AFTER]`: Inject this entry to the **end** of the `{idx}`-th message sent to the **LLM** (🔵 and 🟢)
+
+	> Based on the order of `messages` sent to the LLM, **`{idx}` starts from 0**  
+	>
+	> Example: `[GENERATE:1:BEFORE]` injects the prompt into the 1st message (0-indexed)
+
+- `[InitialVariables]`: Treat entry content as a variable tree written to initial message variables. Only standard `JSON` objects are supported.
+
+	> Only effective when **Immediate Lore Book Loading** is enabled  
+	>
+	> Modifications will trigger rewrites
 
 ---
 
@@ -284,114 +305,139 @@ line 3
 
 ---
 
-## Setting Options
+## Configuration Options
 
-Description of each setting option
+Descriptions of each configuration option
 
----
+
 
 ### Enable Extension
 
-Master switch for the extension. Disabling it will disable all extension features (except commands). `<% ... %>` statements will be sent to LLM as-is.
+Master switch for the extension. Disabling it will deactivate all extension features (except commands), and `<% ... %>` statements will be sent to the **LLM** verbatim.
 
----
 
-### Process Generation Content
 
-Process all `<% ... %>` statements during generation
+### Process Generated Content
 
-Subsequent options depend on this setting - disabling this will treat all following options as disabled
+Process all `<% ... %>` statements during generation.
 
-#### Inject [GENERATE] Worldbook Entries During Generation
+Subsequent options are affected by this setting; disabling this will also disable the following options.
 
-During generation, it will iterate through **all enabled** worldbook entries and filter entries with `[GENERATE:*]` prefix for processing
 
-This process will first sort entries, then process them in order
 
-#### Process During Dry Run Generation
+#### Inject [GENERATE] Lore Book Entries During Generation
 
-SillyTavern has two generation modes: **normal generation** (results sent to LLM) and **dry run generation** (results not sent to LLM)
+During generation, all **enabled** lore book entries are scanned, and entries with `[GENERATE:*]` prefixes are processed.
 
-Enabling this option will process template prompts during **dry run generation**
+Entries are sorted first, then processed sequentially.
 
-#### Inject @INJECT Worldbook Entries
 
-See [Prompt Injection](#Prompt-Injection)
 
----
+#### Inject @INJECT Lore Book Entries During Generation
 
-### Process Floor Messages
+See [Prompt Injection](#prompt-injection)
 
-Process all `<% ... %>` statements in message floors
 
-Subsequent options depend on this setting - disabling this will treat all following options as disabled
 
-#### Inject [RENDER] Worldbook Entries During Floor Rendering
+### Process Message Content
 
-During rendering, it will iterate through **all enabled** worldbook entries and filter entries with `[RENDER:*]` prefix for processing
+Process all `<% ... %>` statements within **messages**.
 
-This process will first sort entries, then process them in order
+Subsequent options are affected by this setting; disabling this will also disable the following options.
+
+
+
+#### Inject [RENDER] Lore Book Entries During Message Rendering
+
+During rendering, all **enabled** lore book entries are scanned, and entries with `[RENDER:*]` prefixes are processed.
+
+Entries are sorted first, then processed sequentially.
+
+
 
 #### Process Code Blocks
 
-Allow template processing for content within `<pre>` code blocks
+Enable template processing for content within code blocks `<pre>`.
+
+
 
 #### Process Raw Message Content
 
-Process the original message content (as displayed in editor) before rendering
+Before rendering, process the raw message content (as displayed in edit mode) with templates.
 
-After processing, write the result back to the message's raw content (equivalent to direct message editing)
+After processing, write the result back to the raw message content (equivalent to direct message editing).
 
-> This process will NOT go through any **regex** or **macro** processing in advance  
-> This will permanently modify the message content
+> This process bypasses all **regex** and **macro** preprocessing  
+> Permanently modifies message content
 
-#### Skip Floor Message Processing During Generation
 
-Hide all `<% ... %>` statements in messages before generation to prevent sending them to LLM for processing
 
----
+#### Ignore Message Processing During Generation
 
-### Auto-save Variable Updates
+Before generation, hide all `<% ... %>` statements in messages to prevent them from being processed during generation.
 
-Immediately save (to file) any modified variables after processing content
 
-> Enabling this will cause additional performance overhead. SillyTavern already has auto-save functionality, so this is generally not needed
 
----
+### Auto-Save Variable Updates
 
-### Preload Worldbook
+After any content processing, immediately save modified variables (to file).
 
-Immediately load all enabled worldbook entries after opening character card/chat, and process their content with templates
+> Enabling this causes additional performance overhead. SillyTavern auto-saves by default, so this is generally unnecessary.
 
----
 
-### Disable With Statement Block
 
-ejs internally uses the deprecated `with(...) { ... }` statement
+### Immediate Lore Book Loading
 
-Enabling this option will disable this statement, using `const variables, ...` parameter unpacking instead
+Immediately load all enabled lore books after opening a character card/chat and process their content with templates.
 
----
+
+
+### Disable `with` Statement Blocks
+
+`ejs` internally uses the deprecated `with(...) { ... }` statement.
+
+Enabling this option disables `with` and uses parameter unpacking via `const variables, ...` instead.
+
+
 
 ### Show Detailed Console Info
 
-Enable this option to output extensive debug information in console
+When enabled, the console outputs extensive debug information.
 
----
 
-### Caching (Experimental)
 
-Enable this feature to cache compiled prompts, avoiding time-consuming recompilation and slightly improving speed
+### Treat Disabled GENERATE/RENDER/INJECT Entries as Enabled
 
-However, due to caching mechanisms, sometimes cached prompts may fail to update
+- Scope:  
+	> All special entries controlled by the extension  
+	> Example: `[GENERATE]`, `[RENDER]`, `@@generate`, `@@render`, etc.
 
----
+- When enabled:  
+	
+> Special entries are processed **only when disabled**
+	
+- When disabled:  
+	
+	> Special entries are processed **only when enabled**
+
+Enabling maintains backward compatibility ("special entries require **disabling** to activate").  
+Disabling uses the new behavior ("special entries require **enabling** to activate").
+
+
+
+### Cache (Experimental)
+
+Enabling this caches compiled prompts to avoid redundant compilation, slightly improving speed.
+
+However, cached prompts may sometimes fail to update due to their immutable nature.
+
+
 
 ### Cache Size
 
-Control the size of the cache pool
+Controls the cache pool size.
 
----
+
 
 ### Cache Hash Function
 
@@ -401,46 +447,163 @@ Minimal performance impact
 
 ## Prompt Injection
 
-The prompt injection feature implements dependency inversion through **tag keys** to import prompts, rather than importing through specific entries
+Prompt injection implements dependency inversion by importing prompts via **tag keys** instead of direct entry references.
 
-For example, we can import **CoT** (Chain of Thought) defined in the worldbook into the preset's **CoT** block
+For example, we can import **CoT** defined in lore books into the **CoT** section of a **preset**, ensuring LLMs focus on structured, compact prompts. Traditional lore book additions might scatter the LLM's attention between preset and lore book CoTs.
 
-Since LLMs pay stronger attention to formatted, compact prompts, using traditional worldbook entries to add custom CoT would cause LLM to ignore either the preset CoT or worldbook CoT
-
-### Example
-
-In worldbook:
+**Example in lore book:**
 ```javascript
 <%
 injectPrompt("CoT", `
-# Affinity
-Q: What is <char>'s affinity level?
-Q: How will the upcoming generation affect affinity?
-Q: What is the affinity level after changes?
-# Summarize affinity changes and output new level in generation
+# Affection
+Q: What is <char>'s affection level?
+Q: How will the next generation affect affection?
+Q: What is the new affection level?
+# Summarize affection changes and output the new level
 `)
 %>
 ```
 
-In preset:
+**Example in preset:**
 ```javascript
-Follow the steps below for <thinking>.
+Follow these <thinking> steps:
 <thinking>
-// Read CoT defined in worldbook
+// Read CoT defined in lore book
 <%- getPromptsInjected("CoT") %>
 </thinking>
 ```
 
-Resulting in:
+**Result during generation:**
 ```javascript
-Follow the steps below for <thinking>.
+Follow these <thinking> steps:
 <thinking>
 
-# Affinity
-Q: What is <char>'s affinity level?
-Q: How will the upcoming generation affect affinity?
-Q: What is the affinity level after changes?
-# Summarize affinity changes and output new level in generation
+# Affection
+Q: What is <char>'s affection level?
+Q: How will the next generation affect affection?
+Q: What is the new affection level?
+# Summarize affection changes and output the new level
 
 </thinking>
 ```
+
+---
+
+## Decorators
+
+At the start of **lore book/world info** content, prefix lines with `@@` to add decorators. The extension recognizes these for special processing.
+
+Multiple decorators can be used (one per line, no blank lines between).
+
+**Decorator example:**
+```
+@@activate
+Lore book entry content...
+```
+
+> This decorator ignores 🟢 keywords, treating the entry as 🔵 for activation
+
+### Available Decorators
+- `@@activate`: Treat as 🔵 entry
+- `@@dont_activate`: Disable activation (fully blocked, even via `activewi`)
+- `@@message_formatting`: Output as HTML (only for `[RENDER]`/`@@render` modes)
+- `@@generate_before`: Equivalent to `[GENERATE:BEFORE]`
+- `@@generate_after`: Equivalent to `[GENERATE:AFTER]`
+- `@@render_before`: Equivalent to `[RENDER:BEFORE]`
+- `@@render_after`: Equivalent to `[RENDER:AFTER]`
+- `@@dont_preload`: Skip processing when opening character cards
+- `@@initial_variables`: Equivalent to `[InitialVariables]`
+
+**Example (status bar):**
+```
+@@render_after
+@@message_formatting
+​```
+Name: <%- variables.status_bar.character_name %>
+​```
+```
+---
+
+## Activation Regex
+
+The `activateRegex` function temporarily creates a **regular expression** to process **prompt content** with additional rules.
+
+It supports function-based replacements (more powerful than SillyTavern's native **regex**), but can also leverage SillyTavern's regex framework.
+
+### SillyTavern Regex
+- No function support (string-only replacements)
+- No **named capture groups**
+- Active only during generation
+
+**Example:**
+```javascript
+<%
+    // Hides deep thinking content in messages
+    activateRegex(/<think>[\s\S]*?<\/think>/gi, "");
+%>
+```
+
+> This injects a temporary **SillyTavern regex** to process content **sent to the LLM**  
+> Processing order: **SillyTavern regex** → **prompt template**
+
+### Preprocessing Regex
+Applied **before** prompt template processing, then template computation.
+
+Active during both generation and rendering.
+
+```javascript
+<%
+    // Replace {{getvars::...}} with variable values
+    activateRegex(/\{\{getvars::([a-zA-Z0-9_]+?)\}\}/gi, function(match, varName) {
+    	return this.getvar(varName);
+	}, { generate: true });
+%>
+```
+
+> Mimics **SillyTavern macro** functionality with custom macro `{{getvars}}`
+
+### Message Regex
+
+Two variants: **raw message content** and **HTML content**.
+
+#### Raw Message Content
+Permanently modifies message content directly.
+
+Executed before **prompt template** processing.
+
+```javascript
+<%
+    // Update message variables from <Variables> blocks
+    activateRegex(/<Variables>([\s\S]+?)<\/Variables>/gi, function(match, variables) {
+    	const self = this;
+    	variables
+            .split("\n")	// Split by line
+            .filter(x => x.includes(":")) // Validate format
+    		.map(x => x.split(":", 2))	// Split key-value
+    		.forEach(([k, v]) => self.setvar(k.trim(), v.trim()));	// Write variables
+    	
+    	// Remove variable block
+    	return "";
+	}, { message: true });
+%>
+```
+
+> Reads LLM-output variable updates and writes them to the variable table
+
+#### HTML Content
+
+Modifies message HTML content.
+
+```javascript
+<%_
+	// Replace catbox image links with proxy to fix loading issues
+	activateRegex(
+        /files\.catbox\.moe/gi,
+        'catbox.***.net',
+        { message: true, display: true }
+    );
+_%>
+```
+
+> Replaces all `files.catbox.moe` links in message HTML with `catbox.***.net`
+
