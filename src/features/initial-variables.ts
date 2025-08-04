@@ -28,6 +28,12 @@ export async function handleInitialVariables(entries?: WorldInfoData[]) {
                 return;
             }
 
+            if(!_.isPlainObject(data)) {
+                toastr.error(`Wrong format for initial variables ${x.world}/${x.comment}/${x.uid}`, 'Prompt Template');
+                console.error(`[Prompt Template] Wrong format for initial variables ${x.world}/${x.comment}/${x.uid}: `, data);
+                return;
+            }
+
             for (let i = 0; i < firstMessage.swipes.length; i++) {
                 if (!firstMessage.variables)
                     firstMessage.variables = {};
