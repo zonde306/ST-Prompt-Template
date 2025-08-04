@@ -460,7 +460,7 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
         isDryRun: true,
     });
 
-    await handleInitialVariables(worldInfos);
+    await handleInitialVariables(env, worldInfos);
 
     let prompts = '';
     console.log(`[Prompt Template] *** EVALUATING ${enabledWorldInfo.length} WORLD INFO ***`);
@@ -531,7 +531,6 @@ async function handleRefreshWorldInfo(name: string, data: LoreBook) {
         return;
 
     const worldInfoData = Object.values(data.entries).filter(data => !data.disable);
-    await handleInitialVariables(await getWorldInfoData(name));
     
     const env = await prepareContext(65535, {
         runType: 'preparation',
@@ -544,6 +543,8 @@ async function handleRefreshWorldInfo(name: string, data: LoreBook) {
         name: undefined,
         isDryRun: true,
     });
+
+    await handleInitialVariables(env, await getWorldInfoData(name));
 
     let prompts = '';
 

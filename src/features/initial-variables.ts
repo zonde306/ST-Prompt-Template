@@ -1,9 +1,11 @@
 import { getEnabledWorldInfoEntries, WorldInfoData } from "../function/worldinfo";
-import { chat } from "../../../../../../script.js";
+import { chat, substituteParams } from "../../../../../../script.js";
 import { Message } from "../modules/defines";
 import { settings } from "../modules/ui";
+import { applyRegex } from "../function/regex";
+import { evalTemplate } from "../function/ejs";
 
-export async function handleInitialVariables(entries?: WorldInfoData[]) {
+export async function handleInitialVariables(env: Record<string, unknown>, entries?: WorldInfoData[]) {
     if (chat[0] == null)
         return;
 
@@ -11,16 +13,16 @@ export async function handleInitialVariables(entries?: WorldInfoData[]) {
         entries = await getEnabledWorldInfoEntries();
 
     const firstMessage: Message = chat[0];
-
-    entries
+    await Promise.all(entries
         .filter(e =>
             e.disable === settings.invert_enabled &&
             (e.comment.startsWith('[InitialVariables]') || e.decorators.includes('@@initial_variables'))
         )
-        .forEach(x => {
+        .map(async(x) => {
+            const content = await evalTemplate(applyRegex.call(env, substituteParams(x.content)), env);
             let data = {};
             try {
-                data = JSON.parse(x.content);
+                data = JSON.parse(content);
             } catch (e) {
                 toastr.error(`Can't parse initial variables ${x.world}/${x.comment}/${x.uid}`, 'Prompt Template');
                 console.error(`[Prompt Template] Can't parse initial variables ${x.world}/${x.comment}/${x.uid}: `, x.content);
@@ -41,5 +43,5 @@ export async function handleInitialVariables(entries?: WorldInfoData[]) {
                     firstMessage.variables[i] = {};
                 _.merge(firstMessage.variables[i], data);
             }
-        });
+        }));
 }
