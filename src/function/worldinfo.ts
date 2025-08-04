@@ -699,7 +699,7 @@ const KNOWN_DECORATORS = [
  * @param content The content to parse
  * @returns The decorators found in the content and the content without decorators
 */
-function parseDecorators(content: string): [string[], string] {
+export function parseDecorators(content: string): [string[], string] {
     /**
      * Check if the decorator is known
      * @param data string to check
@@ -756,7 +756,7 @@ export function isSpecialEntry(entry: WorldInfoData) : boolean {
         title.includes('[InitialVariables]'))
         return true;
     
-    const decorators = entry.decorators.join(',');
+    const decorators = (entry.decorators ?? parseDecorators(entry.content)[0]).join(',');
     if(decorators.includes('@@generate') ||
         decorators.includes('@@render') ||
         decorators.includes('@@initial_variables'))
