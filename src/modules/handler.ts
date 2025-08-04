@@ -3,9 +3,9 @@ import vm from 'vm-browserify';
 import { Message, GenerateAfterData, WorldInfoLoaded } from './defines';
 import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock, substituteParams, this_chid, getCurrentChatId, appendMediaToMessage, addCopyToCodeBlocks } from '../../../../../../script.js';
 import { prepareContext } from '../function/ejs';
-import { STATE, checkAndSave, setVariable } from '../function/variables';
+import { STATE, checkAndSave } from '../function/variables';
 import { extension_settings } from '../../../../../extensions.js';
-import { getEnabledWorldInfoEntries, deactivateActivateWorldInfo, LoreBook, getEnabledLoreBooks, getActivateWorldInfo, isSpecialEntry } from '../function/worldinfo';
+import { getEnabledWorldInfoEntries, deactivateActivateWorldInfo, LoreBook, getEnabledLoreBooks, getActivateWorldInfo, isSpecialEntry, getWorldInfoData } from '../function/worldinfo';
 import { getCharacterDefine } from '../function/characters';
 import { settings } from './ui';
 import { activateRegex, deactivateRegex, applyRegex } from '../function/regex';
@@ -14,10 +14,7 @@ import { updateTokens, removeHtmlTagsInsideBlock, escapePreContent, cleanPreCont
 import { evalTemplateHandler, processWorldinfoEntities } from '../utils/evaluate';
 import { updateReasoningUI } from '../../../../../reasoning.js';
 import { handleInjectPrompt } from '../features/inject-prompt';
-import { parse as yamlParse } from 'yaml';
-import { parse as tomlParse } from 'toml';
-import JSON5 from 'json5';
-import { parse as iniParse } from 'ini';
+import { handleInitialVariables } from '../features/initial-variables';
 
 let runID = 0;
 let isFakeRun = false; // Avoid recursive processing
@@ -463,55 +460,7 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
         isDryRun: true,
     });
 
-    if(chat[0] != null) {
-        const firstMessage : Message = chat[0];
-        if(!firstMessage.variables)
-            firstMessage.variables = {};
-
-        worldInfos.filter(e =>
-                e.disable === settings.invert_enabled &&
-                (e.comment.startsWith('[InitialVariables]') || e.decorators.includes('@@initial_variables'))
-            )
-            .forEach(x => {
-                let data = {};
-                try {
-                    data = JSON.parse(x.content);
-                } catch(e1) {
-                    try {
-                        data = yamlParse(x.content);
-                    } catch(e2) {
-                        try {
-                            data = tomlParse(x.content);
-                        } catch(e3) {
-                            try {
-                                data = iniParse(x.content);
-                            } catch(e4) {
-                                try {
-                                    data = JSON5.parse(x.content);
-                                } catch(e5) {
-                                    toastr.error(`Can't parse initial variables ${x.world}/${x.comment}/${x.uid}`, 'Prompt Template');
-                                    console.error(`[Prompt Template] Can't parse initial variables ${x.world}/${x.comment}/${x.uid}: `, x.content);
-                                    console.error(e1);
-                                    console.error(e2);
-                                    console.error(e3);
-                                    console.error(e4);
-                                    console.error(e5);
-                                    return;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                for(let i = 0; i < firstMessage.swipes.length; i++) {
-                    if(!firstMessage.variables)
-                        firstMessage.variables = {};
-                    if(!firstMessage.variables[i])
-                        firstMessage.variables[i] = {};
-                    _.merge(firstMessage.variables[i], data);
-                }
-            });
-    }
+    await handleInitialVariables(worldInfos);
 
     let prompts = '';
     console.log(`[Prompt Template] *** EVALUATING ${enabledWorldInfo.length} WORLD INFO ***`);
@@ -582,7 +531,8 @@ async function handleRefreshWorldInfo(name: string, data: LoreBook) {
         return;
 
     const worldInfoData = Object.values(data.entries).filter(data => !data.disable);
-
+    await handleInitialVariables(await getWorldInfoData(name));
+    
     const env = await prepareContext(65535, {
         runType: 'preparation',
         runID: runID++,
