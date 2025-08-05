@@ -13,6 +13,9 @@ export async function handleInitialVariables(env: Record<string, unknown>, entri
         entries = await getEnabledWorldInfoEntries();
 
     const firstMessage: Message = chat[0];
+    if(firstMessage == null)
+        return;
+
     await Promise.all(entries
         .filter(e =>
             (e.disable === settings.invert_enabled || e.decorators.includes('@@always_enabled')) &&
@@ -36,7 +39,7 @@ export async function handleInitialVariables(env: Record<string, unknown>, entri
                 return;
             }
 
-            for (let i = 0; i < firstMessage.swipes.length; i++) {
+            for (let i = 0; i < (firstMessage.swipes?.length ?? 1); i++) {
                 if (!firstMessage.variables)
                     firstMessage.variables = {};
                 if (!firstMessage.variables[i])
