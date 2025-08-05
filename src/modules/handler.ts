@@ -470,7 +470,7 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
     console.debug(enabledWorldInfo);
 
     if (settings.generate_loader_enabled)
-        prompts += await evaluateWIEntities(env, { decorator: '@@generate_before', comment: '[GENERATE:BEFORE]', entries: worldEntries });
+        prompts += await evaluateWIEntities(env, { decorator: '@@generate_before', comment: '[GENERATE:BEFORE]', entries: worldEntries, preload: true });
 
     for (const data of enabledWorldInfo) {
         prompts += await evalTemplateHandler(
@@ -503,7 +503,7 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
     }
 
     if (settings.generate_loader_enabled)
-        await evaluateWIEntities(env, { decorator: '@@generate_after', comment: '[GENERATE:AFTER]', content: prompts, entries: worldEntries });
+        await evaluateWIEntities(env, { decorator: '@@generate_after', comment: '[GENERATE:AFTER]', content: prompts, entries: worldEntries, preload: true });
 
     const end = Date.now() - start;
     console.log(`[Prompt Template] processing ${enabledWorldInfo.length} world info in ${end}ms`);

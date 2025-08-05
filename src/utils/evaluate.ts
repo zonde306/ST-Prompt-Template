@@ -61,6 +61,7 @@ interface EvaluateWorldEntitiesOptions {
     msgId?: number;
     entries?: WorldInfoEntry[];
     content?: string | null;
+    preload?: boolean;
 }
 
 /**
@@ -87,6 +88,7 @@ export async function evaluateWIEntities(
                 x.comment.startsWith(options.comment ?? x.comment + ' ') ||
                 x.decorators?.includes(options.decorator ?? ' ')
             ) && (
+                options.preload ||
                 !x.decorators?.includes('@@only_preload')
             )
         ),
