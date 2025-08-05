@@ -85,9 +85,9 @@ export async function evaluateWIEntities(
                 x.decorators?.includes('@@always_enabled')
             ) && (
                 x.comment.startsWith(options.comment ?? x.comment + ' ') ||
-                x.decorators.includes(options.decorator ?? ' ')
+                x.decorators?.includes(options.decorator ?? ' ')
             ) && (
-                !x.decorators.includes('@@only_preload')
+                !x.decorators?.includes('@@only_preload')
             )
         ),
         options.content ?? '',
@@ -126,7 +126,7 @@ export async function evaluateWIEntities(
             },
         );
         if (result != null) {
-            if (options.msgId != null && data.decorators.includes('@@message_formatting')) {
+            if (options.msgId != null && data.decorators?.includes('@@message_formatting')) {
                 const message: Message = chat[options.msgId];
                 result = messageFormatting(result, message.name, message.is_system, message.is_user, options.msgId);
             }
@@ -136,6 +136,8 @@ export async function evaluateWIEntities(
 
     if (settings.debug_enabled)
         console.debug(`[Prompt Template] ${options.comment}/${options.decorator} worldinfo templates applied.\n`, prompt, '\n', worldInfoData);
+    else
+        console.debug(`[Prompt Template] ${options.comment}/${options.decorator} worldinfo templates applied.\n`, worldInfoData);
 
     return prompt;
 }

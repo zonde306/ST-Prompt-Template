@@ -138,6 +138,7 @@ async function handleGenerateAfter(data: GenerateAfterData) {
     STATE.isDryRun = false;
     const start = Date.now();
     console.log(`[Prompt Template] start generate after ${chat.length} messages`);
+    const worldEntries = await getEnabledWorldInfoEntries();
 
     const env = await prepareContext(65535, {
         runType: 'generate',
@@ -156,7 +157,7 @@ async function handleGenerateAfter(data: GenerateAfterData) {
         // Before a specific message
         const beforeMessage = settings.generate_loader_enabled === false
             ? ''
-            : await evaluateWIEntities(env, { comment: `[GENERATE:${idx}:BEFORE]` });
+            : await evaluateWIEntities(env, { comment: `[GENERATE:${idx}:BEFORE]`, entries: worldEntries });
 
         if (typeof message.content === 'string') { // Plain text message
             const prompt = await evalTemplateHandler(
@@ -174,7 +175,7 @@ async function handleGenerateAfter(data: GenerateAfterData) {
             // After a specific message
             const afterMessage = settings.generate_loader_enabled === false
                 ? ''
-                : await evaluateWIEntities(env, { comment: `[GENERATE:${idx}:AFTER]`, content: prompt });
+                : await evaluateWIEntities(env, { comment: `[GENERATE:${idx}:AFTER]`, content: prompt, entries: worldEntries });
 
             if (prompt != null) {
                 message.content = beforeMessage + prompt + afterMessage;
@@ -199,7 +200,7 @@ async function handleGenerateAfter(data: GenerateAfterData) {
                     // After a specific message
                     const afterMessage = settings.generate_loader_enabled === false
                         ? ''
-                        : await evaluateWIEntities(env, { comment: `[GENERATE:${idx}:AFTER]`, content: prompt });
+                        : await evaluateWIEntities(env, { comment: `[GENERATE:${idx}:AFTER]`, content: prompt, entries: worldEntries });
 
                     if (prompt != null) {
                         content.text = beforeMessage + prompt + afterMessage;
@@ -212,7 +213,7 @@ async function handleGenerateAfter(data: GenerateAfterData) {
 
     const after = settings.generate_loader_enabled === false
         ? ''
-        : await evaluateWIEntities(env, { decorator: '@@generate_after', comment: '[GENERATE:AFTER]', content: prompts });
+        : await evaluateWIEntities(env, { decorator: '@@generate_after', comment: '[GENERATE:AFTER]', content: prompts, entries: worldEntries });
 
     prompts += after;
 
@@ -299,9 +300,11 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
         return messageFormatting(markup, message.name, message.is_system, message.is_user, message_idx);
     }
 
+    const worldEntries = await getEnabledWorldInfoEntries();
+
     const before = settings.render_loader_enabled === false
         ? ''
-        : await evaluateWIEntities(env, { escaper, msgId: message_idx, decorator: '@@render_before', comment: '[RENDER:BEFORE]' });
+        : await evaluateWIEntities(env, { escaper, msgId: message_idx, decorator: '@@render_before', comment: '[RENDER:BEFORE]', entries: worldEntries });
 
     if (!isDryRun && settings.raw_message_evaluation_enabled) {
         env.runType = 'render_permanent';
@@ -384,7 +387,7 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
 
     const after = settings.render_loader_enabled === false
         ? ''
-        : await evaluateWIEntities(env, { escaper, msgId: message_idx, decorator: '@@render_after', comment: '[RENDER:AFTER]', content: newContent });
+        : await evaluateWIEntities(env, { escaper, msgId: message_idx, decorator: '@@render_after', comment: '[RENDER:AFTER]', content: newContent, entries: worldEntries });
 
     if (newContent != null)
         newContent = before + newContent + after;
@@ -440,8 +443,8 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
     const start = Date.now();
 
     console.log(`[Prompt Template] *** PRELOADING WORLD INFO ***`);
-    const worldInfos = await getEnabledWorldInfoEntries();
-    const enabledWorldInfo = worldInfos
+    const worldEntries = await getEnabledWorldInfoEntries();
+    const enabledWorldInfo = worldEntries
         .filter(data =>
             !data.disable &&
             !data.decorators.includes('@@dont_preload') &&
@@ -460,13 +463,14 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
         isDryRun: true,
     });
 
-    await handleInitialVariables(env, worldInfos);
+    await handleInitialVariables(env, worldEntries);
 
     let prompts = '';
     console.log(`[Prompt Template] *** EVALUATING ${enabledWorldInfo.length} WORLD INFO ***`);
+    console.debug(enabledWorldInfo);
 
     if (settings.generate_loader_enabled)
-        prompts += await evaluateWIEntities(env, { decorator: '@@generate_before', comment: '[GENERATE:BEFORE]' });
+        prompts += await evaluateWIEntities(env, { decorator: '@@generate_before', comment: '[GENERATE:BEFORE]', entries: worldEntries });
 
     for (const data of enabledWorldInfo) {
         prompts += await evalTemplateHandler(
@@ -499,7 +503,7 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
     }
 
     if (settings.generate_loader_enabled)
-        await evaluateWIEntities(env, { decorator: '@@generate_after', comment: '[GENERATE:AFTER]', content: prompts });
+        await evaluateWIEntities(env, { decorator: '@@generate_after', comment: '[GENERATE:AFTER]', content: prompts, entries: worldEntries });
 
     const end = Date.now() - start;
     console.log(`[Prompt Template] processing ${enabledWorldInfo.length} world info in ${end}ms`);
@@ -525,6 +529,7 @@ async function handleRefreshWorldInfo(name: string, data: LoreBook) {
         return;
 
     const start = Date.now();
+    console.log(`[Prompt Template] *** REFRESHING WORLD INFO: ${name} ***`);
 
     const enabled = getEnabledLoreBooks();
     if (!enabled.includes(name))
@@ -549,12 +554,13 @@ async function handleRefreshWorldInfo(name: string, data: LoreBook) {
         isDryRun: true,
     });
 
+    console.debug(worldInfoData);
     await handleInitialVariables(env, await getWorldInfoData(name));
 
     let prompts = '';
 
     if (settings.generate_loader_enabled)
-        prompts += await evaluateWIEntities(env, { decorator: '@@generate_before', comment: '[GENERATE:BEFORE]' });
+        prompts += await evaluateWIEntities(env, { decorator: '@@generate_before', comment: '[GENERATE:BEFORE]', entries: Object.values(data.entries) });
 
     for (const data of worldInfoData) {
         prompts += await evalTemplateHandler(
@@ -571,7 +577,7 @@ async function handleRefreshWorldInfo(name: string, data: LoreBook) {
     }
 
     if (settings.generate_loader_enabled)
-        await evaluateWIEntities(env, { decorator: '@@generate_after', comment: '[GENERATE:AFTER]', content: prompts });
+        await evaluateWIEntities(env, { decorator: '@@generate_after', comment: '[GENERATE:AFTER]', content: prompts, entries: Object.values(data.entries) });
 
     const end = Date.now() - start;
     console.log(`[Prompt Template] processing ${worldInfoData.length} world info in ${end}ms`);

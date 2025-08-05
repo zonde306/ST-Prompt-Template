@@ -46,5 +46,7 @@ export async function handleInitialVariables(env: Record<string, unknown>, entri
                     firstMessage.variables[i] = {};
                 _.merge(firstMessage.variables[i], data);
             }
+            
+            console.debug(`[Prompt Template] Set Initial Variables: \n`, data);
         }));
 }
