@@ -5,7 +5,7 @@ import { eventSource, event_types, chat, messageFormatting, GenerateOptions, upd
 import { prepareContext } from '../function/ejs';
 import { STATE, checkAndSave } from '../function/variables';
 import { extension_settings } from '../../../../../extensions.js';
-import { getEnabledWorldInfoEntries, deactivateActivateWorldInfo, LoreBook, getEnabledLoreBooks, getActivateWorldInfo, isSpecialEntry, getWorldInfoData } from '../function/worldinfo';
+import { getEnabledWorldInfoEntries, deactivateActivateWorldInfo, LoreBook, getEnabledLoreBooks, getActivateWorldInfo, isSpecialEntry, getWorldInfoData, parseDecorators } from '../function/worldinfo';
 import { getCharacterDefine } from '../function/characters';
 import { settings } from './ui';
 import { activateRegex, deactivateRegex, applyRegex } from '../function/regex';
@@ -520,7 +520,7 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
     }
 }
 
-async function handleRefreshWorldInfo(name: string, data: LoreBook) {
+async function handleRefreshWorldInfo(world: string, data: LoreBook) {
     if (settings.enabled === false)
         return;
     if (settings.preload_worldinfo_enabled === false)
@@ -529,16 +529,23 @@ async function handleRefreshWorldInfo(name: string, data: LoreBook) {
         return;
 
     const start = Date.now();
-    console.log(`[Prompt Template] *** REFRESHING WORLD INFO: ${name} ***`);
+    console.log(`[Prompt Template] *** REFRESHING WORLD INFO: ${world} ***`);
 
     const enabled = getEnabledLoreBooks();
-    if (!enabled.includes(name))
+    if (!enabled.includes(world))
         return;
 
-    const worldInfoData = Object.values(data.entries)
+    // fix missing fields
+    const worldInfoEntries = Object.values(data.entries)
+        .map(x => {
+            const [decorators, content] = parseDecorators(x.content);
+            return { ...x, decorators, content, world };
+        });
+
+    const worldInfoData = worldInfoEntries
         .filter(data =>
             !data.disable &&
-            !data.decorators?.includes('@@dont_preload') &&
+            !data.decorators.includes('@@dont_preload') &&
             !isSpecialEntry(data, true)
         );
     
@@ -555,12 +562,12 @@ async function handleRefreshWorldInfo(name: string, data: LoreBook) {
     });
 
     console.debug(worldInfoData);
-    await handleInitialVariables(env, await getWorldInfoData(name));
+    await handleInitialVariables(env, await getWorldInfoData(world));
 
     let prompts = '';
 
     if (settings.generate_loader_enabled)
-        prompts += await evaluateWIEntities(env, { decorator: '@@generate_before', comment: '[GENERATE:BEFORE]', entries: Object.values(data.entries) });
+        prompts += await evaluateWIEntities(env, { decorator: '@@generate_before', comment: '[GENERATE:BEFORE]', entries: worldInfoEntries });
 
     for (const data of worldInfoData) {
         prompts += await evalTemplateHandler(
@@ -577,7 +584,7 @@ async function handleRefreshWorldInfo(name: string, data: LoreBook) {
     }
 
     if (settings.generate_loader_enabled)
-        await evaluateWIEntities(env, { decorator: '@@generate_after', comment: '[GENERATE:AFTER]', content: prompts, entries: Object.values(data.entries) });
+        await evaluateWIEntities(env, { decorator: '@@generate_after', comment: '[GENERATE:AFTER]', content: prompts, entries: worldInfoEntries });
 
     const end = Date.now() - start;
     console.log(`[Prompt Template] processing ${worldInfoData.length} world info in ${end}ms`);
