@@ -2,6 +2,11 @@ import { chat, substituteParams } from "../../../../../../script.js";
 import { getRegexedString, regex_placement } from "../../../../regex/engine.js";
 import { Message } from "../modules/defines";
 
+/**
+ * Perform regexp and macro processing on message content
+ * @param message Message
+ * @returns message content
+ */
 function processMessage(message?: Message & { id: number }) : string {
     if(message == null)
         return '';
