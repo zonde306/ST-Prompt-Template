@@ -17,6 +17,7 @@ import { injectPrompt, getPromptsInjected, hasPromptsInjected } from './inject';
 import { power_user } from '../../../../../power-user.js';
 import { METADATA_KEY } from '../../../../../world-info.js';
 import { hasher } from './hasher'
+import { getRegexedString, regex_placement } from '../../../../regex/engine.js';
 
 // @ts-expect-error: 7034
 import { groups, selected_group } from '../../../../../group-chats.js';
@@ -310,7 +311,7 @@ async function boundedReadWorldinfo(this: Record<string, unknown>,
     }
 
     if (wi) {
-        return await evalTemplate(substituteParams(wi.content),
+        return await evalTemplate(substituteParams(getRegexedString(wi.content, regex_placement.WORLD_INFO)),
             _.merge(this, data, { world_info: wi }),
             { when: `${wi.world}.${wi.comment}` },
         );
