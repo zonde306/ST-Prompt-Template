@@ -186,14 +186,14 @@ export function deactivateRegex(selector: RegexSelector = {}, count : number = 1
 
 /**
  * Apply RegExp to process the prompts
- * @param this EJS Execution Context
+ * @param env EJS Execution Context
  * @param content prompts
  * @param selector RegExp to be executed
  * @param flags processing environment
  * @returns Processed content
  */
 export function applyRegex(
-    this: Record<string, unknown>,
+    env: Record<string, unknown>,
     content : string,
     selector: RegexSelector = {},
     flags: RegexFlags & { depth?: number, role?: string } = {}
@@ -232,7 +232,7 @@ export function applyRegex(
                 }
                 
                 // @ts-expect-error: string.replace replaceValue is allow to pass a function
-                content = content.replace(regex.search, typeof regex.replace === 'function' ? regex.replace.bind(this) : regex.replace);
+                content = content.replace(regex.search, typeof regex.replace === 'function' ? regex.replace.bind(env) : regex.replace);
             }
         }
         if(selector.generate) {
@@ -247,7 +247,7 @@ export function applyRegex(
                     continue;
                 
                 // @ts-expect-error: string.replace replaceValue is allow to pass a function
-                content = content.replace(regex.search, typeof regex.replace === 'function' ? regex.replace.bind(this) : regex.replace);
+                content = content.replace(regex.search, typeof regex.replace === 'function' ? regex.replace.bind(env) : regex.replace);
             }
         }
     }

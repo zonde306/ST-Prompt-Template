@@ -19,7 +19,7 @@ export async function handleInitialVariables(env: Record<string, unknown>, entri
             (e.comment.startsWith('[InitialVariables]') || e.decorators.includes('@@initial_variables'))
         )
         .map(async(x) => {
-            const content = await evalTemplate(applyRegex.call(env, substituteParams(x.content)), env);
+            const content = await evalTemplate(applyRegex(env, substituteParams(x.content)), env);
             let data = {};
             try {
                 data = JSON.parse(content);

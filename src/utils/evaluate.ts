@@ -81,7 +81,7 @@ export async function processWorldinfoEntities(
     let prompt = '';
     for (const data of worldInfoData) {
         let result = await evalTemplateHandler(
-            applyRegex.call(
+            applyRegex(
                 env,
                 substituteParams(data.content),
                 {

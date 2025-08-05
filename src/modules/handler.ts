@@ -160,7 +160,7 @@ async function handleGenerateAfter(data: GenerateAfterData) {
 
         if (typeof message.content === 'string') { // Plain text message
             const prompt = await evalTemplateHandler(
-                applyRegex.call(env, message.content, { generate: true }, { role: message.role, worldinfo: false }),
+                applyRegex(env, message.content, { generate: true }, { role: message.role, worldinfo: false }),
                 env,
                 `message #${idx + 1}(${message.role})`,
                 {
@@ -185,7 +185,7 @@ async function handleGenerateAfter(data: GenerateAfterData) {
                 // OAI format
                 if (content.type === 'text') {
                     const prompt = await evalTemplateHandler(
-                        applyRegex.call(env, content.text, { generate: true }, { role: message.role, worldinfo: false }),
+                        applyRegex(env, content.text, { generate: true }, { role: message.role, worldinfo: false }),
                         env,
                         `message #${idx + 1}(${message.role})`,
                         {
@@ -306,11 +306,11 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
     if (!isDryRun && settings.raw_message_evaluation_enabled) {
         env.runType = 'render_permanent';
         const newContent = await evalTemplateHandler(
-            escapeReasoningBlocks(applyRegex.call(
+            escapeReasoningBlocks(applyRegex(
                 env,
                 message.mes,
                 {
-                    message: true
+                    message: true,
                 },
                 {
                     user: message.is_user,
@@ -354,7 +354,7 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
     };
 
     let newContent = await evalTemplateHandler(
-        escapeReasoningBlocks(unescapeHtmlEntities(removeHtmlTagsInsideBlock(applyRegex.call(
+        escapeReasoningBlocks(unescapeHtmlEntities(removeHtmlTagsInsideBlock(applyRegex(
             env,
             content,
             { message: true },
