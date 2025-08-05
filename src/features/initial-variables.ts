@@ -15,7 +15,7 @@ export async function handleInitialVariables(env: Record<string, unknown>, entri
     const firstMessage: Message = chat[0];
     await Promise.all(entries
         .filter(e =>
-            e.disable === settings.invert_enabled &&
+            (e.disable === settings.invert_enabled || e.decorators.includes('@@always_enabled')) &&
             (e.comment.startsWith('[InitialVariables]') || e.decorators.includes('@@initial_variables'))
         )
         .map(async(x) => {

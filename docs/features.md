@@ -415,7 +415,7 @@ When enabled, the console outputs extensive debug information.
 - When enabled:  
 	
 > Special entries are processed **only when disabled**
-	
+
 - When disabled:  
 	
 	> Special entries are processed **only when enabled**
@@ -513,6 +513,7 @@ Lore book entry content...
 - `@@render_after`: Equivalent to `[RENDER:AFTER]`
 - `@@dont_preload`: Skip processing when opening character cards
 - `@@initial_variables`: Equivalent to `[InitialVariables]`
+- `@@always_enabled`: used for special entries such as `[GENERATE]`, `[RENDE]`, and `[InitialVariables]` to force the entry to be enabled
 
 **Example (status bar):**
 ```

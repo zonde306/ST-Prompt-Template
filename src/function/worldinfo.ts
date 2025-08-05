@@ -692,6 +692,7 @@ const KNOWN_DECORATORS = [
     '@@render_after',
     '@@dont_preload',
     '@@initial_variables',
+    '@@always_enabled',
 ];
 
 /**

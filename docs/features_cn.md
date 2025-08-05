@@ -123,7 +123,7 @@
    - 系统会遍历所有消息内容
    - 当消息内容匹配指定的正则表达式时，会执行对应的世界书条目
 - 匹配的内容会注入到对应消息之前
-   
+  
 3. **可用变量**:
    - `matched_message`: 匹配的消息内容
    - `matched_message_index`: 匹配消息的索引
@@ -708,6 +708,7 @@ Q: 变化后的好感度是多少？
 - `@@render_after`：相当于`[RENDER:AFTER]`
 - `@@dont_preload`：不要在打开角色卡时处理这个条目
 - `@@initial_variables`：相当于`[InitialVariables]`
+- `@@always_enabled`：用于`[GENERATE]`、`[RENDE]`和`[InitialVariables]`等特殊条目，强制启用该条目
 
 例如，状态：
 

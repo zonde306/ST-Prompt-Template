@@ -56,25 +56,27 @@ export async function evalTemplateHandler(content: string,
  * 
  * @param env Execution Context, see prepareContext
  * @param prefix WI entry prefix
- * @param keywords Content used to activate WI entry
+ * @param content Content used to activate WI entry
  * @param options EJS options
  * @returns The result after all WI entries come out
  */
 export async function processWorldinfoEntities(
     env: Record<string, unknown>,
     prefix: string,
-    keywords: string = '',
+    content: string = '',
     options: EvalTemplateOptions & { msgId?: number, decorators?: string } = {}) {
     const allEntries = await getEnabledWorldInfoEntries();
     const worldInfoData = selectActivatedEntries(
         allEntries.filter(x =>
-            x.disable === settings.invert_enabled &&
             (
+                x.disable === settings.invert_enabled ||
+                x.decorators?.includes('@@always_enabled')
+            ) && (
                 x.comment.startsWith(prefix) ||
-                x.decorators.includes(options.decorators ?? 'EMPTY'
-
-            ))),
-        keywords,
+                x.decorators.includes(options.decorators ?? 'EMPTY')
+            )
+        ),
+        content,
         { vectorized: false }
     );
 
@@ -85,8 +87,8 @@ export async function processWorldinfoEntities(
                 env,
                 substituteParams(data.content),
                 {
-                    generate: prefix.startsWith('[GENERATE'),
-                    message: prefix.startsWith('[RENDER'),
+                    generate: prefix.startsWith('[GENERATE') || options.decorators?.includes('@@generate_before') || options.decorators?.includes('@@generate_after') || false,
+                    message: prefix.startsWith('[RENDER') || options.decorators?.includes('@@render_before') || options.decorators?.includes('@@render_after') || false,
                 },
                 {
                     worldinfo: true,
