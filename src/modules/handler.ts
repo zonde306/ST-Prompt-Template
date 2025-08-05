@@ -520,7 +520,7 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
     }
 }
 
-async function handleRefreshWorldInfo(world: string, data: LoreBook) {
+async function handleRefreshWorldInfo(world: string, _data: LoreBook) {
     if (settings.enabled === false)
         return;
     if (settings.preload_worldinfo_enabled === false)
@@ -535,13 +535,7 @@ async function handleRefreshWorldInfo(world: string, data: LoreBook) {
     if (!enabled.includes(world))
         return;
 
-    // fix missing fields
-    const worldInfoEntries = Object.values(data.entries)
-        .map(x => {
-            const [decorators, content] = parseDecorators(x.content);
-            return { ...x, decorators, content, world };
-        });
-    
+    const worldInfoEntries = await getWorldInfoData(world);
     console.debug(worldInfoEntries);
 
     const worldInfoData = worldInfoEntries
