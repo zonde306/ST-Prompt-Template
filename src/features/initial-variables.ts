@@ -1,11 +1,11 @@
-import { getEnabledWorldInfoEntries, WorldInfoData } from "../function/worldinfo";
+import { getEnabledWorldInfoEntries, WorldInfoEntry } from "../function/worldinfo";
 import { chat, substituteParams } from "../../../../../../script.js";
 import { Message } from "../modules/defines";
 import { settings } from "../modules/ui";
 import { applyRegex } from "../function/regex";
 import { evalTemplate } from "../function/ejs";
 
-export async function handleInitialVariables(env: Record<string, unknown>, entries?: WorldInfoData[]) {
+export async function handleInitialVariables(env: Record<string, unknown>, entries?: WorldInfoEntry[]) {
     if (chat[0] == null)
         return;
 

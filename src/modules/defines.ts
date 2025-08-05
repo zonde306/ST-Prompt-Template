@@ -1,5 +1,5 @@
 import { ReasoningType } from "../../../../../reasoning.js";
-import { WorldInfoData } from "../function/worldinfo.js";
+import { WorldInfoEntry } from "../function/worldinfo.js";
 
 type TextContent = {
     type: "text";
@@ -149,8 +149,8 @@ export interface GenerateAfterData {
 }
 
 export interface WorldInfoLoaded {
-    globalLore: WorldInfoData[];
-    characterLore: WorldInfoData[];
-    chatLore: WorldInfoData[];
-    personaLore: WorldInfoData[];
+    globalLore: WorldInfoEntry[];
+    characterLore: WorldInfoEntry[];
+    chatLore: WorldInfoEntry[];
+    personaLore: WorldInfoEntry[];
 }

@@ -1,6 +1,6 @@
 import { EvalTemplateOptions, getSyntaxErrorInfo, evalTemplate } from '../function/ejs';
 import { settings } from '../modules/ui';
-import { selectActivatedEntries, getEnabledWorldInfoEntries } from '../function/worldinfo';
+import { selectActivatedEntries, getEnabledWorldInfoEntries, WorldInfoEntry } from '../function/worldinfo';
 import { chat, messageFormatting, substituteParams } from '../../../../../../script.js';
 import { applyRegex } from '../function/regex';
 import { copyText } from '../../../../../utils.js';
@@ -48,6 +48,22 @@ export async function evalTemplateHandler(content: string,
 }
 
 /**
+ * The function for specifying EJS processing options
+ * @param comment WI entries title
+ * @param decorator WI entries decorator
+ * @param msgId message index
+ * @param entries WorldInfo entries list
+ * @param content Content for activation
+ */
+interface EvaluateWorldEntitiesOptions {
+    comment?: string;
+    decorator?: string;
+    msgId?: number;
+    entries?: WorldInfoEntry[];
+    content?: string | null;
+}
+
+/**
  * According to the currently enabled WI,
  * select all entries with the specified prefix,
  * perform activation calculations with keywords,
@@ -55,28 +71,26 @@ export async function evalTemplateHandler(content: string,
  * and return the processing results
  * 
  * @param env Execution Context, see prepareContext
- * @param prefix WI entry prefix
- * @param content Content used to activate WI entry
  * @param options EJS options
  * @returns The result after all WI entries come out
  */
-export async function processWorldinfoEntities(
+export async function evaluateWIEntities(
     env: Record<string, unknown>,
-    prefix: string,
-    content: string = '',
-    options: EvalTemplateOptions & { msgId?: number, decorators?: string } = {}) {
-    const allEntries = await getEnabledWorldInfoEntries();
+    options: EvalTemplateOptions & EvaluateWorldEntitiesOptions = {}) {
+    const allEntries = options.entries ?? await getEnabledWorldInfoEntries();
     const worldInfoData = selectActivatedEntries(
         allEntries.filter(x =>
             (
                 x.disable === settings.invert_enabled ||
                 x.decorators?.includes('@@always_enabled')
             ) && (
-                x.comment.startsWith(prefix) ||
-                x.decorators.includes(options.decorators ?? 'EMPTY')
+                x.comment.startsWith(options.comment ?? x.comment + ' ') ||
+                x.decorators.includes(options.decorator ?? ' ')
+            ) && (
+                !x.decorators.includes('@@only_preload')
             )
         ),
-        content,
+        options.content ?? '',
         { vectorized: false }
     );
 
@@ -87,8 +101,8 @@ export async function processWorldinfoEntities(
                 env,
                 substituteParams(data.content),
                 {
-                    generate: prefix.startsWith('[GENERATE') || options.decorators?.includes('@@generate_before') || options.decorators?.includes('@@generate_after') || false,
-                    message: prefix.startsWith('[RENDER') || options.decorators?.includes('@@render_before') || options.decorators?.includes('@@render_after') || false,
+                    generate: options.comment?.startsWith('[GENERATE') || options.decorator?.includes('@@generate') || false,
+                    message: options.comment?.startsWith('[RENDER') || options.decorator?.includes('@@render') || false,
                 },
                 {
                     worldinfo: true,
@@ -121,7 +135,7 @@ export async function processWorldinfoEntities(
     }
 
     if (settings.debug_enabled)
-        console.debug(`[Prompt Template] ${prefix} worldinfo templates applied.\n`, prompt, '\n', worldInfoData);
+        console.debug(`[Prompt Template] ${options.comment}/${options.decorator} worldinfo templates applied.\n`, prompt, '\n', worldInfoData);
 
     return prompt;
 }

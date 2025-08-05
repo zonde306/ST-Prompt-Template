@@ -11,7 +11,8 @@ export async function handleInjectPrompt(data: GenerateAfterData, env: Record<st
     const injectWorldInfoData = (await getEnabledWorldInfoEntries())
         .filter(x =>
             x.comment.startsWith('@INJECT') &&
-            (x.disable === settings.invert_enabled || x.decorators?.includes('@@always_enabled'))
+            (x.disable === settings.invert_enabled || x.decorators.includes('@@always_enabled')) &&
+            !x.decorators.includes('@@only_preload')
         );
 
     if (injectWorldInfoData && injectWorldInfoData.length > 0) {

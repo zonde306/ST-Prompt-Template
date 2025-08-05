@@ -42,7 +42,7 @@ interface WorldInfoFilter {
     tags: string[];
 }
 
-export interface WorldInfoData {
+export interface WorldInfoEntry {
     uid: number;
     key: string[];
     keysecondary: string[];
@@ -97,7 +97,7 @@ export interface WorldInfoData {
 }
 
 export interface LoreBook {
-    entries: Record<string, WorldInfoData>;
+    entries: Record<string, WorldInfoEntry>;
 }
 
 export interface ActivateWorldInfoCondition {
@@ -106,7 +106,7 @@ export interface ActivateWorldInfoCondition {
     vectorized?: boolean;
 }
 
-let activatedWorldEntries = new Map<string, WorldInfoData>();
+let activatedWorldEntries = new Map<string, WorldInfoEntry>();
 
 /**
  * Activate the specified WI entry
@@ -115,7 +115,7 @@ let activatedWorldEntries = new Map<string, WorldInfoData>();
  * @param force force activation entry
  * @returns WI entry
  */
-export async function activateWorldInfo(world : string | RegExp | number, uid: string | RegExp | number, force?: boolean): Promise<WorldInfoData | null>;
+export async function activateWorldInfo(world : string | RegExp | number, uid: string | RegExp | number, force?: boolean): Promise<WorldInfoEntry | null>;
 
 /**
  * Activate the specified WI entry
@@ -123,9 +123,9 @@ export async function activateWorldInfo(world : string | RegExp | number, uid: s
  * @param force force activation entry
  * @returns WI entry
  */
-export async function activateWorldInfo(uid: string | RegExp | number, force?: boolean): Promise<WorldInfoData | null>;
+export async function activateWorldInfo(uid: string | RegExp | number, force?: boolean): Promise<WorldInfoEntry | null>;
 
-export async function activateWorldInfo(world : string | RegExp | number, uid?: string | RegExp | number | boolean, force?: boolean): Promise<WorldInfoData | null> {
+export async function activateWorldInfo(world : string | RegExp | number, uid?: string | RegExp | number | boolean, force?: boolean): Promise<WorldInfoEntry | null> {
     // @ts-expect-error: overload
     const entry = await getWorldInfoEntry(world, typeof uid === 'boolean' ? undefined : uid);
     if(entry) {
@@ -176,7 +176,7 @@ export function deactivateActivateWorldInfo() {
     activatedWorldEntries.clear();
 }
 
-export function getActivateWorldInfo(): WorldInfoData[] {
+export function getActivateWorldInfo(): WorldInfoEntry[] {
     return Array.from(activatedWorldEntries.values());
 }
 
@@ -185,7 +185,7 @@ export function getActivateWorldInfo(): WorldInfoData[] {
  * @param name WI name
  * @returns WI entries
  */
-export async function getWorldInfoData(name?: string): Promise<WorldInfoData[]> {
+export async function getWorldInfoData(name?: string): Promise<WorldInfoEntry[]> {
     // @ts-expect-error
     const lore = (name || characters[this_chid]?.data?.extensions?.world || power_user.persona_description_lorebook || chat_metadata[METADATA_KEY] || '') as string;
     const lorebook = await loadWorldInfo(lore) as LoreBook;
@@ -223,16 +223,16 @@ export async function getWorldInfoTitles(name?: string): Promise<string[]> {
  * @param title entry name
  * @returns entry data
  */
-export async function getWorldInfoEntry(name: string, title: string | RegExp | number): Promise<WorldInfoData | null>;
+export async function getWorldInfoEntry(name: string, title: string | RegExp | number): Promise<WorldInfoEntry | null>;
 
 /**
  * Get the specified WI entry data
  * @param title entry name
  * @returns entry data
  */
-export async function getWorldInfoEntry(title: string | RegExp | number): Promise<WorldInfoData | null>;
+export async function getWorldInfoEntry(title: string | RegExp | number): Promise<WorldInfoEntry | null>;
 
-export async function getWorldInfoEntry(name: string | RegExp | number, title?: string | RegExp | number): Promise<WorldInfoData | null> {
+export async function getWorldInfoEntry(name: string | RegExp | number, title?: string | RegExp | number): Promise<WorldInfoEntry | null> {
     let entries = [];
     if(title != null) {
         entries = await getWorldInfoData(name as string);
@@ -296,10 +296,10 @@ export async function getWorldInfoActivatedEntries(name: string,
  * @returns WI entries
  */
 export function selectActivatedEntries(
-    entries: WorldInfoData[],
+    entries: WorldInfoEntry[],
     keywords: string | string[],
-    condition: ActivateWorldInfoCondition = {}) : WorldInfoData[] {
-    let activated: Set<WorldInfoData> = new Set<WorldInfoData>();
+    condition: ActivateWorldInfoCondition = {}) : WorldInfoEntry[] {
+    let activated: Set<WorldInfoEntry> = new Set<WorldInfoEntry>();
     const trigger = _.castArray(keywords).join('\n\n') as string;
     for (const data of entries) {
         if(condition.constant != null && data.constant !== condition.constant)
@@ -328,6 +328,11 @@ export function selectActivatedEntries(
 
         if(data.decorators.includes('@@dont_activate')) {
             // suppressed by @@dont_activate decorator
+            continue;
+        }
+
+        if(data.decorators.includes('@@only_preload')) {
+            // suppressed by @@only_preload decorator
             continue;
         }
 
@@ -386,8 +391,8 @@ export function selectActivatedEntries(
     // Inclusion Group
     const grouped = _.groupBy(
         Array.from(activated),
-        (data: WorldInfoData) => data.group
-    ) as { [key: string]: WorldInfoData[] };
+        (data: WorldInfoEntry) => data.group
+    ) as { [key: string]: WorldInfoEntry[] };
     const ungrouped = grouped[''] || [];
 
     // No grouping required
@@ -396,7 +401,7 @@ export function selectActivatedEntries(
     }
 
     // Select the best match based on grouping
-    let matched: WorldInfoData[] = [];
+    let matched: WorldInfoEntry[] = [];
     for (const [group, datas] of Object.entries(grouped)) {
         if (group === '') continue;
 
@@ -406,9 +411,9 @@ export function selectActivatedEntries(
         }
 
         // Group prioritization
-        const usePrioritize = datas.filter((data: WorldInfoData) => data.groupOverride);
+        const usePrioritize = datas.filter((data: WorldInfoEntry) => data.groupOverride);
         if (usePrioritize.length > 0) {
-            const orders = datas.map((data: WorldInfoData) => data.order);
+            const orders = datas.map((data: WorldInfoEntry) => data.order);
             const top = Math.min(...orders);
             if (top) {
                 matched.push(datas[Math.max(orders.findIndex(order => order <= top), 0)]);
@@ -444,13 +449,13 @@ export function selectActivatedEntries(
 }
 
 // Ignore Case
-function transformString(str: string, entry: WorldInfoData) {
+function transformString(str: string, entry: WorldInfoEntry) {
     const caseSensitive = entry.caseSensitive ?? world_info_case_sensitive;
     return caseSensitive ? str : str.toLowerCase();
 }
 
 // Keyword matching
-function matchKeys(haystack: string, needle: string, entry: WorldInfoData) {
+function matchKeys(haystack: string, needle: string, entry: WorldInfoEntry) {
     const keyRegex = parseRegexFromString(needle);
     if (keyRegex) {
         return keyRegex.test(haystack);
@@ -479,7 +484,7 @@ function matchKeys(haystack: string, needle: string, entry: WorldInfoData) {
 }
 
 // Group Scoring
-function getScore(haystack: string, entry: WorldInfoData) {
+function getScore(haystack: string, entry: WorldInfoEntry) {
     const bufferState = haystack;
     let numberOfPrimaryKeys = 0;
     let numberOfSecondaryKeys = 0;
@@ -619,9 +624,9 @@ export function getEnabledLoreBooks(
 export async function getEnabledWorldInfoEntries(
     chara : boolean = true, global : boolean = true,
     persona : boolean = true, charaExtra : boolean = true,
-    chat: boolean = true) : Promise<WorldInfoData[]> {
+    chat: boolean = true) : Promise<WorldInfoEntry[]> {
     
-    let results : WorldInfoData[] = [];
+    let results : WorldInfoEntry[] = [];
     const lorebooks = getEnabledLoreBooks(chara, global, persona, charaExtra, chat);
     for (const book of lorebooks) {
         const worldInfo = await getWorldInfoData(book);
@@ -643,12 +648,12 @@ const DEPTH_MAPPING = {
     [world_info_position.ANBottom]: -1, // Bottom of Author's Note
 };
 
-function getWorldInfoSorter(entries: WorldInfoData[]) {
-    return (a: WorldInfoData, b: WorldInfoData) => worldInfoSorter(a, b, Math.max(...entries.map(x => x.position === world_info_position.atDepth ? x.depth : 0)));
+function getWorldInfoSorter(entries: WorldInfoEntry[]) {
+    return (a: WorldInfoEntry, b: WorldInfoEntry) => worldInfoSorter(a, b, Math.max(...entries.map(x => x.position === world_info_position.atDepth ? x.depth : 0)));
 }
 
-function worldInfoSorter(a: WorldInfoData, b: WorldInfoData, top: number = DEFAULT_DEPTH) {
-    function calcDepth(entry: WorldInfoData) {
+function worldInfoSorter(a: WorldInfoEntry, b: WorldInfoEntry, top: number = DEFAULT_DEPTH) {
+    function calcDepth(entry: WorldInfoEntry) {
         const offset = DEPTH_MAPPING[entry.position];
 
         // absolute depth
@@ -693,6 +698,7 @@ const KNOWN_DECORATORS = [
     '@@dont_preload',
     '@@initial_variables',
     '@@always_enabled',
+    '@@only_preload',
 ];
 
 /**
@@ -749,7 +755,7 @@ export function parseDecorators(content: string): [string[], string] {
     return [[], content];
 }
 
-export function isSpecialEntry(entry: WorldInfoData) : boolean {
+export function isSpecialEntry(entry: WorldInfoEntry, preload : boolean = false) : boolean {
     const title = entry.comment;
     if(title.startsWith('[GENERATE:') ||
         title.startsWith('[RENDER:') ||
@@ -761,6 +767,9 @@ export function isSpecialEntry(entry: WorldInfoData) : boolean {
     if(decorators.includes('@@generate') ||
         decorators.includes('@@render') ||
         decorators.includes('@@initial_variables'))
+        return true;
+    
+    if(!preload && decorators.includes('@@only_preload'))
         return true;
     
     return false;

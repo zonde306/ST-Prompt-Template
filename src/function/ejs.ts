@@ -2,7 +2,7 @@ import ejs from '../3rdparty/ejs.js';
 // @ts-expect-error
 import vm from 'vm-browserify';
 import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.js';
-import { getWorldInfoData, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries, selectActivatedEntries, activateWorldInfo, getWorldInfoEntry, WorldInfoData, activateWorldInfoByKeywords, getEnabledLoreBooks } from './worldinfo';
+import { getWorldInfoData, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries, selectActivatedEntries, activateWorldInfo, getWorldInfoEntry, WorldInfoEntry, activateWorldInfoByKeywords, getEnabledLoreBooks } from './worldinfo';
 import { allVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption } from './variables';
 import { getCharacterDefine, DEFAULT_CHAR_DEFINE, getCharacterData, getCharacterAvaterURL, getUserAvatarURL } from './characters';
 import { substituteParams, eventSource, this_chid, characters, chat_metadata, name1, name2, getCurrentChatId, chat } from '../../../../../../script.js';
@@ -297,7 +297,7 @@ async function boundedReadWorldinfo(this: Record<string, unknown>,
     worldinfoOrEntry: string,
     entryOrData: string | RegExp | number | Record<string, unknown> = {},
     data: Record<string, unknown> = {}): Promise<string> {
-    let wi : WorldInfoData | null = null;
+    let wi : WorldInfoEntry | null = null;
     if(_.isPlainObject(entryOrData)) {
         // @ts-expect-error: 2339
         wi = await getWorldInfoEntry(this.world_info?.world || '', worldinfoOrEntry);
