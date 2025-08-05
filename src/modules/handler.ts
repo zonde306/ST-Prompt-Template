@@ -538,7 +538,7 @@ async function handleRefreshWorldInfo(name: string, data: LoreBook) {
     const worldInfoData = Object.values(data.entries)
         .filter(data =>
             !data.disable &&
-            !data.decorators.includes('@@dont_preload') &&
+            !data.decorators?.includes('@@dont_preload') &&
             !isSpecialEntry(data, true)
         );
     
