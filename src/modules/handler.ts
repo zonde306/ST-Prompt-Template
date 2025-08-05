@@ -541,6 +541,8 @@ async function handleRefreshWorldInfo(world: string, data: LoreBook) {
             const [decorators, content] = parseDecorators(x.content);
             return { ...x, decorators, content, world };
         });
+    
+    console.debug(worldInfoEntries);
 
     const worldInfoData = worldInfoEntries
         .filter(data =>
