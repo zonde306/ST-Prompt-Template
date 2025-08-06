@@ -185,7 +185,7 @@ export function getActivateWorldInfo(): WorldInfoEntry[] {
  * @param name WI name
  * @returns WI entries
  */
-export async function getWorldInfoData(name?: string): Promise<WorldInfoEntry[]> {
+export async function getWorldInfoEntries(name?: string): Promise<WorldInfoEntry[]> {
     // @ts-expect-error
     const lore = (name || characters[this_chid]?.data?.extensions?.world || power_user.persona_description_lorebook || chat_metadata[METADATA_KEY] || '') as string;
     const lorebook = await loadWorldInfo(lore) as LoreBook;
@@ -213,8 +213,8 @@ export async function getWorldInfoData(name?: string): Promise<WorldInfoEntry[]>
  * @param name WI name
  * @returns WI entry names
  */
-export async function getWorldInfoTitles(name?: string): Promise<string[]> {
-    return (await getWorldInfoData(name)).map(data => data.comment);
+export async function getWorldInfoComments(name?: string): Promise<string[]> {
+    return (await getWorldInfoEntries(name)).map(data => data.comment);
 }
 
 /**
@@ -235,9 +235,9 @@ export async function getWorldInfoEntry(title: string | RegExp | number): Promis
 export async function getWorldInfoEntry(name: string | RegExp | number, title?: string | RegExp | number): Promise<WorldInfoEntry | null> {
     let entries = [];
     if(title != null) {
-        entries = await getWorldInfoData(name as string);
+        entries = await getWorldInfoEntries(name as string);
     } else {
-        entries = await getWorldInfoData();
+        entries = await getWorldInfoEntries();
         title = name;
     }
 
@@ -283,7 +283,7 @@ export async function getWorldInfoEntryContent(name: string | RegExp | number, t
 export async function getWorldInfoActivatedEntries(name: string,
     keywords: string | string[],
     condition: ActivateWorldInfoCondition = {}) {
-    const entries = await getWorldInfoData(name);
+    const entries = await getWorldInfoEntries(name);
     if (!entries) return [];
     return selectActivatedEntries(entries, keywords, condition);
 }
@@ -629,7 +629,7 @@ export async function getEnabledWorldInfoEntries(
     let results : WorldInfoEntry[] = [];
     const lorebooks = getEnabledLoreBooks(chara, global, persona, charaExtra, chat);
     for (const book of lorebooks) {
-        const worldInfo = await getWorldInfoData(book);
+        const worldInfo = await getWorldInfoEntries(book);
         if (worldInfo?.length > 0) {
             results = results.concat(worldInfo);
         }

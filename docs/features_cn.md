@@ -101,7 +101,7 @@
 
 	> 只有在启用**立即加载世界书**才会生效
 	>
-	> 修改将会重新写入
+	> 修改将会重新写入，并覆盖之前的内容
 
 ### 正则表达式语法示例
 
@@ -569,7 +569,7 @@ line 3
 
 
 
-### 立即加载世界书
+立即加载世界书
 
 在打开角色卡/聊天后，立即加载所有启用的世界书，并对内容进行模板处理
 
@@ -702,13 +702,14 @@ Q: 变化后的好感度是多少？
 - `@@activate`：视为🔵条目
 - `@@dont_activate`：不要激活这个条目（会完全禁止激活，即使用`activewi`）
 - `@@message_formatting`：输出为HTML代码（仅限``[RENDER]`和`@@render`模式）
-- `@@generate_before`：相当于`[GENERATE:BEFORE]`
-- `@@generate_after`：相当于`[GENERATE:AFTER]`
-- `@@render_before`：相当于`[RENDER:BEFRE]`
-- `@@render_after`：相当于`[RENDER:AFTER]`
+- `@@generate_before`：相当于`[GENERATE:BEFORE]`（详见[内容注入](#内容注入)）
+- `@@generate_after`：相当于`[GENERATE:AFTER]`（详见[内容注入](#内容注入)）
+- `@@render_before`：相当于`[RENDER:BEFRE]`（详见[内容注入](#内容注入)）
+- `@@render_after`：相当于`[RENDER:AFTER]`（详见[内容注入](#内容注入)）
 - `@@dont_preload`：不要在打开角色卡时处理这个条目
-- `@@initial_variables`：相当于`[InitialVariables]`
+- `@@initial_variables`：相当于`[InitialVariables]`（详见[内容注入](#内容注入)）
 - `@@always_enabled`：用于`[GENERATE]`、`[RENDE]`和`[InitialVariables]`等特殊条目，强制启用该条目
+- `@@only_preload`：只在[立即加载世界书](#立即加载世界书)阶段启用该条目
 
 例如，状态：
 

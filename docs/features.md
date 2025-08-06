@@ -89,7 +89,7 @@ This feature is affected by **trigger strategy**, **order**, **inclusion groups*
 
 	> Only effective when **Immediate Lore Book Loading** is enabled  
 	>
-	> Modifications will trigger rewrites
+	> Modifications will be rewritten and overwrite previous content
 
 ---
 
@@ -507,15 +507,17 @@ Lore book entry content...
 - `@@activate`: Treat as 🔵 entry
 - `@@dont_activate`: Disable activation (fully blocked, even via `activewi`)
 - `@@message_formatting`: Output as HTML (only for `[RENDER]`/`@@render` modes)
-- `@@generate_before`: Equivalent to `[GENERATE:BEFORE]`
-- `@@generate_after`: Equivalent to `[GENERATE:AFTER]`
-- `@@render_before`: Equivalent to `[RENDER:BEFORE]`
-- `@@render_after`: Equivalent to `[RENDER:AFTER]`
-- `@@dont_preload`: Skip processing when opening character cards
-- `@@initial_variables`: Equivalent to `[InitialVariables]`
-- `@@always_enabled`: used for special entries such as `[GENERATE]`, `[RENDE]`, and `[InitialVariables]` to force the entry to be enabled
+- `@@generate_before`: Equivalent to `[GENERATE:BEFORE]`(see [Content Injection](#Content Injection) for details).
+- `@@generate_after`: Equivalent to `[GENERATE:AFTER]`(see [Content Injection](#Content Injection) for details).
+- `@@render_before`: Equivalent to `[RENDER:BEFORE]`(see [Content Injection](#Content Injection) for details).
+- `@@render_after`: Equivalent to `[RENDER:AFTER]`(see [Content Injection](#Content Injection) for details).
+- `@@dont_preload`: Don't process this entry when opening a character sheet.
+- `@@initial_variables`: Equivalent to `[InitialVariables]` (see [Content Injection](#Content Injection) for details).
+- `@@always_enabled`: For special entries like `[GENERATE]`, `[RENDE]`, and `[InitialVariables]`, this entry is forced to be enabled.
+- `@@only_preload`: Enable this entry only during the [Immediate Lore Book Loading](#Immediate Lore Book Loading) phase.
 
 **Example (status bar):**
+
 ```
 @@render_after
 @@message_formatting

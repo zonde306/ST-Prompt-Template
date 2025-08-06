@@ -5,7 +5,7 @@ import { eventSource, event_types, chat, messageFormatting, GenerateOptions, upd
 import { prepareContext } from '../function/ejs';
 import { STATE, checkAndSave } from '../function/variables';
 import { extension_settings } from '../../../../../extensions.js';
-import { getEnabledWorldInfoEntries, deactivateActivateWorldInfo, LoreBook, getEnabledLoreBooks, getActivateWorldInfo, isSpecialEntry, getWorldInfoData, parseDecorators } from '../function/worldinfo';
+import { getEnabledWorldInfoEntries, deactivateActivateWorldInfo, LoreBook, getEnabledLoreBooks, getActivateWorldInfo, isSpecialEntry, getWorldInfoEntries, parseDecorators } from '../function/worldinfo';
 import { getCharacterDefine } from '../function/characters';
 import { settings } from './ui';
 import { activateRegex, deactivateRegex, applyRegex } from '../function/regex';
@@ -535,7 +535,7 @@ async function handleRefreshWorldInfo(world: string, _data: LoreBook) {
     if (!enabled.includes(world))
         return;
 
-    const worldInfoEntries = await getWorldInfoData(world);
+    const worldInfoEntries = await getWorldInfoEntries(world);
     console.debug(worldInfoEntries);
 
     const worldInfoData = worldInfoEntries
@@ -558,7 +558,7 @@ async function handleRefreshWorldInfo(world: string, _data: LoreBook) {
     });
 
     console.debug(worldInfoData);
-    await handleInitialVariables(env, await getWorldInfoData(world));
+    await handleInitialVariables(env, await getWorldInfoEntries(world));
 
     let prompts = '';
 
