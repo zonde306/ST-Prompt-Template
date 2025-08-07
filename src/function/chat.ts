@@ -113,6 +113,20 @@ export function getChatMessages(startOrCount: number = chat.length,
 }
 
 /**
+ * Options for the matchChatMessages function
+ * @param start Start position
+ * @param end End position
+ * @param role Role for filtering messages
+ * @param and If true, only matches where all the patterns match
+ */
+interface GetChatMessageOptions {
+    start?: number;
+    end?: number;
+    role?: 'user' | 'assistant' | 'system';
+    and?: boolean;
+}
+
+/**
  * Checks if the given pattern is in chat messages
  * @see getChatMessages
  * 
@@ -120,8 +134,15 @@ export function getChatMessages(startOrCount: number = chat.length,
  * @param options Options for getChatMessages
  * @returns Returns true if found, false otherwise
  */
-export function matchChatMessages(pattern: string | RegExp, options : { start?: number, end?: number, role?: 'user' | 'assistant' | 'system' } = {}) {
+export function matchChatMessages(pattern: string | RegExp | string[] | RegExp[], options : GetChatMessageOptions = {}) {
     // @ts-expect-error
     const messages = getChatMessages(options.start ?? -2, options.end, options.role);
-    return messages.some(x => x.match(pattern));
+    if(!Array.isArray(pattern))
+        pattern = [ pattern ] as string[] | RegExp[];
+
+    return messages.some(x =>
+        options.and ?
+            (pattern as RegExp[] | string[]).every(y => x.match(y)) :
+            (pattern as RegExp[] | string[]).some(y => x.match(y))
+    );
 }

@@ -420,11 +420,24 @@ function getPromptsInjected(key, postprocess = []);
 function hasPromptsInjected(key);
 
 /**
- * Checks if the given pattern is in chat messages
- * @see getChatMessages
- * @param pattern {(string|RegExp)} Search content
- * @param options {{ start = -2, end = null, role = null }} Options for getChatMessages
- * @returns {boolean} Returns true if found, false otherwise
+ * Options for the matchChatMessages function
+ * @interface GetChatMessageOptions
+ * @property {number} [start] - Start position (inclusive index)
+ * @property {number} [end] - End position (exclusive index)
+ * @property {'user'|'assistant'|'system'} [role] - Role filter for messages
+ * @property {boolean} [and] - When true, requires all patterns to match (for array patterns)
+ */
+
+/**
+ * Checks if the given pattern exists in chat messages
+ * @see getChatMessages - Related message retrieval function
+ * 
+ * @param {string|RegExp|(string|RegExp)[]} pattern - Search pattern(s) to match
+ *   - Single string: exact substring match
+ *   - Single RegExp: regex test
+ *   - Array: matches any pattern in array (use `and: true` for all patterns)
+ * @param {GetChatMessageOptions} [options={}] - Configuration options
+ * @returns {boolean} True if pattern(s) found in messages, false otherwise
  */
 function matchChatMessages(pattern, options = {});
 ```

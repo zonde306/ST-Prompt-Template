@@ -418,11 +418,23 @@ function getPromptsInjected(key, postprocess = []);
 function hasPromptsInjected(key);
 
 /**
- * 在楼层消息里查找是否存在指定内容
+ * @interface GetChatMessageOptions
+ * @property {number} [start=-2] - 开始位置
+ * @property {number} [end=null] - 结束位置
+ * @property {'user'|'assistant'|'system'} [role=null] - 仅选择指定角色
+ * @property {boolean} [and] - 如果 pattern 是数组，是否需要完全匹配，否则为匹配任意一个
+ */
+
+/**
+ * 从楼层消息中查找是否存在指定内容
  * @see getChatMessages
- * @param pattern {(string|RegExp)} 要查找的内容
- * @param options {{ start = -2, end = null, role = null }} 查找选项
- * @returns {boolean} 找到返回true，否则false
+ * 
+ * @param {string|RegExp|(string|RegExp)[]} pattern - 搜索关键字
+ *   - 单个字符串: 字符串搜索
+ *   - 单个正则: 正则搜索
+ *   - 数组: 根据 options.and 决定是匹配一个或者是完全匹配
+ * @param {GetChatMessageOptions} [options={}] - 选项
+ * @returns {boolean} 符合匹配项则返回true，否则false
  */
 function matchChatMessages(pattern, options = {});
 
