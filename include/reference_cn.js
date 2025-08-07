@@ -418,6 +418,15 @@ function getPromptsInjected(key, postprocess = []);
 function hasPromptsInjected(key);
 
 /**
+ * 在楼层消息里查找是否存在指定内容
+ * @see getChatMessages
+ * @param pattern {(string|RegExp)} 要查找的内容
+ * @param options {{ start = -2, end = null, role = null }} 查找选项
+ * @returns {boolean} 找到返回true，否则false
+ */
+function matchChatMessages(pattern, options = {});
+
+/**
  * 全部变量合集
  * 根据以下顺序(优先级)合并变量, 高优先级覆盖低优先级的同名变量:
  * 1.消息变量(楼层号从末尾到开头)

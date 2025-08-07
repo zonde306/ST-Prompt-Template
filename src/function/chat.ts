@@ -111,3 +111,17 @@ export function getChatMessages(startOrCount: number = chat.length,
 
     return [];
 }
+
+/**
+ * Checks if the given pattern is in chat messages
+ * @see getChatMessages
+ * 
+ * @param pattern Search content
+ * @param options Options for getChatMessages
+ * @returns Returns true if found, false otherwise
+ */
+export function matchChatMessages(pattern: string | RegExp, options : { start?: number, end?: number, role?: 'user' | 'assistant' | 'system' } = {}) {
+    // @ts-expect-error
+    const messages = getChatMessages(options.start ?? -2, options.end, options.role);
+    return messages.some(x => x.match(pattern));
+}

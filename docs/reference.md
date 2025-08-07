@@ -418,6 +418,15 @@ function getPromptsInjected(key, postprocess = []);
  * @returns {boolean} - Whether prompt injection exists
  */
 function hasPromptsInjected(key);
+
+/**
+ * Checks if the given pattern is in chat messages
+ * @see getChatMessages
+ * @param pattern {(string|RegExp)} Search content
+ * @param options {{ start = -2, end = null, role = null }} Options for getChatMessages
+ * @returns {boolean} Returns true if found, false otherwise
+ */
+function matchChatMessages(pattern, options = {});
 ```
 
 > `flags` types:

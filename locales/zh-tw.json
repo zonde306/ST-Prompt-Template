@@ -1,5 +1,5 @@
 {
-	"Prompt template settings": "提示詞模板設置",
+	"Prompt template settings": "提示詞模板",
 	"[PT] Enable": "啟用擴展",
 	"[PT] Enable Generate-time evaluation": "啟用生成時提示詞處理功能",
 	"[PT] Enable [GENERATE:BEFORE] evaluation": "允許使用 [GENERATE:BEFORE] 將提示詞插入到生成輸入頂部",

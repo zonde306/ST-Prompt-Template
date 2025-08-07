@@ -8,7 +8,7 @@ import { getCharacterDefine, DEFAULT_CHAR_DEFINE, getCharacterData, getCharacter
 import { substituteParams, eventSource, this_chid, characters, chat_metadata, name1, name2, getCurrentChatId, chat } from '../../../../../../script.js';
 import { getPresetPromptsContent } from './presets';
 import { getQuickReply, getQuickReplyData } from './quickreply';
-import { getChatMessage, getChatMessages } from './chat';
+import { getChatMessage, getChatMessages, matchChatMessages } from './chat';
 import { fakerEnv } from './faker';
 import check from 'syntax-error';
 import { settings } from '../modules/ui';
@@ -58,6 +58,7 @@ const SHARE_CONTEXT: Record<string, unknown> = {
     activateWorldInfoByKeywords,
     getEnabledLoreBooks,
     hasPromptsInjected,
+    matchChatMessages,
 };
 
 const CODE_TEMPLATE = `

@@ -417,6 +417,15 @@ function getPromptsInjected(key, postprocess = []);
 function hasPromptsInjected(key);
 
 /**
+ * Checks if the given pattern is in chat messages
+ * @see getChatMessages
+ * @param pattern {(string|RegExp)} Search content
+ * @param options {{ start = -2, end = null, role = null }} Options for getChatMessages
+ * @returns {boolean} Returns true if found, false otherwise
+ */
+function matchChatMessages(pattern, options = {});
+
+/**
  * Aggregated variables collection
  * Merges variables in the following priority order (highest to lowest):
  * 1. Message variables (from latest to earliest floor)

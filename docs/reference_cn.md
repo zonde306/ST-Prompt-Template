@@ -419,6 +419,15 @@ function getPromptsInjected(key, postprocess = []);
  * @returns {boolean} - 提示词注入是否存在
  */
 function hasPromptsInjected(key);
+
+/**
+ * 在楼层消息里查找是否存在指定内容
+ * @see getChatMessages
+ * @param pattern {(string|RegExp)} 要查找的内容
+ * @param options {{ start = -2, end = null, role = null }} 查找选项
+ * @returns {boolean} 找到返回true，否则false
+ */
+function matchChatMessages(pattern, options = {});
 ```
 
 > `flags` 类型:
