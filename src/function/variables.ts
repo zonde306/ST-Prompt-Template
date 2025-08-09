@@ -13,7 +13,7 @@ export let STATE = {
 /**
  * Combine all variables
  * @param end Maximum number of combined messages
- * @returns variables tree
+ * @returns variables object
  */
 export function allVariables(end? : number) : Record<string, unknown> {
     return _.mergeWith(
@@ -31,6 +31,10 @@ export function allVariables(end? : number) : Record<string, unknown> {
 
 /**
  * messages filter
+ * 
+ * @property role - Filter by message role
+ * @property id - Filter by message ID
+ * @property swipe_id - Filter by message swipe ID
  */
 export interface MessageFilter {
     role?: 'system' | 'user' | 'assistant' | 'any';
@@ -38,6 +42,18 @@ export interface MessageFilter {
     swipe_id?: number;
 }
 
+/**
+ * options for setVariable
+ * 
+ * @property index - Index for array/object variable
+ * @property scope - Where to write the variable
+ * @property flags - Variable setting rules
+ * @property results - Return old/new value
+ * @property withMsg - messages filter
+ * @property merge - Merge object values
+ * @property dryRun - Always allow setting variables
+ * @property noCache - Do not query cache
+ */
 export interface SetVarOption {
     index?: number;
     scope?: 'global' | 'local' | 'message' | 'cache';
@@ -107,6 +123,15 @@ function evalFilter(filter? : MessageFilter, msgid? : number, swipeid?: number):
     return [message_id, swipe_id];
 }
 
+/**
+ * Setting variables
+ * 
+ * @param this Execution Environment
+ * @param key variable name
+ * @param value variable value
+ * @param options Options
+ * @returns The return value is determined by options.results
+ */
 export function setVariable(this : Record<string, unknown>, key : string, value : unknown,
                             options : SetVarOption = {}) {
     const { noCache } = options;
@@ -272,6 +297,16 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
     return newValue;
 }
 
+/**
+ * Options for getVariable
+ * 
+ * @property index - Index for array/object variable
+ * @property scope - Variable Type
+ * @property defaults - Default Value
+ * @property withMsg - Filter message by MessageFilter
+ * @property noCache - Ignore the cache and read the latest value
+ * @property clone - return cloned value instead of original value
+ */
 export interface GetVarOption {
     index?: number;
     scope?: 'global' | 'local' | 'message' | 'cache';
@@ -281,6 +316,13 @@ export interface GetVarOption {
     clone?: boolean;
 }
 
+/**
+ * Get variables
+ * @param this Execution Context
+ * @param key variable name
+ * @param options Options
+ * @returns variable value
+ */
 export function getVariable(this : Record<string, unknown>, key : string,
                             options : GetVarOption = {}) {
     const { noCache } = options;
@@ -345,6 +387,19 @@ export function getVariable(this : Record<string, unknown>, key : string,
     return _.get(STATE.cache, key, defaults);
 }
 
+/**
+ * Options for increaseVariable/decreaseVariable
+ * 
+ * @property index - Index for array/object variable
+ * @property inscope - Where to read variables from
+ * @property outscope - Where to write the variable
+ * @property flags - Flags of modify operations
+ * @property defaults - Value if variable is not exists
+ * @property dryRun - Always allow setting variables
+ * @property noCache - Ignore the cache and read the latest value
+ * @property min - Minimum value of assignment
+ * @property max - Maximum value of assignment
+ */
 export interface GetSetVarOption {
     index?: number;
     defaults?: number;
@@ -359,6 +414,14 @@ export interface GetSetVarOption {
     max?: number;
 }
 
+/**
+ * Add a variable
+ * @param this Execution Context
+ * @param key variable name
+ * @param value Increased value
+ * @param options Options
+ * @returns The return value is determined by options.results
+ */
 export function increaseVariable(this : Record<string, unknown>, key : string,
                                  value : number = 1, options : GetSetVarOption = {}) {
     const { noCache } = options;
@@ -387,6 +450,14 @@ export function increaseVariable(this : Record<string, unknown>, key : string,
     return undefined;
 }
 
+/**
+ * Decrease a variable
+ * @param this Execution Context
+ * @param key variable name
+ * @param value Decreased value
+ * @param options Options
+ * @returns The return value is determined by options.results
+ */
 export function decreaseVariable(this : Record<string, unknown>, key : string,
                                  value : number = 1, options : GetSetVarOption = {}) {
     if(this?.runID === undefined)
