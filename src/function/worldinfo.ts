@@ -143,7 +143,7 @@ export async function activateWorldInfo(world : string | RegExp | number, uid?: 
             triggers: force ? [] : entry.triggers,
             hash: force ? Math.random() + 1 : undefined, // fuck the hash
             content: force ? entry.content.replace("@@dont_activate", "") : entry.content,
-            ignoreBudget: !!force,
+            ignoreBudget: force || entry.ignoreBudget,
         });
         if(settings.debug_enabled) {
             if(uid != null && typeof uid !== 'boolean')
