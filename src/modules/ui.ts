@@ -20,6 +20,7 @@ const DEFAULT_SETTINGS : Record<string, { name: string, value: boolean | string 
     '#pt_cache_hasher': { name: 'cache_hasher', value: 'h32ToString' },
     '#pt_inject_loader_enabled': { name: 'inject_loader_enabled', value: false },
     '#pt_invert_enabled': { name: 'invert_enabled', value: true },
+    '#pt_chat_depth': { name: 'depth_limit', value: -1 },
 };
 
 interface EjsSettings extends Record<string, boolean | string | number> {
@@ -40,6 +41,7 @@ interface EjsSettings extends Record<string, boolean | string | number> {
     cache_hasher: string;
     inject_loader_enabled: boolean;
     invert_enabled: boolean;
+    depth_limit: number;
 };
 
 export const settings = {} as EjsSettings;

@@ -255,20 +255,20 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
 
     const start = Date.now();
 
-    if (message_id === '' || message_id === undefined || message_id === null) {
-        console.warn(`chat message message_id is empty`);
+    const message_idx = parseInt(message_id);
+    if (isNaN(message_idx) || message_idx < 0 || message_idx >= chat.length) {
+        console.warn(`[Prompt Template] chat message #${message_id} invalid`);
         return;
     }
 
-    const message_idx = parseInt(message_id);
-    if (isNaN(message_idx) || message_idx < 0 || message_idx >= chat.length) {
-        console.warn(`chat message #${message_id} invalid`);
+    if(settings.depth_limit > -1 && chat.length - message_idx - 1 > settings.depth_limit) {
+        console.debug(`[Prompt Template] Reached message limit ${settings.depth_limit} of message ${message_id}`);
         return;
     }
 
     const message: Message = chat[message_idx];
     if (!message) {
-        console.error(`chat message #${message_id} not found`);
+        console.error(`[Prompt Template] chat message #${message_id} not found`);
         return;
     }
 
@@ -276,7 +276,7 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
     const container = parent?.find('.mes_text');
     // don't render if the message is swping (with generating)
     if (!container?.text() || !message.mes || message.mes === '...' || message.mes === message.swipes?.[message.swipe_id - 1]) {
-        console.info(`chat message #${message_id}.${message.swipe_id} is generating`);
+        console.info(`[Prompt Template] chat message #${message_id}.${message.swipe_id} is generating`);
         return;
     }
 
