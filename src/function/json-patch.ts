@@ -1,8 +1,8 @@
-import * as jsonpatch from 'fast-json-patch';
+import { applyPatch } from 'fast-json-patch';
 import { setVariable, getVariable, SetVarOption } from './variables';
 
 export function jsonPatch<T>(doc: T, change: any[]) : T {
-    return jsonpatch.applyPatch(doc, change).newDocument;
+    return applyPatch(doc, change).newDocument;
 }
 
 export function patchVariables(
