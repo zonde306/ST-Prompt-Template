@@ -7,9 +7,10 @@ export function jsonPatch<T>(doc: T, change: any[]) : T {
 
 export function patchVariables(
     this: Record<string, unknown>,
+    key: string | null,
     change: any[],
     options: SetVarOption = {}
 ) {
-    const doc = getVariable.call(this, null);
-    return setVariable.call(this, null, jsonPatch(doc, change), options);
+    const doc = getVariable.call(this, key);
+    return setVariable.call(this, key, jsonPatch(doc, change), options);
 }
