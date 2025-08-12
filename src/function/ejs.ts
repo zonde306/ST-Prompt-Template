@@ -18,6 +18,7 @@ import { power_user } from '../../../../../power-user.js';
 import { METADATA_KEY } from '../../../../../world-info.js';
 import { hasher } from './hasher'
 import { getRegexedString, regex_placement } from '../../../../regex/engine.js';
+import { patchVariables, jsonPatch } from './json-patch';
 
 // @ts-expect-error: 7034
 import { groups, selected_group } from '../../../../../group-chats.js';
@@ -59,6 +60,7 @@ const SHARE_CONTEXT: Record<string, unknown> = {
     getEnabledLoreBooks,
     hasPromptsInjected,
     matchChatMessages,
+    jsonPatch,
 };
 
 const CODE_TEMPLATE = `
@@ -278,6 +280,7 @@ export async function prepareContext(end?: number, env: Record<string, unknown> 
         decLocalVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'local' }),
         decGlobalVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'global' }),
         decMessageVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'message' }),
+        patchVariables: patchVariables.bind(context),
         getqr: boundedQuickReply.bind(context),
         getQuickReply: boundedQuickReply.bind(context),
         evalTemplate: boundedEvalTemplate.bind(context),

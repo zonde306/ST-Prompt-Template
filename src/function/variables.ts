@@ -15,7 +15,7 @@ export let STATE = {
  * @param end Maximum number of combined messages
  * @returns variables object
  */
-export function allVariables(end? : number) : Record<string, unknown> {
+export function allVariables(end?: number): Record<string, unknown> {
     return _.mergeWith(
         {},
         // @ts-expect-error: 2339
@@ -24,8 +24,8 @@ export function allVariables(end? : number) : Record<string, unknown> {
         // @ts-expect-error: 2339
         chat_metadata.variables || {},
         ...chat.slice(0, end).map(msg => msg.variables?.[msg.swipe_id || 0] || {}),
-        { _trace_id : (STATE.traceId)++, _modify_id: 0 },
-        (_dst : unknown, src : unknown) => _.isArray(src) ? src : undefined,
+        { _trace_id: (STATE.traceId)++, _modify_id: 0 },
+        (_dst: unknown, src: unknown) => _.isArray(src) ? src : undefined,
     );
 }
 
@@ -72,23 +72,23 @@ export interface SetVarOption {
  * @param swipeid swipe ID of the current message ID
  * @returns [message_id, swipe_id] selected message ID and swipe ID
  */
-function evalFilter(filter? : MessageFilter, msgid? : number, swipeid?: number): [number?, number?] {
+function evalFilter(filter?: MessageFilter, msgid?: number, swipeid?: number): [number?, number?] {
     let message_id = -1;
-    if(filter?.id !== undefined) {
+    if (filter?.id !== undefined) {
         message_id = filter.id > -1 ? filter.id : chat.length + filter.id;
-    } else if(filter?.role !== undefined) {
+    } else if (filter?.role !== undefined) {
         message_id = chat.findLastIndex(msg =>
             (msg.is_system === (filter.role === 'system')) ||
             (msg.is_user === (filter.role === 'user')) ||
             (!msg.is_system && !msg.is_user && (filter.role === 'assistant')) ||
             (filter.role === 'any')
         );
-    } else if(msgid === undefined) {
+    } else if (msgid === undefined) {
         message_id = chat.findLastIndex(msg => !msg.is_user && !msg.is_system);
-        if(message_id === -1) {
+        if (message_id === -1) {
             console.warn(`No assistant message`);
             message_id = chat.findLastIndex(msg => msg.is_user);
-            if(message_id === -1) {
+            if (message_id === -1) {
                 console.warn(`No user message`);
                 message_id = chat.length - 1;
             }
@@ -97,28 +97,28 @@ function evalFilter(filter? : MessageFilter, msgid? : number, swipeid?: number):
         message_id = msgid;
     }
 
-    if(message_id < 0 || message_id >= chat.length) {
+    if (message_id < 0 || message_id >= chat.length) {
         console.warn(`No message found for filter: ${filter}`);
         return [undefined, undefined];
     }
 
     let swipe_id = 0;
-    if(filter?.swipe_id !== undefined)
+    if (filter?.swipe_id !== undefined)
         swipe_id = filter.swipe_id;
-    else if(swipeid !== undefined)
+    else if (swipeid !== undefined)
         swipe_id = swipeid;
     else
         swipe_id = chat[message_id]?.swipe_id || 0;
 
-    if(swipe_id < 0)
+    if (swipe_id < 0)
         swipe_id = (chat[message_id]?.swipes?.length || 0) + swipe_id;
 
-    if(chat[message_id]?.swipes?.[swipe_id] === undefined) {
+    if (chat[message_id]?.swipes?.[swipe_id] === undefined) {
         console.debug(`No swipe found for filter: ${filter}`);
         return [message_id, swipe_id];
     }
 
-    if(settings.debug_enabled)
+    if (settings.debug_enabled)
         console.debug(`Found message ${message_id} with swipe ${swipe_id} for filter: ${filter}`);
     return [message_id, swipe_id];
 }
@@ -132,38 +132,42 @@ function evalFilter(filter? : MessageFilter, msgid? : number, swipeid?: number):
  * @param options Options
  * @returns The return value is determined by options.results
  */
-export function setVariable(this : Record<string, unknown>, key : string, value : unknown,
-                            options : SetVarOption = {}) {
+export function setVariable(
+    this: Record<string, unknown>,
+    key: string | null,
+    value: unknown,
+    options: SetVarOption = {}
+) {
     const { noCache } = options;
-    if(noCache || this?.runID === undefined) {
+    if (noCache || this?.runID === undefined) {
         // @ts-expect-error: TS2322
         STATE.cache = allVariables(this?.message_id);
-        if(settings.debug_enabled) {
+        if (settings.debug_enabled) {
             console.debug(`[Prompt Template] reload variables cache:`);
             console.debug(STATE.cache);
         }
     }
-    
+
     const { index, scope, flags, results, withMsg, merge, dryRun } = options;
-    if(!dryRun && STATE.isDryRun) return undefined;
-    
+    if (!dryRun && STATE.isDryRun) return undefined;
+
     let oldValue;
     let newValue = value;
-    if (index !== null && index !== undefined) {
-        let data = JSON.parse(_.get(STATE.cache, key, '{}'));
+    if (index != null) {
+        let data = JSON.parse(get(STATE.cache, key, '{}'));
         let idx = Number(index);
         idx = Number.isNaN(idx) ? index : idx;
 
-        if(flags === 'nx' && _.has(data, idx)) return undefined;
-        if(flags === 'xx' && !_.has(data, idx)) return undefined;
-        if(flags === 'nxs' && getVariable.call(this, key, options) !== undefined) return undefined;
-        if(flags === 'xxs' && getVariable.call(this, key, options) === undefined) return undefined;
+        if (flags === 'nx' && _.has(data, idx)) return undefined;
+        if (flags === 'xx' && !_.has(data, idx)) return undefined;
+        if (flags === 'nxs' && getVariable.call(this, key, options) !== undefined) return undefined;
+        if (flags === 'xxs' && getVariable.call(this, key, options) === undefined) return undefined;
 
-        if(results === 'old' || merge)
-            oldValue = _.get(data, idx, undefined);
+        if (results === 'old' || merge)
+            oldValue = get(data, idx, undefined);
 
-        if(merge) {
-            if((oldValue === undefined || _.isArray(oldValue)) && _.isArray(value)) {
+        if (merge) {
+            if ((oldValue === undefined || _.isArray(oldValue)) && _.isArray(value)) {
                 newValue = _.concat(oldValue ?? [], value);
             } else {
                 newValue = _.mergeWith(
@@ -171,31 +175,31 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                     value, (_dst: unknown, src: unknown) => _.isArray(src) ? src : undefined);
             }
         }
-        
+
         newValue === undefined ? _.unset(data, idx) : _.set(data, idx, newValue);
         _.set(STATE.cache, key, JSON.stringify(data));
 
-        switch(scope || 'message') {
+        switch (scope || 'message') {
             case 'global':
                 data = JSON.parse(_.get(extension_settings.variables.global, key, '{}') || '{}');
                 newValue === undefined ? _.unset(data, idx) : _.set(data, idx, newValue);
                 _.set(extension_settings.variables.global, key, JSON.stringify(data));
 
-                if(settings.debug_enabled)
+                if (settings.debug_enabled)
                     console.debug(`Set global variable ${key} to ${newValue} (index ${idx})`);
 
                 STATE.isUpdated = true;
                 break;
             case 'local':
                 // @ts-expect-error: TS2322
-                if(!chat_metadata.variables) chat_metadata.variables = {};
+                if (!chat_metadata.variables) chat_metadata.variables = {};
                 // @ts-expect-error: TS2322
                 data = JSON.parse(_.get(chat_metadata.variables, key, '{}') || '{}');
                 newValue === undefined ? _.unset(data, idx) : _.set(data, idx, newValue);
                 // @ts-expect-error: TS2322
                 _.set(chat_metadata.variables, key, JSON.stringify(data));
 
-                if(settings.debug_enabled)
+                if (settings.debug_enabled)
                     console.debug(`Set local variable ${key} to ${newValue} (index ${idx})`);
 
                 STATE.isUpdated = true;
@@ -203,14 +207,14 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
             case 'message':
                 // @ts-expect-error
                 const [message_id, swipe_id] = evalFilter(withMsg, this?.message_id, this?.swipe_id);
-                if(message_id !== undefined && swipe_id !== undefined) {
-                    if(!chat[message_id].variables) chat[message_id].variables = {};
-                    if(!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
+                if (message_id !== undefined && swipe_id !== undefined) {
+                    if (!chat[message_id].variables) chat[message_id].variables = {};
+                    if (!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
                     data = JSON.parse(_.get(chat[message_id].variables[swipe_id], key, '{}') || '{}');
                     newValue === undefined ? _.unset(data, idx) : _.set(data, idx, newValue);
                     _.set(chat[message_id].variables[swipe_id], key, JSON.stringify(data));
 
-                    if(settings.debug_enabled)
+                    if (settings.debug_enabled)
                         console.debug(`Set message #${message_id}.${swipe_id} variable ${key} to ${newValue} (index ${idx})`);
 
                     STATE.isUpdated = true;
@@ -221,16 +225,16 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
         // @ts-expect-error: TS2322
         STATE.cache._modify_id = STATE.cache._modify_id + 1 || 1;
     } else {
-        if(flags === 'nx' && _.has(STATE.cache, key)) return undefined;
-        if(flags === 'xx' && !_.has(STATE.cache, key)) return undefined;
-        if(flags === 'nxs' && getVariable.call(this, key, options) !== undefined) return undefined;
-        if(flags === 'xxs' && getVariable.call(this, key, options) === undefined) return undefined;
+        if (flags === 'nx' && has(STATE.cache, key)) return undefined;
+        if (flags === 'xx' && !has(STATE.cache, key)) return undefined;
+        if (flags === 'nxs' && getVariable.call(this, key, options) !== undefined) return undefined;
+        if (flags === 'xxs' && getVariable.call(this, key, options) === undefined) return undefined;
 
-        if(results === 'old' || merge)
-            oldValue = _.get(STATE.cache, key, undefined);
+        if (results === 'old' || merge)
+            oldValue = get(STATE.cache, key, undefined);
 
-        if(merge) {
-            if((oldValue === undefined || _.isArray(oldValue)) && _.isArray(value))
+        if (merge) {
+            if ((oldValue === undefined || _.isArray(oldValue)) && _.isArray(value))
                 newValue = _.concat(oldValue ?? [], value);
             else
                 newValue = _.mergeWith(
@@ -238,30 +242,30 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
                     value, (_dst: unknown, src: unknown) => _.isArray(src) ? src : undefined);
         }
 
-        newValue === undefined ? _.unset(STATE.cache, key) : _.set(STATE.cache, key, newValue);
+        newValue === undefined ? unset(STATE.cache, key) : set(STATE.cache, key, newValue);
 
-        switch(scope || 'message') {
+        switch (scope || 'message') {
             case 'global':
-                if(newValue === undefined)
-                    _.unset(extension_settings.variables.global, key);
+                if (newValue === undefined)
+                    unset(extension_settings.variables.global, key);
                 else
-                    _.set(extension_settings.variables.global, key, newValue);
+                    set(extension_settings.variables.global, key, newValue);
 
-                if(settings.debug_enabled)
+                if (settings.debug_enabled)
                     console.debug(`Set global variable ${key} to ${newValue}`);
 
                 STATE.isUpdated = true;
                 break;
             case 'local':
                 // @ts-expect-error: TS2322
-                if(!chat_metadata.variables) chat_metadata.variables = {};
-                
-                if(newValue === undefined) // @ts-expect-error: TS2322
-                    _.unset(chat_metadata.variables, key);
-                else // @ts-expect-error: TS2322
-                    _.set(chat_metadata.variables, key, newValue);
+                if (!chat_metadata.variables) chat_metadata.variables = {};
 
-                if(settings.debug_enabled)
+                if (newValue === undefined) // @ts-expect-error: TS2322
+                    unset(chat_metadata.variables, key);
+                else // @ts-expect-error: TS2322
+                    set(chat_metadata.variables, key, newValue);
+
+                if (settings.debug_enabled)
                     console.debug(`Set local variable ${key} to ${newValue}`);
 
                 STATE.isUpdated = true;
@@ -269,16 +273,16 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
             case 'message':
                 // @ts-expect-error
                 const [message_id, swipe_id] = evalFilter(withMsg, this?.message_id, this?.swipe_id);
-                if(message_id !== undefined && swipe_id !== undefined) {
-                    if(!chat[message_id].variables) chat[message_id].variables = {};
-                    if(!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
+                if (message_id !== undefined && swipe_id !== undefined) {
+                    if (!chat[message_id].variables) chat[message_id].variables = {};
+                    if (!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
 
-                    if(newValue === undefined)
-                        _.unset(chat[message_id].variables[swipe_id], key);
+                    if (newValue === undefined)
+                        unset(chat[message_id].variables[swipe_id], key);
                     else
-                        _.set(chat[message_id].variables[swipe_id], key, newValue);
+                        set(chat[message_id].variables[swipe_id], key, newValue);
 
-                    if(settings.debug_enabled)
+                    if (settings.debug_enabled)
                         console.debug(`Set message #${message_id}.${swipe_id} variable ${key} to ${newValue}`);
 
                     STATE.isUpdated = true;
@@ -290,9 +294,9 @@ export function setVariable(this : Record<string, unknown>, key : string, value 
         STATE.cache._modify_id = STATE.cache._modify_id + 1 || 1;
     }
 
-    if(results === 'old')
+    if (results === 'old')
         return oldValue;
-    if(results === 'fullcache')
+    if (results === 'fullcache')
         return STATE.cache;
     return newValue;
 }
@@ -323,13 +327,16 @@ export interface GetVarOption {
  * @param options Options
  * @returns variable value
  */
-export function getVariable(this : Record<string, unknown>, key : string,
-                            options : GetVarOption = {}) {
+export function getVariable(
+    this: Record<string, unknown>,
+    key: string | null,
+    options: GetVarOption = {}
+) {
     const { noCache } = options;
-    if(noCache || this?.runID === undefined) {
+    if (noCache || this?.runID === undefined) {
         // @ts-expect-error: TS2322
         STATE.cache = allVariables(this?.message_id);
-        if(settings.debug_enabled) {
+        if (settings.debug_enabled) {
             console.debug(`[Prompt Template] reload variables cache:`);
             console.debug(STATE.cache);
         }
@@ -338,53 +345,53 @@ export function getVariable(this : Record<string, unknown>, key : string,
     let result = null;
     const { index, scope, defaults, withMsg } = options;
 
-    switch(scope || 'cache') {
+    switch (scope || 'cache') {
         case 'global':
-            if (index !== null && index !== undefined) {
+            if (index != null) {
                 const data = JSON.parse(_.get(extension_settings.variables.global, key, '{}') || '{}');
                 const idx = Number(index);
                 return _.get(data, Number.isNaN(idx) ? index : idx, defaults);
             }
-            result = _.get(extension_settings.variables.global, key, defaults);
+            result = get(extension_settings.variables.global, key, defaults);
             return options.clone ? _.cloneDeep(result) : result;
         case 'local':
             // @ts-expect-error: TS2322
-            if(!chat_metadata.variables)
+            if (!chat_metadata.variables)
                 return defaults;
-            if (index !== null && index !== undefined) {
+            if (index != null) {
                 // @ts-expect-error: TS2322
                 const data = JSON.parse(_.get(chat_metadata.variables, key, '{}') || '{}');
                 const idx = Number(index);
                 return _.get(data, Number.isNaN(idx) ? index : idx, defaults);
             }
             // @ts-expect-error: TS2322
-            result = _.get(chat_metadata.variables, key, defaults);
+            result = get(chat_metadata.variables, key, defaults);
             return options.clone ? _.cloneDeep(result) : result;
         case 'message':
             // @ts-expect-error
             const [message_id, swipe_id] = evalFilter(withMsg, this?.message_id, this?.swipe_id);
-            if(message_id !== undefined && swipe_id !== undefined) {
-                if(!chat[message_id].variables) return defaults;
-                if(!chat[message_id].variables[swipe_id]) return defaults;
-                if (index !== null && index !== undefined) {
+            if (message_id !== undefined && swipe_id !== undefined) {
+                if (!chat[message_id].variables) return defaults;
+                if (!chat[message_id].variables[swipe_id]) return defaults;
+                if (index != null) {
                     const data = JSON.parse(_.get(chat[message_id].variables[swipe_id], key, '{}') || '{}');
                     const idx = Number(index);
                     return _.get(data, Number.isNaN(idx) ? index : idx, defaults);
                 }
-                
-                result = _.get(chat[message_id].variables[swipe_id], key, defaults);
+
+                result = get(chat[message_id].variables[swipe_id], key, defaults);
                 return options.clone ? _.cloneDeep(result) : result;
             }
             return defaults;
     }
 
-    if (index !== null && index !== undefined) {
+    if (index != null) {
         const data = JSON.parse(_.get(STATE.cache, key, '{}') || '{}');
         const idx = Number(index);
         return _.get(data, idx, defaults);
     }
 
-    return _.get(STATE.cache, key, defaults);
+    return get(STATE.cache, key, defaults);
 }
 
 /**
@@ -422,28 +429,32 @@ export interface GetSetVarOption {
  * @param options Options
  * @returns The return value is determined by options.results
  */
-export function increaseVariable(this : Record<string, unknown>, key : string,
-                                 value : number = 1, options : GetSetVarOption = {}) {
+export function increaseVariable(
+    this: Record<string, unknown>,
+    key: string,
+    value: number = 1,
+    options: GetSetVarOption = {}
+) {
     const { noCache } = options;
-    if(noCache || this?.runID === undefined) {
+    if (noCache || this?.runID === undefined) {
         // @ts-expect-error: TS2322
         STATE.cache = allVariables(this?.message_id);
-        if(settings.debug_enabled) {
+        if (settings.debug_enabled) {
             console.debug(`[Prompt Template] reload variables cache:`);
             console.debug(STATE.cache);
         }
     }
 
     const { index, inscope, outscope, flags, defaults, results, withMsg, dryRun, min, max } = options;
-    if((flags === 'nx' && !_.has(STATE.cache, key)) ||
-      (flags === 'xx' && _.has(STATE.cache, key)) ||
-      (flags === 'nxs' && getVariable.call(this, key, { index, withMsg, scope: inscope }) === undefined) ||
-      (flags === 'xxs' && getVariable.call(this, key, { index, withMsg, scope: inscope }) !== undefined) ||
-      (flags === 'n' || flags === undefined)) {
+    if ((flags === 'nx' && !_.has(STATE.cache, key)) ||
+        (flags === 'xx' && _.has(STATE.cache, key)) ||
+        (flags === 'nxs' && getVariable.call(this, key, { index, withMsg, scope: inscope }) === undefined) ||
+        (flags === 'xxs' && getVariable.call(this, key, { index, withMsg, scope: inscope }) !== undefined) ||
+        (flags === 'n' || flags === undefined)) {
         let val = getVariable.call(this, key, { index, withMsg, scope: inscope, defaults: defaults || 0 }) + value;
-        if(min != null)
+        if (min != null)
             val = Math.max(val, min);
-        if(max != null)
+        if (max != null)
             val = Math.min(val, max);
         return setVariable.call(this, key, val, { index, results, withMsg, dryRun, scope: outscope, flags: 'n' });
     }
@@ -458,16 +469,44 @@ export function increaseVariable(this : Record<string, unknown>, key : string,
  * @param options Options
  * @returns The return value is determined by options.results
  */
-export function decreaseVariable(this : Record<string, unknown>, key : string,
-                                 value : number = 1, options : GetSetVarOption = {}) {
-    if(this?.runID === undefined)
+export function decreaseVariable(
+    this: Record<string, unknown>,
+    key: string,
+    value: number = 1,
+    options: GetSetVarOption = {}
+) {
+    if (this?.runID === undefined)
         console.warn(`setVariable called with invalid context ${this}`);
     return increaseVariable.call(this, key, -value, options);
 }
 
-export async function checkAndSave(force : boolean = false) {
+export async function checkAndSave(force: boolean = false) {
     if (force || (STATE.isUpdated && settings.autosave_enabled !== false))
         await saveChatConditional();
-    
+
     STATE.isUpdated = false;
+}
+
+function get(obj: object, key: string | number | null, defaults?: any): any {
+    if (key == null)
+        return obj;
+    return _.get(obj, key, defaults);
+}
+
+function set(obj: object, key: string | number | null, value: any): any {
+    if (key == null)
+        return Object.assign(obj, value);
+    return _.set(obj, key, value);
+}
+
+function unset(obj: any, key: string | number | null): any {
+    if (key == null)
+        return Object.keys(obj).forEach(k => delete obj[k]);
+    return _.unset(obj, key);
+}
+
+function has(obj: any, key: string | number | null): boolean {
+    if (key == null)
+        return Object.keys(obj).length > 0;
+    return _.has(obj, key);
 }
