@@ -16,7 +16,7 @@ import { activateRegex } from './regex';
 import { injectPrompt, getPromptsInjected, hasPromptsInjected } from './inject';
 import { power_user } from '../../../../../power-user.js';
 import { METADATA_KEY } from '../../../../../world-info.js';
-import { hasher } from './hasher'
+import { hashString } from './hasher'
 import { getRegexedString, regex_placement } from '../../../../regex/engine.js';
 import { patchVariables, jsonPatch } from './json-patch';
 
@@ -152,19 +152,12 @@ export async function evalTemplate(content: string, data: Record<string, unknown
             opts.options.destructuredLocals = Object.keys(data);
     }
 
-    if(opts.options?.cache && hasher.xxhash) {
+    if(opts.options?.cache) {
         if(!opts.options.filename) {
             opts.options.filename = 'unk';
         }
 
-        if(settings.cache_hasher === 'h32ToString') {
-            opts.options.filename += '/' + hasher.xxhash.h32ToString(content, 0x1337);
-        } else if(settings.cache_hasher === 'h64ToString') {
-            opts.options.filename += '/' + hasher.xxhash.h64ToString(content, 0x1337n);
-        } else {
-            console.error(`hasher ${settings.cache_hasher} not supported`);
-            opts.options.cache = false;
-        }
+        opts.options.filename += '/' + hashString(content, 0xfacefeed);
     }
     
     try {

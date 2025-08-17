@@ -5,7 +5,7 @@ import { eventSource, event_types, chat, messageFormatting, GenerateOptions, upd
 import { prepareContext } from '../function/ejs';
 import { STATE, checkAndSave } from '../function/variables';
 import { extension_settings } from '../../../../../extensions.js';
-import { getEnabledWorldInfoEntries, deactivateActivateWorldInfo, LoreBook, getEnabledLoreBooks, getActivateWorldInfo, isSpecialEntry, getWorldInfoEntries, parseDecorators } from '../function/worldinfo';
+import { getEnabledWorldInfoEntries, deactivateActivateWorldInfo, LoreBook, getEnabledLoreBooks, getActivateWorldInfo, isSpecialEntry, getWorldInfoEntries } from '../function/worldinfo';
 import { getCharacterDefine } from '../function/characters';
 import { settings } from './ui';
 import { activateRegex, deactivateRegex, applyRegex } from '../function/regex';
@@ -33,6 +33,8 @@ async function handleGenerateBefore(_type: string, _data: GenerateOptions, dryRu
         return;
 
     console.log(`[Prompt Template] start generate before on dryRun=${dryRun}`);
+
+    deactivateRegex({ message: true });
 
     if (settings.generate_loader_enabled) {
         const env = await prepareContext(65535, {
@@ -128,7 +130,7 @@ async function handleGenerateAfter(data: GenerateAfterData) {
     // OAI/non-OAI have different formats
     const chat = typeof data.prompt === 'string' ? [{ role: '', content: data.prompt }] : data.prompt;
 
-    // No longer available here
+    // Only Format Prompt
     deactivateRegex({ basic: true });
     deactivateActivateWorldInfo();
 
@@ -378,8 +380,6 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
         opts
     );
 
-    deactivateRegex({ message: true });
-
     if (settings.code_blocks_enabled === false) {
         // unpatch
         newContent = unescapePreContent(newContent);
@@ -429,7 +429,7 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
     if (settings.enabled === false)
         return;
 
-    // clean old content
+    // Complete cleanup
     deactivateRegex({ basic: true, message: true, generate: true }, 999);
     deactivateActivateWorldInfo();
     deactivatePromptInjection(999);

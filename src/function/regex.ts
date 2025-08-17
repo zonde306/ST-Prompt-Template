@@ -1,4 +1,5 @@
 import { extension_settings } from '../../../../../extensions.js';
+import { hashString } from './hasher';
 
 interface RegexEntry {
     search: RegExp | string;
@@ -60,7 +61,7 @@ export function activateRegex(
     opts: RegexOptions = {}
 ) {
     // If not provided, randomly generated
-    const uuid = opts.uuid || 'regex-' + Math.random().toString(36).substring(2, 9);
+    const uuid = opts.uuid || hashString(`${pattern}@${replace}`, 0x0baddead);
 
     // By default, the built-in Regex is used.
     if(opts.basic || (opts.basic == null && opts.message == null && opts.generate == null)) {

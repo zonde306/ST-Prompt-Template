@@ -1,5 +1,4 @@
-import { hasher } from "./hasher";
-import { settings } from "../modules/ui";
+import { hashString } from "./hasher";
 
 export interface PromptInjected {
     order: number;
@@ -32,15 +31,9 @@ export function injectPrompt(
     }
 
     // Generate uid
-    if(!uid && hasher.xxhash) {
-        if(settings.cache_hasher === 'h32ToString')
-            uid = hasher.xxhash.h32ToString(`${key}#${prompt}`, 0x1984);
-        else if(settings.cache_hasher === 'h64ToString')
-            uid = hasher.xxhash.h64ToString(`${key}#${prompt}`, 0x1984n);
-        else
-            console.error(`hasher ${settings.cache_hasher} not supported`);
-    }
-
+    if(!uid)
+        uid = hashString(`${key}#${prompt}`, 0xdeadbeef);
+    
     promptInjected.get(key)!.set(uid, { prompt, order, sticky, uid: uid });
 }
 
