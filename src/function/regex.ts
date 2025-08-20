@@ -136,7 +136,7 @@ export function activateRegex(
                 order: opts.order ?? 100,
                 minDepth: opts.minDepth ?? NaN,
                 maxDepth: opts.minDepth ?? NaN,
-                before: opts.before ?? (opts.after ?? opts.html) === false,
+                before: opts.before ?? (opts.after ?? opts.html) == null,
                 after: opts.after ?? false,
                 html: opts.html ?? false,
                 sticky: opts.sticky ?? 0,
