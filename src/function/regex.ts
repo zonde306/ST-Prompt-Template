@@ -18,8 +18,9 @@ interface Regex {
         reasoning: boolean,
         minDepth: number,
         maxDepth: number,
-        raw: boolean,
-        display: boolean,
+        before: boolean,
+        after: boolean,
+        html: boolean,
     }>;
 }
 
@@ -36,8 +37,9 @@ export interface RegexFlags {
     minDepth?: number;
     maxDepth?: number;
     worldinfo?: boolean;
-    raw?: boolean; // Original message content (for chat messages)
-    display?: boolean; // Display message HTML content (for chat messages)
+    before?: boolean;
+    after?: boolean;
+    html?: boolean;
 }
 
 export interface RegexOptions extends RegexFlags {
@@ -134,8 +136,9 @@ export function activateRegex(
                 order: opts.order ?? 100,
                 minDepth: opts.minDepth ?? NaN,
                 maxDepth: opts.minDepth ?? NaN,
-                raw: opts.raw ?? true,
-                display: opts.display ?? false,
+                before: opts.before ?? (opts.after ?? opts.html) === false,
+                after: opts.after ?? false,
+                html: opts.html ?? false,
                 sticky: opts.sticky ?? 0,
             }
         );
@@ -196,39 +199,44 @@ export function deactivateRegex(selector: RegexSelector = {}, count : number = 1
 export function applyRegex(
     env: Record<string, unknown>,
     content : string,
-    selector: RegexSelector = {},
-    flags: RegexFlags & { depth?: number, role?: string } = {}
+    options: RegexSelector & RegexFlags & { depth?: number, role?: string } = {}
 ) : string {
-    if(selector.uuid) {
+    if(options.uuid) {
         // specified will not to be considered for filtering
-        const message = REGEX.messageRegex.get(selector.uuid);
+        const message = REGEX.messageRegex.get(options.uuid);
         if(message) // @ts-expect-error: string.replace replaceValue is allow to pass a function
             content = content.replace(message.search, message.replace);
         
-        const generate = REGEX.generateRegex.get(selector.uuid);
+        const generate = REGEX.generateRegex.get(options.uuid);
         if(generate) // @ts-expect-error: string.replace replaceValue is allow to pass a function
             content = content.replace(generate.search, generate.replace);
     } else {
-        if(selector.message) {
+        if(options.message) {
             for(const regex of Array.from(REGEX.messageRegex.values()).sort((a, b) => a.order - b.order)) {
-                if(flags.assistant && regex.assistant === false)
+                // Allowed by default
+                if(options.assistant && regex.assistant === false)
                     continue;
-                if(flags.user && regex.user === false)
+                if(options.user && regex.user === false)
                     continue;
-                if(flags.reasoning && regex.reasoning === false)
+                if(options.system && regex.system === false)
                     continue;
-                if(flags.worldinfo && regex.worldinfo === false)
+
+                // Disabled by default
+                if(options.reasoning && !regex.reasoning)
                     continue;
-                if(flags.system && regex.system === false)
+                if(options.worldinfo && !regex.worldinfo)
                     continue;
-                if(flags.raw && regex.raw === false)
+                if(options.before && !regex.before)
                     continue;
-                if(flags.display && regex.display === false)
+                if(options.after && !regex.after)
                     continue;
-                if(flags.depth != null && Number.isSafeInteger(flags.depth)) {
-                    if(Number.isSafeInteger(regex.minDepth) && regex.minDepth >= -1 && flags.depth < regex.minDepth)
+                if(options.html && !regex.html)
+                    continue;
+
+                if(Number.isSafeInteger(options.depth)) {
+                    if(regex.minDepth >= -1 && options.depth! < regex.minDepth)
                         continue;
-                    if(Number.isSafeInteger(regex.maxDepth) && regex.maxDepth >= 0 && flags.depth > regex.maxDepth)
+                    if(regex.maxDepth >= 0 && options.depth! > regex.maxDepth)
                         continue;
                 }
                 
@@ -236,15 +244,18 @@ export function applyRegex(
                 content = content.replace(regex.search, typeof regex.replace === 'function' ? regex.replace.bind(env) : regex.replace);
             }
         }
-        if(selector.generate) {
+        if(options.generate) {
             for(const regex of Array.from(REGEX.generateRegex.values()).sort((a, b) => a.order - b.order)) {
-                if(flags.role === 'user' && regex.user === false)
+                // Allowed by default
+                if(options.role === 'user' && regex.user === false)
                     continue;
-                if(flags.role === 'assistant' && regex.assistant === false)
+                if(options.role === 'assistant' && regex.assistant === false)
                     continue;
-                if(flags.role === 'system' && regex.system === false)
+                if(options.role === 'system' && regex.system === false)
                     continue;
-                if(flags.worldinfo && regex.worldinfo === false)
+
+                // Disabled by default
+                if(options.worldinfo && !regex.worldinfo)
                     continue;
                 
                 // @ts-expect-error: string.replace replaceValue is allow to pass a function

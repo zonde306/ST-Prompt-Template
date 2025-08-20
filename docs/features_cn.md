@@ -763,7 +763,10 @@ Q: 变化后的好感度是多少？
     // 将 {{getvars::...}} 替换为变量内容
     activateRegex(/\{\{\getvars::([a-zA-Z0-9_]+?)}\}/gi, function(match, varName) {
     	return this.getvar(varName);
-	}, { generate: true });
+	}, {
+    	// 生成时生效
+    	generate: true
+	});
 %>
 ```
 
@@ -792,7 +795,11 @@ Q: 变化后的好感度是多少？
     	
     	// 删除变量块
     	return "";
-	}, { message: true });
+	}, {
+    	// 楼层消息生效
+    	// 默认 before 为 true,
+    	message: true,
+	});
 %>
 ```
 
@@ -808,7 +815,12 @@ Q: 变化后的好感度是多少？
 	activateRegex(
         /files\.catbox\.moe/gi,
         'catbox.***.net',
-        { message: true, display: true }
+        {
+            // 楼层消息生效
+            message: true,
+            // 仅在HTML生效
+            html: true
+        }
     );
 _%>
 ```

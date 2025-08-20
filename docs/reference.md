@@ -369,8 +369,8 @@ function getChatMessages(start, end, role);
  * @property {boolean} [generate=false] - Apply regex to generated messages (prompt template extension, supports replacement functions)
  * @property {boolean} [basic=true] - Use tavern built-in regex (implemented by tavern, doesn't support replacement functions)
  * @property {number} [order=100] - Execution order, executed in ascending order
- * @property {boolean} [raw=true] - Allow processing of raw floor messages, requires message option to be enabled
- * @property {boolean} [display=false] - Allow processing of floor message HTML, requires message option to be enabled
+ * @property {boolean} [before=true] - Allow processing of raw floor messages, requires message option to be enabled
+ * @property {boolean} [html=false] - Allow processing of floor message HTML, requires message option to be enabled
  * @property {number} [sticky=0] - Stickiness
  */
 

@@ -105,15 +105,9 @@ export async function evaluateWIEntities(
                 {
                     generate: options.comment?.startsWith('[GENERATE') || options.decorator?.includes('@@generate') || false,
                     message: options.comment?.startsWith('[RENDER') || options.decorator?.includes('@@render') || false,
-                },
-                {
                     worldinfo: true,
-                    user: false,
-                    assistant: false,
-                    system: false,
-                    reasoning: false,
-                    raw: false,
-                    display: true,
+                    before: false,
+                    html: true,
                 }
             ),
             _.merge(env, { world_info: data }),

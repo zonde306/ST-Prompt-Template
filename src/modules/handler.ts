@@ -163,7 +163,7 @@ async function handleGenerateAfter(data: GenerateAfterData) {
 
         if (typeof message.content === 'string') { // Plain text message
             const prompt = await evalTemplateHandler(
-                applyRegex(env, message.content, { generate: true }, { role: message.role, worldinfo: false }),
+                applyRegex(env, message.content, { generate: true, role: message.role }),
                 env,
                 `message #${idx + 1}(${message.role})`,
                 {
@@ -188,7 +188,7 @@ async function handleGenerateAfter(data: GenerateAfterData) {
                 // OAI format
                 if (content.type === 'text') {
                     const prompt = await evalTemplateHandler(
-                        applyRegex(env, content.text, { generate: true }, { role: message.role, worldinfo: false }),
+                        applyRegex(env, content.text, { generate: true, role: message.role }),
                         env,
                         `message #${idx + 1}(${message.role})`,
                         {
@@ -316,15 +316,13 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
                 message.mes,
                 {
                     message: true,
-                },
-                {
                     user: message.is_user,
                     assistant: !message.is_user && !message.is_system,
                     system: message.is_system,
-                    worldinfo: false,
                     depth: chat.length - message_idx - 1,
-                    raw: true,
-                    display: false,
+                    before: true,
+                    after: false,
+                    html: false,
                 }
             )),
             env,
@@ -362,15 +360,15 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
         escapeReasoningBlocks(unescapeHtmlEntities(removeHtmlTagsInsideBlock(applyRegex(
             env,
             content,
-            { message: true },
             {
+                message: true,
                 user: message.is_user,
                 assistant: !message.is_user && !message.is_system,
                 system: message.is_system,
                 worldinfo: false,
                 depth: chat.length - message_idx - 1,
-                raw: false,
-                display: true,
+                before: false,
+                html: true,
             }
         ))),
             opts

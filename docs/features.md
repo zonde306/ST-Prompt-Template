@@ -603,7 +603,7 @@ Modifies message HTML content.
 	activateRegex(
         /files\.catbox\.moe/gi,
         'catbox.***.net',
-        { message: true, display: true }
+        { message: true, html: true }
     );
 _%>
 ```

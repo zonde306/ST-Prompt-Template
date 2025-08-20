@@ -73,7 +73,7 @@ export async function handleInjectPrompt(data: GenerateAfterData, env: Record<st
 
             // evaluate content
             const content = await evalTemplateHandler(
-                applyRegex(env, substituteParams(worldInfo.content), { generate: true }, { role: role, worldinfo: false }),
+                applyRegex(env, substituteParams(worldInfo.content), { generate: true, role: role, worldinfo: true }),
                 _.merge(env, { world_info: worldInfo }),
                 `inject ${worldInfo.world}.${worldInfo.comment}`,
                 {
