@@ -1,20 +1,15 @@
 import { getEnabledWorldInfoEntries, WorldInfoEntry } from "../function/worldinfo";
-import { chat, substituteParams } from "../../../../../../script.js";
-import { Message } from "../modules/defines";
+import { substituteParams } from "../../../../../../script.js";
 import { settings } from "../modules/ui";
 import { applyRegex } from "../function/regex";
 import { evalTemplate } from "../function/ejs";
+import { STATE } from "../function/variables";
 
 export async function handleInitialVariables(env: Record<string, unknown>, entries?: WorldInfoEntry[]) {
-    if (chat[0] == null)
-        return;
-
     if (entries == null || entries.length === 0)
         entries = await getEnabledWorldInfoEntries();
 
-    const firstMessage: Message = chat[0];
-    if(firstMessage == null)
-        return;
+    Object.keys(STATE.initialVariables).forEach(k => delete STATE.initialVariables[k]);
 
     await Promise.all(entries
         .filter(e =>
@@ -39,14 +34,8 @@ export async function handleInitialVariables(env: Record<string, unknown>, entri
                 return;
             }
 
-            for (let i = 0; i < (firstMessage.swipes?.length ?? 1); i++) {
-                if (!firstMessage.variables)
-                    firstMessage.variables = {};
-                if (!firstMessage.variables[i])
-                    firstMessage.variables[i] = {};
-                _.merge(firstMessage.variables[i], data);
-            }
-            
+            _.mergeWith(STATE.initialVariables, data, (_dst: unknown, src: unknown) => _.isArray(src) ? src : undefined);
+
             console.debug(`[Prompt Template] Set Initial Variables: \n`, data);
         }));
 }

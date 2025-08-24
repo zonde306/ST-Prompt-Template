@@ -1,13 +1,19 @@
 import { chat, chat_metadata, saveChatConditional } from '../../../../../../script.js';
 import { extension_settings } from '../../../../../extensions.js';
 import { settings } from '../modules/ui';
-import { getCharacterData } from './characters';
 
-export let STATE = {
+export let STATE : {
+    isDryRun: boolean,
+    isUpdated: boolean,
+    cache: Record<string, unknown>,
+    traceId: number,
+    initialVariables: Record<string, unknown>,
+} = {
     isDryRun: false,
     isUpdated: false,
     cache: {},
     traceId: 0,
+    initialVariables: {},
 };
 
 /**
@@ -18,12 +24,11 @@ export let STATE = {
 export function allVariables(end?: number): Record<string, unknown> {
     return _.mergeWith(
         {},
+        extension_settings.variables.global, // global variables
+        STATE.initialVariables, // [IntitialVariables]
         // @ts-expect-error: 2339
-        getCharacterData()?.data?.extensions?.variables || {},
-        extension_settings.variables.global,
-        // @ts-expect-error: 2339
-        chat_metadata.variables || {},
-        ...chat.slice(0, end).map(msg => msg.variables?.[msg.swipe_id || 0] || {}),
+        chat_metadata.variables || {}, // chat variables
+        ...chat.slice(0, end).map(msg => msg.variables?.[msg.swipe_id || 0] || {}), // message variables
         { _trace_id: (STATE.traceId)++, _modify_id: 0 },
         (_dst: unknown, src: unknown) => _.isArray(src) ? src : undefined,
     );
@@ -56,7 +61,7 @@ export interface MessageFilter {
  */
 export interface SetVarOption {
     index?: number;
-    scope?: 'global' | 'local' | 'message' | 'cache';
+    scope?: 'global' | 'local' | 'message' | 'cache' | 'initial';
     flags?: 'nx' | 'xx' | 'n' | 'nxs' | 'xxs';
     results?: 'old' | 'new' | 'fullcache';
     withMsg?: MessageFilter;
@@ -220,6 +225,14 @@ export function setVariable(
                     STATE.isUpdated = true;
                 }
                 break;
+            case 'initial':
+                data = JSON.parse(_.get(STATE.initialVariables, key, '{}') || '{}');
+                newValue === undefined ? _.unset(data, idx) : _.set(data, idx, newValue);
+                _.set(STATE.initialVariables, key, JSON.stringify(data));
+
+                if (settings.debug_enabled)
+                    console.debug(`Set initial variable ${key} to ${newValue} (index ${idx})`);
+                break;
         }
 
         // @ts-expect-error: TS2322
@@ -288,6 +301,15 @@ export function setVariable(
                     STATE.isUpdated = true;
                 }
                 break;
+            case 'initial':
+                if (newValue === undefined)
+                    unset(STATE.initialVariables, key);
+                else
+                    set(STATE.initialVariables, key, newValue);
+
+                if (settings.debug_enabled)
+                    console.debug(`Set initial variable ${key} to ${newValue}`);
+                break;
         }
 
         // @ts-expect-error: TS2322
@@ -313,7 +335,7 @@ export function setVariable(
  */
 export interface GetVarOption {
     index?: number;
-    scope?: 'global' | 'local' | 'message' | 'cache';
+    scope?: 'global' | 'local' | 'message' | 'cache' | 'initial';
     defaults?: unknown;
     withMsg?: MessageFilter;
     noCache?: boolean;
@@ -383,6 +405,14 @@ export function getVariable(
                 return options.clone ? _.cloneDeep(result) : result;
             }
             return defaults;
+        case 'initial':
+            if (index != null) {
+                const data = JSON.parse(_.get(STATE.initialVariables, key, '{}') || '{}');
+                const idx = Number(index);
+                return _.get(data, Number.isNaN(idx) ? index : idx, defaults);
+            }
+            result = get(STATE.initialVariables, key, defaults);
+            return options.clone ? _.cloneDeep(result) : result;
     }
 
     if (index != null) {
@@ -410,8 +440,8 @@ export function getVariable(
 export interface GetSetVarOption {
     index?: number;
     defaults?: number;
-    inscope?: 'global' | 'local' | 'message' | 'cache';
-    outscope?: 'global' | 'local' | 'message' | 'cache';
+    inscope?: 'global' | 'local' | 'message' | 'cache' | 'initial';
+    outscope?: 'global' | 'local' | 'message' | 'cache' | 'initial';
     flags?: 'nx' | 'xx' | 'n' | 'nxs' | 'xxs';
     results?: 'old' | 'new' | 'fullcache';
     withMsg?: MessageFilter;

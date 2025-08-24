@@ -14,7 +14,7 @@
  * Set variable options
  * @typedef {Object} SetVarOption
  * @property {number} [index=null] - Variable index, same as index in /setvar command.
- * @property {'global' | 'local' | 'message' | 'cache'} [scope='message'] - Variable type (scope), see details below
+ * @property {'global' | 'local' | 'message' | 'cache' | 'initial'} [scope='message'] - Variable type (scope), see details below
  * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - Set conditions, won't set if not met, see details below
  * @property {'old' | 'new' | 'fullcache'} [results='new'] - Return value type, see details below
  * @property {MessageFilter} [withMsg=null] - Message filter (if setting message variables)
@@ -41,7 +41,7 @@ function setMessageVar(key, value, options = {});
  * Get variable options
  * @typedef {Object} GetVarOption
  * @property {number} [index=null] - Variable index, same as index in /getvar command
- * @property {'global' | 'local' | 'message' | 'cache'} [scope='cache'] - Variable type (scope), see details below
+ * @property {'global' | 'local' | 'message' | 'cache' | 'initial'} [scope='cache'] - Variable type (scope), see details below
  * @property {any} [defaults=undefined] - Default value (returned when variable doesn't exist)
  * @property {MessageFilter} [withMsg=undefined] - Message selection filter
  * @property {boolean} [noCache=false] - Disable cache (e.g., when reading immediately after setting)
@@ -67,8 +67,8 @@ function getMessageVar(key, options = {});
  * @typedef {Object} GetSetVarOption
  * @property {number} [index=null] - Variable index, same as index in /getvar command
  * @property {unknown} [defaults=0] - Default value used when variable doesn't exist
- * @property {'global' | 'local' | 'message' | 'cache'} [inscope='cache'] - Variable type (scope) for reading, see details below
- * @property {'global' | 'local' | 'message' | 'cache'} [outscope='message'] - Variable type (scope) for setting, see details below
+ * @property {'global' | 'local' | 'message' | 'cache' | 'initial'} [inscope='cache'] - Variable type (scope) for reading, see details below
+ * @property {'global' | 'local' | 'message' | 'cache' | 'initial'} [outscope='message'] - Variable type (scope) for setting, see details below
  * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - Update conditions, won't update if not met, see details below
  * @property {'old' | 'new' | 'fullcache'} [results='new'] - Return value type, see details below
  * @property {MessageFilter} [withMsg=undefined] - Message filter (if setting message variables)
@@ -461,6 +461,8 @@ function matchChatMessages(pattern, options = {});
 > `message`: Message variable (extension-added `chat[msg_id].variables[swipe_id]`).
 >
 > `cache`: Temporary variable (template's `variables`, e.g., `<% variables.variable_name %>`).
+>
+> `initial`: initial variables, from `[InitialVariables]`
 >
 > - Temporary variables **are not saved** and will expire after generation.
 > - Regardless of `scope`, temporary variables will be updated.
