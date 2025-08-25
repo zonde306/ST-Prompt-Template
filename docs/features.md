@@ -610,3 +610,67 @@ _%>
 
 > Replaces all `files.catbox.moe` links in message HTML with `catbox.***.net`
 
+---
+
+## Activating/Loading Specified World Info Entries  
+
+This section primarily explains how to activate specific World info entries via code.  
+
+### Using `getwi` to Directly Load World Info Content  
+
+`getwi` is the most direct method for loading World info. It completely bypasses SillyTavern's built-in World info processing logic, directly injecting the specified World info entry into the current context (even if the current context isn't a World info entry).  
+
+#### Advantages
+
+- Unconditionally activates entries by bypassing SillyTavern's World info processing logic  
+- Precisely controls prompt content placement and activation conditions  
+- Supports multiple invocations  
+- Can activate unmounted World info entries  
+
+#### Disadvantages
+
+- Cannot utilize SillyTavern's World info logic; only retrieves raw content  
+- Repeated calls cause duplicated World info processing (executes code multiple times)  
+
+#### Usage Example  
+```javascript
+Lily's attitude toward {{user}}:  
+<%  
+    // If within the same World info, the first parameter can be omitted (pass only entry name/UID)  
+    if (variables.lily.affinity > 80) {  
+        print(await getwi("lily is lover"));  
+    } else if (variables.lily.affinity > 20) {  
+        print(await getwi("lily is friend"));  
+    } else if (variables.lily.affinity > 0) {  
+        print(await getwi("lily is stranger"));  
+    } else {  
+        print(await getwi("lily is nuisance"));  
+    }  
+%>  
+```
+
+### Using `activewi` to Trigger Native SillyTavern World Info Activation  
+
+To leverage SillyTavern's native 🟢keyword-based World info activation, use `activewi` to add entries to the pending activation queue for SillyTavern to process.  
+Entries activated via this function follow SillyTavern's native activation logic, producing identical results to standard activation.  
+**This function treats disabled entries as enabled** (without modifying the World info itself), allowing even disabled entries to be activated.  
+
+#### Advantages  
+- Fully adheres to SillyTavern's World info processing system  
+- Can activate unmounted World info entries  
+- Optional forced activation ignoring 🟢keywords, 🔗vectorization, groups, cooldowns, delays, etc. (see reference documentation)  
+
+#### Disadvantages  
+- Must be used within `[GENERATE:BEFORE]` entries (not strictly enforced, but calls outside this context only take effect in the next generation)  
+
+#### Usage Example  
+```javascript  
+@@generate_before  
+<%  
+    for (const event of (variables.world.events ?? [])) {  
+        await activewi(`[EVENT] ${event}`);  
+    }  
+%>  
+```
+
+> The `@@generate_before` decorator is functionally equivalent to `[GENERATE:BEFORE]`

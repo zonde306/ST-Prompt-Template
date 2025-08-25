@@ -144,6 +144,7 @@ export async function activateWorldInfo(world : string | RegExp | number, uid?: 
             hash: force ? Math.random() + 1 : undefined, // fuck the hash
             content: force ? entry.content.replace("@@dont_activate", "") : entry.content,
             ignoreBudget: force || entry.ignoreBudget,
+            group: force ? "" : entry.group,
         });
         if(settings.debug_enabled) {
             if(uid != null && typeof uid !== 'boolean')
@@ -163,11 +164,11 @@ export async function activateWorldInfo(world : string | RegExp | number, uid?: 
  */
 export async function activateWorldInfoByKeywords(
     keywords: string | string[],
-    condition: ActivateWorldInfoCondition = {}
+    condition: ActivateWorldInfoCondition & { force?: boolean } = {}
 ) {
     const entries = await getEnabledWorldInfoEntries();
     const activated = selectActivatedEntries(entries, keywords, condition);
-    activated.forEach(x => activatedWorldEntries.set(`${x.world}.${x.uid}`, x));
+    activated.forEach(x => activateWorldInfo(x.world, x.uid, condition.force));
     return activated;
 }
 
@@ -179,7 +180,7 @@ export function deactivateActivateWorldInfo() {
     activatedWorldEntries.clear();
 }
 
-export function getActivateWorldInfo(): WorldInfoEntry[] {
+export function getActivatedWIEntries(): WorldInfoEntry[] {
     return Array.from(activatedWorldEntries.values());
 }
 

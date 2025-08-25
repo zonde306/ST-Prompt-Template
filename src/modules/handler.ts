@@ -5,7 +5,7 @@ import { eventSource, event_types, chat, messageFormatting, GenerateOptions, upd
 import { prepareContext } from '../function/ejs';
 import { STATE, checkAndSave } from '../function/variables';
 import { extension_settings } from '../../../../../extensions.js';
-import { getEnabledWorldInfoEntries, deactivateActivateWorldInfo, LoreBook, getEnabledLoreBooks, getActivateWorldInfo, isSpecialEntry, getWorldInfoEntries } from '../function/worldinfo';
+import { getEnabledWorldInfoEntries, deactivateActivateWorldInfo, LoreBook, getEnabledLoreBooks, getActivatedWIEntries, isSpecialEntry, getWorldInfoEntries } from '../function/worldinfo';
 import { getCharacterDefine } from '../function/characters';
 import { settings } from './ui';
 import { activateRegex, deactivateRegex, applyRegex } from '../function/regex';
@@ -85,7 +85,7 @@ async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
         }
     }
 
-    for (const entry of getActivateWorldInfo()) {
+    for (const entry of getActivatedWIEntries()) {
         let position = 'chatLore';
         let idx = data.characterLore.findIndex(e => e.world === entry.world && e.uid == entry.uid);
         if (idx > -1) {

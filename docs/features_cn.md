@@ -827,6 +827,93 @@ _%>
 
 > 上述代码直接修改楼层HTML中所有的`files.catbox.moe`为`catbox.***.net`
 
+---
+
+## 激活/加载指定世界书条目
+
+这里主要介绍如何通过代码来激活特定世界书条目
+
+### 使用 getwi 直接加载世界书内容
+
+`getwi`是最直接的加载世界书的方式，它完全绕过酒馆（SillyTavern）内置的世界书处理逻辑，直接将指定世界书条目加载到当前世界书条目里（当前不是世界书条目也可以）
+
+#### 优点
+
+- 完全绕过酒馆界书处理逻辑，无条件激活
+- 精确控制提示词内容位置和激活条件
+- 可以多次调用
+- 可以激活未挂载的世界书条目
+
+#### 缺点
+
+- 完全无法使用酒馆界书的逻辑，只能获取内容
+- 多次调用时世界书内容会重复处理（代码执行多次）
+
+#### 使用示例
+
+```javascript
+莉莉对{{user}}的态度：
+<%
+    // 如果是在同一世界书内，第一个参数可以省略，可仅传递 条目名/uid
+    if(variables.lily.affinity > 80) {
+        print(await getwi("lily is lover"));
+    } else (variables.lily.affinity > 20) {
+        print(await getwi("lily is friend"));
+    } else if (variables.lily.affinity > 0) {
+        print(await getwi("lily is stranger"));
+    } else {
+        print(await getwi("lily is nuisance"));
+    }
+%>
+```
+
+### 使用 activewi 触发酒馆原生世界书激活
+
+如果需要酒馆原生的 🟢关键词 激活世界书条目功能，可以使用 `activewi`来将世界书条目加入到待激活列表，让酒馆处理这个条目
+
+使用此函数激活的世界书条目将会遵循酒馆的激活逻辑，达到与原生激活完全相同的效果
+
+此函数会自动将**禁用的条目视为启用状态**（不修改世界书本身），也就是说即使是禁用的条目也能激活
+
+#### 优点
+
+- 完全遵循酒馆的世界书处理功能
+- 可以激活未挂载的世界书条目
+- 可选强制激活，无视🟢关键词、🔗向量化、组、冷却、延迟等特性（详见 reference 文档）
+
+#### 缺点
+
+- 需要在 `[GENERATE:BEFORE]` 条目内使用（不强制，但是不在这里调用只能在下次生成才生效）
+
+#### 使用示例
+
+```javascript
+@@generate_before
+<%
+	for(const event of (variables.world.events ?? [])) {
+        await activewi(`[EVENT] ${event}`);
+    }
+%>
+```
+
+> `@@generate_before `装饰器的效果等同于`[GENERATE:BEFORE]`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
