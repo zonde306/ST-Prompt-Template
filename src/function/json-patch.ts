@@ -11,6 +11,6 @@ export function patchVariables(
     change: Operation[],
     options: SetVarOption & { validate?: any } = {}
 ) {
-    const doc = getVariable.call(this, key);
+    const doc = getVariable.call(this, key, options);
     return setVariable.call(this, key, jsonPatch(doc, change, options.validate), options);
 }
