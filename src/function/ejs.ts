@@ -42,6 +42,7 @@ const SHARE_CONTEXT: Record<string, unknown> = {
     _,
     $,
     toastr,
+    console,
     getCharaData: getCharacterData,
     getCharData: getCharacterData,
     getWorldInfoData: getWorldInfoEntries,
