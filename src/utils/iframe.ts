@@ -8,26 +8,23 @@ export function renderInFrame(html: string, attrs: Record<string, string> = {}):
     iframe.style.height = `${doc?.body?.scrollHeight ?? 300}px`;
     iframe.style.border = 'none';
     Object.entries(attrs).forEach(([ k, v ]) => iframe.setAttribute(k, v));
-
+    iframe.id = iframe.id || 'iframe-' + Math.random().toString(36);
+    
     // Auto resize
     if(doc) {
         const script = doc.createElement('script');
         script.textContent = `
             (function () {
                 function sendSize() {
-                const height = Math.max(
-                    document.body.scrollHeight,
-                    document.documentElement.scrollHeight
-                );
-                const width = Math.max(
-                    document.body.scrollWidth,
-                    document.documentElement.scrollWidth
-                );
-                window.parent.postMessage({
-                    type: 'iframeResize',
-                    height: height,
-                    width: width
-                }, '*');
+                    const height = Math.max(
+                        document.body.scrollHeight,
+                        document.documentElement.scrollHeight
+                    );
+                    const width = Math.max(
+                        document.body.scrollWidth,
+                        document.documentElement.scrollWidth
+                    );
+                    window.parent.document.querySelector('#${iframe.id}').style.height = height + 'px';
                 }
 
                 // 初始发送

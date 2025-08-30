@@ -130,7 +130,7 @@ export async function evaluateWIEntities(
                 }
                 if(data.decorators?.includes('@@iframe')) {
                     result = renderInFrame(result, {
-                        id: `mes-${options.msgId}`,
+                        id: `mes-${options.msgId}-${data.world}-${data.uid}`,
                         'data-worldinfo': data.world,
                         'data-comment': data.comment,
                         'data-uid': data.uid.toString(),
