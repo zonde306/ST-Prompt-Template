@@ -56,7 +56,7 @@ window.addEventListener('message', (event: MessageEvent<{ type: string, height: 
         const iframe = document.getElementById(event.data.id);
         if (iframe) {
             iframe.style.height = event.data.height + 'px';
-            console.log('iframe size changed', event.data.id, event.data.height);
+            console.debug('iframe size changed', event.data.id, event.data.height);
         }
     }
 });
