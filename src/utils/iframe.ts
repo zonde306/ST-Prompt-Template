@@ -20,9 +20,13 @@ export function renderInFrame(html: string, attrs: Record<string, string> = {}):
                     document.body.scrollWidth,
                     document.documentElement.scrollWidth
                 );
-                window.parent.document.querySelector('#${iframe.id}').style.height = height + 'px';
+                window.parent.postMessage({
+                    type: 'iframeSize',
+                    height,
+                    width,
+                    id: '${iframe.id}',
+                });
             }
-            sendSize();
             const observer = new MutationObserver(sendSize);
             observer.observe(document.body, {
                 childList: true,
@@ -31,13 +35,20 @@ export function renderInFrame(html: string, attrs: Record<string, string> = {}):
                 attributeFilter: ['style', 'class']
             });
             window.addEventListener('resize', sendSize);
-            document.addEventListener('load', function(e) {
-                if (e.target.tagName === 'IMG')
-                    sendSize();
-            }, true);
+            window.addEventListener('load', sendSize);
         })();
     `;
     iframe.srcdoc = dom.documentElement.innerHTML;
 
     return iframe.outerHTML;
 }
+
+window.addEventListener('message', (event: MessageEvent<{ type: string, height: number, width: number, id: string }>) => {
+    if (event.data.type === 'iframeSize') {
+        const iframe = document.getElementById(event.data.id);
+        if (iframe) {
+            iframe.style.height = event.data.height + 'px';
+            console.log('iframe size changed', event.data.id, event.data.height);
+        }
+    }
+});
