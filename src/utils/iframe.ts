@@ -6,10 +6,10 @@ export function renderInFrame(html: string, attrs: Record<string, string> = {}):
     iframe.style.height = '300px';
     iframe.style.border = 'none';
     Object.entries(attrs).forEach(([ k, v ]) => iframe.setAttribute(k, v));
-    iframe.id = iframe.id || 'iframe-' + Math.random().toString(36);
+    iframe.id = 'iframe-' + Math.random().toString(36).substring(2, 15);
 
     const dom = new DOMParser().parseFromString(html, 'text/html');
-    dom.head.appendChild(dom.createElement('script')).innerText = `
+    dom.head.appendChild(dom.createElement('script')).textContent = `
         (function () {
             function sendSize() {
                 const height = Math.max(
@@ -36,9 +36,10 @@ export function renderInFrame(html: string, attrs: Record<string, string> = {}):
             });
             window.addEventListener('resize', sendSize);
             window.addEventListener('load', sendSize);
+            sendSize();
         })();
     `;
-    iframe.srcdoc = dom.documentElement.innerHTML;
+    iframe.srcdoc = dom.documentElement.outerHTML;
 
     return iframe.outerHTML;
 }
