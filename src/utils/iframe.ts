@@ -9,8 +9,10 @@ export function renderInFrame(html: string, attrs: Record<string, string> = {}):
     iframe.id = 'iframe-' + Math.random().toString(36).substring(2, 15);
 
     const dom = new DOMParser().parseFromString(html, 'text/html');
-    dom.head.appendChild(dom.createElement('script')).textContent = `
-        (function () {
+    const script = dom.createElement('script');
+    script.defer = true;
+    script.textContent = `
+        function initSendSize() {
             function sendSize() {
                 const height = Math.max(
                     document.body.scrollHeight,
@@ -37,8 +39,13 @@ export function renderInFrame(html: string, attrs: Record<string, string> = {}):
             window.addEventListener('resize', sendSize);
             window.addEventListener('load', sendSize);
             sendSize();
-        })();
+        }
+        if(document.body)
+            initSendSize();
+        else
+            document.addEventListener('DOMContentLoaded', initSendSize);
     `;
+    dom.head.appendChild(script);
     iframe.srcdoc = dom.documentElement.outerHTML;
 
     return iframe.outerHTML;
