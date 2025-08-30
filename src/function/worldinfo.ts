@@ -703,6 +703,7 @@ const KNOWN_DECORATORS = [
     '@@initial_variables',
     '@@always_enabled',
     '@@only_preload',
+    '@@iframe',
 ];
 
 /**

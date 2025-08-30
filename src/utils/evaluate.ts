@@ -5,6 +5,7 @@ import { chat, messageFormatting, substituteParams } from '../../../../../../scr
 import { applyRegex } from '../function/regex';
 import { copyText } from '../../../../../utils.js';
 import { Message } from '../modules/defines';
+import { renderInFrame } from './iframe';
 
 /**
  * Wrap an error display for evalTemplate
@@ -122,9 +123,21 @@ export async function evaluateWIEntities(
             },
         );
         if (result != null) {
-            if (options.msgId != null && data.decorators?.includes('@@message_formatting')) {
-                const message: Message = chat[options.msgId];
-                result = messageFormatting(result, message.name, message.is_system, message.is_user, options.msgId);
+            if (options.msgId != null) {
+                if(data.decorators?.includes('@@message_formatting')) {
+                    const message: Message = chat[options.msgId];
+                    result = messageFormatting(result, message.name, message.is_system, message.is_user, options.msgId);
+                }
+                if(data.decorators?.includes('@@iframe')) {
+                    result = renderInFrame(result, {
+                        id: `mes-${options.msgId}`,
+                        'data-worldinfo': data.world,
+                        'data-comment': data.comment,
+                        'data-uid': data.uid.toString(),
+                        'loading': 'lazy',
+                        'style': 'width: 100%; height: auto; border: none;',
+                    });
+                }
             }
             prompt += result;
         }
