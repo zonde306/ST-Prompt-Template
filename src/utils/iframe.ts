@@ -75,6 +75,7 @@ export function renderInFrame(html: string, attrs: Record<string, string> = {}):
     
                 // Also trigger on window resize and load
                 window.addEventListener('resize', scheduleUpdate);
+                document.addEventListener('transitionend', scheduleUpdate);
                 
                 // Initial size check
                 scheduleUpdate();
