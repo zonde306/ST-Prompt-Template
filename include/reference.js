@@ -11,7 +11,7 @@
  * Set variable options
  * @typedef {Object} SetVarOption
  * @property {number} [index=null] - Variable index, same as index in /setvar command.
- * @property {'global' | 'local' | 'message' | 'cache'} [scope='message'] - Variable type (scope), see details below
+ * @property {'global' | 'local' | 'message' | 'cache' | 'initial'} [scope='message'] - Variable type (scope), see details below
  * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - Set conditions, won't set if not met, see details below
  * @property {'old' | 'new' | 'fullcache'} [results='new'] - Return value type, see details below
  * @property {MessageFilter} [withMsg=null] - Message filter (if setting message variables)
@@ -38,7 +38,7 @@ function setMessageVar(key, value, options = {});
  * Get variable options
  * @typedef {Object} GetVarOption
  * @property {number} [index=null] - Variable index, same as index in /getvar command
- * @property {'global' | 'local' | 'message' | 'cache'} [scope='cache'] - Variable type (scope), see details below
+ * @property {'global' | 'local' | 'message' | 'cache' | 'initial'} [scope='cache'] - Variable type (scope), see details below
  * @property {any} [defaults=undefined] - Default value (returned when variable doesn't exist)
  * @property {MessageFilter} [withMsg=undefined] - Message selection filter
  * @property {boolean} [noCache=false] - Disable cache (e.g., when reading immediately after setting)
@@ -64,8 +64,8 @@ function getMessageVar(key, options = {});
  * @typedef {Object} GetSetVarOption
  * @property {number} [index=null] - Variable index, same as index in /getvar command
  * @property {unknown} [defaults=0] - Default value used when variable doesn't exist
- * @property {'global' | 'local' | 'message' | 'cache'} [inscope='cache'] - Variable type (scope) for reading, see details below
- * @property {'global' | 'local' | 'message' | 'cache'} [outscope='message'] - Variable type (scope) for setting, see details below
+ * @property {'global' | 'local' | 'message' | 'cache' | 'initial'} [inscope='cache'] - Variable type (scope) for reading, see details below
+ * @property {'global' | 'local' | 'message' | 'cache' | 'initial'} [outscope='message'] - Variable type (scope) for setting, see details below
  * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - Update conditions, won't update if not met, see details below
  * @property {'old' | 'new' | 'fullcache'} [results='new'] - Return value type, see details below
  * @property {MessageFilter} [withMsg=undefined] - Message filter (if setting message variables)
@@ -261,9 +261,10 @@ async function evalTemplate(content, data = {}, options = {});
  * @param {boolean} global - Whether to include globally enabled world/knowledge books
  * @param {boolean} persona - Whether to include world books bound to user persona
  * @param {boolean} charaExtra - Whether to include additional knowledge books from character cards
+ * @param {boolean} onlyExisting only include lorebooks that exist in the current world
  * @returns {Promise<WorldInfoData[]>} - World info entry list
  */
-async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true);
+async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true, onlyExisting = true);
 
 /**
  * Output one or more strings
@@ -312,9 +313,10 @@ async function activateWorldInfoByKeywords(keywords, condition = {});
  * @param {boolean} global - Whether to include globally enabled world info
  * @param {boolean} persona - Whether to include user persona bound world info
  * @param {boolean} charaExtra - Whether to include external world info from character cards
+ * @param {boolean} onlyExisting -  only include lorebooks that exist in the current world
  * @returns {Promise<WorldInfoData[]>} - World info entry list
  */
-async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true);
+async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true, onlyExisting = true);
 
 /**
  * Filter activated entries from world info entry list
@@ -366,8 +368,8 @@ function getChatMessages(start, end, role);
  * @property {boolean} [generate=false] - Apply regex to generated messages (prompt template extension, supports replacement functions)
  * @property {boolean} [basic=true] - Use tavern built-in regex (implemented by tavern, doesn't support replacement functions)
  * @property {number} [order=100] - Execution order, executed in ascending order
- * @property {boolean} [raw=true] - Allow processing of raw floor messages, requires message option to be enabled
- * @property {boolean} [display=false] - Allow processing of floor message HTML, requires message option to be enabled
+ * @property {boolean} [before=true] - Allow processing of raw floor messages, requires message option to be enabled
+ * @property {boolean} [html=false] - Allow processing of floor message HTML, requires message option to be enabled
  * @property {number} [sticky=0] - Stickiness
  */
 

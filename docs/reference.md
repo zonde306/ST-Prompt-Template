@@ -264,9 +264,10 @@ async function evalTemplate(content, data = {}, options = {});
  * @param {boolean} global - Whether to include globally enabled world/knowledge books
  * @param {boolean} persona - Whether to include world books bound to user persona
  * @param {boolean} charaExtra - Whether to include additional knowledge books from character cards
+ * @param {boolean} onlyExisting only include lorebooks that exist in the current world
  * @returns {Promise<WorldInfoData[]>} - World info entry list
  */
-async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true);
+async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true, onlyExisting = true);
 
 /**
  * Output one or more strings
@@ -315,9 +316,10 @@ async function activateWorldInfoByKeywords(keywords, condition = {});
  * @param {boolean} global - Whether to include globally enabled world info
  * @param {boolean} persona - Whether to include user persona bound world info
  * @param {boolean} charaExtra - Whether to include external world info from character cards
+ * @param {boolean} onlyExisting -  only include lorebooks that exist in the current world
  * @returns {Promise<WorldInfoData[]>} - World info entry list
  */
-async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true);
+async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true, onlyExisting = true);
 
 /**
  * Filter activated entries from world info entry list

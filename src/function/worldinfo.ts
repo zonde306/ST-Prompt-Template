@@ -1,4 +1,4 @@
-import { loadWorldInfo, parseRegexFromString, world_info_case_sensitive, world_info_match_whole_words, world_info_logic, world_info_use_group_scoring, DEFAULT_WEIGHT, METADATA_KEY, selected_world_info, world_info, DEFAULT_DEPTH, world_info_position } from '../../../../../world-info.js';
+import { loadWorldInfo, parseRegexFromString, world_info_case_sensitive, world_info_match_whole_words, world_info_logic, world_info_use_group_scoring, DEFAULT_WEIGHT, METADATA_KEY, selected_world_info, world_info, DEFAULT_DEPTH, world_info_position, world_names } from '../../../../../world-info.js';
 import { substituteParams, chat_metadata, this_chid, characters, eventSource, event_types } from '../../../../../../script.js';
 import { power_user } from '../../../../../power-user.js';
 import { getCharaFilename } from '../../../../../utils.js';
@@ -536,12 +536,17 @@ function getScore(haystack: string, entry: WorldInfoEntry) {
  * @param persona includes Persona Lorebook
  * @param charaExtra includes character Additional Lorebooks
  * @param chat includes chat bounded lorebooks
+ * @param onlyExisting only include lorebooks that exist in the current world
  * @returns lore books
  */
 export function getEnabledLoreBooks(
-    chara : boolean = true, global : boolean = true,
-    persona : boolean = true, charaExtra : boolean = true,
-    chat: boolean = true) : string[] {
+    chara : boolean = true,
+    global : boolean = true,
+    persona : boolean = true,
+    charaExtra : boolean = true,
+    chat: boolean = true,
+    onlyExisting : boolean = true
+) : string[] {
     let results : string[] = [];
 
     if (chara) {
@@ -613,6 +618,9 @@ export function getEnabledLoreBooks(
             results.push(chatWorld);
     }
 
+    if(onlyExisting)
+        return results.filter(e => world_names.includes(e));
+
     return results;
 }
 
@@ -623,15 +631,20 @@ export function getEnabledLoreBooks(
  * @param persona includes Persona Lorebook
  * @param charaExtra includes character Additional Lorebooks
  * @param chat includes chat bounded lorebooks
+ * @param onlyExisting only include lorebooks that exist in the current world
  * @returns WI entries
  */
 export async function getEnabledWorldInfoEntries(
-    chara : boolean = true, global : boolean = true,
-    persona : boolean = true, charaExtra : boolean = true,
-    chat: boolean = true) : Promise<WorldInfoEntry[]> {
+    chara : boolean = true,
+    global : boolean = true,
+    persona : boolean = true,
+    charaExtra : boolean = true,
+    chat: boolean = true,
+    onlyExisting : boolean = true
+) : Promise<WorldInfoEntry[]> {
     
     let results : WorldInfoEntry[] = [];
-    const lorebooks = getEnabledLoreBooks(chara, global, persona, charaExtra, chat);
+    const lorebooks = getEnabledLoreBooks(chara, global, persona, charaExtra, chat, onlyExisting);
     for (const book of lorebooks) {
         const worldInfo = await getWorldInfoEntries(book);
         if (worldInfo?.length > 0) {

@@ -11,7 +11,7 @@
  * 设置变量选项
  * @typedef {Object} SetVarOption
  * @property {number} [index=null] - 变量的索引,与/setvar的index相同.
- * @property {'global' | 'local' | 'message' | 'cache'} [scope='message'] - 变量类型(作用域),详见下方
+ * @property {'global' | 'local' | 'message' | 'cache' | 'initial'} [scope='message'] - 变量类型(作用域),详见下方
  * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - 设置条件,不满足则不设置,详见下方
  * @property {'old' | 'new' | 'fullcache'} [results='new'] - 返回值类型,详见下方
  * @property {MessageFilter} [withMsg=null] - 消息过滤器(如果要设置消息变量)
@@ -39,7 +39,7 @@ function setMessageVar(key, value, options = {});
  * 获取变量选项
  * @typedef {Object} GetVarOption
  * @property {number} [index=null] - 变量的索引,与/getvar的index相同
- * @property {'global' | 'local' | 'message' | 'cache'} [scope='cache'] - 变量类型(作用域),详见下方
+ * @property {'global' | 'local' | 'message' | 'cache' | 'initial'} [scope='cache'] - 变量类型(作用域),详见下方
  * @property {any} [defaults=undefined] - 默认值(如果变量不存在时返回)
  * @property {MessageFilter} [withMsg=undefined] - 消息选择过滤器
  * @property {boolean} [noCache=false] - 禁用缓存(例如在设置变量后立即读取)
@@ -65,8 +65,8 @@ function getMessageVar(key, options = {});
  * @typedef {Object} GetSetVarOption
  * @property {number} [index=null] - 变量的索引,与/getvar的index相同
  * @property {unknown} [defaults=0] - 如果变量不存在时使用的默认值
- * @property {'global' | 'local' | 'message' | 'cache'} [inscope='cache'] - 读取的变量类型(作用域),详见下方
- * @property {'global' | 'local' | 'message' | 'cache'} outscope='message'] - 设置的变量类型(作用域),详见下方
+ * @property {'global' | 'local' | 'message' | 'cache' | 'initial'} [inscope='cache'] - 读取的变量类型(作用域),详见下方
+ * @property {'global' | 'local' | 'message' | 'cache' | 'initial'} outscope='message'] - 设置的变量类型(作用域),详见下方
  * @property {'nx' | 'xx' | 'n' | 'nxs' | 'xxs'} [flags='n'] - 更新条件,不满足则不更新,详见下方
  * @property {'old' | 'new' | 'fullcache'} [results='new'] - 返回值类型,详见下方
  * @property {MessageFilter} [withMsg=undefined] - 消息过滤器(如果要设置消息变量)
@@ -262,9 +262,10 @@ async function evalTemplate(content, data = {}, options = {});
  * @param {boolean} global - 是否包含全局启用的世界/知识书书
  * @param {boolean} persona - 是否包含用户角色的世界书
  * @param {boolean} charaExtra - 是否包含角色卡附加的知识书
+ * @param {boolean} onlyExisting - 只包含已存在的世界/知识书书
  * @returns {Promise<WorldInfoData[]>} - 世界书的条目列表
  */
-async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true);
+async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true, onlyExisting = true);
 
 /**
  * 输出一个或更多字符串
@@ -313,9 +314,10 @@ async function activateWorldInfoByKeywords(keywords, condition = {});
  * @param {boolean} global - 是否包全局启用的世界书
  * @param {boolean} persona - 是否包用户角色绑定的世界书
  * @param {boolean} persona - 是否包含角色卡的外挂世界书
+ * @param {boolean} onlyExisting - 只包含已存在的世界/知识书书
  * @returns {Promise<WorldInfoData[]>} - 世界书的条目列表
  */
-async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true);
+async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true, onlyExisting = true);
 
 /**
  * 从世界书条目列表筛选出激活的条目
@@ -363,12 +365,12 @@ function getChatMessages(start, end, role);
  * @property {boolean} [assistant=true] - 对AI输出生效
  * @property {boolean} [worldinfo=false] - 对世界信息生效
  * @property {boolean} [reasoning=false] - 对推理生效
- * @property {boolean} [message=false] - 对楼层消息应用正则（提示词模板扩展实现、支持替换函数）
- * @property {boolean} [generate=false] - 对生成消息应用正则（提示词模板扩展、支持替换函数）
+ * @property {boolean} [message=false] - 对楼层消息应用正则（扩展实现、支持替换函数）
+ * @property {boolean} [generate=false] - 对生成消息应用正则（扩展实现、支持替换函数）
  * @property {boolean} [basic=true] - 使用酒馆内置正则（酒馆实现、不支持替换函数）
  * @property {number} [order=100] - 执行顺序，升序执行
- * @property {boolean} [raw=true] - 允许对原始楼层消息进行处理，需要开启 message 项
- * @property {boolean} [display=false] - 允许对楼层消息HTML进行处理，需要开启 message 项
+ * @property {boolean} [before=true] - 允许对原始楼层消息进行处理，需要开启 message 项
+ * @property {boolean} [html=false] - 允许对楼层消息HTML进行处理，需要开启 message 项
  * @property {number} [sticky=0] - 粘性
  */
 
@@ -422,7 +424,7 @@ function hasPromptsInjected(key);
  * @property {number} [start=-2] - 开始位置
  * @property {number} [end=null] - 结束位置
  * @property {'user'|'assistant'|'system'} [role=null] - 仅选择指定角色
- * @property {boolean} [and] - 如果 pattern 是数组，是否需要完全匹配，否则为匹配任意一个
+ * @property {boolean} [and] - 如果 pattern 是数组时有效，是否需要完全匹配，否则为匹配任意一个
  */
 
 /**

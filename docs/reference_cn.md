@@ -265,9 +265,10 @@ async function evalTemplate(content, data = {}, options = {});
  * @param {boolean} global - 是否包含全局启用的世界/知识书书
  * @param {boolean} persona - 是否包含用户角色的世界书
  * @param {boolean} charaExtra - 是否包含角色卡附加的知识书
+ * @param {boolean} onlyExisting - 只包含已存在的世界/知识书书
  * @returns {Promise<WorldInfoData[]>} - 世界书的条目列表
  */
-async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true);
+async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true, onlyExisting = true);
 
 /**
  * 输出一个或更多字符串
@@ -316,9 +317,10 @@ async function activateWorldInfoByKeywords(keywords, condition = {});
  * @param {boolean} global - 是否包全局启用的世界书
  * @param {boolean} persona - 是否包用户角色绑定的世界书
  * @param {boolean} persona - 是否包含角色卡的外挂世界书
+ * @param {boolean} onlyExisting - 只包含已存在的世界/知识书书
  * @returns {Promise<WorldInfoData[]>} - 世界书的条目列表
  */
-async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true);
+async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true, onlyExisting = true);
 
 /**
  * 从世界书条目列表筛选出激活的条目
