@@ -565,7 +565,8 @@ export function getEnabledLoreBooks(
 
     if (global) {
         for (const world of selected_world_info) {
-            results.push(world as string);
+            if(world)
+                results.push(world as string);
         }
     }
 
@@ -586,7 +587,7 @@ export function getEnabledLoreBooks(
                 // @ts-expect-error
                 const primaryBook : string = characters[this_chid]?.data?.extensions?.world;
                 for(const book of extraCharLore.extraBooks) {
-                    if (book !== primaryBook && !selected_world_info.includes(book))
+                    if (book && book !== primaryBook && !selected_world_info.includes(book))
                         results.push(book);
                 }
             }
@@ -603,7 +604,7 @@ export function getEnabledLoreBooks(
                     // @ts-expect-error
                     const primaryBook : string = member?.data?.extensions?.world;
                     for(const book of extraCharLore.extraBooks) {
-                        if (book !== primaryBook && !selected_world_info.includes(book))
+                        if (book && book !== primaryBook && !selected_world_info.includes(book))
                             results.push(book);
                     }
                 }
@@ -619,7 +620,7 @@ export function getEnabledLoreBooks(
     }
 
     if(onlyExisting)
-        return results.filter(e => world_names.includes(e));
+        return results.filter(e => e && world_names.includes(e));
 
     return results;
 }
