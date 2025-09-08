@@ -19,12 +19,13 @@ import { handleInitialVariables } from '../features/initial-variables';
 let runID = 0;
 let isFakeRun = false; // Avoid recursive processing
 let isDryRun = false; // Is it preparation stage?
+let isInPlace = false; // Is it in-place generation?
 let generateBefore = '';
 
 // just a randomly generated value
 const regexFilterUUID = "a8ff1bc7-15f2-4122-b43b-ded692560538";
 
-async function handleGenerateBefore(_type: string, _data: GenerateOptions, dryRun: boolean) {
+async function handleGenerateBefore(type: string, _data: GenerateOptions, dryRun: boolean) {
     if (settings.enabled === false)
         return;
 
@@ -32,12 +33,14 @@ async function handleGenerateBefore(_type: string, _data: GenerateOptions, dryRu
     if (dryRun)
         return;
 
+    isInPlace = (type === 'swipe' || type === 'append' || type === 'continue' || type === 'appendFinal');
     console.log(`[Prompt Template] start generate before on dryRun=${dryRun}`);
 
     deactivateRegex({ message: true });
 
     if (settings.generate_loader_enabled) {
-        const env = await prepareContext(65535, {
+        // Skip existing variables when generating in-place
+        const env = await prepareContext(chat.length - Number(isInPlace), {
             runType: 'generate',
             runID: runID++,
             message_id: undefined,
@@ -142,7 +145,8 @@ async function handleGenerateAfter(data: GenerateAfterData) {
     console.log(`[Prompt Template] start generate after ${chat.length} messages`);
     const worldEntries = await getEnabledWorldInfoEntries();
 
-    const env = await prepareContext(65535, {
+    // Skip existing variables when generating in-place
+    const env = await prepareContext(chat.length - Number(isInPlace), {
         runType: 'generate',
         runID: runID++,
         message_id: undefined,
@@ -286,6 +290,7 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
     if (isDryRun && !message?.is_ejs_processed?.[message.swipe_id || 0])
         STATE.isDryRun = isDryRun = false;
 
+    // for Array.slice
     const env = await prepareContext(message_idx + 1, {
         runType: 'render',
         message_id: message_idx,
