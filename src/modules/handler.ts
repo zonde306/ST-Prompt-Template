@@ -19,7 +19,6 @@ import { handleInitialVariables } from '../features/initial-variables';
 let runID = 0;
 let isFakeRun = false; // Avoid recursive processing
 let isDryRun = false; // Is it preparation stage?
-let isInPlace = false; // Is it in-place generation?
 let generateBefore = '';
 
 // just a randomly generated value
@@ -33,14 +32,14 @@ async function handleGenerateBefore(type: string, _data: GenerateOptions, dryRun
     if (dryRun)
         return;
 
-    isInPlace = (type === 'swipe' || type === 'append' || type === 'continue' || type === 'appendFinal');
+    STATE.isInPlace = (type === 'swipe' || type === 'append' || type === 'continue' || type === 'appendFinal');
     console.log(`[Prompt Template] start generate before on dryRun=${dryRun}`);
 
     deactivateRegex({ message: true });
 
     if (settings.generate_loader_enabled) {
         // Skip existing variables when generating in-place
-        const env = await prepareContext(chat.length - Number(isInPlace), {
+        const env = await prepareContext(chat.length - Number(STATE.isInPlace), {
             runType: 'generate',
             runID: runID++,
             message_id: undefined,
@@ -146,7 +145,7 @@ async function handleGenerateAfter(data: GenerateAfterData) {
     const worldEntries = await getEnabledWorldInfoEntries();
 
     // Skip existing variables when generating in-place
-    const env = await prepareContext(chat.length - Number(isInPlace), {
+    const env = await prepareContext(chat.length - Number(STATE.isInPlace), {
         runType: 'generate',
         runID: runID++,
         message_id: undefined,
@@ -247,6 +246,7 @@ async function handleGenerateAfter(data: GenerateAfterData) {
     deactivateActivateWorldInfo();
     deactivateRegex({ generate: true, basic: true });
     deactivatePromptInjection();
+    STATE.isInPlace = false;
 }
 
 async function handleMessageRender(message_id: string, type?: string, isDryRun?: boolean) {

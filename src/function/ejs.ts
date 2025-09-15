@@ -201,12 +201,13 @@ export async function evalTemplate(content: string, data: Record<string, unknown
  * @returns Context
  */
 export async function prepareContext(end?: number, env: Record<string, unknown> = {}): Promise<Record<string, unknown>> {
-    let vars = allVariables(end);
-    STATE.cache = vars;
+    // precache variables
+    allVariables(end);
+    
     let context = {
         ...SHARE_CONTEXT,
         get variables() {
-            return STATE.cache;
+            return STATE.cacheAll;
         },
         execute: async (cmd: string) => (await executeSlashCommandsWithOptions(cmd)).pipe,
         get SillyTavern() {
