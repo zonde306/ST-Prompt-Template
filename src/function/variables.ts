@@ -404,13 +404,31 @@ export function getVariable(
             result = get(chat_metadata.variables, key, defaults);
             return options.clone ? _.cloneDeep(result) : result;
         case 'message':
-            if (index != null) {
-                const data = JSON.parse(_.get(STATE.cacheMessage, key, '{}') || '{}');
-                const idx = Number(index);
-                return _.get(data, Number.isNaN(idx) ? index : idx, defaults);
+            if(withMsg != null) {
+                // @ts-expect-error
+                const [message_id, swipe_id] = evalMessageFilter(withMsg, this?.message_id, this?.swipe_id);
+                if (message_id !== undefined && swipe_id !== undefined) {
+                    if (!chat[message_id].variables) return defaults;
+                    if (!chat[message_id].variables[swipe_id]) return defaults;
+                    if (index != null) {
+                        const data = JSON.parse(_.get(chat[message_id].variables[swipe_id], key, '{}') || '{}');
+                        const idx = Number(index);
+                        return _.get(data, Number.isNaN(idx) ? index : idx, defaults);
+                    }
+
+                    result = get(chat[message_id].variables[swipe_id], key, defaults);
+                    return options.clone ? _.cloneDeep(result) : result;
+                }
+                return defaults;
+            } else {
+                if (index != null) {
+                    const data = JSON.parse(_.get(STATE.cacheMessage, key, '{}') || '{}');
+                    const idx = Number(index);
+                    return _.get(data, Number.isNaN(idx) ? index : idx, defaults);
+                }
+                result = get(STATE.cacheMessage, key, defaults);
+                return options.clone ? _.cloneDeep(result) : result;
             }
-            result = get(STATE.cacheMessage, key, defaults);
-            return options.clone ? _.cloneDeep(result) : result;
         case 'initial':
             if (index != null) {
                 const data = JSON.parse(_.get(STATE.initialVariables, key, '{}') || '{}');
