@@ -39,8 +39,13 @@
  */
 
 /**
- * @typedef {(FlagOption|ScopeOption|ResultOption)} SimpleOptions
- * @description 快捷选项，支持 flags / scope / results 三类简写
+ * @typedef {boolean} DryRun
+ * @description 强制设置变量
+ */
+
+/**
+ * @typedef {(FlagOption|ScopeOption|ResultOption|DryRun)} SimpleOptions
+ * @description 快捷选项，支持 flags / scope / results / dryRun 三类简写
  */
 
 /**

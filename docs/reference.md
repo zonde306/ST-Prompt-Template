@@ -39,8 +39,13 @@
 */
 
 /**
- * @typedef {(FlagOption|ScopeOption|ResultOption)} SimpleOptions
- * @description Shortcut options, supports flags, scope, and results
+ * @typedef {boolean} DryRun
+ * @description force assign
+ */
+
+/**
+ * @typedef {(FlagOption|ScopeOption|ResultOption|DryRun)} SimpleOptions
+ * @description Shortcut options, supports flags, scope, results and dryRun
 */
 
 /**

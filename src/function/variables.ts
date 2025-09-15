@@ -20,7 +20,7 @@ export let STATE : {
     isInPlace: false,
 };
 
-type SimpleOptions = 'nx' | 'xx' | 'n' | 'nxs' | 'xxs' | 'global' | 'local' | 'message' | 'cache' | 'initial' | 'old' | 'new' | 'fullcache';
+type SimpleOptions = 'nx' | 'xx' | 'n' | 'nxs' | 'xxs' | 'global' | 'local' | 'message' | 'cache' | 'initial' | 'old' | 'new' | 'fullcache' | boolean;
 
 /**
  * Combine all variables and cache it
@@ -589,6 +589,9 @@ function optionsConverter(
             case 'initial':
                 return { scope: options, inscope: options, outscope: options };
         }
+    }
+    if(typeof options === 'boolean') {
+        return { dryRun: options };
     }
     return options;
 }
