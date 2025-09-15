@@ -27,7 +27,7 @@ type SimpleOptions = 'nx' | 'xx' | 'n' | 'nxs' | 'xxs' | 'global' | 'local' | 'm
  * @param end Maximum number of combined messages
  * @returns variables object
  */
-export function allVariables(end?: number): Record<string, unknown> {
+export function precacheAllVariables(end?: number): Record<string, unknown> {
     // message variables
     STATE.cacheMessage = _.mergeWith({}, ...chat.slice(0, end).map(msg => msg.variables?.[msg.swipe_id || 0] || {}));
     STATE.cacheAll = _.mergeWith(
@@ -89,27 +89,26 @@ export interface SetVarOption {
  * @param swipeid swipe ID of the current message ID
  * @returns [message_id, swipe_id] selected message ID and swipe ID
  */
-function evalMessageFilter(filter?: MessageFilter, msgid?: number, swipeid?: number): [number?, number?] {
+function evalMessageFilter(filter?: MessageFilter, msgid?: number, swipeid?: number, onlyExists: boolean = false): [number?, number?] {
     let message_id = -1;
     if (filter?.id !== undefined) {
         message_id = filter.id > -1 ? filter.id : chat.length + filter.id;
     } else if (filter?.role !== undefined) {
         message_id = chat.findLastIndex(msg =>
-            (msg.is_system === (filter.role === 'system')) ||
-            (msg.is_user === (filter.role === 'user')) ||
-            (!msg.is_system && !msg.is_user && (filter.role === 'assistant')) ||
-            (filter.role === 'any')
+            (
+                (msg.is_system === (filter.role === 'system')) ||
+                (msg.is_user === (filter.role === 'user')) ||
+                (!msg.is_system && !msg.is_user && (filter.role === 'assistant')) ||
+                (filter.role === 'any')
+            ) && (
+                !onlyExists ||
+                // When getting a variable, look for the existing variable
+                msg.variables?.[msg.swipe_id ?? 0] != null
+            )
         );
     } else if (msgid === undefined) {
-        message_id = chat.findLastIndex(msg => !msg.is_user && !msg.is_system);
-        if (message_id === -1) {
-            console.warn(`No assistant message`);
-            message_id = chat.findLastIndex(msg => msg.is_user);
-            if (message_id === -1) {
-                console.warn(`No user message`);
-                message_id = chat.length - 1;
-            }
-        }
+        // When getting a variable, look for the existing variable
+        message_id = chat.findLastIndex(msg => !onlyExists || msg.variables?.[msg.swipe_id ?? 0] != null);
     } else {
         message_id = msgid;
     }
@@ -159,7 +158,7 @@ export function setVariable(
     const { noCache } = options;
     if (noCache || this?.runID === undefined) {
         // @ts-expect-error: TS2322
-        STATE.cacheAll = allVariables(this?.message_id);
+        STATE.cacheAll = precacheAllVariables(this?.message_id);
         if (settings.debug_enabled) {
             console.debug(`[Prompt Template] reload variables cache:`);
             console.debug(STATE.cacheAll);
@@ -224,7 +223,7 @@ export function setVariable(
                 break;
             case 'message':
                 // @ts-expect-error
-                const [message_id, swipe_id] = evalMessageFilter(withMsg, this?.message_id, this?.swipe_id);
+                const [message_id, swipe_id] = evalMessageFilter(withMsg, this?.message_id, this?.swipe_id, false);
                 if (message_id !== undefined && swipe_id !== undefined) {
                     if (!chat[message_id].variables) chat[message_id].variables = {};
                     if (!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
@@ -298,7 +297,7 @@ export function setVariable(
                 break;
             case 'message':
                 // @ts-expect-error
-                const [message_id, swipe_id] = evalMessageFilter(withMsg, this?.message_id, this?.swipe_id);
+                const [message_id, swipe_id] = evalMessageFilter(withMsg, this?.message_id, this?.swipe_id, false);
                 if (message_id !== undefined && swipe_id !== undefined) {
                     if (!chat[message_id].variables) chat[message_id].variables = {};
                     if (!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
@@ -371,7 +370,7 @@ export function getVariable(
     const { noCache } = options;
     if (noCache || this?.runID === undefined) {
         // @ts-expect-error: TS2322
-        STATE.cacheAll = allVariables(this?.message_id);
+        STATE.cacheAll = precacheAllVariables(this?.message_id);
         if (settings.debug_enabled) {
             console.debug(`[Prompt Template] reload variables cache:`);
             console.debug(STATE.cacheAll);
@@ -404,31 +403,21 @@ export function getVariable(
             result = get(chat_metadata.variables, key, defaults);
             return options.clone ? _.cloneDeep(result) : result;
         case 'message':
-            if(withMsg != null) {
-                // @ts-expect-error
-                const [message_id, swipe_id] = evalMessageFilter(withMsg, this?.message_id, this?.swipe_id);
-                if (message_id !== undefined && swipe_id !== undefined) {
-                    if (!chat[message_id].variables) return defaults;
-                    if (!chat[message_id].variables[swipe_id]) return defaults;
-                    if (index != null) {
-                        const data = JSON.parse(_.get(chat[message_id].variables[swipe_id], key, '{}') || '{}');
-                        const idx = Number(index);
-                        return _.get(data, Number.isNaN(idx) ? index : idx, defaults);
-                    }
-
-                    result = get(chat[message_id].variables[swipe_id], key, defaults);
-                    return options.clone ? _.cloneDeep(result) : result;
-                }
-                return defaults;
-            } else {
+            // @ts-expect-error
+            const [message_id, swipe_id] = evalMessageFilter(withMsg, this?.message_id, this?.swipe_id, true);
+            if (message_id !== undefined && swipe_id !== undefined) {
+                if (!chat[message_id].variables) return defaults;
+                if (!chat[message_id].variables[swipe_id]) return defaults;
                 if (index != null) {
-                    const data = JSON.parse(_.get(STATE.cacheMessage, key, '{}') || '{}');
+                    const data = JSON.parse(_.get(chat[message_id].variables[swipe_id], key, '{}') || '{}');
                     const idx = Number(index);
                     return _.get(data, Number.isNaN(idx) ? index : idx, defaults);
                 }
-                result = get(STATE.cacheMessage, key, defaults);
+
+                result = get(chat[message_id].variables[swipe_id], key, defaults);
                 return options.clone ? _.cloneDeep(result) : result;
             }
+            return defaults;
         case 'initial':
             if (index != null) {
                 const data = JSON.parse(_.get(STATE.initialVariables, key, '{}') || '{}');
@@ -493,7 +482,7 @@ export function increaseVariable(
     const { noCache } = options;
     if (noCache || this?.runID === undefined) {
         // @ts-expect-error: TS2322
-        STATE.cacheAll = allVariables(this?.message_id);
+        STATE.cacheAll = precacheAllVariables(this?.message_id);
         if (settings.debug_enabled) {
             console.debug(`[Prompt Template] reload variables cache:`);
             console.debug(STATE.cacheAll);
