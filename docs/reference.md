@@ -637,6 +637,18 @@ System: <%- depth_prompt %>
 variables = {}
 
 /**
+ * Aggregated message variables collection
+ * Merges variables in the following priority order (highest to lowest):
+ * Message variables (from latest to earliest floor)
+ * 
+ * @note: Excludes variables from current/subsequent floors during message processing
+ *        Conflict resolution: Merge if both types are [] or {}, otherwise replace
+ * @see: https://lodash.com/docs/4.17.15#merge
+ * @type {object}
+ */
+messageVariables = {}
+
+/**
  * SillyTavern.getContext() return value
  * Check console output of SillyTavern.getContext() for full details
  */

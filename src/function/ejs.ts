@@ -209,6 +209,9 @@ export async function prepareContext(end?: number, env: Record<string, unknown> 
         get variables() {
             return STATE.cacheAll;
         },
+        get messageVariables() {
+            return STATE.cacheMessage;
+        },
         execute: async (cmd: string) => (await executeSlashCommandsWithOptions(cmd)).pipe,
         get SillyTavern() {
             return SillyTavern.getContext();
