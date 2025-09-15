@@ -33,7 +33,7 @@ async function handleGenerateBefore(type: string, _data: GenerateOptions, dryRun
         return;
 
     STATE.isInPlace = (type === 'swipe' || type === 'append' || type === 'continue' || type === 'appendFinal');
-    console.log(`[Prompt Template] start generate before on dryRun=${dryRun}`);
+    console.debug(`[Prompt Template] start generate before on dryRun=${dryRun}, isInPlace=${STATE.isInPlace}`);
 
     deactivateRegex({ message: true });
 
