@@ -24,11 +24,31 @@
  */
 
 /**
+ * @typedef {('nx'|'xx'|'n'|'nxs'|'xxs')} FlagOption
+ * @description Variable setting rules: nx = set only if not present, xx = set only if present, n = mandatory setting, etc.
+*/
+
+/**
+ * @typedef {('global'|'local'|'message'|'cache'|'initial')} ScopeOption
+ * @description Variable scope
+*/
+
+/**
+ * @typedef {('old'|'new'|'fullcache')} ResultOption
+ * @description Return value type
+*/
+
+/**
+ * @typedef {(FlagOption|ScopeOption|ResultOption)} SimpleOptions
+ * @description Shortcut options, supports flags, scope, and results
+*/
+
+/**
  * Set variable
  *
  * @param {string} key - Variable name
  * @param {any} value - Variable value
- * @param {SetVarOption} [options={}] - Set variable options.
+ * @param {(SetVarOption|SimpleOptions)} [options={}] - Set variable options.
  * @returns Success depends on options.results, returns undefined on failure
  */
 function setvar(key, value, options = {});
@@ -53,7 +73,7 @@ function setMessageVar(key, value, options = {});
  * @note: Should avoid modifying object references
  *
  * @param {string} key - Variable name
- * @param {GetVarOption} [options={}] - Get variable options
+ * @param {(GetVarOption|SimpleOptions)} [options={}] - Get variable options
  * @returns {any} - Variable value, returns options.defaults if not found
  */
 function getvar(key, options = {});
@@ -83,7 +103,7 @@ function getMessageVar(key, options = {});
  *
  * @param {string} key - Variable name
  * @param {number} [value=1] - Value to increment by
- * @param {GetSetVarOption} [options={}] - Update variable options
+ * @param {(GetSetVarOption|SimpleOptions)} [options={}] - Update variable options
  * @returns Depends on options.results, returns undefined on failure.
  */
 function incvar(key, value = 1, options = {});
@@ -97,7 +117,7 @@ function incMessageVar(key, value = 1, options = {});
  *
  * @param {string} key - Variable name
  * @param {number} [value=1] - Value to decrement by
- * @param {GetSetVarOption} [options={}] - Update variable options
+ * @param {(GetSetVarOption|SimpleOptions)} [options={}] - Update variable options
  * @returns Depends on options.results, returns undefined on failure.
  */
 function decvar(key, value = 1, options = {});

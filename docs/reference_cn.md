@@ -24,11 +24,31 @@
  */
 
 /**
+ * @typedef {('nx'|'xx'|'n'|'nxs'|'xxs')} FlagOption
+ * @description 变量设置规则：nx=不存在才设, xx=存在才设, n=强制设等
+ */
+
+/**
+ * @typedef {('global'|'local'|'message'|'cache'|'initial')} ScopeOption
+ * @description 变量作用域
+ */
+
+/**
+ * @typedef {('old'|'new'|'fullcache')} ResultOption
+ * @description 返回值类型
+ */
+
+/**
+ * @typedef {(FlagOption|ScopeOption|ResultOption)} SimpleOptions
+ * @description 快捷选项，支持 flags / scope / results 三类简写
+ */
+
+/**
  * 设置变量
  *
  * @param {string} key - 变量名
  * @param {any} value - 变量值
- * @param {SetVarOption} [options={}] - 设置变量选项.
+ * @param {(SetVarOption|SimpleOptions)} [options={}] - 设置变量选项.
  * @returns 成功根据options.results决定，失败返回undefined
  */
 function setvar(key, value, options = {});
@@ -54,7 +74,7 @@ function setMessageVar(key, value, options = {});
  * @note: 应该避免修改对象引用
  *
  * @param {string} key - 变量名
- * @param {GetVarOption} [options={}] - 获取变量选项
+ * @param {(GetVarOption|SimpleOptions)} [options={}] - 获取变量选项
  * @returns {any} - 变量值,找不到返回options.defaults的值
  */
 function getvar(key, options = {});
@@ -84,7 +104,7 @@ function getMessageVar(key, options = {});
  *
  * @param {string} key - 变量名
  * @param {number} [value=1] - 变量值
- * @param {GetSetVarOption} [options={}] - 更新变量选项
+ * @param {(GetSetVarOption|SimpleOptions)} [options={}] - 更新变量选项
  * @returns 根据options.results决定,失败返回undefined.
  */
 function incvar(key, value = 1, options = {});
@@ -98,7 +118,7 @@ function incMessageVar(key, value = 1, options = {});
  *
  * @param {string} key - 变量名
  * @param {number} [value=1] - 变量值
- * @param {GetSetVarOption} [options={}] - 更新变量选项
+ * @param {(GetSetVarOption|SimpleOptions)} [options={}] - 更新变量选项
  * @returns 根据options.results决定,失败返回undefined.
  */
 function decvar(key, value = 1, options = {});

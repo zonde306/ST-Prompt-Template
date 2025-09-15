@@ -16,6 +16,8 @@ export let STATE : {
     initialVariables: {},
 };
 
+type SimpleOptions = 'nx' | 'xx' | 'n' | 'nxs' | 'xxs' | 'global' | 'local' | 'message' | 'cache' | 'initial' | 'old' | 'new' | 'fullcache';
+
 /**
  * Combine all variables
  * @param end Maximum number of combined messages
@@ -77,7 +79,7 @@ export interface SetVarOption {
  * @param swipeid swipe ID of the current message ID
  * @returns [message_id, swipe_id] selected message ID and swipe ID
  */
-function evalFilter(filter?: MessageFilter, msgid?: number, swipeid?: number): [number?, number?] {
+function evalMessageFilter(filter?: MessageFilter, msgid?: number, swipeid?: number): [number?, number?] {
     let message_id = -1;
     if (filter?.id !== undefined) {
         message_id = filter.id > -1 ? filter.id : chat.length + filter.id;
@@ -141,8 +143,9 @@ export function setVariable(
     this: Record<string, unknown>,
     key: string | null,
     value: unknown,
-    options: SetVarOption = {}
+    options: SetVarOption | SimpleOptions = {},
 ) {
+    options = optionsConverter(options) as SetVarOption;
     const { noCache } = options;
     if (noCache || this?.runID === undefined) {
         // @ts-expect-error: TS2322
@@ -211,7 +214,7 @@ export function setVariable(
                 break;
             case 'message':
                 // @ts-expect-error
-                const [message_id, swipe_id] = evalFilter(withMsg, this?.message_id, this?.swipe_id);
+                const [message_id, swipe_id] = evalMessageFilter(withMsg, this?.message_id, this?.swipe_id);
                 if (message_id !== undefined && swipe_id !== undefined) {
                     if (!chat[message_id].variables) chat[message_id].variables = {};
                     if (!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
@@ -285,7 +288,7 @@ export function setVariable(
                 break;
             case 'message':
                 // @ts-expect-error
-                const [message_id, swipe_id] = evalFilter(withMsg, this?.message_id, this?.swipe_id);
+                const [message_id, swipe_id] = evalMessageFilter(withMsg, this?.message_id, this?.swipe_id);
                 if (message_id !== undefined && swipe_id !== undefined) {
                     if (!chat[message_id].variables) chat[message_id].variables = {};
                     if (!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
@@ -352,8 +355,9 @@ export interface GetVarOption {
 export function getVariable(
     this: Record<string, unknown>,
     key: string | null,
-    options: GetVarOption = {}
+    options: GetVarOption | SimpleOptions = {}
 ) {
+    options = optionsConverter(options) as GetVarOption;
     const { noCache } = options;
     if (noCache || this?.runID === undefined) {
         // @ts-expect-error: TS2322
@@ -391,7 +395,7 @@ export function getVariable(
             return options.clone ? _.cloneDeep(result) : result;
         case 'message':
             // @ts-expect-error
-            const [message_id, swipe_id] = evalFilter(withMsg, this?.message_id, this?.swipe_id);
+            const [message_id, swipe_id] = evalMessageFilter(withMsg, this?.message_id, this?.swipe_id);
             if (message_id !== undefined && swipe_id !== undefined) {
                 if (!chat[message_id].variables) return defaults;
                 if (!chat[message_id].variables[swipe_id]) return defaults;
@@ -463,8 +467,9 @@ export function increaseVariable(
     this: Record<string, unknown>,
     key: string,
     value: number = 1,
-    options: GetSetVarOption = {}
+    options: GetSetVarOption | SimpleOptions = {}
 ) {
+    options = optionsConverter(options) as GetSetVarOption;
     const { noCache } = options;
     if (noCache || this?.runID === undefined) {
         // @ts-expect-error: TS2322
@@ -503,8 +508,9 @@ export function decreaseVariable(
     this: Record<string, unknown>,
     key: string,
     value: number = 1,
-    options: GetSetVarOption = {}
+    options: GetSetVarOption | SimpleOptions = {}
 ) {
+    options = optionsConverter(options) as GetSetVarOption;
     if (this?.runID === undefined)
         console.warn(`setVariable called with invalid context ${this}`);
     return increaseVariable.call(this, key, -value, options);
@@ -539,4 +545,30 @@ function has(obj: any, key: string | number | null): boolean {
     if (key == null)
         return Object.keys(obj).length > 0;
     return _.has(obj, key);
+}
+
+function optionsConverter(
+    options: GetSetVarOption | SetVarOption | GetSetVarOption | SimpleOptions
+): GetSetVarOption | SetVarOption | GetSetVarOption {
+    if (typeof options === 'string') {
+        switch(options) {
+            case 'old':
+            case 'new':
+            case 'fullcache':
+                return { results: options };
+            case 'nx':
+            case 'xx':
+            case 'nxs':
+            case 'xxs':
+            case 'n':
+                return { flags: options };
+            case 'cache':
+            case 'global':
+            case 'local':
+            case 'message':
+            case 'initial':
+                return { scope: options, inscope: options, outscope: options };
+        }
+    }
+    return options;
 }
