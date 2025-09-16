@@ -114,6 +114,10 @@ function evalMessageFilter(filter?: MessageFilter, msgid?: number, swipeid?: num
         // When getting a variable, look for the existing variable
         message_id = chat.findLastIndex(msg => !getter || msg.variables?.[msg.swipe_id ?? 0] != null);
     } else {
+        if(msgid > chat.length)
+            msgid = chat.length - 1;
+        else if(msgid < 0)
+            msgid = chat.length + msgid;
         message_id = msgid;
     }
 

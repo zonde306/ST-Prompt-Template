@@ -15,7 +15,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         const ctx = JSON.parse(args.ctx || '{}');
         if (args.block)
             value = `<%= ${value} %>`;
-        const env = await prepareContext(65535, {
+        const env = await prepareContext(-1, {
             runType: 'command',
             runID: -1,
             isDryRun: false,

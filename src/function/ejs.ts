@@ -196,13 +196,13 @@ export async function evalTemplate(content: string, data: Record<string, unknown
  * Creating an Execution Context
  * @see evalTemplate
  * 
- * @param end Maximum number of combined messages
+ * @param msg_id Current message ID
  * @param env Override context
  * @returns Context
  */
-export async function prepareContext(end?: number, env: Record<string, unknown> = {}): Promise<Record<string, unknown>> {
+export async function prepareContext(msg_id?: number, env: Record<string, unknown> = {}): Promise<Record<string, unknown>> {
     // precache variables
-    precacheVariables(end);
+    precacheVariables(msg_id);
     
     let context = {
         ...SHARE_CONTEXT,

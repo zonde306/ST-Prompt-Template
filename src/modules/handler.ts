@@ -39,7 +39,7 @@ async function handleGenerateBefore(type: string, _data: GenerateOptions, dryRun
 
     if (settings.generate_loader_enabled) {
         // Skip existing variables when generating in-place
-        const env = await prepareContext(chat.length - Number(STATE.isInPlace), {
+        const env = await prepareContext(-1 - Number(STATE.isInPlace), {
             runType: 'generate',
             runID: runID++,
             message_id: undefined,
@@ -145,7 +145,7 @@ async function handleGenerateAfter(data: GenerateAfterData) {
     const worldEntries = await getEnabledWorldInfoEntries();
 
     // Skip existing variables when generating in-place
-    const env = await prepareContext(chat.length - Number(STATE.isInPlace), {
+    const env = await prepareContext(-1 - Number(STATE.isInPlace), {
         runType: 'generate',
         runID: runID++,
         message_id: undefined,
@@ -291,7 +291,7 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
         STATE.isDryRun = isDryRun = false;
 
     // for Array.slice
-    const env = await prepareContext(message_idx + 1, {
+    const env = await prepareContext(message_idx, {
         runType: 'render',
         message_id: message_idx,
         swipe_id: message.swipe_id,
@@ -454,7 +454,7 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
             !isSpecialEntry(data, true)
         );
 
-    const env = await prepareContext(65535, {
+    const env = await prepareContext(-1, {
         runType: 'preparation',
         runID: runID++,
         message_id: undefined,
@@ -548,7 +548,7 @@ async function handleRefreshWorldInfo(world: string, _data: LoreBook) {
             !isSpecialEntry(data, true)
         );
     
-    const env = await prepareContext(65535, {
+    const env = await prepareContext(-1, {
         runType: 'preparation',
         runID: runID++,
         message_id: undefined,

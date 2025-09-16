@@ -17,7 +17,7 @@ export async function init() {
         },
         prepareContext: async(
             context : Record<string, unknown> = {},
-            end : number = 65535) => {
+            end : number = -1) => {
             return await prepareContext(end, context);
         },
         getSyntaxErrorInfo,
