@@ -31,7 +31,15 @@ type SimpleOptions = 'nx' | 'xx' | 'n' | 'nxs' | 'xxs' | 'global' | 'local' | 'm
 export function precacheVariables(msg_id?: number, sw_id?: number): Record<string, unknown> {
     const [ message_id, swipe_id ] = evalMessageFilter(undefined, msg_id, sw_id, true);
     if(message_id != null && swipe_id != null) {
-        STATE.cacheMessage = _.cloneDeep(chat[message_id].variables?.[swipe_id] || {});
+        if(message_id > 0 && (chat[message_id].is_user || chat[message_id].is_system)) {
+            // The variables of system and user are incomplete, and more variables need to be found.
+            STATE.cacheMessage = Object.assign({},
+                _.cloneDeep(chat[message_id - 1].variables?.[swipe_id] || {}),
+                _.cloneDeep(chat[message_id].variables?.[swipe_id] || {}),
+            );
+        } else {
+            STATE.cacheMessage = _.cloneDeep(chat[message_id].variables?.[swipe_id] || {});
+        }
     } else {
         STATE.cacheMessage = {};
     }
