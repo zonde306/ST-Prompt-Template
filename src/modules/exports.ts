@@ -1,7 +1,7 @@
 import { evalTemplate, prepareContext, getSyntaxErrorInfo, SharedDefines } from '../function/ejs';
 import { STATE } from '../function/variables';
 import { applySettings, loadSettings } from './ui';
-import { precacheVariables } from '../function/variables';
+import { precacheVariables, checkAndSave } from '../function/variables';
 import { handlePreloadWorldInfo } from './handler';
 import { getCurrentChatId } from '../../../../../../script.js';
 
@@ -25,6 +25,7 @@ export async function init() {
             applySettings(features);
         },
         allVariables: precacheVariables,
+        saveVariables: checkAndSave,
         resetFeatures: () => loadSettings(true),
         defines: SharedDefines,
         refreshWorldInfo: async() => await handlePreloadWorldInfo(getCurrentChatId(), true),

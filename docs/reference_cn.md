@@ -984,6 +984,13 @@ async function refreshWorldInfo();
  * 所有通过 define 创建的全局变量/函数
 */
 defines = {};
+
+/*
+ * 保存修改的变量
+ * 如果调用过 setvar 则必须调用它
+ * @see evalTemplate
+*/
+async function saveVariables();
 ```
 
 > 可通过 `globalThis.EjsTemplate`访问这些函数（如 `EjsTemplate.evalTemplate`）

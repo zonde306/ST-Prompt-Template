@@ -1078,6 +1078,13 @@ async function refreshWorldInfo();
  * Global variables/functions created via define
  */
 defines = {};
+
+/*
+ * Save modified variables
+ * Required if setvar was called
+ * @see evalTemplate
+*/
+async function saveVariables();
 ```
 
 > Access via `globalThis.EjsTemplate` (e.g., `EjsTemplate.evalTemplate`)
