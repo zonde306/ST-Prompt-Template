@@ -32,6 +32,8 @@ export function precacheVariables(msg_id?: number, sw_id?: number): Record<strin
     const [ message_id, swipe_id ] = evalMessageFilter(undefined, msg_id, sw_id, true);
     if(message_id != null && swipe_id != null) {
         STATE.cacheMessage = _.cloneDeep(chat[message_id].variables?.[swipe_id] || {});
+        if(message_id === 0)
+            STATE.cacheMessage = Object.assign({}, _.cloneDeep(STATE.cacheMessage), STATE.initialVariables);
     } else {
         STATE.cacheMessage = _.cloneDeep(STATE.initialVariables);
     }
