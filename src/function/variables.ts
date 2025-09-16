@@ -1,5 +1,6 @@
 import { chat, chat_metadata, saveChatConditional } from '../../../../../../script.js';
 import { extension_settings } from '../../../../../extensions.js';
+import { Message } from '../modules/defines';
 import { settings } from '../modules/ui';
 
 export let STATE : {
@@ -35,7 +36,7 @@ export function precacheVariables(msg_id?: number, sw_id?: number): Record<strin
             // The variables of system and user are incomplete, and more variables need to be found.
             STATE.cacheMessage = Object.assign({},
                 _.cloneDeep(chat[message_id - 1]?.variables?.[chat[message_id - 1].swipe_id ?? 0] || {}),
-                _.cloneDeep(chat[message_id]?.variables?.[swipe_id] || {}),
+                _.cloneDeep(findPreviousMessageVariables(message_id)),
             );
         } else {
             STATE.cacheMessage = _.cloneDeep(chat[message_id]?.variables?.[swipe_id] || {});
@@ -640,4 +641,16 @@ function optionsConverter(
         return { dryRun: options };
     }
     return options;
+}
+
+function findPreviousMessageVariables(message_id: number) : Record<string, any> {
+    const message : Message | undefined = chat
+        .slice(0, message_id)
+        .findLast(msg =>
+            !msg.is_system &&
+            !msg.is_user &&
+            msg.variables?.[msg?.swipe_id ?? 0] != null
+        );
+    
+    return message?.variables?.[message.swipe_id ?? 0] ?? {};
 }
