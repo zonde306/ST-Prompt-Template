@@ -241,9 +241,10 @@ export function setVariable(
                     console.debug(`Set local variable ${key} to ${newValue} (index ${idx})`);
                 break;
             case 'message':
-                if (withMsg) {
-                    // @ts-expect-error
-                    const [message_id, swipe_id] = evalMessageFilter(withMsg, this?.message_id, this?.swipe_id, false);
+                // @ts-expect-error
+                const [message_id, swipe_id] = evalMessageFilter(withMsg, this?.message_id, this?.swipe_id, false);
+                // @ts-expect-error: 2538
+                if (withMsg || chat[message_id]?.variables_assignment?.[swipe_id]) {
                     if (message_id !== undefined && swipe_id !== undefined) {
                         if (!chat[message_id].variables) chat[message_id].variables = {};
                         if (!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
@@ -320,9 +321,10 @@ export function setVariable(
                     console.debug(`Set local variable ${key} to ${newValue}`);
                 break;
             case 'message':
-                if (withMsg) {
-                    // @ts-expect-error
-                    const [message_id, swipe_id] = evalMessageFilter(withMsg, this?.message_id, this?.swipe_id, false);
+                // @ts-expect-error
+                const [message_id, swipe_id] = evalMessageFilter(withMsg, this?.message_id, this?.swipe_id, false);
+                // @ts-expect-error: 2538
+                if (withMsg || chat[message_id]?.variables_assignment?.[swipe_id]) {
                     if (message_id !== undefined && swipe_id !== undefined) {
                         if (!chat[message_id].variables) chat[message_id].variables = {};
                         if (!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
@@ -579,8 +581,11 @@ export async function checkAndSave(force: boolean = false) {
                 chat[message_id].variables = {};
             if(!chat[message_id].variables[swipe_id])
                 chat[message_id].variables[swipe_id] = {};
+            if(!chat[message_id].variable_assignment)
+                chat[message_id].variable_assignment = {};
             
             chat[message_id].variables[swipe_id] = Object.assign({}, STATE.cacheMessage, chat[message_id]?.variables?.[swipe_id]);
+            chat[message_id].variables_assignment[swipe_id] = true;
         }
     }
 
