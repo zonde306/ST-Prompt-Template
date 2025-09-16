@@ -26,7 +26,7 @@ type SimpleOptions = 'nx' | 'xx' | 'n' | 'nxs' | 'xxs' | 'global' | 'local' | 'm
 /**
  * Combine all variables and cache it
  * @param msg_id Current message ID
- * @param sw_id Current message ID
+ * @param sw_id Current message swipe ID
  * @returns all variables object
  */
 export function precacheVariables(msg_id?: number, sw_id?: number): Record<string, unknown> {
