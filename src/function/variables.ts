@@ -34,11 +34,11 @@ export function precacheVariables(msg_id?: number, sw_id?: number): Record<strin
         if(message_id > 0 && (chat[message_id].is_user || chat[message_id].is_system)) {
             // The variables of system and user are incomplete, and more variables need to be found.
             STATE.cacheMessage = Object.assign({},
-                _.cloneDeep(chat[message_id - 1].variables?.[swipe_id] || {}),
-                _.cloneDeep(chat[message_id].variables?.[swipe_id] || {}),
+                _.cloneDeep(chat[message_id - 1]?.variables?.[chat[message_id - 1].swipe_id ?? 0] || {}),
+                _.cloneDeep(chat[message_id]?.variables?.[swipe_id] || {}),
             );
         } else {
-            STATE.cacheMessage = _.cloneDeep(chat[message_id].variables?.[swipe_id] || {});
+            STATE.cacheMessage = _.cloneDeep(chat[message_id]?.variables?.[swipe_id] || {});
         }
     } else {
         STATE.cacheMessage = {};
