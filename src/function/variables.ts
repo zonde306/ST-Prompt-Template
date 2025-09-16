@@ -32,15 +32,14 @@ export function precacheVariables(msg_id?: number, sw_id?: number): Record<strin
     const [ message_id, swipe_id ] = evalMessageFilter(undefined, msg_id, sw_id, true);
     if(message_id != null && swipe_id != null) {
         STATE.cacheMessage = _.cloneDeep(chat[message_id].variables?.[swipe_id] || {});
-        if(message_id === 0)
-            STATE.cacheMessage = Object.assign({}, _.cloneDeep(STATE.cacheMessage), STATE.initialVariables);
     } else {
-        STATE.cacheMessage = _.cloneDeep(STATE.initialVariables);
+        STATE.cacheMessage = {};
     }
     
     STATE.cacheAll = _.cloneDeep(Object.assign(
         {},
         extension_settings.variables.global, // global variables
+        STATE.initialVariables,
         // @ts-expect-error: 2339
         chat_metadata.variables || {}, // chat variables
         STATE.cacheMessage, // message variables
@@ -253,7 +252,7 @@ export function setVariable(
 
                     if (settings.debug_enabled)
                         console.debug(`Set message variable ${key} to ${newValue} (index ${idx})`);
-
+                    
                     STATE.isUpdated = true;
                 }
                 break;
