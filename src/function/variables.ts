@@ -581,8 +581,8 @@ export async function checkAndSave(force: boolean = false) {
                 chat[message_id].variables = {};
             if(!chat[message_id].variables[swipe_id])
                 chat[message_id].variables[swipe_id] = {};
-            if(!chat[message_id].variable_assignment)
-                chat[message_id].variable_assignment = {};
+            if(!chat[message_id].variables_assignment)
+                chat[message_id].variables_assignment = {};
             
             chat[message_id].variables[swipe_id] = Object.assign({}, STATE.cacheMessage, chat[message_id]?.variables?.[swipe_id]);
             chat[message_id].variables_assignment[swipe_id] = true;
