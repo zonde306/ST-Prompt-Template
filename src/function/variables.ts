@@ -10,6 +10,8 @@ export let STATE : {
     traceId: number,
     initialVariables: Record<string, unknown>,
     isInPlace: boolean,
+    messageId: number,
+    swipeId: number,
 } = {
     isDryRun: false,
     cacheAll: {},
@@ -17,6 +19,8 @@ export let STATE : {
     traceId: 0,
     initialVariables: {},
     isInPlace: false,
+    messageId: -1,
+    swipeId: -1,
 };
 
 type SimpleOptions = 'nx' | 'xx' | 'n' | 'nxs' | 'xxs' | 'global' | 'local' | 'message' | 'cache' | 'initial' | 'old' | 'new' | 'fullcache' | boolean;
@@ -39,6 +43,8 @@ export function precacheVariables(msg_id?: number, sw_id?: number): Record<strin
         } else {
             STATE.cacheMessage = _.cloneDeep(chat[message_id]?.variables?.[swipe_id] || {});
         }
+        STATE.messageId = message_id;
+        STATE.swipeId = swipe_id;
     } else {
         STATE.cacheMessage = {};
     }
@@ -250,6 +256,10 @@ export function setVariable(
                         newValue === undefined ? _.unset(data, idx) : _.set(data, idx, newValue);
                         _.set(chat[message_id].variables[swipe_id], key, JSON.stringify(data));
 
+                        // Update cache when same origin
+                        if(message_id === STATE.messageId && swipe_id === STATE.swipeId)
+                            _.set(STATE.cacheMessage, key, JSON.stringify(data));
+
                         if (settings.debug_enabled)
                             console.debug(`Set message #${message_id}.${swipe_id} variable ${key} to ${newValue} (index ${idx})`);
                     }
@@ -327,8 +337,16 @@ export function setVariable(
 
                         if (newValue === undefined) {
                             unset(chat[message_id].variables[swipe_id], key);
+
+                            // Update cache when same origin
+                            if(message_id === STATE.messageId && swipe_id === STATE.swipeId)
+                                unset(STATE.cacheMessage, key);
                         } else {
                             set(chat[message_id].variables[swipe_id], key, newValue);
+
+                            // Update cache when same origin
+                            if(message_id === STATE.messageId && swipe_id === STATE.swipeId)
+                                set(STATE.cacheMessage, key, newValue);
                         }
 
                         if (settings.debug_enabled)
