@@ -5,7 +5,6 @@ import { settings } from '../modules/ui';
 
 export let STATE : {
     isDryRun: boolean,
-    isUpdated: boolean,
     cacheAll: Record<string, unknown>,
     cacheMessage: Record<string, unknown>,
     traceId: number,
@@ -13,7 +12,6 @@ export let STATE : {
     isInPlace: boolean,
 } = {
     isDryRun: false,
-    isUpdated: false,
     cacheAll: {},
     cacheMessage: {},
     traceId: 0,
@@ -262,8 +260,6 @@ export function setVariable(
 
                     if (settings.debug_enabled)
                         console.debug(`Set message variable ${key} to ${newValue} (index ${idx})`);
-                    
-                    STATE.isUpdated = true;
                 }
                 break;
             case 'initial':
@@ -347,8 +343,6 @@ export function setVariable(
 
                         if (settings.debug_enabled)
                             console.debug(`Set message variable ${key} to ${newValue}`);
-
-                        STATE.isUpdated = true;
                 }
                 break;
             case 'initial':
@@ -574,25 +568,21 @@ export function decreaseVariable(
 }
 
 export async function checkAndSave(force: boolean = false) {
-    if(STATE.isUpdated) {
-        const [message_id, swipe_id] = evalMessageFilter(undefined, undefined, undefined, false);
-        if(message_id != null && swipe_id != null) {
-            if(!chat[message_id].variables)
-                chat[message_id].variables = {};
-            if(!chat[message_id].variables[swipe_id])
-                chat[message_id].variables[swipe_id] = {};
-            if(!chat[message_id].variables_assignment)
-                chat[message_id].variables_assignment = {};
-            
-            chat[message_id].variables[swipe_id] = Object.assign({}, STATE.cacheMessage, chat[message_id]?.variables?.[swipe_id]);
-            chat[message_id].variables_assignment[swipe_id] = true;
-        }
+    const [message_id, swipe_id] = evalMessageFilter(undefined, undefined, undefined, false);
+    if(message_id != null && swipe_id != null) {
+        if(!chat[message_id].variables)
+            chat[message_id].variables = {};
+        if(!chat[message_id].variables[swipe_id])
+            chat[message_id].variables[swipe_id] = {};
+        if(!chat[message_id].variables_assignment)
+            chat[message_id].variables_assignment = {};
+        
+        chat[message_id].variables[swipe_id] = Object.assign({}, STATE.cacheMessage, chat[message_id]?.variables?.[swipe_id]);
+        chat[message_id].variables_assignment[swipe_id] = true;
     }
 
-    if (force || (STATE.isUpdated && settings.autosave_enabled !== false))
+    if (force || settings.autosave_enabled !== false)
         await saveChatConditional();
-
-    STATE.isUpdated = false;
 }
 
 function get(obj: object, key: string | number | null, defaults?: any): any {
