@@ -3,7 +3,7 @@ import vm from 'vm-browserify';
 import { Message, GenerateAfterData, WorldInfoLoaded } from './defines';
 import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock, substituteParams, this_chid, getCurrentChatId, appendMediaToMessage, addCopyToCodeBlocks } from '../../../../../../script.js';
 import { prepareContext } from '../function/ejs';
-import { STATE, checkAndSave } from '../function/variables';
+import { STATE, checkAndSave, clonePreviousMessage } from '../function/variables';
 import { extension_settings } from '../../../../../extensions.js';
 import { getEnabledWorldInfoEntries, deactivateActivateWorldInfo, LoreBook, getEnabledLoreBooks, getActivatedWIEntries, isSpecialEntry, getWorldInfoEntries } from '../function/worldinfo';
 import { getCharacterDefine } from '../function/characters';
@@ -605,12 +605,29 @@ async function handleFilterInstall(_type: string, _options: GenerateOptions, dry
     }
 }
 
+async function handleMessageCreated(message_id: number, type?: string) {
+    if(type === 'append' ||
+        type === 'continue' ||
+        type === 'appendFinal' ||
+        type === 'first_message' ||
+        type === 'impersonate')
+        return;
+    
+    clonePreviousMessage(message_id);
+}
+
 const MESSAGE_RENDER_EVENTS = [
     event_types.MESSAGE_UPDATED,
     event_types.MESSAGE_SWIPED,
     event_types.CHARACTER_MESSAGE_RENDERED,
     event_types.USER_MESSAGE_RENDERED,
     // event_types.MESSAGE_DELETED,
+];
+
+const MESSAGE_CREATED = [
+    event_types.MESSAGE_SENT,
+    event_types.MESSAGE_RECEIVED,
+    event_types.MESSAGE_SWIPED,
 ];
 
 export async function init() {
@@ -621,6 +638,7 @@ export async function init() {
     eventSource.on(event_types.GENERATE_AFTER_DATA, handleGenerateAfter);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.on(e, handleMessageRender));
     eventSource.on(event_types.WORLDINFO_ENTRIES_LOADED, handleWorldInfoLoaded);
+    MESSAGE_CREATED.forEach(e => eventSource.on(e, handleMessageCreated));
 }
 
 export async function exit() {
@@ -630,4 +648,5 @@ export async function exit() {
     eventSource.removeListener(event_types.GENERATE_AFTER_DATA, handleGenerateAfter);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.removeListener(e, handleMessageRender));
     eventSource.removeListener(event_types.WORLDINFO_ENTRIES_LOADED, handleWorldInfoLoaded);
+    MESSAGE_CREATED.forEach(e => eventSource.removeListener(e, handleMessageCreated));
 }

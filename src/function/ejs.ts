@@ -207,7 +207,7 @@ export async function prepareContext(msg_id?: number, env: Record<string, unknow
     let context = {
         ...SHARE_CONTEXT,
         get variables() {
-            return STATE.cacheAll;
+            return STATE.cacheVars;
         },
         get messageVariables() {
             return STATE.cacheMessage;
