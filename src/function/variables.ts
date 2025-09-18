@@ -671,6 +671,6 @@ export function clonePreviousMessage(message_id: number, swipe_id?: number): boo
     if(!message.variables[swipe_id])
         message.variables[swipe_id] = {};
     
-    message.variables[swipe_id] = Object.assign({}, message.variables[swipe_id], variables);
+    message.variables[swipe_id] = Object.assign({}, variables, message.variables[swipe_id]);
     return true;
 }
