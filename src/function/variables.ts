@@ -30,6 +30,8 @@ type SimpleOptions = 'nx' | 'xx' | 'n' | 'nxs' | 'xxs' | 'global' | 'local' | 'm
  * @returns all variables object
  */
 export function precacheVariables(msg_id?: number, sw_id?: number): Record<string, unknown> {
+    clonePreviousMessage(msg_id ?? chat.length - 1);
+
     STATE.messageId = msg_id ?? chat.length - 1;
     if(STATE.messageId < 0)
         STATE.messageId = chat.length + STATE.messageId;
@@ -663,14 +665,24 @@ export function clonePreviousMessage(message_id: number, swipe_id?: number): boo
     if(chat[message_id] == null || chat[message_id - 1] == null)
         return false;
 
-    const variables = findPreviousMessageVariables(message_id);
     const message = chat[message_id] as Message;
     swipe_id = swipe_id ?? message.swipe_id ?? 0;
+
+    // @ts-expect-error: 7053
+    if(message.variables_initialized?.[swipe_id])
+        return false;
+
     if(!message.variables)
         message.variables = {};
     if(!message.variables[swipe_id])
         message.variables[swipe_id] = {};
+    if(!message.variables_initialized)
+        message.variables_initialized = {};
     
-    message.variables[swipe_id] = Object.assign({}, variables, message.variables[swipe_id]);
+    const variables = findPreviousMessageVariables(message_id);
+    message.variables[swipe_id] = _.cloneDeep(Object.assign({}, variables, message.variables[swipe_id]));
+    // @ts-expect-error: 18046
+    message.variables_initialized[swipe_id] = true;
+    console.debug(`[Prompt Template] clone previous message variables: ${message.variables[swipe_id]}`);
     return true;
 }
