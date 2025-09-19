@@ -619,7 +619,7 @@ async function handleMessageCreated(message_id: number, type?: string) {
 const MESSAGE_RENDER_EVENTS = [
     event_types.MESSAGE_UPDATED,
     event_types.MESSAGE_SWIPED,
-    event_types.CHARACTER_MESSAGE_RENDERED,
+    // event_types.CHARACTER_MESSAGE_RENDERED,
     event_types.USER_MESSAGE_RENDERED,
     // event_types.MESSAGE_DELETED,
 ];
@@ -639,6 +639,9 @@ export async function init() {
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.on(e, handleMessageRender));
     eventSource.on(event_types.WORLDINFO_ENTRIES_LOADED, handleWorldInfoLoaded);
     MESSAGE_CREATED.forEach(e => eventSource.on(e, handleMessageCreated));
+
+    // REQUIRED BY: https://discord.com/channels/1291925535324110879/1374352724245614662/1418480720682287197
+    eventSource.makeFirst(event_types.CHARACTER_MESSAGE_RENDERED, handleMessageRender);
 }
 
 export async function exit() {
@@ -649,4 +652,5 @@ export async function exit() {
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.removeListener(e, handleMessageRender));
     eventSource.removeListener(event_types.WORLDINFO_ENTRIES_LOADED, handleWorldInfoLoaded);
     MESSAGE_CREATED.forEach(e => eventSource.removeListener(e, handleMessageCreated));
+    eventSource.removeListener(event_types.CHARACTER_MESSAGE_RENDERED, handleMessageRender);
 }

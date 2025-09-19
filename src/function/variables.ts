@@ -683,6 +683,6 @@ export function clonePreviousMessage(message_id: number, swipe_id?: number): boo
     message.variables[swipe_id] = _.cloneDeep(Object.assign({}, variables, message.variables[swipe_id]));
     // @ts-expect-error: 18046
     message.variables_initialized[swipe_id] = true;
-    console.debug(`[Prompt Template] clone previous message variables: ${message.variables[swipe_id]}`);
+    console.debug(`[Prompt Template] clone previous message variables: `, message.variables[swipe_id]);
     return true;
 }
