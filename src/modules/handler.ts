@@ -5,13 +5,13 @@ import { eventSource, event_types, chat, messageFormatting, GenerateOptions, upd
 import { prepareContext } from '../function/ejs';
 import { STATE, checkAndSave, clonePreviousMessage } from '../function/variables';
 import { extension_settings } from '../../../../../extensions.js';
-import { getEnabledWorldInfoEntries, deactivateActivateWorldInfo, LoreBook, getEnabledLoreBooks, getActivatedWIEntries, isSpecialEntry, getWorldInfoEntries } from '../function/worldinfo';
+import { getEnabledWorldInfoEntries, deactivateActivateWorldInfo, LoreBook, getEnabledLoreBooks, getActivatedWIEntries, isSpecialEntry, getWorldInfoEntries, isPreprocessingEntry } from '../function/worldinfo';
 import { getCharacterDefine } from '../function/characters';
 import { settings } from './ui';
 import { activateRegex, deactivateRegex, applyRegex } from '../function/regex';
 import { deactivatePromptInjection } from '../function/inject';
 import { updateTokens, removeHtmlTagsInsideBlock, escapePreContent, cleanPreContent, escapeReasoningBlocks, unescapePreContent, unescapeHtmlEntities } from '../utils/prompts';
-import { evalTemplateHandler, evaluateWIEntities } from '../utils/evaluate';
+import { evalTemplateHandler, evaluateWIEntities, evalTemplateWI } from '../utils/evaluate';
 import { updateReasoningUI } from '../../../../../reasoning.js';
 import { handleInjectPrompt } from '../features/inject-prompt';
 import { handleInitialVariables } from '../features/initial-variables';
@@ -58,62 +58,101 @@ async function handleGenerateBefore(type: string, _data: GenerateOptions, dryRun
 }
 
 async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
+    // for preprocessing
+    const env = await prepareContext(-1 - Number(STATE.isInPlace), {
+        runType: 'generate',
+        runID: runID++,
+        message_id: undefined,
+        swipe_id: undefined,
+        is_last: undefined,
+        is_user: undefined,
+        is_system: undefined,
+        name: undefined,
+        isDryRun: false,
+    });
+
+    // filter special entries
     for (let i = data.characterLore.length - 1; i >= 0; i--) {
         const entry = data.characterLore[i];
         if (isSpecialEntry(entry)) {
             data.characterLore.splice(i, 1);
-            console.debug(`[Prompt Template] Remove chara lore of ${entry.world}/${entry.comment}/${entry.uid} from context`);
+            console.debug(`[Prompt Template] Remove chara lore of ${entry.world}/${entry.comment}/${entry.uid} from context when SpecialEntry`);
+        } else if (isPreprocessingEntry(entry)) {
+            const [ content, key, keysecondary ] = await evalTemplateWI(data.characterLore[i], env);
+            data.characterLore[i] = { ...entry, content, key, keysecondary};
+            console.debug(`[Prompt Template] Preprocess chara lore of ${entry.world}/${entry.comment}/${entry.uid}`);
+            if(settings.debug_enabled)
+                console.debug(content);
         }
     }
     for (let i = data.globalLore.length - 1; i >= 0; i--) {
         const entry = data.globalLore[i];
         if (isSpecialEntry(entry)) {
             data.globalLore.splice(i, 1);
-            console.debug(`[Prompt Template] Remove global lore of ${entry.world}/${entry.comment}/${entry.uid} from context`);
+            console.debug(`[Prompt Template] Remove global lore of ${entry.world}/${entry.comment}/${entry.uid} from context when SpecialEntry`);
+        } else if (isPreprocessingEntry(entry)) {
+            const [ content, key, keysecondary ] = await evalTemplateWI(data.globalLore[i], env);
+            data.globalLore[i] = { ...entry, content, key, keysecondary };
+            console.debug(`[Prompt Template] Preprocess global lore of ${entry.world}/${entry.comment}/${entry.uid}`);
+            if(settings.debug_enabled)
+                console.debug(content);
         }
     }
     for (let i = data.personaLore.length - 1; i >= 0; i--) {
         const entry = data.personaLore[i];
         if (isSpecialEntry(entry)) {
             data.personaLore.splice(i, 1);
-            console.debug(`[Prompt Template] Remove persona lore of ${entry.world}/${entry.comment}/${entry.uid} from context`);
+            console.debug(`[Prompt Template] Remove persona lore of ${entry.world}/${entry.comment}/${entry.uid} from context when SpecialEntry`);
+        } else if (isPreprocessingEntry(entry)) {
+            const [ content, key, keysecondary ] = await evalTemplateWI(data.personaLore[i], env);
+            data.personaLore[i] = { ...entry, content, key, keysecondary };
+            console.debug(`[Prompt Template] Preprocess persona lore of ${entry.world}/${entry.comment}/${entry.uid}`);
+            if(settings.debug_enabled)
+                console.debug(content);
         }
     }
     for (let i = data.chatLore.length - 1; i >= 0; i--) {
         const entry = data.chatLore[i];
         if (isSpecialEntry(entry)) {
             data.chatLore.splice(i, 1);
-            console.debug(`[Prompt Template] Remove chat lore of ${entry.world}/${entry.comment}/${entry.uid} from context`);
+            console.debug(`[Prompt Template] Remove chat lore of ${entry.world}/${entry.comment}/${entry.uid} from context when SpecialEntry`);
+        } else if (isPreprocessingEntry(entry)) {
+            const [ content, key, keysecondary ] = await evalTemplateWI(data.chatLore[i], env);
+            data.chatLore[i] = { ...entry, content, key, keysecondary };
+            console.debug(`[Prompt Template] Preprocess chat lore of ${entry.world}/${entry.comment}/${entry.uid}`);
+            if(settings.debug_enabled)
+                console.debug(content);
         }
     }
 
+    // remove duplicate entry when force activate
     for (const entry of getActivatedWIEntries()) {
         let position = 'chatLore';
         let idx = data.characterLore.findIndex(e => e.world === entry.world && e.uid == entry.uid);
         if (idx > -1) {
             data.characterLore.splice(idx, 1);
-            console.debug(`[Prompt Template] Remove chara lore of ${entry.world}/${entry.comment}/${entry.uid} from context`);
+            console.debug(`[Prompt Template] Remove duplicate chara lore of ${entry.world}/${entry.comment}/${entry.uid} from context when FORCE ACTIVATE WI`);
             position = 'characterLore';
         }
 
         idx = data.globalLore.findIndex(e => e.world === entry.world && e.uid == entry.uid);
         if (idx > -1) {
             data.globalLore.splice(idx, 1);
-            console.debug(`[Prompt Template] Remove global lore of ${entry.world}/${entry.comment}/${entry.uid} from context`);
+            console.debug(`[Prompt Template] Remove duplicate global lore of ${entry.world}/${entry.comment}/${entry.uid} from context when FORCE ACTIVATE WI`);
             position = 'globalLore';
         }
 
         idx = data.personaLore.findIndex(e => e.world === entry.world && e.uid == entry.uid);
         if (idx > -1) {
             data.personaLore.splice(idx, 1);
-            console.debug(`[Prompt Template] Remove persona lore of ${entry.world}/${entry.comment}/${entry.uid} from context`);
+            console.debug(`[Prompt Template] Remove duplicate persona lore of ${entry.world}/${entry.comment}/${entry.uid} from context when FORCE ACTIVATE WI`);
             position = 'personaLore';
         }
 
         idx = data.chatLore.findIndex(e => e.world === entry.world && e.uid == entry.uid);
         if (idx > -1) {
             data.chatLore.splice(idx, 1);
-            console.debug(`[Prompt Template] Remove chat lore of ${entry.world}/${entry.comment}/${entry.uid} from context`);
+            console.debug(`[Prompt Template] Remove duplicate chat lore of ${entry.world}/${entry.comment}/${entry.uid} from context when FORCE ACTIVATE WI`);
             position = 'chatLore';
         }
 

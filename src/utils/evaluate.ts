@@ -1,11 +1,12 @@
 import { EvalTemplateOptions, getSyntaxErrorInfo, evalTemplate } from '../function/ejs';
 import { settings } from '../modules/ui';
-import { selectActivatedEntries, getEnabledWorldInfoEntries, WorldInfoEntry } from '../function/worldinfo';
+import { selectActivatedEntries, getEnabledWorldInfoEntries, WorldInfoEntry, parseDecorators } from '../function/worldinfo';
 import { chat, messageFormatting, substituteParams } from '../../../../../../script.js';
 import { applyRegex } from '../function/regex';
 import { copyText } from '../../../../../utils.js';
 import { Message } from '../modules/defines';
 import { renderInFrame } from './iframe';
+import { getRegexedString, regex_placement } from '../../../../regex/engine.js';
 
 /**
  * Wrap an error display for evalTemplate
@@ -149,4 +150,42 @@ export async function evaluateWIEntities(
         console.debug(`[Prompt Template] ${options.comment}/${options.decorator} worldinfo templates applied.\n`, worldInfoData);
 
     return prompt;
+}
+
+export async function evalTemplateWI(
+    entry: WorldInfoEntry,
+    env: Record<string, unknown>,
+    options: EvalTemplateOptions = {}) : Promise<[string, string[], string[]]> {
+    const content = entry.decorators ? entry.content : parseDecorators(entry.content)[1];
+    const resultContent = await evalTemplateHandler(
+        applyRegex(env, substituteParams(getRegexedString(content, regex_placement.WORLD_INFO)), { generate: true }),
+        env,
+        `lore book ${entry.world}/${entry.comment}/${entry.uid}`,
+        {
+            ...options,
+            options: {
+                filename: `worldinfo/${entry.world}/${entry.uid}-${entry.comment}`,
+                cache: settings.cache_enabled === 1, // enable for all
+                ...(options.options ?? {}),
+            }
+        }
+    ) ?? content;
+    const resultKeys = await Promise.all(entry.key.map(async(key) => {
+        return await evalTemplateHandler(
+            applyRegex(env, content, { generate: true }),
+            env,
+            `lore book ${entry.world}/${entry.comment}/${entry.uid} key ${key}`,
+            options,
+        ) ?? key;
+    }));
+    const resultSecondary = await Promise.all(entry.keysecondary.map(async(key) => {
+        return await evalTemplateHandler(
+            applyRegex(env, content, { generate: true }),
+            env,
+            `lore book ${entry.world}/${entry.comment}/${entry.uid} key ${key}`,
+            options,
+        ) ?? key;
+    }));
+
+    return [resultContent, resultKeys, resultSecondary];
 }

@@ -674,3 +674,58 @@ Entries activated via this function follow SillyTavern's native activation logic
 ```
 
 > The `@@generate_before` decorator is functionally equivalent to `[GENERATE:BEFORE]`
+
+### Native Recursive 🟢 Keyword Activation via Preprocessing Lorebook Entries
+
+To achieve native green-light recursive activation, you can perform **template processing** on Lorebook entries *before* the Lorebook is processed. This allows SillyTavern’s native 🟢 keyword activation to function as intended.
+
+This feature can be enabled in two ways:
+
+- Add `[Preprocessing]` to the entry title
+
+	> Example: `[Preprocessing] Lorebook Activator`
+
+- Add the decorator `@@preprocessing` within the entry content
+
+> Example:
+>
+> ```
+> @@preprocessing
+> This is the content of the lorebook entry...
+> ```
+
+#### Advantages
+
+- Fully compatible with SillyTavern’s native 🟢 keyword recursive activation
+- Supports template processing for both **primary keywords** and **optional filters**
+
+#### Disadvantages
+
+- Double processing issue
+
+> Since regex, macros, and template code are pre-processed, the extension will perform a second round of processing after the Lorebook has been handled.
+
+- Unordered processing
+
+> Processing here does not follow SillyTavern’s standard Lorebook processing order. Entry execution order cannot be guaranteed, so users must ensure no conflicts arise.
+
+#### Usage Example
+
+```javascript
+@@preprocessing
+<% if (variables.Hakimi.Affection > 50 && variables.Hakimi.AffectionEventStage === 0) { %>
+Current Event: Hakimi lets down her guard
+<% } else if (variables.Hakimi.Affection > 70 && variables.Hakimi.AffectionEventStage === 1) { %>
+Current Event: Hakimi reveals what happened to her
+<% } else if (variables.Hakimi.Affection > 90 && variables.Hakimi.AffectionEventStage === 2) { %>
+Current Event: Hakimi shares her past
+<% } %>
+```
+
+When sent to the LLM, the above content may appear as:
+
+```
+Current Event: Hakimi lets down her guard
+
+Corresponding content for the entry "Hakimi lets down her guard"...
+```

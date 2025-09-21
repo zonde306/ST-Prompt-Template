@@ -105,7 +105,7 @@ window.addEventListener('message', (event: MessageEvent<{ type: string, height: 
         if (iframe) {
             // Use Math.ceil to avoid sub-pixel layout issues causing unnecessary scrollbars
             iframe.style.height = Math.ceil(event.data.height) + 'px';
-            console.debug('iframe size changed', event.data.id, event.data.height);
+            // console.debug('iframe size changed', event.data.id, event.data.height);
         }
     }
 });

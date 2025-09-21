@@ -718,6 +718,7 @@ const KNOWN_DECORATORS = [
     '@@always_enabled',
     '@@only_preload',
     '@@iframe',
+    '@@preprocessing',
 ];
 
 /**
@@ -776,8 +777,8 @@ export function parseDecorators(content: string): [string[], string] {
 
 export function isSpecialEntry(entry: WorldInfoEntry, preload : boolean = false) : boolean {
     const title = entry.comment;
-    if(title.startsWith('[GENERATE:') ||
-        title.startsWith('[RENDER:') ||
+    if(title.includes('[GENERATE:') ||
+        title.includes('[RENDER:') ||
         title.includes('@INJECT') ||
         title.includes('[InitialVariables]'))
         return true;
@@ -792,4 +793,16 @@ export function isSpecialEntry(entry: WorldInfoEntry, preload : boolean = false)
         return true;
     
     return false;
+}
+
+export function isPreprocessingEntry(entry: WorldInfoEntry) : boolean {
+    if(entry.disable)
+        return false;
+    
+    const title = entry.comment;
+    if(title.includes('[Preprocessing]'))
+        return true;
+
+    const decorators = (entry.decorators ?? parseDecorators(entry.content)[0]).join(',');
+    return decorators.includes('@@preprocessing');
 }
