@@ -641,18 +641,6 @@ System: <%- depth_prompt %>
 variables = {}
 
 /**
- * 全部消息变量合集
- * 根据以下顺序(优先级)合并变量, 高优先级覆盖低优先级的同名变量:
- * 消息变量(楼层号从末尾到开头)
- * 
- * @note: 处理楼层消息变量时此值不包含当前以及之后的楼层变量
- *        冲突处理: 类型同为 [] 或者 {} 则合并，否则替换
- * @see: https://lodash.com/docs/4.17.15#merge
- * @type {object}
- */
-messageVariables = {}
-
-/**
  * 酒馆的 SillyTavern.getContext() 返回内容
  * 详细内容可在控制台里输入 SillyTavern.getContext() 查看
  */

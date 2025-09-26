@@ -177,8 +177,11 @@ export async function evalTemplate(content: string, data: Record<string, unknown
                 console.debug(`[Prompt Template] when ${opts.when} has errors:\n${contentWithLines}`);
             }
 
-            if (err instanceof SyntaxError)
+            if (err instanceof SyntaxError) {
                 err.message += getSyntaxErrorInfo(content);
+                // @ts-expect-error
+                console.info('SOURCE: ', err.src);
+            }
 
             console.error(err);
 
@@ -208,9 +211,6 @@ export async function prepareContext(msg_id?: number, env: Record<string, unknow
         ...SHARE_CONTEXT,
         get variables() {
             return STATE.cacheVars;
-        },
-        get messageVariables() {
-            return STATE.cacheMessage;
         },
         execute: async (cmd: string) => (await executeSlashCommandsWithOptions(cmd)).pipe,
         get SillyTavern() {
@@ -247,6 +247,10 @@ export async function prepareContext(msg_id?: number, env: Record<string, unknow
 
         get lastCharMessageId() {
             return chat.findLastIndex(msg => !msg.is_user && !msg.is_system);
+        },
+
+        get lastMessageId() {
+            return chat.length - 1;
         },
 
         ...env,
