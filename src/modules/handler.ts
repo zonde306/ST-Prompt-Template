@@ -162,9 +162,12 @@ async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
     }
 }
 
-async function handleGenerateAfter(data: GenerateAfterData) {
+async function handleGenerateAfter(data: GenerateAfterData, dryRun?: boolean) {
+    isDryRun = dryRun ?? isDryRun;
+
     if (isDryRun)
         return;
+
     if (settings.enabled === false)
         return;
 
