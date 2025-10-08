@@ -658,6 +658,60 @@ async function handleMessageCreated(message_id: number, type?: string) {
     clonePreviousMessage(message_id);
 }
 
+async function handleCustomGenerate(data: { message: string }, generationId: string) {
+    if (settings.enabled === false)
+        return;
+    if (settings.render_enabled === false)
+        return;
+    if(settings.raw_message_evaluation_enabled === false)
+        return;
+
+    const start = Date.now();
+
+    const env = await prepareContext(undefined, {
+        runID: runID++,
+        message_id: undefined,
+        swipe_id: undefined,
+        is_last: undefined,
+        is_user: undefined,
+        is_system: undefined,
+        name: undefined,
+        isDryRun: false,
+    });
+
+    const newContent = await evalTemplateHandler(
+        escapeReasoningBlocks(applyRegex(
+            env,
+            data.message,
+            {
+                message: true,
+                user: false,
+                assistant: true,
+                system: false,
+                depth: 0,
+                before: true,
+                after: false,
+                html: false,
+            }
+        )),
+        env,
+        `custom #${generationId}`,
+        {
+            options: {
+                filename: `custom/${getCurrentChatId()}`,
+                cache: false, // evaluate only once, no caching required
+            }
+        }
+    );
+    
+    if (newContent != null) {
+        data.message = newContent;
+    }
+
+    const end = Date.now() - start;
+    console.log(`[Prompt Template] processing #${generationId} custom generate in ${end}ms`);
+}
+
 const MESSAGE_RENDER_EVENTS = [
     event_types.MESSAGE_UPDATED,
     event_types.MESSAGE_SWIPED,
@@ -684,6 +738,9 @@ export async function init() {
 
     // REQUIRED BY: https://discord.com/channels/1291925535324110879/1374352724245614662/1418480720682287197
     eventSource.makeFirst(event_types.CHARACTER_MESSAGE_RENDERED, handleMessageRender);
+
+    // compatible with https://github.com/N0VI028/JS-Slash-Runner/blob/b07d3e78ce75b541ce0ead3ba3c92acbb99ad59e/src/function/generate/responseGenerator.ts#L156
+    eventSource.on('js_generation_before_end', handleCustomGenerate);
 }
 
 export async function exit() {

@@ -1,0 +1,43 @@
+# .github/workflows/auto-build.yml
+name: Auto build
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  auto-commit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run your script
+      run: |
+        npm run build
+    
+    - name: Commit and push changes
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        
+        if [ -n "$(git status --porcelain)" ]; then
+          git add .
+          git commit -m "chore: auto-commit changes" --no-verify
+          git push
+          echo "Changes committed and pushed successfully"
+        else
+          echo "No changes detected, nothing to commit"
+        fi
