@@ -1,4 +1,5 @@
 import { setVariable, getVariable, SetVarOption } from './variables';
+import { LLMJSONParser } from 'ai-json-fixer';
 
 /**
  * JSON Patch Operation Type (RFC 6902)
@@ -188,9 +189,24 @@ export function jsonPatch(doc: object, patches: JsonPatch): object {
 export function patchVariables(
     this: Record<string, unknown>,
     key: string | null,
-    change: JsonPatch,
+    change: JsonPatch | string,
     options: SetVarOption = {}
 ) {
     const doc = getVariable.call(this, key, options);
-    return setVariable.call(this, key, jsonPatch(doc, change), options);
+    const patch = jsonPatch(doc, typeof change === 'string' ? parseJSON(change) : change);
+    return setVariable.call(this, key, patch, options);
+}
+
+let parser: null | LLMJSONParser = null;
+
+export function parseJSON(json: string) {
+    if (parser == null) {
+        parser = new LLMJSONParser();
+    }
+    return parser.parse(json, {
+        stripMarkdown: true,
+        trimTrailing: true,
+        fixQuotes: true,
+        addMissingCommas: true,
+    });
 }

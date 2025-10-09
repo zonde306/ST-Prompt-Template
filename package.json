@@ -3,6 +3,7 @@
   "version": "1.15",
   "private": true,
   "dependencies": {
+    "ai-json-fixer": "^0.2.0",
     "syntax-error": "^1.4.0",
     "tsc": "^2.0.4",
     "vm-browserify": "^1.1.2",

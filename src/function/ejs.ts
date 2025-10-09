@@ -18,7 +18,7 @@ import { power_user } from '../../../../../power-user.js';
 import { METADATA_KEY } from '../../../../../world-info.js';
 import { hashString } from './hasher'
 import { getRegexedString, regex_placement } from '../../../../regex/engine.js';
-import { patchVariables, jsonPatch } from './json-patch';
+import { patchVariables, jsonPatch, parseJSON } from './json-patch';
 
 // @ts-expect-error: 7034
 import { groups, selected_group } from '../../../../../group-chats.js';
@@ -62,6 +62,7 @@ const SHARE_CONTEXT: Record<string, unknown> = {
     hasPromptsInjected,
     matchChatMessages,
     jsonPatch,
+    parseJSON,
 };
 
 const CODE_TEMPLATE = `
