@@ -4,6 +4,7 @@ import { applySettings, loadSettings } from './ui';
 import { precacheVariables, checkAndSave } from '../function/variables';
 import { handlePreloadWorldInfo } from './handler';
 import { getCurrentChatId } from '../../../../../../script.js';
+import { parseJSON, jsonPatch } from '../function/json-patch';
 
 export async function init() {
     // @ts-expect-error
@@ -32,6 +33,8 @@ export async function init() {
         get initialVariables() {
             return STATE.initialVariables;
         },
+        parseJSON,
+        jsonPatch,
     };
 }
 

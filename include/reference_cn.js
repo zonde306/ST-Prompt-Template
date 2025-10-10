@@ -21,11 +21,36 @@
  */
 
 /**
+ * @typedef {('nx'|'xx'|'n'|'nxs'|'xxs')} FlagOption
+ * @description 变量设置规则：nx=不存在才设, xx=存在才设, n=强制设等
+ */
+
+/**
+ * @typedef {('global'|'local'|'message'|'cache'|'initial')} ScopeOption
+ * @description 变量作用域
+ */
+
+/**
+ * @typedef {('old'|'new'|'fullcache')} ResultOption
+ * @description 返回值类型
+ */
+
+/**
+ * @typedef {boolean} DryRun
+ * @description 强制设置变量
+ */
+
+/**
+ * @typedef {(FlagOption|ScopeOption|ResultOption|DryRun)} SimpleOptions
+ * @description 快捷选项，支持 flags / scope / results / dryRun 三类简写
+ */
+
+/**
  * 设置变量
  *
- * @param {string} key - 变量名
+ * @param {(string|null)} key - 变量名，null 表示整个替换变量树
  * @param {any} value - 变量值
- * @param {SetVarOption} [options={}] - 设置变量选项.
+ * @param {(SetVarOption|SimpleOptions)} [options={}] - 设置变量选项.
  * @returns 成功根据options.results决定，失败返回undefined
  */
 function setvar(key, value, options = {});
@@ -50,8 +75,8 @@ function setMessageVar(key, value, options = {});
  * 读取变量
  * @note: 应该避免修改对象引用
  *
- * @param {string} key - 变量名
- * @param {GetVarOption} [options={}] - 获取变量选项
+ * @param {(string|null)} key - 变量名，null 表示整个获取变量树
+ * @param {(GetVarOption|SimpleOptions)} [options={}] - 获取变量选项
  * @returns {any} - 变量值,找不到返回options.defaults的值
  */
 function getvar(key, options = {});
@@ -81,7 +106,7 @@ function getMessageVar(key, options = {});
  *
  * @param {string} key - 变量名
  * @param {number} [value=1] - 变量值
- * @param {GetSetVarOption} [options={}] - 更新变量选项
+ * @param {(GetSetVarOption|SimpleOptions)} [options={}] - 更新变量选项
  * @returns 根据options.results决定,失败返回undefined.
  */
 function incvar(key, value = 1, options = {});
@@ -95,7 +120,7 @@ function incMessageVar(key, value = 1, options = {});
  *
  * @param {string} key - 变量名
  * @param {number} [value=1] - 变量值
- * @param {GetSetVarOption} [options={}] - 更新变量选项
+ * @param {(GetSetVarOption|SimpleOptions)} [options={}] - 更新变量选项
  * @returns 根据options.results决定,失败返回undefined.
  */
 function decvar(key, value = 1, options = {});
@@ -105,7 +130,7 @@ function decGlobalVar(key, value = 1, options = {});
 function decMessageVar(key, value = 1, options = {});
 
 /**
- * 执行命令,例如/setvar
+ * 执行 SillyTavern 命令, 例如 /setvar
  *
  * @param {string} cmd - 命令
  * @returns {Promise<string>} - 命令返回值
@@ -115,7 +140,7 @@ async function execute(cmd);
 /**
  * 读取世界书条目内容
  *
- * @param {string} lorebook - 世界书名(递归时可传递空值，自动推断为当前世界书)
+ * @param {string} lorebook - 世界书名(空字符串/不传递时为当前角色卡主要世界书)
  * @param {string | RegExp | number} title - 条目uid/标题
  * @param {Record<string, any>} [data={}] - 传递的数据
  * @returns {Promise<string>} - 世界书条目的内容
@@ -439,6 +464,39 @@ function hasPromptsInjected(key);
  * @returns {boolean} 符合匹配项则返回true，否则false
  */
 function matchChatMessages(pattern, options = {});
+
+/*
+ * 一个更宽松的 JSON Parser 实现，可以一定程度上解析 LLM 输出的格式错误的 JSON 字符串
+ * 
+ * @see JSON.parse
+ *
+ * @param {string} text - 要进行解析的 JSON 字符串
+ * @returns {(object|array|string|null|number|boolean)} - 解析结果
+*/
+function parseJSON(text);
+
+/*
+ * 对 dest 应用 JSON Patch 修改，返回修改后的 dest
+ * 不会原地修改 dest，而是返回新的 object
+ * @see https://www.rfc-editor.org/rfc/rfc6902
+ *
+ * @param {object} dest - 要被修改的 object
+ * @param {object[]} change - JSON Patch 操作列表
+ * @returns {object} - 修改后的 object
+*/
+function jsonPatch(dest, change);
+
+/*
+ * 对变量应用 JSON Patch 修改
+ * @see jsonPatch
+ * @see setvar
+ *
+ * @param {(string|null)} key - 要被修改的变量，null 则表示修改整个变量树
+ * @param {object[]} change - JSON Patch 操作列表
+ * @param {SetVarOption} [options={}] - 修改变量传递的参数
+ * @returns 返回值由 options 决定
+*/
+function patchVariables(key, change, options = {});
 
 /**
  * 全部变量合集
