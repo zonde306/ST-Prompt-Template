@@ -30,6 +30,11 @@ type SimpleOptions = 'nx' | 'xx' | 'n' | 'nxs' | 'xxs' | 'global' | 'local' | 'm
  * @returns all variables object
  */
 export function precacheVariables(msg_id?: number, sw_id?: number): Record<string, unknown> {
+    if(chat.length < 1) {
+        STATE.cacheVars = {};
+        return STATE.cacheVars;
+    }
+
     clonePreviousMessage(msg_id ?? chat.length - 1);
 
     STATE.messageId = msg_id ?? chat.length - 1;
