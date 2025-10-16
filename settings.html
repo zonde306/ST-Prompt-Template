@@ -13,7 +13,7 @@
 		
 		<div class="inline-drawer-content">
 			<!-- 全局开关 -->
-			<label class="flex-container" title="Global switch" data-i18n="[title]Global switch">
+			<label class="flex-container" title="Global switch" data-i18n="titleGlobal switch">
 				<input type="checkbox" id="pt_enabled">
 				<!-- 是否启用扩展 -->
 				<span data-i18n="PT Enable">Enable extension</span>
@@ -23,23 +23,23 @@
 			<hr>
 			
 			<!-- 生成全局开关 -->
-			<label class="flex-container" title="Global generation switch" data-i18n="[title]Global generation switch">
+			<label class="flex-container" title="Global generation switch" data-i18n="titleGlobal generation switch">
 				<input type="checkbox" id="pt_generate_enabled">
 				<!-- 处理生成内容 -->
 				<span data-i18n="PT Enable Generate-time evaluation">Generate processing</span>
 				<span class="fa-solid fa-circle-question note-link-span"></span>
 			</label>
 			
-			<!-- 允许世界书条目的 [GENERATE:BEFORE] 和 [GENERATE:AFTER] 注入到生成提示词中 -->
-			<label class="flex-container" title="Allow [GENERATE:BEFORE] and [GENERATE:AFTER] World Info entries to be injected into the generated prompt." data-i18n="[title]Allow [GENERATE:BEFORE] and [GENERATE:AFTER] World Info entries to be injected into the generated prompt.">
+			<!-- 允许世界书条目的 GENERATE:BEFORE 和 GENERATE:AFTER 注入到生成提示词中 -->
+			<label class="flex-container" title="Allow [GENERATE:BEFORE] and GENERATE:AFTER World Info entries to be injected into the generated prompt." data-i18n="titleAllow GENERATE:BEFORE and GENERATE:AFTER World Info entries to be injected into the generated prompt.">
 				<input type="checkbox" id="pt_generate_loader_enabled">
-				<!-- 生成时注入 [GENERATE] 世界书条目 -->
-				<span data-i18n="PT Enable [GENERATE] evaluation">Enable [GENERATE] feature</span>
+				<!-- 生成时注入 GENERATE 世界书条目 -->
+				<span data-i18n="PT Enable GENERATE evaluation">Enable [GENERATE] feature</span>
 				<span class="fa-solid fa-circle-question note-link-span"></span>
 			</label>
 
 			<!-- 允许世界书条目的 @INJECT 注入到生成提示词中&#10;Contributed by kanon0914 -->
-			<label class="flex-container" title="Allow @INJECT World Info entries to be injected into the generated prompt.&#10;Contributed by kanon0914" data-i18n="[title]Allow @INJECT World Info entries to be injected into the generated prompt.&#10;Contributed by kanon0914">
+			<label class="flex-container" title="Allow @INJECT World Info entries to be injected into the generated prompt.&#10;Contributed by kanon0914" data-i18n="titleAllow @INJECT World Info entries to be injected into the generated prompt.&#10;Contributed by kanon0914">
 				<input type="checkbox" id="pt_inject_loader_enabled">
 				<!-- 生成时注入 @INJECT 世界书条目 -->
 				<span data-i18n="PT Enable @INJECT evaluation">Enable @INJECT feature</span>
@@ -49,23 +49,23 @@
 			<hr>
 			
 			<!-- 楼层全局开关 -->
-			<label class="flex-container" title="Global chat message switch" data-i18n="[title]Global chat message switch">
+			<label class="flex-container" title="Global chat message switch" data-i18n="titleGlobal chat message switch">
 				<input type="checkbox" id="pt_render_enabled">
 				<!-- 处理楼层消息 -->
 				<span data-i18n="PT Enable Chat message evaluation">Chat message processing</span>
 				<span class="fa-solid fa-circle-question note-link-span"></span>
 			</label>
 			
-			<!-- 允许世界书条目的 [RENDER:BEFORE] 和 [RENDER:AFTER] 注入到楼层消息中&#10;仅影响显示内容，不影响生成&#10;一般用来显示状态栏 -->
-			<label class="flex-container" title="Allow [RENDER:BEFORE] and [RENDER:AFTER] World Info entries to be injected into chat messages.&#10;Only affects display content, not generation." data-i18n="[title]Allow [RENDER:BEFORE] and [RENDER:AFTER] World Info entries to be injected into chat messages.&#10;Only affects display content, not generation.&#10;Typically used for displaying status bars.">
+			<!-- 允许世界书条目的 RENDER:BEFORE 和 RENDER:AFTER 注入到楼层消息中&#10;仅影响显示内容，不影响生成&#10;一般用来显示状态栏 -->
+			<label class="flex-container" title="Allow [RENDER:BEFORE] and [RENDER:AFTER] World Info entries to be injected into chat messages.&#10;Only affects display content, not generation." data-i18n="titleAllow RENDER:BEFORE and RENDER:AFTER World Info entries to be injected into chat messages.&#10;Only affects display content, not generation.&#10;Typically used for displaying status bars.">
 				<input type="checkbox" id="pt_render_loader_enabled">
-				<!-- 渲染楼层时注入 [RENDER] 世界书条目 -->
-				<span data-i18n="PT Enable [RENDER] evaluation">Enable [RENDER] feature</span>
+				<!-- 渲染楼层时注入 RENDER 世界书条目 -->
+				<span data-i18n="PT Enable RENDER evaluation">Enable [RENDER] feature</span>
 				<span class="fa-solid fa-circle-question note-link-span"></span>
 			</label>
 			
 			<!-- 允许在处理楼层消息时对 &lt;pre&gt; 块进行模板处理 -->
-			<label class="flex-container" title="Allow template processing of &lt;pre&gt; blocks when processing chat messages." data-i18n="[title]Allow template processing of pre blocks when processing chat messages.">
+			<label class="flex-container" title="Allow template processing of &lt;pre&gt; blocks when processing chat messages." data-i18n="titleAllow template processing of pre blocks when processing chat messages.">
 				<input type="checkbox" id="pt_code_blocks">
 				<!-- 处理代码块 -->
 				<span data-i18n="PT Enable code blocks">Enable &lt;pre&gt; processing in chat messages</span>
@@ -73,7 +73,7 @@
 			</label>
 			
 			<!-- 先对原始消息进行原始消息的模板处理，会修改原始消息内容&#10;可以避免重复处理楼层消息，建议开启 -->
-			<label class="flex-container" title="Process the original message content first, which will modify the original message content.&#10;This can avoid reprocessing chat messages, it is recommended to enable." data-i18n="[title]Process the original message content first, which will modify the original message content.&#10;This can avoid reprocessing chat messages, it is recommended to enable.">
+			<label class="flex-container" title="Process the original message content first, which will modify the original message content.&#10;This can avoid reprocessing chat messages, it is recommended to enable." data-i18n="titleProcess the original message content first, which will modify the original message content.&#10;This can avoid reprocessing chat messages, it is recommended to enable.">
 				<input type="checkbox" id="pt_permanent_evaluation">
 				<!-- 处理原始消息内容 -->
 				<span data-i18n="PT Permanent evaluation results">Enable raw chat messages</span>
@@ -81,7 +81,7 @@
 			</label>
 			
 			<!-- 在生成前将楼层消息里的模板语句隐藏，不参与生成 -->
-			<label class="flex-container" title="Hide template statements in chat messages before generation, so they are not included in the generation." data-i18n="[title]Hide template statements in chat messages before generation, so they are not included in the generation.">
+			<label class="flex-container" title="Hide template statements in chat messages before generation, so they are not included in the generation." data-i18n="titleHide template statements in chat messages before generation, so they are not included in the generation.">
 				<input type="checkbox" id="pt_filter_chat_message">
 				<!-- 生成时忽略楼层消息处理 -->
 				<span data-i18n="PT Filter chat message">Generate processing does not include chat messages</span>
@@ -89,7 +89,7 @@
 			</label>
 			
 			<!-- 仅处理深度小于此值的楼层&#10;-1表示无限制 -->
-			<label title="Only process messages shallower than this value.&#10;-1 means no limit." data-i18n="[title]Only process messages shallower than this value.&#10;-1 means no limit.">
+			<label title="Only process messages shallower than this value.&#10;-1 means no limit." data-i18n="titleOnly process messages shallower than this value.&#10;-1 means no limit.">
 				<!-- 楼层处理最大深度 -->
 				<span data-i18n="PT chat depth limit">Maximum depth of chat messages</span>
 				<span class="fa-solid fa-circle-question note-link-span"></span>
@@ -106,7 +106,7 @@
 			<hr>
 			
 			<!-- 模板处理结束后立即保存&#10;一般不需要开启，酒馆也会自行保存的 -->
-			<label class="flex-container" title="Save immediately after template processing is complete." data-i18n="[title]Save immediately after template processing is complete.&#10;Usually not necessary to enable, as Tavern will save it automatically.">
+			<label class="flex-container" title="Save immediately after template processing is complete." data-i18n="titleSave immediately after template processing is complete.&#10;Usually not necessary to enable, as Tavern will save it automatically.">
 				<input type="checkbox" id="pt_autosave_enabled">
 				<!-- 自动保存变量更新 -->
 				<span data-i18n="PT Enable Autosave">Automatically save chats</span>
@@ -114,7 +114,7 @@
 			</label>
 			
 			<!-- 打开角色卡时立即加载并处理世界书&#10;一般用来初始化变量和define -->
-			<label class="flex-container" title="Load and process World Info immediately when opening chats." data-i18n="[title]Load and process World Info immediately when opening character cards.&#10;Typically used to initialize variables and defines.">
+			<label class="flex-container" title="Load and process World Info immediately when opening chats." data-i18n="titleLoad and process World Info immediately when opening character cards.&#10;Typically used to initialize variables and defines.">
 				<input type="checkbox" id="pt_preload_worldinfo">
 				<!-- 立即加载世界书 -->
 				<span data-i18n="PT Enable Preload">Preload World/Lorebooks</span>
@@ -122,7 +122,7 @@
 			</label>
 			
 			<!-- 用来解决getvar is not defined的问题&#10;开启会导致define和const冲突 -->
-			<label class="flex-container" title="Used to fix the 'getvar is not defined' error." data-i18n="[title]Used to solve the 'getvar is not defined' issue.&#10;Enabling this may cause conflicts with 'define' and 'const'.">
+			<label class="flex-container" title="Used to fix the 'getvar is not defined' error." data-i18n="titleUsed to solve the 'getvar is not defined' issue.&#10;Enabling this may cause conflicts with 'define' and 'const'.">
 				<input type="checkbox" id="pt_with_context_disabled">
 				<!-- 禁用with语句块 -->
 				<span data-i18n="PT Disabling with statement">Disable with statement</span>
@@ -130,7 +130,7 @@
 			</label>
 			
 			<!-- 控制台显示详细日志&#10;日志非常多 -->
-			<label class="flex-container" title="Display detailed logs in the console." data-i18n="[title]Display detailed logs in the console.&#10;Logs can be very verbose.">
+			<label class="flex-container" title="Display detailed logs in the console." data-i18n="titleDisplay detailed logs in the console.&#10;Logs can be very verbose.">
 				<input type="checkbox" id="pt_debug_enabled">
 				<!-- 控制台显示详细信息 -->
 				<span data-i18n="PT Enable debug logging">Console detailed log</span>
@@ -138,7 +138,7 @@
 			</label>
 			
 			<!-- 旧设定兼容模式&#10;世界书中的GENERATE/RENDER/INJECT条目禁用时视为启用 -->
-			<label class="flex-container" title="Old setting compatibility mode.&#10;GENERATE/RENDER/INJECT entries in World Info are considered enabled when disabled." data-i18n="[title]Old setting compatibility mode.&#10;GENERATE/RENDER/INJECT entries in World Info are considered enabled when disabled.">
+			<label class="flex-container" title="Old setting compatibility mode.&#10;GENERATE/RENDER/INJECT entries in World Info are considered enabled when disabled." data-i18n="titleOld setting compatibility mode.&#10;GENERATE/RENDER/INJECT entries in World Info are considered enabled when disabled.">
 				<input type="checkbox" id="pt_invert_enabled">
 				<!-- GENERATE/RENDER/INJECT条目禁用视为启用 -->
 				<span data-i18n="PT Invert entry enable">Compatibility with old features</span>
@@ -148,7 +148,7 @@
 			<hr>
 			
 			<!-- 模板编译缓存，可以提速&#10;目前存在一些问题 -->
-			<label class="flex-container" title="Template compilation cache, can speed up performance.&#10;Maybe something went wrong." data-i18n="[title]Template compilation cache, can speed up performance.&#10;Current issues exist.">
+			<label class="flex-container" title="Template compilation cache, can speed up performance.&#10;Maybe something went wrong." data-i18n="titleTemplate compilation cache, can speed up performance.&#10;Current issues exist.">
 				<!-- 缓存（实验性） -->
 				<span data-i18n="PT Enable cache">Cache (experimental)</span>
 				<span class="fa-solid fa-circle-question note-link-span"></span>
@@ -163,7 +163,7 @@
 			</label>
 			
 			<!-- 缓存大小限制&#10;0则不限制 -->
-			<label title="Cache size limit.&#10;0 means no limit." data-i18n="[title]Cache size limit.&#10;0 means no limit.">
+			<label title="Cache size limit.&#10;0 means no limit." data-i18n="titleCache size limit.&#10;0 means no limit.">
 				<!-- 缓存大小 -->
 				<span data-i18n="PT cache size">Cache size</span>
 				<span class="fa-solid fa-circle-question note-link-span"></span>
@@ -178,7 +178,7 @@
 			</label>
 			
 			<!-- 缓存hash算法&#10;不同算法性能会有差异 -->
-			<label class="flex-container" title="Cache hash algorithm.&#10;Different algorithms may have varying performance." data-i18n="[title]Cache hash algorithm.&#10;Different algorithms may have varying performance.">
+			<label class="flex-container" title="Cache hash algorithm.&#10;Different algorithms may have varying performance." data-i18n="titleCache hash algorithm.&#10;Different algorithms may have varying performance.">
 				<!-- 缓存Hash函数 -->
 				<span data-i18n="PT cache hasher">缓存Hash函数</span>
 				<span class="fa-solid fa-circle-question note-link-span"></span>
