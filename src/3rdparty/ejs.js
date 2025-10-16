@@ -66,7 +66,7 @@
     // so we make an exception for `renderFile`
     var _OPTS_PASSABLE_WITH_DATA_EXPRESS = _OPTS_PASSABLE_WITH_DATA.concat('cache');
     var _BOM = /^\uFEFF/;
-    var _JS_IDENTIFIER = /^[a-zA-Z_$][0-9a-zA-Z_$]*$/;
+    var _JS_IDENTIFIER = /^[\p{ID_Start}$][\p{ID_Continue}$]*$/u;
     
     /**
      * EJS template function cache. This can be a LRU object from lru-cache NPM
