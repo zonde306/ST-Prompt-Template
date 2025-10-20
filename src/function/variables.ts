@@ -646,15 +646,17 @@ function optionsConverter(
 /**
  * Find the previous available variable
  * @param message_id current message id
+ * @param key variable key
  * @returns variables object
  */
-function findPreviousMessageVariables(message_id: number) : Record<string, any> {
+export function findPreviousMessageVariables(message_id?: number, key?: string) : Record<string, any> {
     const message : Message | undefined = chat
         .slice(0, message_id)
         .findLast(msg =>
             !msg.is_system &&
             !msg.is_user &&
-            msg.variables?.[msg?.swipe_id ?? 0] != null
+            msg.variables?.[msg?.swipe_id ?? 0] != null &&
+            (key == null || get(msg.variables?.[msg?.swipe_id ?? 0], key, null) != null)
         );
     
     return message?.variables?.[message.swipe_id ?? 0] ?? {};
