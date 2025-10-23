@@ -653,8 +653,8 @@ export function findPreviousMessageVariables(message_id?: number, key?: string) 
     const message : Message | undefined = chat
         .slice(0, message_id)
         .findLast(msg =>
-            !msg.is_system &&
-            !msg.is_user &&
+            // !msg.is_system &&
+            // !msg.is_user &&
             msg.variables?.[msg?.swipe_id ?? 0] != null &&
             (key == null || get(msg.variables?.[msg?.swipe_id ?? 0], key, null) != null)
         );
