@@ -1,5 +1,5 @@
 import { setVariable, getVariable, SetVarOption } from './variables';
-import { LLMJSONParser } from 'ai-json-fixer';
+import { jsonrepair } from 'jsonrepair';
 
 /**
  * JSON Patch Operation Type (RFC 6902)
@@ -197,16 +197,6 @@ export function patchVariables(
     return setVariable.call(this, key, patch, options);
 }
 
-let parser: null | LLMJSONParser = null;
-
 export function parseJSON(json: string) {
-    if (parser == null) {
-        parser = new LLMJSONParser();
-    }
-    return parser.parse(json, {
-        stripMarkdown: true,
-        trimTrailing: true,
-        fixQuotes: true,
-        addMissingCommas: true,
-    });
+    return JSON.parse(jsonrepair(json));
 }

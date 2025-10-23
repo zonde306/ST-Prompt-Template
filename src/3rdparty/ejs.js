@@ -599,7 +599,7 @@
                     throw new Error('localsName is not a valid JS identifier.');
                 }
                 if (opts.destructuredLocals && opts.destructuredLocals.length) {
-                    var destructuring = ' const __locals = (' + opts.localsName + ' || {}),\n';
+                    var destructuring = ' {\n  const __locals = (' + opts.localsName + ' || {}),\n  ';
                     for (var i = 0; i < opts.destructuredLocals.length; i++) {
                         var name = opts.destructuredLocals[i];
                         if (!_JS_IDENTIFIER.test(name)) {
@@ -617,7 +617,9 @@
                 }
                 prepended +=  ' {' + '\n';
                 appended += '  }' + '\n';
-
+                if (opts.destructuredLocals && opts.destructuredLocals.length)
+                    appended += '  }\n';
+                
                 appended += '  return __output;' + '\n';
                 this.source = prepended + this.source + appended;
             }
