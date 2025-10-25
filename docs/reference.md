@@ -93,7 +93,7 @@ function setMessageVar(key, value, options = {});
  *
  * @param {(string|null)} key - Variable name. If `null`, returns the entire variable tree.
  * @param {(GetVarOption|SimpleOptions)} [options={}] - Options for retrieving the variable.
- * @returns {any} - Variable value, or `options.defaults` if not found.
+ * @returns {any} - Variable value, or `options.defaults` if not found (or `undefined` if `options.defaults` is not specified).
  */
 function getvar(key, options = {});
 // Aliases for specific scopes

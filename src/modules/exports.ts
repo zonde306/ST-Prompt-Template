@@ -28,7 +28,9 @@ export async function init() {
         allVariables: precacheVariables,
         saveVariables: checkAndSave,
         resetFeatures: () => loadSettings(true),
-        defines: SharedDefines,
+        get defines() {
+            return SharedDefines;
+        },
         refreshWorldInfo: async() => await handlePreloadWorldInfo(getCurrentChatId(), true),
         get initialVariables() {
             return STATE.initialVariables;
