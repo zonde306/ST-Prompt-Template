@@ -867,6 +867,11 @@ is_user = false
  * 消息是否为系统
  */
 is_system = false
+
+/*
+ * 当前生成模型
+ */
+model = 'gpt-3.5'
 ```
 
 ---

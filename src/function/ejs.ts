@@ -6,7 +6,7 @@ import { getWorldInfoEntries, getWorldInfoActivatedEntries, getEnabledWorldInfoE
 import { precacheVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption, findPreviousMessageVariables } from './variables';
 import { getCharacterDefine, DEFAULT_CHAR_DEFINE, getCharacterData, getCharacterAvaterURL, getUserAvatarURL } from './characters';
 import { substituteParams, eventSource, this_chid, characters, chat_metadata, name1, name2, getCurrentChatId, chat } from '../../../../../../script.js';
-import { getPresetPromptsContent } from './presets';
+import { getPresetPromptsContent, getGeneratingModel } from './presets';
 import { getQuickReply, getQuickReplyData } from './quickreply';
 import { getChatMessage, getChatMessages, matchChatMessages } from './chat';
 import { fakerEnv } from './faker';
@@ -63,6 +63,9 @@ const SHARE_CONTEXT: Record<string, unknown> = {
     matchChatMessages,
     jsonPatch,
     parseJSON,
+    get model() {
+        return getGeneratingModel();
+    },
 };
 
 const CODE_TEMPLATE = `
