@@ -64,10 +64,12 @@ export interface Message extends Record<string, unknown> {
     mes: string;
     name: string;
     send_date: string;
-    variables?: Record<number, Record<string, unknown>>;    // created by extensions
     swipe_id: number;
     swipe_info: Array<unknown>;
     swipes: Array<string>;
+
+    // created by extensions
+    variables?: Record<number, Record<string, unknown>>;
     is_ejs_processed?: Array<boolean>;
 }
 
