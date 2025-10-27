@@ -122,6 +122,10 @@ export function jsonPatch(doc: object, patches: JsonPatch): object {
         const lodashPath = convertJsonPointerToLodashPath(path);
 
         switch (op) {
+            // @ts-expect-error: 2678
+            case 'set':
+            // @ts-expect-error: 2678
+            case 'assign':
             case 'add':
             case 'replace': {
                 // Handle special case for adding to the end of an array (e.g., "/a/-")
