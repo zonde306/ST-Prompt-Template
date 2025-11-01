@@ -463,10 +463,10 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
     const end = Date.now() - start;
     console.log(`[Prompt Template] processing #${message_idx} messages in ${end}ms`);
 
-    await checkAndSave();
-
-    if (!isDryRun)
+    if (!isDryRun) {
+        await checkAndSave();
         updateTokens(container.text(), 'receive');
+    }
 }
 
 // export for command
