@@ -122,6 +122,10 @@ export function jsonPatch(doc: object, patches: JsonPatch): object {
         const lodashPath = convertJsonPointerToLodashPath(path);
 
         switch (op) {
+            // @ts-expect-error: 2678
+            case 'set':
+            // @ts-expect-error: 2678
+            case 'assign':
             case 'add':
             case 'replace': {
                 // Handle special case for adding to the end of an array (e.g., "/a/-")
@@ -132,7 +136,8 @@ export function jsonPatch(doc: object, patches: JsonPatch): object {
                     if (Array.isArray(parent)) {
                         parent.push(value);
                     } else {
-                        throw new Error(`Cannot push to a non-array value at path: ${parentPath.join('.')}`);
+                        toastr.error(`Cannot push to a non-array value at path: ${parentPath.join('.')}`, 'JSON Patch');
+                        break;
                     }
                 } else {
                     _.set(newDoc, lodashPath, value);
@@ -144,7 +149,7 @@ export function jsonPatch(doc: object, patches: JsonPatch): object {
                 if (!_.unset(newDoc, lodashPath)) {
                     // _.unset returns false if the path can't be removed. 
                     // This can be treated as a warning or an error depending on strictness.
-                    console.warn(`Path "${path}" could not be removed.`);
+                    toastr.warn(`Path "${path}" could not be removed.`, 'JSON Patch');
                 }
                 break;
             }
@@ -152,7 +157,8 @@ export function jsonPatch(doc: object, patches: JsonPatch): object {
             case 'move': {
                 const valueToMove = _.get(newDoc, fromPath);
                 if (_.isUndefined(valueToMove)) {
-                    throw new Error(`Cannot move from a non-existent path: "${patch.from}"`);
+                    toastr.error(`Cannot move from a non-existent path: "${patch.from}"`, 'JSON Patch');
+                    break;
                 }
                 // Important: remove *before* setting, in case the destination is a child of the source.
                 _.unset(newDoc, fromPath);
@@ -163,7 +169,8 @@ export function jsonPatch(doc: object, patches: JsonPatch): object {
             case 'copy': {
                 const valueToCopy = _.get(newDoc, fromPath);
                 if (_.isUndefined(valueToCopy)) {
-                    throw new Error(`Cannot copy from a non-existent path: "${patch.from}"`);
+                    toastr.error(`Cannot copy from a non-existent path: "${patch.from}"`, 'JSON Patch');
+                    break;
                 }
                 // For copy, the value remains at the source, so we just set it at the destination.
                 _.set(newDoc, lodashPath, valueToCopy);
@@ -173,13 +180,14 @@ export function jsonPatch(doc: object, patches: JsonPatch): object {
             case 'test': {
                 const existingValue = _.get(newDoc, lodashPath);
                 if (!_.isEqual(existingValue, value)) {
-                    throw new Error(`Test failed: value at "${path}" is not equal to the provided value.`);
+                    toastr.error(`Test failed: value at "${path}" is not equal to the provided value.`);
+                    return doc;
                 }
                 break;
             }
 
             default:
-                throw new Error(`Unsupported patch operation: "${op}"`);
+                toastr.warning(`Unsupported patch operation: "${op}"`, 'JSON Patch');
         }
     }
 

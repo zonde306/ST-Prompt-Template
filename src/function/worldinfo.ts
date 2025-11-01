@@ -725,54 +725,69 @@ const KNOWN_DECORATORS = [
  * Parse decorators from worldinfo content
  * @param content The content to parse
  * @returns The decorators found in the content and the content without decorators
-*/
+ */
 export function parseDecorators(content: string): [string[], string] {
     /**
-     * Check if the decorator is known
-     * @param data string to check
-     * @returns true if the decorator is known
-    */
-    const isKnownDecorator = (data: string): boolean => {
-        if (data.startsWith('@@@')) {
-            data = data.substring(1);
+     * Extract the base decorator name from a line (e.g., "@@depth 5" → "@@depth")
+     * @param line The decorator line
+     * @returns The base decorator name
+     */
+    const getBaseDecorator = (line: string): string => {
+        // Remove possible leading '@@@' (escape)
+        let candidate = line.startsWith('@@@') ? line.substring(1) : line;
+        // Take the part before the first space as the decorator name
+        const firstSpaceIndex = candidate.indexOf(' ');
+        if (firstSpaceIndex !== -1) {
+            candidate = candidate.substring(0, firstSpaceIndex);
         }
-
-        for (const decorator of KNOWN_DECORATORS) {
-            if (data.startsWith(decorator)) {
-                return true;
-            }
-        }
-        return false;
+        return candidate;
     };
 
-    if (content.startsWith('@@')) {
-        let newContent = content;
-        const splited = content.split('\n');
-        let decorators = [];
-        let fallbacked = false;
+    /**
+     * Check if the decorator is known
+     * @param line The full decorator line (e.g., "@@depth 5")
+     * @returns true if the base decorator is known
+     */
+    const isKnownDecorator = (line: string): boolean => {
+        const base = getBaseDecorator(line);
+        return KNOWN_DECORATORS.includes(base);
+    };
 
-        for (let i = 0; i < splited.length; i++) {
-            if (splited[i].startsWith('@@')) {
-                if (splited[i].startsWith('@@@') && !fallbacked) {
-                    continue;
-                }
-
-                if (isKnownDecorator(splited[i])) {
-                    decorators.push(splited[i].startsWith('@@@') ? splited[i].substring(1) : splited[i]);
-                    fallbacked = false;
-                }
-                else {
-                    fallbacked = true;
-                }
-            } else {
-                newContent = splited.slice(i).join('\n');
-                break;
-            }
-        }
-        return [decorators, newContent];
+    if (!content.startsWith('@@')) {
+        return [[], content];
     }
 
-    return [[], content];
+    const lines = content.split('\n');
+    const decorators: string[] = [];
+    let contentStartIndex = 0;
+    let fallbacked = false;
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        if (line.startsWith('@@')) {
+            // Handle escapes: @@@xxx is treated as normal content unless fallbacked
+            if (line.startsWith('@@@') && !fallbacked) {
+                contentStartIndex = i;
+                break;
+            }
+
+            if (isKnownDecorator(line)) {
+                // Keep the original line (including arguments), but remove the escape prefix (if any)
+                const normalizedLine = line.startsWith('@@@') ? line.substring(1) : line;
+                decorators.push(normalizedLine);
+                fallbacked = false;
+            } else {
+                fallbacked = true;
+            }
+        } else {
+            contentStartIndex = i;
+            break;
+        }
+    }
+
+    const newContent = lines.slice(contentStartIndex).join('\n');
+    return [decorators, newContent];
 }
 
 export function isSpecialEntry(entry: WorldInfoEntry, preload : boolean = false) : boolean {
