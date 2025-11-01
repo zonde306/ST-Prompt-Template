@@ -249,8 +249,16 @@ export async function prepareContext(msg_id?: number, env: Record<string, unknow
             return chat.findLastIndex(msg => msg.is_user);
         },
 
+        get lastUserMessage() {
+            return chat.findLast(msg => msg.is_user)?.mes ?? '';
+        },
+
         get lastCharMessageId() {
             return chat.findLastIndex(msg => !msg.is_user && !msg.is_system);
+        },
+
+        get lastCharMessage() {
+            return chat.findLast(msg => !msg.is_user && !msg.is_system)?.mes ?? '';
         },
 
         get lastMessageId() {
