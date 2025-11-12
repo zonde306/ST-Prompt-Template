@@ -1163,6 +1163,13 @@ function parseJSON(text);
  * @returns {object} - New patched object.
  */
 function jsonPatch(dest, change);
+
+/**
+ * get extension settings
+ *
+ * @returns {EjsSettings} - Feature settings
+ */
+function getFeatures();
 ```
 
 > Access via `globalThis.EjsTemplate` (e.g., `EjsTemplate.evalTemplate`)

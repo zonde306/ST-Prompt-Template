@@ -1,6 +1,6 @@
 import { evalTemplate, prepareContext, getSyntaxErrorInfo, SharedDefines } from '../function/ejs';
 import { STATE } from '../function/variables';
-import { applySettings, loadSettings } from './ui';
+import { applySettings, loadSettings, settings } from './ui';
 import { precacheVariables, checkAndSave } from '../function/variables';
 import { handlePreloadWorldInfo } from './handler';
 import { getCurrentChatId } from '../../../../../../script.js';
@@ -37,6 +37,9 @@ export async function init() {
         },
         parseJSON,
         jsonPatch,
+        getFeatures: () => {
+            return { ...settings };
+        }
     };
 }
 
