@@ -1078,6 +1078,13 @@ function parseJSON(text);
  * @returns {object} - 修改后的 object
 */
 function jsonPatch(dest, change);
+
+/**
+ * 获取当前扩展设置
+ *
+ * @returns {EjsSettings} - 当前设置
+ */
+function getFeatures();
 ```
 
 > 可通过 `globalThis.EjsTemplate`访问这些函数（如 `EjsTemplate.evalTemplate`）
