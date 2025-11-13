@@ -47,11 +47,19 @@
 
 /**
  * 设置变量
+ * 
+ * @examples
+ *    setvar('a', 1);
+ *    setvar('a', 1, 'nx');
+ *    setvar('a', 1, { flags: 'nx' });
+ *    setvar('a', 1, { scope: 'global' });
+ *    setvar('a', 1, { scope: 'global', flags: 'nx' });
  *
- * @param {(string|null)} key - 变量名，null 表示整个替换变量树
+ * @param {(string|null)} key - 变量名，基于 lodash 的 _.get 实现，null 表示整个替换变量树
  * @param {any} value - 变量值
  * @param {(SetVarOption|SimpleOptions)} [options={}] - 设置变量选项.
- * @returns 成功根据options.results决定，失败返回undefined
+ * 
+ * @returns 成功根据 options.results 决定，失败返回 undefined
  */
 function setvar(key, value, options = {});
 // 特定 options.scope 的别名
@@ -74,10 +82,17 @@ function setMessageVar(key, value, options = {});
 /**
  * 读取变量
  * @note: 应该避免修改对象引用
+ * 
+ * @examples
+ *    getvar('a');
+ *    getvar('a', 'nx');
+ *    getvar('a', { flags: 'nx' });
+ *    getvar('a', { scope: 'global' });
+ *    getvar('a', { scope: 'global', defaults: 0 });
  *
- * @param {(string|null)} key - 变量名，null 表示整个获取变量树
+ * @param {(string|null)} key - 变量名，基于 lodash 的 _.get 实现，null 表示整个获取变量树
  * @param {(GetVarOption|SimpleOptions)} [options={}] - 获取变量选项
- * @returns {any} - 变量值,找不到返回options.defaults的值
+ * @returns {any} - 变量值,找不到返回 options.defaults 的值(默认为undefined)
  */
 function getvar(key, options = {});
 // 特定 options.scope 的别名
@@ -103,11 +118,15 @@ function getMessageVar(key, options = {});
 
 /**
  * 增加变量的值
+ * 
+ * @examples
+ *    incvar('a');
+ *    incvar('a', 1, { defaults: 1 });
  *
- * @param {string} key - 变量名
+ * @param {string} key - 变量名，基于 lodash 的 _.get 实现
  * @param {number} [value=1] - 变量值
  * @param {(GetSetVarOption|SimpleOptions)} [options={}] - 更新变量选项
- * @returns 根据options.results决定,失败返回undefined.
+ * @returns 根据options.results决定, 失败返回undefined.
  */
 function incvar(key, value = 1, options = {});
 // 特定 options.outscope 的别名
@@ -117,11 +136,15 @@ function incMessageVar(key, value = 1, options = {});
 
 /**
  * 减少变量的值
+ * 
+ * @examples
+ *    decvar('a.b');
+ *    decvar('a.b', 1, { defaults: 1 });
  *
- * @param {string} key - 变量名
+ * @param {string} key - 变量名，基于 lodash 的 _.get 实现
  * @param {number} [value=1] - 变量值
  * @param {(GetSetVarOption|SimpleOptions)} [options={}] - 更新变量选项
- * @returns 根据options.results决定,失败返回undefined.
+ * @returns 根据options.results决定, 失败返回 undefined.
  */
 function decvar(key, value = 1, options = {});
 // 特定 options.outscope 的别名
@@ -143,7 +166,7 @@ async function execute(cmd);
  * @param {string} lorebook - 世界书名(空字符串/不传递时为当前角色卡主要世界书)
  * @param {string | RegExp | number} title - 条目uid/标题
  * @param {Record<string, any>} [data={}] - 传递的数据
- * @returns {Promise<string>} - 世界书条目的内容
+ * @returns {Promise<string>} - 世界书条目的内容, 失败返回空字符串
  */
 async function getwi(lorebook, title, data = {});
 async function getWorldInfo(lorebook, title, data = {});
@@ -156,7 +179,7 @@ async function getWorldInfo(title, data = {});
  * @param {string | RegExp | number} [name=this_chid] - 角色卡名字/ID
  * @param {string} [template=DEFAULT_CHAR_DEFINE] - 输出格式
  * @param {Object} [data={}] - 传递的数据
- * @returns {Promise<string>} - 角色卡定义的内容
+ * @returns {Promise<string>} - 角色卡定义的内容, 失败返回空字符串
  */
 async function getchar(name = this_chid, template = DEFAULT_CHAR_DEFINE, data = {});
 async function getChara(name = this_chid, template = DEFAULT_CHAR_DEFINE, data = {});
@@ -166,7 +189,7 @@ async function getChara(name = this_chid, template = DEFAULT_CHAR_DEFINE, data =
  *
  * @param {string | RegExp} name - 提示词的名字
  * @param {Object} [data={}] - 传递的数据
- * @returns {Promise<string>} - 预设的提示词的内容
+ * @returns {Promise<string>} - 预设的提示词的内容, 失败返回空字符串
  */
 async function getpreset(name, data = {});
 async function getPresetPrompt(name, data = {});
@@ -177,7 +200,8 @@ async function getPresetPrompt(name, data = {});
  *
  * @param {string} name - 变量/函数名
  * @param {any} value - 变量/函数的内容
- * @param {boolean} [merge=false] - 是否使用合并来定义(_.merge)
+ * @param {boolean} [merge=false] - 是否使用合并来定义(_.merge), 已存在时尝试合并，否则覆盖
+ * 
  * @note 定义函数时应该使用 this 访问上下文, 例如: this.variables, this.getvar, this.setvar
  */
 function define(name, value, merge = false);
@@ -189,7 +213,7 @@ function define(name, value, merge = false);
  * @param {string | RegExp} name - 快速回复集名字
  * @param {string | RegExp} label - 快速回复条目名字
  * @param {Object} [data={}] - 传递的数据
- * @returns {string} - 快速回复的内容
+ * @returns {string} - 快速回复的内容, 失败返回空字符串
  */
 async function getqr(name, label, data = {});
 async function getQuickReply(name, label, data = {});
@@ -199,7 +223,7 @@ async function getQuickReply(name, label, data = {});
  * @note 返回数据未进行模板处理
  *
  * @param {string | RegExp | number} [name=this_chid] - 角色卡名字/ID
- * @returns {Promise<v1CharData | null>} - 角色卡的数据
+ * @returns {Promise<v1CharData | null>} - 角色卡的数据，失败返回 null
  */
 async function getCharData(name = this_chid);
 
@@ -245,7 +269,7 @@ async function getCharData(name = this_chid);
  * @note 返回数据未进行模板处理
  *
  * @param {string} name - 世界书的名字/uid
- * @returns {Promise<WorldInfoData[]>} - 世界书的条目列表
+ * @returns {Promise<WorldInfoData[]>} - 世界书的条目列表，失败返回空数组
  */
 async function getWorldInfoData(name);
 
@@ -254,7 +278,7 @@ async function getWorldInfoData(name);
  * @note 返回数据未进行模板处理
  *
  * @param {string | RegExp} name - 世界书的名字/uid
- * @returns {QuickReplySetLink | null} - 世界书的数据
+ * @returns {QuickReplySetLink | null} - 世界书的数据，失败返回 null
  */
 function getQuickReplyData(name);
 
@@ -265,7 +289,7 @@ function getQuickReplyData(name);
  * @param {string} name - 世界书的名字/uid
  * @param {(string|string[])} keyword - 用于激活世界书的关键字(内容)
  * @param {ActivateWorldInfoCondition} [condition={}] - 激活条件
- * @returns {Promise<WorldInfoData[]>} - 世界书的条目列表
+ * @returns {Promise<WorldInfoData[]>} - 世界书的条目列表，失败返回空数组
  */
 async function getWorldInfoActivatedData(name, keyword, condition = {});
 
@@ -275,6 +299,9 @@ async function getWorldInfoActivatedData(name, keyword, condition = {});
  * @param {string} content - 要处理的字符串内容
  * @param {Object} [data={}] - 传递的数据
  * @param {Object} [options={}] - ejs 参数
+ * 
+ * @errors 执行代码遇到异常会原样抛出
+ * 
  * @returns {Promise<string>} - 处理后的字符串内容
  */
 async function evalTemplate(content, data = {}, options = {});
@@ -288,7 +315,7 @@ async function evalTemplate(content, data = {}, options = {});
  * @param {boolean} persona - 是否包含用户角色的世界书
  * @param {boolean} charaExtra - 是否包含角色卡附加的知识书
  * @param {boolean} onlyExisting - 只包含已存在的世界/知识书书
- * @returns {Promise<WorldInfoData[]>} - 世界书的条目列表
+ * @returns {Promise<WorldInfoData[]>} - 世界书的条目列表，失败返回空数组
  */
 async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true, onlyExisting = true);
 
@@ -328,7 +355,7 @@ async function activateWorldInfo(title, force = false);
  *
  * @param {string} worldinfo - 世界书名
  * @param {ActivateWorldInfoCondition} [condition={}] - 激活选项
- * @returns {Promise<WorldInfoData[]>} - 激活的世界书的条目列表
+ * @returns {Promise<WorldInfoData[]>} - 激活的世界书的条目列表，找不到条目返回空数组
  */
 async function activateWorldInfoByKeywords(keywords, condition = {});
 
@@ -340,7 +367,7 @@ async function activateWorldInfoByKeywords(keywords, condition = {});
  * @param {boolean} persona - 是否包用户角色绑定的世界书
  * @param {boolean} persona - 是否包含角色卡的外挂世界书
  * @param {boolean} onlyExisting - 只包含已存在的世界/知识书书
- * @returns {Promise<WorldInfoData[]>} - 世界书的条目列表
+ * @returns {Promise<WorldInfoData[]>} - 世界书的条目列表，失败返回空数组
  */
 async function getEnabledWorldInfoEntries(chara = true, global = true, persona = true, charaExtra = true, onlyExisting = true);
 
@@ -350,7 +377,7 @@ async function getEnabledWorldInfoEntries(chara = true, global = true, persona =
  * @param {WorldInfoData[]} entries - 世界书条目列表
  * @param {string | string[]} keywords - 用户激活的内容
  * @param {ActivateWorldInfoCondition} [condition={}] - 激活条件
- * @returns {WorldInfoData[]} - 被激活的世界书的条目列表
+ * @returns {WorldInfoData[]} - 被激活的世界书的条目列表，找不到条目返回空数组
  */
 function selectActivatedEntries(entries, keywords, condition = {});
 
@@ -370,7 +397,7 @@ function getChatMessage(idx, role = undefined);
  * @param {'user' | 'assistant' | 'system'} role - 仅选取指定角色的消息
  * @param {number} start - 聊天(楼层)消息开始位置ID
  * @param {number} end - 聊天(楼层)消息结束位置ID
- * @returns {string[]} - 聊天(楼层)消息内容列表
+ * @returns {string[]} - 聊天(楼层)消息内容列表，失败返回空数组
  */
 function getChatMessages(count);
 function getChatMessages(count, role);
@@ -497,6 +524,44 @@ function jsonPatch(dest, change);
  * @returns 返回值由 options 决定
 */
 function patchVariables(key, change, options = {});
+
+/**
+ * 删除变量
+ * 如果 key 对应变量是 object/array 则删除 index 对应属性/值
+ * 如果 key 对应变量是 string 则从变量中删除 index 子串
+ * 提供 index 但不存在时不做任何事情，也不会抛出异常
+ * 
+ * @param {string} key - 变量名
+ * @param {string|number} [index=undefined] - 索引，未指定则删除对应的整个变量
+ * @param {SetVarOption} [options={}] - 设置变量的选项
+ * @returns 根据options.results决定, 失败返回undefined.
+ */
+function delvar(key, index = undefined, options = {});
+
+// 对应的特化版本
+function delLocalVar(key, index = undefined, options = {});
+function delGlobalVar(key, index = undefined, options = {});
+function delMessageVar(key, index = undefined, options = {});
+
+/**
+ * 在变量中插入元素
+ * 如果 key 对应变量是 object 则用 index 作为 object 的 key，将 value 设置进去
+ * 如果 key 对应变量是 array 则在 index 位置插入 value
+ * 如果 key 对应变量是 string 则在 index 位置插入 value
+ * 其他类型或者 index 不存在则不做任何事情，也不会抛出异常
+ * 
+ * @param {string} key - 变量名
+ * @param {any} value - 要插入的值
+ * @param {string|number} [index=undefined] - 索引，未指定则在末尾插入
+ * @param {SetVarOption} [options={}] - 设置变量的选项
+ * @returns 根据options.results决定, 失败返回undefined.
+ */
+function insvar(key, value, index = undefined, options = {});
+
+// 对应的特化版本
+function insertLocalVar(key, value, index = undefined, options = {});
+function insertGlobalVar(key, value, index = undefined, options = {});
+function insertMessageVar(key, value, index = undefined, options = {});
 
 /**
  * 全部变量合集

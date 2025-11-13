@@ -527,6 +527,44 @@ function jsonPatch(dest, change);
  * @returns 返回值由 options 决定
 */
 function patchVariables(key, change, options = {});
+
+/**
+ * 删除变量
+ * 如果 key 对应变量是 object/array 则删除 index 对应属性/值
+ * 如果 key 对应变量是 string 则从变量中删除 index 子串
+ * 提供 index 但不存在时不做任何事情，也不会抛出异常
+ * 
+ * @param {string} key - 变量名
+ * @param {string|number} [index=undefined] - 索引，未指定则删除对应的整个变量
+ * @param {SetVarOption} [options={}] - 设置变量的选项
+ * @returns 根据options.results决定, 失败返回undefined.
+ */
+function delvar(key, index = undefined, options = {});
+
+// 对应的特化版本
+function delLocalVar(key, index = undefined, options = {});
+function delGlobalVar(key, index = undefined, options = {});
+function delMessageVar(key, index = undefined, options = {});
+
+/**
+ * 在变量中插入元素
+ * 如果 key 对应变量是 object 则用 index 作为 object 的 key，将 value 设置进去
+ * 如果 key 对应变量是 array 则在 index 位置插入 value
+ * 如果 key 对应变量是 string 则在 index 位置插入 value
+ * 其他类型或者 index 不存在则不做任何事情，也不会抛出异常
+ * 
+ * @param {string} key - 变量名
+ * @param {any} value - 要插入的值
+ * @param {string|number} [index=undefined] - 索引，未指定则在末尾插入
+ * @param {SetVarOption} [options={}] - 设置变量的选项
+ * @returns 根据options.results决定, 失败返回undefined.
+ */
+function insvar(key, value, index = undefined, options = {});
+
+// 对应的特化版本
+function insertLocalVar(key, value, index = undefined, options = {});
+function insertGlobalVar(key, value, index = undefined, options = {});
+function insertMessageVar(key, value, index = undefined, options = {});
 ```
 
 > `flags` 类型:

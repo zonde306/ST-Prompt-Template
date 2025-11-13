@@ -3,7 +3,7 @@ import ejs from '../3rdparty/ejs.js';
 import vm from 'vm-browserify';
 import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.js';
 import { getWorldInfoEntries, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries, selectActivatedEntries, activateWorldInfo, getWorldInfoEntry, WorldInfoEntry, activateWorldInfoByKeywords, getEnabledLoreBooks } from './worldinfo';
-import { precacheVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption, findPreviousMessageVariables } from './variables';
+import { precacheVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption, findPreviousMessageVariables, removeVariable, insertVariable } from './variables';
 import { getCharacterDefine, DEFAULT_CHAR_DEFINE, getCharacterData, getCharacterAvaterURL, getUserAvatarURL } from './characters';
 import { substituteParams, eventSource, this_chid, characters, chat_metadata, name1, name2, getCurrentChatId, chat } from '../../../../../../script.js';
 import { getPresetPromptsContent, getGeneratingModel } from './presets';
@@ -299,6 +299,14 @@ export async function prepareContext(msg_id?: number, env: Record<string, unknow
         getQuickReply: boundedQuickReply.bind(context),
         evalTemplate: boundedEvalTemplate.bind(context),
         findVariables: (key?: string, mes_id: number = chat.length) => findPreviousMessageVariables(mes_id, key),
+        delvar: removeVariable.bind(context),
+        delLocalVar: (k: string, o : GetSetVarOption = {}) => removeVariable.call(context, k, { ...o, scope: 'local' }),
+        delGlobalVar: (k: string, o : GetSetVarOption = {}) => removeVariable.call(context, k, { ...o, scope: 'global' }),
+        delMessageVar: (k: string, o : GetSetVarOption = {}) => removeVariable.call(context, k, { ...o, scope: 'message' }),
+        insvar: insertVariable.bind(context),
+        insertLocalVar: (k: string, v: unknown, i: number | string | undefined = undefined, o : GetSetVarOption = {}) => insertVariable.call(context, k, v, i, { ...o, scope: 'local' }),
+        insertGlobalVar: (k: string, v: unknown, i: number | string | undefined = undefined, o : GetSetVarOption = {}) => insertVariable.call(context, k, v, i, { ...o, scope: 'global' }),
+        insertMessageVar: (k: string, v: unknown, i: number | string | undefined = undefined, o : GetSetVarOption = {}) => insertVariable.call(context, k, v, i, { ...o, scope: 'message' }),
         ...boundCloneDefines(context, SharedDefines),
     });
 
