@@ -792,86 +792,31 @@
                 });
             }
         },
-    
+        
         parseTemplateText: function () {
             var str = this.templateText;
-            var openDel = this.opts.openDelimiter + this.opts.delimiter;
-            var closeDel = this.opts.delimiter + this.opts.closeDelimiter;
+            var pat = this.regex;
+            var result = pat.exec(str);
             var arr = [];
-            var cursor = 0;
-        
-            while (cursor < str.length) {
-                var openPos = str.indexOf(openDel, cursor);
-        
-                if (openPos === -1) {
-                    if (cursor < str.length) {
-                        arr.push(str.substring(cursor));
-                    }
-                    break;
+            var firstPos;
+    
+            while (result) {
+                firstPos = result.index;
+    
+                if (firstPos !== 0) {
+                    arr.push(str.substring(0, firstPos));
+                    str = str.slice(firstPos);
                 }
-        
-                if (openPos > cursor) {
-                    arr.push(str.substring(cursor, openPos));
-                }
-        
-                var escapedOpen = openDel + this.opts.delimiter;
-                if (str.substr(openPos, escapedOpen.length) === escapedOpen) {
-                    arr.push(escapedOpen);
-                    cursor = openPos + escapedOpen.length;
-                    continue;
-                }
-                
-                var openTag;
-                var modifier = str.charAt(openPos + openDel.length);
-                if (['=', '_', '#', '-'].indexOf(modifier) !== -1) {
-                    openTag = str.substr(openPos, openDel.length + 1);
-                } else {
-                    openTag = openDel;
-                }
-        
-                var closePos = -1;
-                var inQuote = null;
-                var searchPos = openPos + openTag.length;
-        
-                while (searchPos < str.length) {
-                    var char = str.charAt(searchPos);
-                    if (inQuote) {
-                        if (char === '\\') { searchPos++; }
-                        else if (char === inQuote) { inQuote = null; }
-                    } else {
-                        if (char === "'" || char === '"' || char === '`') {
-                            inQuote = char;
-                        } else if (str.substring(searchPos, searchPos + closeDel.length) === closeDel) {
-                            closePos = searchPos;
-                            break;
-                        }
-                    }
-                    searchPos++;
-                }
-        
-                if (closePos === -1) {
-                    throw new Error('Could not find matching close tag for tag starting at position ' + openPos);
-                }
-        
-                var closeTag;
-                var contentEndPos;
-                var prefix = str.charAt(closePos - 1);
-                if (['-', '_'].indexOf(prefix) !== -1) {
-                    closeTag = prefix + closeDel;
-                    contentEndPos = closePos - 1;
-                } else {
-                    closeTag = closeDel;
-                    contentEndPos = closePos;
-                }
-        
-                var content = str.substring(openPos + openTag.length, contentEndPos);
-                arr.push(openTag);
-                arr.push(content);
-                arr.push(closeTag);
-                
-                cursor = contentEndPos + closeTag.length;
+    
+                arr.push(result[0]);
+                str = str.slice(result[0].length);
+                result = pat.exec(str);
             }
-        
+    
+            if (str) {
+                arr.push(str);
+            }
+    
             return arr;
         },
     
