@@ -771,11 +771,10 @@
             var closeDel = this.opts.delimiter + this.opts.closeDelimiter; // e.g: '%>'
             var arr = [];
             var cursor = 0;
-            
+        
             while (cursor < str.length) {
                 var openPos = str.indexOf(openDel, cursor);
         
-                // If no more start tags are found, the remaining string is pushed as plain text, and then the process ends.
                 if (openPos === -1) {
                     if (cursor < str.length) {
                         arr.push(str.substring(cursor));
@@ -783,35 +782,28 @@
                     break;
                 }
         
-                // Push the plain text content before the start tag into the array.
                 if (openPos > cursor) {
                     arr.push(str.substring(cursor, openPos));
                 }
         
                 var closePos = -1;
-                var inQuote = null; // Used to track whether the current element is in the string (' | " | `).
+                var inQuote = null;
                 var searchPos = openPos + openDel.length;
         
                 while (searchPos < str.length) {
                     var char = str.charAt(searchPos);
-        
                     if (inQuote) {
-                        // If it is an escape character, skip the next character.
                         if (char === '\\') {
                             searchPos += 2;
                             continue;
                         }
-                        // If the current string is a closing quotation mark, then exit the string state.
                         if (char === inQuote) {
                             inQuote = null;
                         }
                     } else {
-                        // If you enter a string
                         if (char === "'" || char === '"' || char === '`') {
                             inQuote = char;
-                        }
-                        // If a closing tag is found (and it is not in the string).
-                        else if (str.substring(searchPos, searchPos + closeDel.length) === closeDel) {
+                        } else if (str.substring(searchPos, searchPos + closeDel.length) === closeDel) {
                             closePos = searchPos;
                             break;
                         }
@@ -823,7 +815,7 @@
                     throw new Error('Could not find matching close tag for tag starting at position ' + openPos);
                 }
         
-                // Determine the specific start tag (e.g., is it '<%=' or '<%_').
+                // Determine the specific start label
                 var openTag;
                 var modifier = str.charAt(openPos + openDel.length);
                 if (str.substr(openPos, openDel.length + this.opts.delimiter.length) === openDel + this.opts.delimiter) {
@@ -834,19 +826,26 @@
                     openTag = str.substr(openPos, openDel.length);
                 }
         
-                // Determine the specific closing tag (e.g., whether it's '-%>' or '_%>').
                 var closeTag;
                 var contentEndPos;
-                var prefix = str.charAt(closePos - 1);
-                if (prefix === '-' || prefix === '_') {
+                
+                // First, check if it is an escaped closing tag '%%>'.
+                if (str.substr(closePos - this.opts.delimiter.length, this.opts.delimiter.length) === this.opts.delimiter) {
+                    closeTag = this.opts.delimiter + closeDel; // '%%>'
+                    contentEndPos = closePos - this.opts.delimiter.length;
+                }
+                // Then check if it is a closed tag with modifiers '-%>' or '_%>'.
+                else if (['-', '_'].indexOf(str.charAt(closePos - 1)) !== -1) {
+                    var prefix = str.charAt(closePos - 1);
                     closeTag = prefix + closeDel;
                     contentEndPos = closePos - 1;
-                } else {
+                }
+                // Finally, there's the regular closing tag '%>'.
+                else {
                     closeTag = closeDel;
                     contentEndPos = closePos;
                 }
-                
-                // Extract content between tags
+        
                 var content = str.substring(openPos + openTag.length, contentEndPos);
                 
                 arr.push(openTag);
