@@ -726,40 +726,68 @@
             return returnedFn;
         },
     
-        generateSource: function () {
+        generateSource: function() {
             var opts = this.opts;
-    
-            if (opts.rmWhitespace) {
-                // Have to use two separate replace here as `^` and `$` operators don't
-                // work well with `\r` and empty lines don't work well with the `m` flag.
-                this.templateText =
-                    this.templateText.replace(/[\r\n]+/g, '\n').replace(/^\s+|\s+$/gm, '');
-            }
-    
-            // Slurp spaces and tabs before <%_ and after _%>
-            this.templateText =
-                this.templateText.replace(/[ \t]*<%_/gm, '<%_').replace(/_%>[ \t]*/gm, '_%>');
-    
-            var self = this;
-            var matches = this.parseTemplateText();
             var d = this.opts.delimiter;
             var o = this.opts.openDelimiter;
             var c = this.opts.closeDelimiter;
-    
-            if (matches && matches.length) {
-                matches.forEach(function (line, index) {
-                    var closing;
-                    // If this is an opening tag, check for closing tags
-                    // FIXME: May end up with some false positives here
-                    // Better to store modes as k/v with openDelimiter + delimiter as key
-                    // Then this can simply check against the map
-                    if ( line.indexOf(o + d) === 0        // If it is a tag
-                        && line.indexOf(o + d + d) !== 0) { // and is not escaped
-                        closing = matches[index + 2];
-                        if (!(closing == d + c || closing == '-' + d + c || closing == '_' + d + c)) {
-                            throw new Error('Could not find matching close tag for "' + line + '".');
+        
+            if (opts.rmWhitespace) {
+                this.templateText =
+                    this.templateText.replace(/[\r\n]+/g, '\n').replace(/^\s+|\s+$/gm, '');
+            }
+            this.templateText =
+                this.templateText.replace(/[ \t]*<%_/gm, '<%_').replace(/_%>[ \t]*/gm, '_%>');
+            
+        
+            var allTokens = this.parseTemplateText();
+            var processedTokens = [];
+            var i = 0;
+        
+            while (i < allTokens.length) {
+                var token = allTokens[i];
+        
+                if (token.startsWith(o + d) && token !== o + d + d) {
+                    var nestingLevel = 1;
+                    var contentBuffer = [];
+                    var j = i + 1;
+        
+                    while (j < allTokens.length) {
+                        var innerToken = allTokens[j];
+        
+                        if (innerToken.startsWith(o + d) && innerToken !== o + d + d) {
+                            nestingLevel++;
+                        } else if (innerToken.endsWith(d + c) && innerToken !== d + d + c) {
+                            nestingLevel--;
+        
+                            if (nestingLevel === 0) {
+                                processedTokens.push(token);
+                                processedTokens.push(contentBuffer.join(''));
+                                processedTokens.push(innerToken);
+                                
+                                i = j; 
+                                break; 
+                            }
                         }
+                        
+                        contentBuffer.push(innerToken);
+                        j++;
                     }
+                    
+                    if (nestingLevel !== 0) {
+                         throw new Error('Could not find matching close tag for "' + token + '".');
+                    }
+        
+                } else {
+                    processedTokens.push(token);
+                }
+        
+                i++;
+            }
+        
+            var self = this;
+            if (processedTokens.length) {
+                processedTokens.forEach(function (line) {
                     self.scanLine(line);
                 });
             }
