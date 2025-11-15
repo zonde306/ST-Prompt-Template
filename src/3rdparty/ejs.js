@@ -767,30 +767,56 @@
     
         parseTemplateText: function () {
             var str = this.templateText;
-            var openDel = this.opts.openDelimiter + this.opts.delimiter;
-            var closeDel = this.opts.delimiter + this.opts.closeDelimiter;
+            var openDel = this.opts.openDelimiter + this.opts.delimiter; // e.g: '<%'
+            var closeDel = this.opts.delimiter + this.opts.closeDelimiter; // e.g: '%>'
             var arr = [];
             var cursor = 0;
-            
+        
             while (cursor < str.length) {
                 var openPos = str.indexOf(openDel, cursor);
-                
+        
                 if (openPos === -1) {
                     if (cursor < str.length) {
                         arr.push(str.substring(cursor));
                     }
                     break;
                 }
-                
+        
                 if (openPos > cursor) {
                     arr.push(str.substring(cursor, openPos));
                 }
-                
-                var closePos = str.indexOf(closeDel, openPos + openDel.length);
+        
+                var closePos = -1;
+                var inQuote = null;
+                var searchPos = openPos + openDel.length;
+        
+                while (searchPos < str.length) {
+                    var char = str.charAt(searchPos);
+        
+                    if (inQuote) {
+                        if (char === '\\') {
+                            searchPos += 2;
+                            continue;
+                        }
+                        if (char === inQuote) {
+                            inQuote = null;
+                        }
+                    } else {
+                        if (char === "'" || char === '"' || char === '`') {
+                            inQuote = char;
+                        }
+                        else if (str.substring(searchPos, searchPos + closeDel.length) === closeDel) {
+                            closePos = searchPos;
+                            break;
+                        }
+                    }
+                    searchPos++;
+                }
+        
                 if (closePos === -1) {
                     throw new Error('Could not find matching close tag for tag starting at position ' + openPos);
                 }
-                
+        
                 var openTag;
                 var modifier = str.charAt(openPos + openDel.length);
                 if (str.substr(openPos, openDel.length + this.opts.delimiter.length) === openDel + this.opts.delimiter) {
@@ -800,7 +826,7 @@
                 } else {
                     openTag = str.substr(openPos, openDel.length);
                 }
-                
+        
                 var closeTag;
                 var contentEndPos;
                 var prefix = str.charAt(closePos - 1);
@@ -811,7 +837,7 @@
                     closeTag = closeDel;
                     contentEndPos = closePos;
                 }
-                
+        
                 var content = str.substring(openPos + openTag.length, contentEndPos);
                 
                 arr.push(openTag);
