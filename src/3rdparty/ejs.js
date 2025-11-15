@@ -767,8 +767,8 @@
     
         parseTemplateText: function () {
             var str = this.templateText;
-            var openDel = this.opts.openDelimiter + this.opts.delimiter; // e.g: '<%'
-            var closeDel = this.opts.delimiter + this.opts.closeDelimiter; // e.g: '%>'
+            var openDel = this.opts.openDelimiter + this.opts.delimiter;
+            var closeDel = this.opts.delimiter + this.opts.closeDelimiter;
             var arr = [];
             var cursor = 0;
         
@@ -786,20 +786,21 @@
                     arr.push(str.substring(cursor, openPos));
                 }
         
-                // Determine the specific start label
+                var escapedOpen = openDel + this.opts.delimiter;
+                if (str.substr(openPos, escapedOpen.length) === escapedOpen) {
+                    arr.push(escapedOpen);
+                    cursor = openPos + escapedOpen.length;
+                    continue;
+                }
+                
                 var openTag;
-                if (str.substr(openPos, openDel.length + this.opts.delimiter.length) === openDel + this.opts.delimiter) {
-                    openTag = openDel + this.opts.delimiter;
+                var modifier = str.charAt(openPos + openDel.length);
+                if (['=', '_', '#', '-'].indexOf(modifier) !== -1) {
+                    openTag = str.substr(openPos, openDel.length + 1);
                 } else {
-                    var modifier = str.charAt(openPos + openDel.length);
-                    if (['=', '_', '#', '-'].indexOf(modifier) !== -1) {
-                        openTag = str.substr(openPos, openDel.length + 1);
-                    } else {
-                        openTag = str.substr(openPos, openDel.length);
-                    }
+                    openTag = openDel;
                 }
         
-                // Find closing tags (this logic now correctly handles '%>' in the string).
                 var closePos = -1;
                 var inQuote = null;
                 var searchPos = openPos + openTag.length;
@@ -807,8 +808,8 @@
                 while (searchPos < str.length) {
                     var char = str.charAt(searchPos);
                     if (inQuote) {
-                        if (char === '\\') { searchPos += 2; continue; }
-                        if (char === inQuote) { inQuote = null; }
+                        if (char === '\\') { searchPos++; }
+                        else if (char === inQuote) { inQuote = null; }
                     } else {
                         if (char === "'" || char === '"' || char === '`') {
                             inQuote = char;
@@ -823,34 +824,19 @@
                 if (closePos === -1) {
                     throw new Error('Could not find matching close tag for tag starting at position ' + openPos);
                 }
-                
-                // Determine the specific end tag and prevent overlapping parsing.
+        
                 var closeTag;
                 var contentEndPos;
-                var contentStartPos = openPos + openTag.length;
-                
-                var escapeCharPos = closePos - this.opts.delimiter.length;
-                var modifierCharPos = closePos - 1;
-        
-                // Check if it is '%%>', and that the first '%' is not within the range of the opening tag.
-                if (str.substr(escapeCharPos, this.opts.delimiter.length) === this.opts.delimiter && escapeCharPos >= contentStartPos) {
-                    closeTag = this.opts.delimiter + closeDel;
-                    contentEndPos = escapeCharPos;
-                } 
-                // Check if it is '-%>' or '_%>', and ensure the modifier is not within the range of the opening tag.
-                else if (['-', '_'].indexOf(str.charAt(modifierCharPos)) !== -1 && modifierCharPos >= contentStartPos) {
-                    var prefix = str.charAt(modifierCharPos);
+                var prefix = str.charAt(closePos - 1);
+                if (['-', '_'].indexOf(prefix) !== -1) {
                     closeTag = prefix + closeDel;
-                    contentEndPos = modifierCharPos;
-                }
-                // ordinary '%>'
-                else {
+                    contentEndPos = closePos - 1;
+                } else {
                     closeTag = closeDel;
                     contentEndPos = closePos;
                 }
         
-                var content = str.substring(contentStartPos, contentEndPos);
-                
+                var content = str.substring(openPos + openTag.length, contentEndPos);
                 arr.push(openTag);
                 arr.push(content);
                 arr.push(closeTag);
