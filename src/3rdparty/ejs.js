@@ -763,33 +763,64 @@
                     self.scanLine(line);
                 });
             }
-    
         },
     
         parseTemplateText: function () {
             var str = this.templateText;
-            var pat = this.regex;
-            var result = pat.exec(str);
+            var openDel = this.opts.openDelimiter + this.opts.delimiter;
+            var closeDel = this.opts.delimiter + this.opts.closeDelimiter;
             var arr = [];
-            var firstPos;
-    
-            while (result) {
-                firstPos = result.index;
-    
-                if (firstPos !== 0) {
-                    arr.push(str.substring(0, firstPos));
-                    str = str.slice(firstPos);
+            var cursor = 0;
+            
+            while (cursor < str.length) {
+                var openPos = str.indexOf(openDel, cursor);
+                
+                if (openPos === -1) {
+                    if (cursor < str.length) {
+                        arr.push(str.substring(cursor));
+                    }
+                    break;
                 }
-    
-                arr.push(result[0]);
-                str = str.slice(result[0].length);
-                result = pat.exec(str);
+                
+                if (openPos > cursor) {
+                    arr.push(str.substring(cursor, openPos));
+                }
+                
+                var closePos = str.indexOf(closeDel, openPos + openDel.length);
+                if (closePos === -1) {
+                    throw new Error('Could not find matching close tag for tag starting at position ' + openPos);
+                }
+                
+                var openTag;
+                var modifier = str.charAt(openPos + openDel.length);
+                if (str.substr(openPos, openDel.length + this.opts.delimiter.length) === openDel + this.opts.delimiter) {
+                    openTag = openDel + this.opts.delimiter;
+                } else if (['=', '_', '#', '-'].indexOf(modifier) !== -1) {
+                    openTag = str.substr(openPos, openDel.length + 1);
+                } else {
+                    openTag = str.substr(openPos, openDel.length);
+                }
+                
+                var closeTag;
+                var contentEndPos;
+                var prefix = str.charAt(closePos - 1);
+                if (prefix === '-' || prefix === '_') {
+                    closeTag = prefix + closeDel;
+                    contentEndPos = closePos - 1;
+                } else {
+                    closeTag = closeDel;
+                    contentEndPos = closePos;
+                }
+                
+                var content = str.substring(openPos + openTag.length, contentEndPos);
+                
+                arr.push(openTag);
+                arr.push(content);
+                arr.push(closeTag);
+                
+                cursor = contentEndPos + closeTag.length;
             }
-    
-            if (str) {
-                arr.push(str);
-            }
-    
+        
             return arr;
         },
     
