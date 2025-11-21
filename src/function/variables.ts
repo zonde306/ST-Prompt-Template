@@ -498,6 +498,109 @@ export function getVariable(
 }
 
 /**
+ * Delete/Remove variable
+ * if target is array/object, remove the key/index
+ * if target is string, remove the substring
+ * 
+ * @param this Execution Context
+ * @param key variable name
+ * @param index key for object variable, or index for array variable, or substring for string variable
+ * @param options options for setVariable
+ * 
+ * @returns The return value is determined by options.results
+ */
+export function removeVariable(
+    this: Record<string, unknown>,
+    key: string | null,
+    index: unknown = undefined,
+    options: SetVarOption | GetSetVarOption | SimpleOptions = {}) {
+    if(index == null) {
+        return setVariable.call(this, key, undefined, options);
+    } else {
+        const variable = getVariable.call(this, key, options);
+        if(_.isArray(variable)) {
+            const idx = variable.indexOf(index);
+            if(idx !== -1) {
+                variable.splice(idx, 1);
+                return setVariable.call(this, key, variable, options);
+            }
+        } else if(_.isObject(variable)) {
+            delete variable[index.toString()];
+            return setVariable.call(this, key, variable, options);
+        } else if(_.isString(variable) && _.isString(index)) {
+            const idx = variable.indexOf(index);
+            if(idx !== -1) {
+                // @ts-expect-error: 2339
+                variable.splice(idx, index.length);
+                return setVariable.call(this, key, variable, options);
+            }
+        }
+    }
+    return undefined;
+}
+
+/**
+ * Insert value to variable
+ * if target is array, insert the value to the index
+ * if target is object, insert the value to the key
+ * if target is string, insert the value to the index
+ * 
+ * @param this Execution Context
+ * @param key variable name
+ * @param value value to insert
+ * @param index where to insert, if not provided, append to the end
+ * @param options options for setVariable
+ * 
+ * @returns The return value is determined by options.results
+ */
+export function insertVariable(
+    this: Record<string, unknown>,
+    key: string | null,
+    value: unknown,
+    index: number | string | undefined = undefined,
+    options: SetVarOption | SimpleOptions = {},
+) {
+    options = optionsConverter(options) as SetVarOption;
+    let variable = getVariable.call(this, key, options);
+    if(_.isArray(variable)) {
+        if(index == null) {
+            variable.push(value);
+        } else {
+            index = Number(index) < 0 ? variable.length + Number(index) : Number(index);
+            variable.splice(index, 0, value);
+        }
+
+        return setVariable.call(this, key, variable, options);
+    } else if(_.isObject(variable) && index != null) {
+        const exists = variable.hasOwnProperty(index.toString());
+        if(options.flags?.includes('nx') && exists) return undefined;
+        if(options.flags?.includes('xx') && !exists) return undefined;
+
+        variable[index.toString()] = value;
+        return setVariable.call(this, key, variable, options);
+    } else if(_.isString(variable)) {
+        if(index == null) {
+            // @ts-expect-error: 18046
+            variable += value.toString();
+        } else if(_.isString(index)) {
+            const idx = variable.indexOf(index);
+            if(idx !== -1) {
+                // @ts-expect-error: 18046
+                variable.splice(idx, value.toString().length, value.toString());
+            }
+        } else {
+            index = Number(index) < 0 ? variable.length + Number(index) : Number(index);
+            // @ts-expect-error: 18046
+            variable.splice(Number(index), 0, value.toString());
+        }
+        
+        return setVariable.call(this, key, variable, options);
+    }
+
+    return undefined;
+}
+
+/**
  * Options for increaseVariable/decreaseVariable
  * 
  * @property index - Index for array/object variable

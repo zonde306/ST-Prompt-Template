@@ -90,7 +90,7 @@ function setMessageVar(key, value, options = {});
  *
  * @param {(string|null)} key - Variable name. If `null`, returns the entire variable tree.
  * @param {(GetVarOption|SimpleOptions)} [options={}] - Options for retrieving the variable.
- * @returns {any} - Variable value, or `options.defaults` if not found.
+ * @returns {any} - Variable value, or `options.defaults` if not found (or `undefined` if `options.defaults` is not specified).
  */
 function getvar(key, options = {});
 // Aliases for specific scopes
@@ -519,6 +519,44 @@ function jsonPatch(dest, change);
  * @returns {any} - Return value determined by `options.results`.
  */
 function patchVariables(key, change, options = {});
+
+/**
+ * Deletes a variable
+ * If the variable corresponding to the key is an object/array, deletes the property/value at the specified index.
+ * If the variable corresponding to the key is a string, deletes the substring at the specified index.
+ * If index is provided but does not exist, no action is taken and no exception is thrown.
+ * 
+ * @param {string} key - Variable name
+ * @param {string|number} [index=undefined] - Index; if unspecified, deletes the entire variable
+ * @param {SetVarOption} [options={}] - Options for setting the variable
+ * @returns {any} - Return value determined by options.results; returns undefined on failure.
+ */
+function delvar(key, index = undefined, options = {});
+
+// Specialized versions
+function delLocalVar(key, index = undefined, options = {});
+function delGlobalVar(key, index = undefined, options = {});
+function delMessageVar(key, index = undefined, options = {});
+
+/**
+ * Inserts an element into a variable
+ * If the variable corresponding to the key is an object, uses index as the object key and sets value.
+ * If the variable corresponding to the key is an array, inserts value at the specified index position.
+ * If the variable corresponding to the key is a string, inserts value at the specified index position.
+ * For other types or if index does not exist, no action is taken and no exception is thrown.
+ * 
+ * @param {string} key - Variable name
+ * @param {any} value - Value to insert
+ * @param {string|number} [index=undefined] - Index; if unspecified, inserts at the end
+ * @param {SetVarOption} [options={}] - Options for setting the variable
+ * @returns {any} - Return value determined by options.results; returns undefined on failure.
+ */
+function insvar(key, value, index = undefined, options = {});
+
+// Specialized versions
+function insertLocalVar(key, value, index = undefined, options = {});
+function insertGlobalVar(key, value, index = undefined, options = {});
+function insertMessageVar(key, value, index = undefined, options = {});
 
 /**
  * Aggregated variables collection
