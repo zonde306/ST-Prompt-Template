@@ -705,3 +705,49 @@ lastUserMessageId = 0
  * @type {number}
  */
 lastCharMessageId = 0
+
+/*
+ * 当前选择的模型
+ */
+model = 'gpt-3.5'
+
+/*
+ * 当前生成类型
+ * 不是生成为空字符串
+ */
+generateType = '' | 'custom' | 'normal' | 'continue' | 'impersonate' | 'regenerate' | 'swipe' | 'quiet';
+
+/*
+ * 消息ID(即楼层号)
+ */
+message_id = 0
+
+/*
+ * 消息页码ID
+ */
+swipe_id = 0
+
+/*
+ * 消息角色名
+ */
+name = 'User'
+
+/*
+ * 消息是否为最后一条
+ */
+is_last = false
+
+/*
+ * 消息是否为最后一条
+ */
+is_last = false
+
+/*
+ * 消息是否为用户
+ */
+is_user = false
+
+/*
+ * 消息是否为系统
+ */
+is_system = false
