@@ -331,13 +331,13 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
     const parent = $(`div.mes[mesid="${message_id}"]`);
     const container = parent?.find('.mes_text');
     // don't render if the message is swping (with generating)
-    if (!container?.text() || !message.mes || message.mes === '...' || message.mes === message.swipes?.[message.swipe_id - 1]) {
+    if (!container?.text() || !message.mes || message.mes === '...' || message.mes === message.swipes?.[(message.swipe_id ?? 0) - 1]) {
         console.info(`[Prompt Template] chat message #${message_id}.${message.swipe_id} is generating`);
         return;
     }
 
     // initialize at least once
-    if (isDryRun && !message?.is_ejs_processed?.[message.swipe_id || 0])
+    if (isDryRun && !message?.is_ejs_processed?.[message.swipe_id ?? 0])
         STATE.isDryRun = isDryRun = false;
 
     // for Array.slice
@@ -355,7 +355,7 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
     });
 
     function escaper(markup: string): string {
-        return messageFormatting(markup, message.name, message.is_system, message.is_user, message_idx);
+        return messageFormatting(markup, message.name ?? '', !!message.is_system, !!message.is_user, message_idx);
     }
 
     const worldEntries = await getEnabledWorldInfoEntries();
@@ -724,13 +724,6 @@ async function handleCustomGenerated(data: { message: string }, generationId: st
     console.log(`[Prompt Template] processing #${generationId} custom generate in ${end}ms`);
 }
 
-async function handleSwipeDeleted(messageId: number, swipeId: number) {
-    // comparing `undefined` with any other type always returns false, so there shouldn't be any errors.
-    if(chat[messageId]?.variables?.length > chat[messageId]?.swipes?.length) {
-        chat[messageId].variables = chat[messageId].variables.slice(swipeId, 1);
-    }
-}
-
 const MESSAGE_RENDER_EVENTS = [
     event_types.MESSAGE_UPDATED,
     event_types.MESSAGE_SWIPED,
@@ -760,8 +753,6 @@ export async function init() {
 
     // compatible with https://github.com/N0VI028/JS-Slash-Runner/blob/b07d3e78ce75b541ce0ead3ba3c92acbb99ad59e/src/function/generate/responseGenerator.ts#L156
     eventSource.on('js_generation_before_end', handleCustomGenerated);
-
-    eventSource.on(event_types.MESSAGE_SWIPE_DELETED, handleSwipeDeleted);
 }
 
 export async function exit() {
@@ -773,5 +764,4 @@ export async function exit() {
     eventSource.removeListener(event_types.WORLDINFO_ENTRIES_LOADED, handleWorldInfoLoaded);
     MESSAGE_CREATED.forEach(e => eventSource.removeListener(e, handleMessageCreated));
     eventSource.removeListener(event_types.CHARACTER_MESSAGE_RENDERED, handleMessageRender);
-    eventSource.removeListener(event_types.MESSAGE_SWIPE_DELETED, handleSwipeDeleted);
 }

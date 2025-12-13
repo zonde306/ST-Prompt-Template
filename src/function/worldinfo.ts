@@ -556,7 +556,6 @@ export function getEnabledLoreBooks(
             results.push(charaWorld);
 
         for(const member of getGroupMembers()) {
-            // @ts-expect-error
             const world = member?.data?.extensions?.world;
             if (world && !selected_world_info.includes(world))
                 results.push(world);
@@ -571,7 +570,6 @@ export function getEnabledLoreBooks(
     }
 
     if (persona) {
-        // @ts-expect-error
         const chatWorld : string = chat_metadata[METADATA_KEY];
         const personaWorld : string = power_user.persona_description_lorebook;
         if(personaWorld && personaWorld !== chatWorld && !selected_world_info.includes(personaWorld))
@@ -594,14 +592,12 @@ export function getEnabledLoreBooks(
         }
 
         for(const member of getGroupMembers()) {
-            // @ts-expect-error: 2339
             const chid = characters.findIndex(ch => ch.avatar === member.avatar);
             const file = getCharaFilename(chid);
             if (file) {
                 // @ts-expect-error
                 const extraCharLore = world_info.charLore?.find((e) => e.name === file);
                 if (extraCharLore && Array.isArray(extraCharLore.extraBooks)) {
-                    // @ts-expect-error
                     const primaryBook : string = member?.data?.extensions?.world;
                     for(const book of extraCharLore.extraBooks) {
                         if (book && book !== primaryBook && !selected_world_info.includes(book))
@@ -613,7 +609,6 @@ export function getEnabledLoreBooks(
     }
 
     if (chat) {
-        // @ts-expect-error
         const chatWorld : string = chat_metadata[METADATA_KEY];
         if (chatWorld && !selected_world_info.includes(chatWorld))
             results.push(chatWorld);
@@ -680,7 +675,6 @@ function worldInfoSorter(a: WorldInfoEntry, b: WorldInfoEntry, top: number = DEF
 
         // relative to AN
         if(entry.position === world_info_position.ANTop || entry.position === world_info_position.ANBottom) {
-            // @ts-expect-error: 2339
             switch(chat_metadata.note_position) {
                 case 0:
                 case 2:
@@ -688,7 +682,6 @@ function worldInfoSorter(a: WorldInfoEntry, b: WorldInfoEntry, top: number = DEF
                     return offset + top + DEPTH_MAPPING[world_info_position.before] + 2;
                 case 1:
                     // In-chat @ Depth
-                    // @ts-expect-error: 2339
                     return (chat_metadata.note_depth ?? DEFAULT_DEPTH) + (entry.depth ?? DEFAULT_DEPTH);
             }
 

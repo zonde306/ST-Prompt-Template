@@ -1,5 +1,4 @@
 /// <reference path="../../../../../../global.d.ts" />
-import { ReasoningType } from "../../../../../reasoning.js";
 import { WorldInfoEntry } from "../function/worldinfo.js";
 
 type TextContent = {
@@ -26,41 +25,21 @@ export interface ChatData {
 }
 
 // Allow custom fields
-export interface MessageExtra extends ChatMessageExtra {
-    // public/scripts/reasoning.js
-    reasoning?: string;
-    reasoning_type?: ReasoningType;
-
-    // public/scripts/extensions/memory/index.js
-    memory?: string;    // Summary
-
-    // public/scripts/chats.js
-    image?: string;
-    inline_image?: boolean;
-    file?: { url: string, size: number, name: string, created: number, text?: string };
-    fileLength?: number;
-    image_swipes?: string[];
-    title?: string;
-
-    // public/scripts/bookmarks.js
-    bookmark_link?: boolean;
-
-    // public/scripts/group-chats.js
-    gen_id?: number;
-
-    // public/scripts/slash-commands.js
-    bias?: string;
-
-    // public/scripts/extensions/translate/index.js
-    display_text?: string;
-    reasoning_display_text?: string;
+export interface MessageExtra extends ChatMessageExtra, Record<string, unknown> {
 }
 
 // Allow custom fields
 export interface Message extends ChatMessage {
-    // created by extensions
-    variables?: Record<string, unknown>[];
+    // old formats
+    variables?: Record<string, any>[];
     is_ejs_processed?: Array<boolean>;
+    variables_initialized?: Array<boolean>;
+
+    // new formats
+    swipe_info?: (SwipeInfo & {
+        variables?: Record<string, any>;
+        variables_initialized?: boolean;
+    })[];
 }
 
 export interface ScriptInject {

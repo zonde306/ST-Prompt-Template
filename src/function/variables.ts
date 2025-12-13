@@ -43,18 +43,18 @@ export function precacheVariables(msg_id?: number, sw_id?: number): Record<strin
     if(STATE.messageId >= chat.length)
         STATE.messageId = chat.length - 1;
     STATE.swipeId = sw_id ?? chat[STATE.messageId].swipe_id ?? 0;
-    initVariable(STATE.messageId, STATE.swipeId);
+    const messageVariables = ensureMessageVariables(STATE.messageId, STATE.swipeId);
     
     STATE.cacheVars = _.cloneDeep(Object.assign(
         {},
         extension_settings.variables.global, // global variables
         STATE.initialVariables,
         chat_metadata.variables || {}, // chat variables
-        chat[STATE.messageId]?.variables?.[STATE.swipeId] || {}, // message variables
+        messageVariables || {}, // message variables
         { _trace_id: (STATE.traceId)++, _modify_id: 0 }, // trace ID
     ));
     
-    console.debug(`[Prompt Template] message #${STATE.messageId}.${STATE.swipeId} variables: `, chat[STATE.messageId]?.variables?.[STATE.swipeId]);
+    console.debug(`[Prompt Template] message #${STATE.messageId}.${STATE.swipeId} variables: `, messageVariables);
     console.debug(`[Prompt Template] all variables: `, STATE.cacheVars);
     return STATE.cacheVars;
 }
@@ -107,7 +107,7 @@ function evalMessageFilter(filter?: MessageFilter, msgid?: number, swipeid?: num
     if (filter?.id !== undefined) {
         message_id = filter.id > -1 ? filter.id : chat.length + filter.id;
     } else if (filter?.role !== undefined) {
-        message_id = chat.findLastIndex(msg =>
+        message_id = chat.findLastIndex((msg: Message) =>
             (
                 (msg.is_system === (filter.role === 'system')) ||
                 (msg.is_user === (filter.role === 'user')) ||
@@ -116,12 +116,14 @@ function evalMessageFilter(filter?: MessageFilter, msgid?: number, swipeid?: num
             ) && (
                 !getter ||
                 // When getting a variable, look for the existing variable
-                msg.variables?.[msg.swipe_id ?? 0] != null
+                msg.swipe_info?.[msg.swipe_id ?? 0]?.variables != null
             )
         );
     } else if (msgid === undefined) {
         // When getting a variable, look for the existing variable
-        message_id = chat.findLastIndex(msg => !getter || msg.variables?.[msg.swipe_id ?? 0] != null);
+        message_id = chat.findLastIndex((msg: Message) =>
+            !getter || msg.swipe_info?.[msg.swipe_id ?? 0]?.variables != null
+        );
     } else {
         if(msgid > chat.length)
             msgid = chat.length - 1;
@@ -131,7 +133,7 @@ function evalMessageFilter(filter?: MessageFilter, msgid?: number, swipeid?: num
         message_id = msgid;
         if(getter) {
             // If the current message has no variables, search upwards
-            message_id = chat.slice(0, msgid + 1).findLastIndex(msg => msg.variables?.[msg.swipe_id ?? 0] != null);
+            message_id = chat.slice(0, msgid + 1).findLastIndex((msg: Message) => msg.swipe_info?.[msg.swipe_id ?? 0]?.variables != null);
         }
     }
 
@@ -243,10 +245,10 @@ export function setVariable(
                     // @ts-expect-error
                     const [message_id, swipe_id] = evalMessageFilter(withMsg, this?.message_id, this?.swipe_id, false);
                     if (message_id !== undefined && swipe_id !== undefined) {
-                        initVariable(message_id, swipe_id);
-                        data = JSON.parse(_.get(chat[message_id].variables[swipe_id], key, '{}') || '{}');
+                        const variables = ensureMessageVariables(message_id, swipe_id);
+                        data = JSON.parse(_.get(variables, key, '{}') || '{}');
                         newValue === undefined ? _.unset(data, idx) : _.set(data, idx, newValue);
-                        _.set(chat[message_id].variables[swipe_id], key, JSON.stringify(data));
+                        _.set(variables, key, JSON.stringify(data));
 
                         // Update cache when same origin
                         if(message_id === STATE.messageId && swipe_id === STATE.swipeId)
@@ -258,7 +260,7 @@ export function setVariable(
                 } else {
                     data = JSON.parse(_.get(STATE.cacheVars, key, '{}') || '{}');
                     newValue === undefined ? _.unset(data, idx) : _.set(data, idx, newValue);
-                    _.set(chat[STATE.messageId].variables[STATE.swipeId], key, JSON.stringify(data));
+                    _.set(ensureMessageVariables(STATE.messageId, STATE.swipeId), key, JSON.stringify(data));
                     _.set(STATE.cacheVars, key, JSON.stringify(data));
                     
                     if (settings.debug_enabled)
@@ -324,16 +326,16 @@ export function setVariable(
                     // @ts-expect-error
                     const [message_id, swipe_id] = evalMessageFilter(withMsg, this?.message_id, this?.swipe_id, false);
                     if (message_id !== undefined && swipe_id !== undefined) {
-                        initVariable(message_id, swipe_id);
+                        const variables = ensureMessageVariables(message_id, swipe_id);
 
                         if (newValue === undefined) {
-                            unset(chat[message_id].variables[swipe_id], key);
+                            unset(variables, key);
 
                             // Update cache when same origin
                             if(message_id === STATE.messageId && swipe_id === STATE.swipeId)
                                 unset(STATE.cacheVars, key);
                         } else {
-                            set(chat[message_id].variables[swipe_id], key, newValue);
+                            set(variables, key, newValue);
 
                             // Update cache when same origin
                             if(message_id === STATE.messageId && swipe_id === STATE.swipeId)
@@ -344,16 +346,17 @@ export function setVariable(
                             console.debug(`Set message #${message_id}.${swipe_id} variable ${key} to ${newValue}`);
                     }
                 } else {
-                        if (newValue === undefined) {
-                            unset(STATE.cacheVars, key);
-                            unset(chat[STATE.messageId].variables[STATE.swipeId], key);
-                        } else {
-                            set(STATE.cacheVars, key, newValue);
-                            set(chat[STATE.messageId].variables[STATE.swipeId], key, newValue);
-                        }
+                    const variables = ensureMessageVariables(STATE.messageId, STATE.swipeId);
+                    if (newValue === undefined) {
+                        unset(STATE.cacheVars, key);
+                        unset(variables, key);
+                    } else {
+                        set(STATE.cacheVars, key, newValue);
+                        set(variables, key, newValue);
+                    }
 
-                        if (settings.debug_enabled)
-                            console.debug(`Set message variable ${key} to ${newValue}`);
+                    if (settings.debug_enabled)
+                        console.debug(`Set message variable ${key} to ${newValue}`);
                 }
                 break;
             case 'initial':
@@ -447,15 +450,19 @@ export function getVariable(
                 // @ts-expect-error
                 const [message_id, swipe_id] = evalMessageFilter(withMsg, this?.message_id, this?.swipe_id, true);
                 if (message_id !== undefined && swipe_id !== undefined) {
-                    if (!chat[message_id].variables) return defaults;
-                    if (!chat[message_id].variables[swipe_id]) return defaults;
+                    // @ts-expect-error: 2339
+                    if (!chat[message_id].swipe_info?.[swipe_id]?.variables)
+                        return defaults;
+
                     if (index != null) {
-                        const data = JSON.parse(_.get(chat[message_id].variables[swipe_id], key, '{}') || '{}');
+                        // @ts-expect-error: 2339
+                        const data = JSON.parse(_.get(chat[message_id].swipe_info?.[swipe_id]?.variables, key, '{}') || '{}');
                         const idx = Number(index);
                         return _.get(data, Number.isNaN(idx) ? index : idx, defaults);
                     }
 
-                    result = get(chat[message_id].variables[swipe_id], key, defaults);
+                    // @ts-expect-error: 2339
+                    result = get(chat[message_id].swipe_info?.[swipe_id]?.variables, key, defaults);
                     return options.clone ? _.cloneDeep(result) : result;
                 }
                 return defaults;
@@ -683,7 +690,7 @@ export async function checkAndSave(force: boolean = false) {
         await saveChatConditional();
 }
 
-function get(obj: object, key: string | number | null, defaults?: any): any {
+function get(obj: object | undefined, key: string | number | null, defaults?: any): any {
     if (key == null)
         return obj;
     return _.get(obj, key, defaults);
@@ -745,11 +752,11 @@ function optionsConverter(
 export function findPreviousMessageVariables(message_id?: number, key?: string) : Record<string, any> {
     const message : Message | undefined = chat
         .slice(0, message_id)
-        .findLast(msg =>
+        .findLast((msg: Message) =>
             // !msg.is_system &&
             // !msg.is_user &&
-            msg.variables?.[msg?.swipe_id ?? 0] != null &&
-            (key == null || get(msg.variables?.[msg?.swipe_id ?? 0], key, null) != null)
+            msg.swipe_info?.[msg?.swipe_id ?? 0]?.variables != null &&
+            (key == null || get(msg.swipe_info?.[msg?.swipe_id ?? 0]?.variables, key, null) != null)
         );
     
     return message?.variables?.[message.swipe_id ?? 0] ?? {};
@@ -768,44 +775,52 @@ export function clonePreviousMessage(message_id: number, swipe_id?: number): boo
     const message = chat[message_id] as Message;
     swipe_id = swipe_id ?? message.swipe_id ?? 0;
 
-    // @ts-expect-error: 7053
-    if(message.variables_initialized?.[swipe_id])
+    if(message.swipe_info?.[swipe_id]?.variables_initialized)
         return false;
 
-    initVariable(message_id, swipe_id);
+    ensureMessageVariables(message_id, swipe_id);
 
     const variables = findPreviousMessageVariables(message_id);
 
     // @ts-expect-error: 18048
     message.variables[swipe_id] = _.cloneDeep(Object.assign({}, variables, message.variables[swipe_id]));
     // @ts-expect-error: 18048
-    message.variables_initialized[swipe_id] = true;
+    message.swipe_info[swipe_id].variables_initialized = true;
     // @ts-expect-error: 18048
     console.debug(`[Prompt Template] clone previous message variables: `, message.variables[swipe_id]);
     return true;
 }
 
-function initVariable(message_id: number, swipe_id?: number, defaults: object = {}) {
+/**
+ * Install chat message variable objects
+ * @param message_id chat message id
+ * @param swipe_id chat swipe id
+ * @param defaults default variables if not exists
+ * @returns variables object reference
+ */
+function ensureMessageVariables(message_id: number, swipe_id?: number, defaults: Record<string, any> = {}): Record<string, any> {
     const message = chat[message_id] as Message;
-    if(message) {
-        if(!message.variables) {
-            message.variables = [];
-        } else if(!Array.isArray(message.variables)) {
-            // convert from old style
-            message.variables = Object.assign([], message.variables);
-        }
+    if(!message)
+        return defaults;
 
-        // @ts-expect-error: 18048
-        if(!message.variables[swipe_id]) {
-            // @ts-expect-error: 18048
-            message.variables[swipe_id] = defaults;
-        }
+    swipe_id = swipe_id ?? message.swipe_id ?? 0;
 
-        if(!message.variables_initialized) {
-            message.variables_initialized = [];
-        } else if(!Array.isArray(message.variables_initialized)) {
-            // convert from old style
-            message.variables_initialized = Object.assign([], message.variables_initialized);
-        }
+    if(!message.swipe_info)
+        message.swipe_info = [];
+    if(!message.swipe_info[swipe_id])
+        message.swipe_info[swipe_id] = {};
+
+    if(!message.swipe_info[swipe_id].variables) {
+        if(!message.variables?.[swipe_id])
+            message.swipe_info[swipe_id].variables = defaults;
+        else if(!Array.isArray(message.variables[swipe_id])) // convert from old formats
+            message.swipe_info[swipe_id].variables = Object.assign([], message.variables[swipe_id]);
+        else
+            message.swipe_info[swipe_id].variables = message.variables[swipe_id];
+
+        if(message.variables_initialized?.[swipe_id])
+            message.swipe_info[swipe_id].variables_initialized = true;
     }
+
+    return message.swipe_info[swipe_id].variables!;
 }
