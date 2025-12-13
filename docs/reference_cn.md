@@ -866,6 +866,17 @@ lastUserMessageId = 0
  * @type {number}
  */
 lastCharMessageId = 0
+
+/*
+ * 当前选择的模型
+ */
+model = 'gpt-3.5'
+
+/*
+ * 当前生成类型
+ * 不是生成为空字符串
+ */
+generateType = '' | 'custom' | 'normal' | 'continue' | 'impersonate' | 'regenerate' | 'swipe' | 'quiet';
 ```
 
 只有在 `runType` 为 `render` 时才会出现的字段
@@ -905,11 +916,6 @@ is_user = false
  * 消息是否为系统
  */
 is_system = false
-
-/*
- * 当前生成模型
- */
-model = 'gpt-3.5'
 ```
 
 ---

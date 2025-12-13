@@ -20,6 +20,7 @@ let runID = 0;
 let isFakeRun = false; // Avoid recursive processing
 let isDryRun = false; // Is it preparation stage?
 let generateBefore = '';
+let lastGenerateType = '';
 
 // just a randomly generated value
 const regexFilterUUID = "a8ff1bc7-15f2-4122-b43b-ded692560538";
@@ -32,6 +33,7 @@ async function handleGenerateBefore(type: string, _data: GenerateOptions, dryRun
     if (dryRun)
         return;
 
+    lastGenerateType = type;
     STATE.isInPlace = (type === 'swipe' || type === 'append' || type === 'continue' || type === 'appendFinal');
     console.debug(`[Prompt Template] start generate before on dryRun=${dryRun}, isInPlace=${STATE.isInPlace}`);
 
@@ -49,6 +51,7 @@ async function handleGenerateBefore(type: string, _data: GenerateOptions, dryRun
             is_system: undefined,
             name: undefined,
             isDryRun: false,
+            generateType: lastGenerateType,
         });
 
         generateBefore = await evaluateWIEntities(env, { decorator: '@@generate_before', comment: '[GENERATE:BEFORE]' });
@@ -58,6 +61,9 @@ async function handleGenerateBefore(type: string, _data: GenerateOptions, dryRun
 }
 
 async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
+    if (settings.enabled === false)
+        return;
+
     // for preprocessing
     const env = await prepareContext(-1 - Number(STATE.isInPlace), {
         runType: 'generate',
@@ -69,6 +75,7 @@ async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
         is_system: undefined,
         name: undefined,
         isDryRun: false,
+        generateType: lastGenerateType,
     });
 
     // filter special entries
@@ -197,6 +204,7 @@ async function handleGenerateAfter(data: GenerateAfterData, dryRun?: boolean) {
         is_system: undefined,
         name: undefined,
         isDryRun: false,
+        generateType: lastGenerateType,
     });
 
     let prompts = generateBefore;
@@ -343,6 +351,7 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
         is_system: message.is_system,
         name: message.name,
         isDryRun: isDryRun,
+        generateType: '',
     });
 
     function escaper(markup: string): string {
@@ -506,6 +515,7 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
         is_system: undefined,
         name: undefined,
         isDryRun: true,
+        generateType: '',
     });
 
     await handleInitialVariables(env, worldEntries);
@@ -600,6 +610,7 @@ async function handleRefreshWorldInfo(world: string, _data: LoreBook) {
         is_system: undefined,
         name: undefined,
         isDryRun: true,
+        generateType: '',
     });
 
     console.debug(worldInfoData);
@@ -658,7 +669,7 @@ async function handleMessageCreated(message_id: number, type?: string) {
     clonePreviousMessage(message_id);
 }
 
-async function handleCustomGenerate(data: { message: string }, generationId: string) {
+async function handleCustomGenerated(data: { message: string }, generationId: string) {
     if (settings.enabled === false)
         return;
     if (settings.render_enabled === false)
@@ -677,6 +688,7 @@ async function handleCustomGenerate(data: { message: string }, generationId: str
         is_system: undefined,
         name: undefined,
         isDryRun: false,
+        generateType: 'custom',
     });
 
     const newContent = await evalTemplateHandler(
@@ -712,6 +724,13 @@ async function handleCustomGenerate(data: { message: string }, generationId: str
     console.log(`[Prompt Template] processing #${generationId} custom generate in ${end}ms`);
 }
 
+async function handleSwipeDeleted(messageId: number, swipeId: number) {
+    // comparing `undefined` with any other type always returns false, so there shouldn't be any errors.
+    if(chat[messageId]?.variables?.length > chat[messageId]?.swipes?.length) {
+        chat[messageId].variables = chat[messageId].variables.slice(swipeId, 1);
+    }
+}
+
 const MESSAGE_RENDER_EVENTS = [
     event_types.MESSAGE_UPDATED,
     event_types.MESSAGE_SWIPED,
@@ -727,7 +746,7 @@ const MESSAGE_CREATED = [
 ];
 
 export async function init() {
-    eventSource.makeFirst(event_types.CHAT_CHANGED, handlePreloadWorldInfo);
+    eventSource.makeLast(event_types.CHAT_CHANGED, handlePreloadWorldInfo);
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleFilterInstall);
     eventSource.on(event_types.WORLDINFO_UPDATED, handleRefreshWorldInfo);
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleGenerateBefore);
@@ -740,7 +759,9 @@ export async function init() {
     eventSource.makeFirst(event_types.CHARACTER_MESSAGE_RENDERED, handleMessageRender);
 
     // compatible with https://github.com/N0VI028/JS-Slash-Runner/blob/b07d3e78ce75b541ce0ead3ba3c92acbb99ad59e/src/function/generate/responseGenerator.ts#L156
-    eventSource.on('js_generation_before_end', handleCustomGenerate);
+    eventSource.on('js_generation_before_end', handleCustomGenerated);
+
+    eventSource.on(event_types.MESSAGE_SWIPE_DELETED, handleSwipeDeleted);
 }
 
 export async function exit() {
@@ -752,4 +773,5 @@ export async function exit() {
     eventSource.removeListener(event_types.WORLDINFO_ENTRIES_LOADED, handleWorldInfoLoaded);
     MESSAGE_CREATED.forEach(e => eventSource.removeListener(e, handleMessageCreated));
     eventSource.removeListener(event_types.CHARACTER_MESSAGE_RENDERED, handleMessageRender);
+    eventSource.removeListener(event_types.MESSAGE_SWIPE_DELETED, handleSwipeDeleted);
 }
