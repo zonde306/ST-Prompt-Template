@@ -337,7 +337,7 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
     }
 
     // initialize at least once
-    if (isDryRun && !message?.is_ejs_processed?.[message.swipe_id ?? 0])
+    if (isDryRun && !message?.swipe_info?.[message.swipe_id ?? 0]?.is_ejs_processed)
         STATE.isDryRun = isDryRun = false;
 
     // for Array.slice
@@ -465,9 +465,9 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
         isFakeRun = false;
     }
 
-    if (!message.is_ejs_processed)
-        message.is_ejs_processed = [];
-    message.is_ejs_processed[message.swipe_id || 0] = true;
+    if (!message.swipe_info)
+        message.swipe_info = [];
+    message.swipe_info[message.swipe_id || 0].is_ejs_processed = true;
 
     const end = Date.now() - start;
     console.log(`[Prompt Template] processing #${message_idx} messages in ${end}ms`);

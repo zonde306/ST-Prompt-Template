@@ -31,14 +31,27 @@ export interface MessageExtra extends ChatMessageExtra, Record<string, unknown> 
 // Allow custom fields
 export interface Message extends ChatMessage {
     // old formats
+
+    /**
+     * @deprecated
+     */
     variables?: Record<string, any>[];
+
+    /**
+     * @deprecated
+     */
     is_ejs_processed?: Array<boolean>;
+
+    /**
+     * @deprecated
+     */
     variables_initialized?: Array<boolean>;
 
     // new formats
     swipe_info?: (SwipeInfo & {
         variables?: Record<string, any>;
         variables_initialized?: boolean;
+        is_ejs_processed?: boolean;
     })[];
 }
 

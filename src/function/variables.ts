@@ -759,7 +759,7 @@ export function findPreviousMessageVariables(message_id?: number, key?: string) 
             (key == null || get(msg.swipe_info?.[msg?.swipe_id ?? 0]?.variables, key, null) != null)
         );
     
-    return message?.variables?.[message.swipe_id ?? 0] ?? {};
+    return message?.swipe_info?.[message.swipe_id ?? 0]?.variables ?? {};
 }
 
 /**
@@ -778,16 +778,15 @@ export function clonePreviousMessage(message_id: number, swipe_id?: number): boo
     if(message.swipe_info?.[swipe_id]?.variables_initialized)
         return false;
 
-    ensureMessageVariables(message_id, swipe_id);
-
-    const variables = findPreviousMessageVariables(message_id);
+    const current = ensureMessageVariables(message_id, swipe_id);
+    const previous = findPreviousMessageVariables(message_id);
 
     // @ts-expect-error: 18048
-    message.variables[swipe_id] = _.cloneDeep(Object.assign({}, variables, message.variables[swipe_id]));
+    message.swipe_info[swipe_id].variables = _.cloneDeep(Object.assign({}, previous, current));
     // @ts-expect-error: 18048
     message.swipe_info[swipe_id].variables_initialized = true;
     // @ts-expect-error: 18048
-    console.debug(`[Prompt Template] clone previous message variables: `, message.variables[swipe_id]);
+    console.debug(`[Prompt Template] clone previous message variables: `, message.swipe_info[swipe_id].variables);
     return true;
 }
 
@@ -820,6 +819,9 @@ function ensureMessageVariables(message_id: number, swipe_id?: number, defaults:
 
         if(message.variables_initialized?.[swipe_id])
             message.swipe_info[swipe_id].variables_initialized = true;
+
+        if(message.is_ejs_processed?.[swipe_id])
+            message.swipe_info[swipe_id].is_ejs_processed = true;
     }
 
     return message.swipe_info[swipe_id].variables!;
