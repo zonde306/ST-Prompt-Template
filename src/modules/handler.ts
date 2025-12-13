@@ -1,6 +1,6 @@
 // @ts-expect-error
 import vm from 'vm-browserify';
-import { Message, GenerateAfterData, WorldInfoLoaded } from './defines';
+import { Message, GenerateAfterData, WorldInfoLoaded, WorldInfoScan } from './defines';
 import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock, substituteParams, this_chid, getCurrentChatId, appendMediaToMessage, addCopyToCodeBlocks } from '../../../../../../script.js';
 import { prepareContext } from '../function/ejs';
 import { STATE, checkAndSave, clonePreviousMessage } from '../function/variables';
@@ -61,6 +61,9 @@ async function handleGenerateBefore(type: string, _data: GenerateOptions, dryRun
 }
 
 async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
+    if (settings.enabled === false)
+        return;
+
     // for preprocessing
     const env = await prepareContext(-1 - Number(STATE.isInPlace), {
         runType: 'generate',
@@ -721,6 +724,13 @@ async function handleCustomGenerated(data: { message: string }, generationId: st
     console.log(`[Prompt Template] processing #${generationId} custom generate in ${end}ms`);
 }
 
+async function handleSwipeDeleted(messageId: number, swipeId: number) {
+    // comparing `undefined` with any other type always returns false, so there shouldn't be any errors.
+    if(chat[messageId]?.variables?.length > chat[messageId]?.swipes?.length) {
+        chat[messageId].variables.slice(swipeId, 1);
+    }
+}
+
 const MESSAGE_RENDER_EVENTS = [
     event_types.MESSAGE_UPDATED,
     event_types.MESSAGE_SWIPED,
@@ -750,6 +760,8 @@ export async function init() {
 
     // compatible with https://github.com/N0VI028/JS-Slash-Runner/blob/b07d3e78ce75b541ce0ead3ba3c92acbb99ad59e/src/function/generate/responseGenerator.ts#L156
     eventSource.on('js_generation_before_end', handleCustomGenerated);
+
+    eventSource.on(event_types.MESSAGE_SWIPE_DELETED, handleSwipeDeleted);
 }
 
 export async function exit() {
@@ -761,4 +773,5 @@ export async function exit() {
     eventSource.removeListener(event_types.WORLDINFO_ENTRIES_LOADED, handleWorldInfoLoaded);
     MESSAGE_CREATED.forEach(e => eventSource.removeListener(e, handleMessageCreated));
     eventSource.removeListener(event_types.CHARACTER_MESSAGE_RENDERED, handleMessageRender);
+    eventSource.removeListener(event_types.MESSAGE_SWIPE_DELETED, handleSwipeDeleted);
 }

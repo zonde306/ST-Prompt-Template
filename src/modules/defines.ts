@@ -69,7 +69,7 @@ export interface Message extends Record<string, unknown> {
     swipes: Array<string>;
 
     // created by extensions
-    variables?: Record<number, Record<string, unknown>>;
+    variables?: Record<string, unknown>[];
     is_ejs_processed?: Array<boolean>;
 }
 
@@ -155,4 +155,31 @@ export interface WorldInfoLoaded {
     characterLore: WorldInfoEntry[];
     chatLore: WorldInfoEntry[];
     personaLore: WorldInfoEntry[];
+}
+
+export interface WorldInfoScan {
+    state: {
+        current: number;
+        next: number;
+        loopCount: number;
+    };
+    new: {
+        all: WorldInfoEntry[];
+        successful: WorldInfoEntry[];
+    };
+    activated: {
+        entries: WorldInfoEntry[];
+        text: string;
+    };
+    sortedEntries: WorldInfoEntry[];
+    recursionDelay: {
+        availableLevels: number[];
+        currentLevel: number;
+    };
+    budget: {
+        current: number;
+        overflowed: boolean;
+    };
+    /** @type {import('../../../../../world-info.js').WorldInfoTimedEffects} */
+    timedEffects: any;
 }

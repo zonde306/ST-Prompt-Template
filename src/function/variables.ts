@@ -43,16 +43,12 @@ export function precacheVariables(msg_id?: number, sw_id?: number): Record<strin
     if(STATE.messageId >= chat.length)
         STATE.messageId = chat.length - 1;
     STATE.swipeId = sw_id ?? chat[STATE.messageId].swipe_id ?? 0;
-    if(!chat[STATE.messageId].variables)
-        chat[STATE.messageId].variables = {};
-    if(!chat[STATE.messageId].variables[STATE.swipeId])
-        chat[STATE.messageId].variables[STATE.swipeId] = {};
+    initVariable(STATE.messageId, STATE.swipeId);
     
     STATE.cacheVars = _.cloneDeep(Object.assign(
         {},
         extension_settings.variables.global, // global variables
         STATE.initialVariables,
-        // @ts-expect-error: 2339
         chat_metadata.variables || {}, // chat variables
         chat[STATE.messageId]?.variables?.[STATE.swipeId] || {}, // message variables
         { _trace_id: (STATE.traceId)++, _modify_id: 0 }, // trace ID
@@ -232,12 +228,11 @@ export function setVariable(
                     console.debug(`Set global variable ${key} to ${newValue} (index ${idx})`);
                 break;
             case 'local':
-                // @ts-expect-error: TS2322
-                if (!chat_metadata.variables) chat_metadata.variables = {};
-                // @ts-expect-error: TS2322
+                if (!chat_metadata.variables)
+                    chat_metadata.variables = {};
+
                 data = JSON.parse(_.get(chat_metadata.variables, key, '{}') || '{}');
                 newValue === undefined ? _.unset(data, idx) : _.set(data, idx, newValue);
-                // @ts-expect-error: TS2322
                 _.set(chat_metadata.variables, key, JSON.stringify(data));
 
                 if (settings.debug_enabled)
@@ -248,8 +243,7 @@ export function setVariable(
                     // @ts-expect-error
                     const [message_id, swipe_id] = evalMessageFilter(withMsg, this?.message_id, this?.swipe_id, false);
                     if (message_id !== undefined && swipe_id !== undefined) {
-                        if (!chat[message_id].variables) chat[message_id].variables = {};
-                        if (!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
+                        initVariable(message_id, swipe_id);
                         data = JSON.parse(_.get(chat[message_id].variables[swipe_id], key, '{}') || '{}');
                         newValue === undefined ? _.unset(data, idx) : _.set(data, idx, newValue);
                         _.set(chat[message_id].variables[swipe_id], key, JSON.stringify(data));
@@ -314,12 +308,12 @@ export function setVariable(
                     console.debug(`Set global variable ${key} to ${newValue}`);
                 break;
             case 'local':
-                // @ts-expect-error: TS2322
-                if (!chat_metadata.variables) chat_metadata.variables = {};
+                if (!chat_metadata.variables)
+                    chat_metadata.variables = {};
 
-                if (newValue === undefined) // @ts-expect-error: TS2322
+                if (newValue === undefined)
                     unset(chat_metadata.variables, key);
-                else // @ts-expect-error: TS2322
+                else
                     set(chat_metadata.variables, key, newValue);
 
                 if (settings.debug_enabled)
@@ -330,8 +324,7 @@ export function setVariable(
                     // @ts-expect-error
                     const [message_id, swipe_id] = evalMessageFilter(withMsg, this?.message_id, this?.swipe_id, false);
                     if (message_id !== undefined && swipe_id !== undefined) {
-                        if (!chat[message_id].variables) chat[message_id].variables = {};
-                        if (!chat[message_id].variables[swipe_id]) chat[message_id].variables[swipe_id] = {};
+                        initVariable(message_id, swipe_id);
 
                         if (newValue === undefined) {
                             unset(chat[message_id].variables[swipe_id], key);
@@ -440,16 +433,13 @@ export function getVariable(
             result = get(extension_settings.variables.global, key, defaults);
             return options.clone ? _.cloneDeep(result) : result;
         case 'local':
-            // @ts-expect-error: TS2322
             if (!chat_metadata.variables)
                 return defaults;
             if (index != null) {
-                // @ts-expect-error: TS2322
                 const data = JSON.parse(_.get(chat_metadata.variables, key, '{}') || '{}');
                 const idx = Number(index);
                 return _.get(data, Number.isNaN(idx) ? index : idx, defaults);
             }
-            // @ts-expect-error: TS2322
             result = get(chat_metadata.variables, key, defaults);
             return options.clone ? _.cloneDeep(result) : result;
         case 'message':
@@ -782,17 +772,40 @@ export function clonePreviousMessage(message_id: number, swipe_id?: number): boo
     if(message.variables_initialized?.[swipe_id])
         return false;
 
-    if(!message.variables)
-        message.variables = {};
-    if(!message.variables[swipe_id])
-        message.variables[swipe_id] = {};
-    if(!message.variables_initialized)
-        message.variables_initialized = {};
-    
+    initVariable(message_id, swipe_id);
+
     const variables = findPreviousMessageVariables(message_id);
+
+    // @ts-expect-error: 18048
     message.variables[swipe_id] = _.cloneDeep(Object.assign({}, variables, message.variables[swipe_id]));
-    // @ts-expect-error: 18046
+    // @ts-expect-error: 18048
     message.variables_initialized[swipe_id] = true;
+    // @ts-expect-error: 18048
     console.debug(`[Prompt Template] clone previous message variables: `, message.variables[swipe_id]);
     return true;
+}
+
+function initVariable(message_id: number, swipe_id?: number, defaults: object = {}) {
+    const message = chat[message_id] as Message;
+    if(message) {
+        if(!message.variables) {
+            message.variables = [];
+        } else if(!Array.isArray(message.variables)) {
+            // convert from old style
+            message.variables = Object.assign([], message.variables);
+        }
+
+        // @ts-expect-error: 18048
+        if(!message.variables[swipe_id]) {
+            // @ts-expect-error: 18048
+            message.variables[swipe_id] = defaults;
+        }
+
+        if(!message.variables_initialized) {
+            message.variables_initialized = [];
+        } else if(!Array.isArray(message.variables_initialized)) {
+            // convert from old style
+            message.variables_initialized = Object.assign([], message.variables_initialized);
+        }
+    }
 }
