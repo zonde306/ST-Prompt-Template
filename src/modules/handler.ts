@@ -1,6 +1,6 @@
 // @ts-expect-error
 import vm from 'vm-browserify';
-import { Message, GenerateAfterData, WorldInfoLoaded, WorldInfoScan } from './defines';
+import { Message, GenerateAfterData, WorldInfoLoaded } from './defines';
 import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock, substituteParams, this_chid, getCurrentChatId, appendMediaToMessage, addCopyToCodeBlocks } from '../../../../../../script.js';
 import { prepareContext } from '../function/ejs';
 import { STATE, checkAndSave, clonePreviousMessage } from '../function/variables';
@@ -727,7 +727,7 @@ async function handleCustomGenerated(data: { message: string }, generationId: st
 async function handleSwipeDeleted(messageId: number, swipeId: number) {
     // comparing `undefined` with any other type always returns false, so there shouldn't be any errors.
     if(chat[messageId]?.variables?.length > chat[messageId]?.swipes?.length) {
-        chat[messageId].variables.slice(swipeId, 1);
+        chat[messageId].variables = chat[messageId].variables.slice(swipeId, 1);
     }
 }
 

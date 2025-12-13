@@ -1,3 +1,4 @@
+/// <reference path="../../../../../../global.d.ts" />
 import { ReasoningType } from "../../../../../reasoning.js";
 import { WorldInfoEntry } from "../function/worldinfo.js";
 
@@ -25,7 +26,7 @@ export interface ChatData {
 }
 
 // Allow custom fields
-export interface MessageExtra extends Record<string, unknown> {
+export interface MessageExtra extends ChatMessageExtra {
     // public/scripts/reasoning.js
     reasoning?: string;
     reasoning_type?: ReasoningType;
@@ -40,7 +41,6 @@ export interface MessageExtra extends Record<string, unknown> {
     fileLength?: number;
     image_swipes?: string[];
     title?: string;
-    append_title?: string;
 
     // public/scripts/bookmarks.js
     bookmark_link?: boolean;
@@ -57,17 +57,7 @@ export interface MessageExtra extends Record<string, unknown> {
 }
 
 // Allow custom fields
-export interface Message extends Record<string, unknown> {
-    extra: MessageExtra;
-    is_system: boolean;
-    is_user: boolean;
-    mes: string;
-    name: string;
-    send_date: string;
-    swipe_id: number;
-    swipe_info: Array<unknown>;
-    swipes: Array<string>;
-
+export interface Message extends ChatMessage {
     // created by extensions
     variables?: Record<string, unknown>[];
     is_ejs_processed?: Array<boolean>;
