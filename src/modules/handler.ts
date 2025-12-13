@@ -746,7 +746,7 @@ const MESSAGE_CREATED = [
 ];
 
 export async function init() {
-    eventSource.makeFirst(event_types.CHAT_CHANGED, handlePreloadWorldInfo);
+    eventSource.makeLast(event_types.CHAT_CHANGED, handlePreloadWorldInfo);
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleFilterInstall);
     eventSource.on(event_types.WORLDINFO_UPDATED, handleRefreshWorldInfo);
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleGenerateBefore);
