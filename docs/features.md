@@ -729,3 +729,38 @@ Current Event: Hakimi lets down her guard
 
 Corresponding content for the entry "Hakimi lets down her guard"...
 ```
+
+### Excluding Entries Using the `@@if` Decorator
+
+If you only need to use a condition to determine whether an entry should be activated and don't want to write complex code, there's a simple method.
+
+You can use the `@@if` decorator to exclude entries. If the condition is false, the entry will be disabled.
+
+```
+@@if condition
+World/Lorebook content...
+```
+
+The condition can be any `JavaScript` code, but it must be written on a single line.
+
+#### Advantages
+
+- Fully adheres to SillyTavern's built-in World/Lorebook handling.
+- Directly excludes entries, preventing accidental activation of the World/Lorebook.
+- Simple to write; no need for a lot of `<% ... %>` tags.
+
+#### Disadvantages
+
+- Only one line of code is allowed.
+
+#### Usage Examples
+
+```
+@@if variables.Hakimi.favorability >= 90
+Hakimi likes {{user}} very much.
+```
+
+```
+@@if variables.Hakimi.favorability > 50 && variables.Hakimi.favorability < 90
+Hakimi considers {{user}} a friend.
+```
