@@ -19,8 +19,6 @@ import { METADATA_KEY } from '../../../../../world-info.js';
 import { hashString } from './hasher'
 import { getRegexedString, regex_placement } from '../../../../regex/engine.js';
 import { patchVariables, jsonPatch, parseJSON } from './json-patch';
-
-// @ts-expect-error: 7034
 import { groups, selected_group } from '../../../../../group-chats.js';
 
 interface IncluderResult {
@@ -233,16 +231,12 @@ export async function prepareContext(msg_id?: number, env: Record<string, unknow
         },
         userAvatar: getUserAvatarURL(),
         
-        // @ts-expect-error: 7005
         groups,
-        
-        // @ts-expect-error: 7005
         groupId: selected_group,
         
         // @ts-expect-error: 2538
         charLoreBook: characters[this_chid]?.data?.extensions?.world,
         userLoreBook: power_user.persona_description_lorebook,
-        // @ts-expect-error: 7053
         chatLoreBook: chat_metadata[METADATA_KEY],
         
         get lastUserMessageId() {

@@ -61,7 +61,7 @@ export interface Message extends ChatMessage {
     // created by extensions
     variables?: Record<string, unknown>[];
     is_ejs_processed?: Array<boolean>;
-    variables_initialized: boolean[];
+    variables_initialized?: boolean[];
 }
 
 export interface ScriptInject {

@@ -11,7 +11,7 @@ function processMessage(message?: Message & { id: number }) : string {
     if(message == null)
         return '';
     const placement = message.is_user ? regex_placement.USER_INPUT : regex_placement.AI_OUTPUT;
-    return substituteParams(getRegexedString(message.mes, placement, {
+    return substituteParams(getRegexedString(message.mes ?? '', placement, {
         characterOverride: message.name,
         isPrompt: true,
         depth: chat.length - message.id - 1, // [0...6].length === 7

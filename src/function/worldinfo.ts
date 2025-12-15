@@ -4,6 +4,24 @@ import { power_user } from '../../../../../power-user.js';
 import { getCharaFilename } from '../../../../../utils.js';
 import { getGroupMembers } from '../../../../../group-chats.js';
 import { settings } from '../modules/ui';
+import { evalTemplate } from './ejs';
+
+const KNOWN_DECORATORS = [
+    '@@activate',
+    '@@dont_activate',
+    '@@message_formatting',
+    '@@generate_before',
+    '@@generate_after',
+    '@@render_before',
+    '@@render_after',
+    '@@dont_preload',
+    '@@initial_variables',
+    '@@always_enabled',
+    '@@only_preload',
+    '@@iframe',
+    '@@preprocessing',
+    '@@if',
+];
 
 interface WorldInfoExtension {
     position: number;
@@ -556,7 +574,6 @@ export function getEnabledLoreBooks(
             results.push(charaWorld);
 
         for(const member of getGroupMembers()) {
-            // @ts-expect-error
             const world = member?.data?.extensions?.world;
             if (world && !selected_world_info.includes(world))
                 results.push(world);
@@ -571,7 +588,6 @@ export function getEnabledLoreBooks(
     }
 
     if (persona) {
-        // @ts-expect-error
         const chatWorld : string = chat_metadata[METADATA_KEY];
         const personaWorld : string = power_user.persona_description_lorebook;
         if(personaWorld && personaWorld !== chatWorld && !selected_world_info.includes(personaWorld))
@@ -594,14 +610,12 @@ export function getEnabledLoreBooks(
         }
 
         for(const member of getGroupMembers()) {
-            // @ts-expect-error: 2339
             const chid = characters.findIndex(ch => ch.avatar === member.avatar);
             const file = getCharaFilename(chid);
             if (file) {
                 // @ts-expect-error
                 const extraCharLore = world_info.charLore?.find((e) => e.name === file);
                 if (extraCharLore && Array.isArray(extraCharLore.extraBooks)) {
-                    // @ts-expect-error
                     const primaryBook : string = member?.data?.extensions?.world;
                     for(const book of extraCharLore.extraBooks) {
                         if (book && book !== primaryBook && !selected_world_info.includes(book))
@@ -613,7 +627,6 @@ export function getEnabledLoreBooks(
     }
 
     if (chat) {
-        // @ts-expect-error
         const chatWorld : string = chat_metadata[METADATA_KEY];
         if (chatWorld && !selected_world_info.includes(chatWorld))
             results.push(chatWorld);
@@ -680,7 +693,6 @@ function worldInfoSorter(a: WorldInfoEntry, b: WorldInfoEntry, top: number = DEF
 
         // relative to AN
         if(entry.position === world_info_position.ANTop || entry.position === world_info_position.ANBottom) {
-            // @ts-expect-error: 2339
             switch(chat_metadata.note_position) {
                 case 0:
                 case 2:
@@ -688,7 +700,6 @@ function worldInfoSorter(a: WorldInfoEntry, b: WorldInfoEntry, top: number = DEF
                     return offset + top + DEPTH_MAPPING[world_info_position.before] + 2;
                 case 1:
                     // In-chat @ Depth
-                    // @ts-expect-error: 2339
                     return (chat_metadata.note_depth ?? DEFAULT_DEPTH) + (entry.depth ?? DEFAULT_DEPTH);
             }
 
@@ -704,22 +715,6 @@ function worldInfoSorter(a: WorldInfoEntry, b: WorldInfoEntry, top: number = DEF
         a.order - b.order ||
         b.uid - a.uid;   
 }
-
-const KNOWN_DECORATORS = [
-    '@@activate',
-    '@@dont_activate',
-    '@@message_formatting',
-    '@@generate_before',
-    '@@generate_after',
-    '@@render_before',
-    '@@render_after',
-    '@@dont_preload',
-    '@@initial_variables',
-    '@@always_enabled',
-    '@@only_preload',
-    '@@iframe',
-    '@@preprocessing',
-];
 
 /**
  * Parse decorators from worldinfo content
@@ -820,4 +815,16 @@ export function isPreprocessingEntry(entry: WorldInfoEntry) : boolean {
 
     const decorators = (entry.decorators ?? parseDecorators(entry.content)[0]).join(',');
     return decorators.includes('@@preprocessing');
+}
+
+export async function isConditionFiltedEntry(env: Record<string, unknown>, entry: WorldInfoEntry) : Promise<boolean> {
+    if(entry.disable)
+        return false;
+
+    let condition = (entry.decorators ?? parseDecorators(entry.content)[0]).find(x => x.startsWith('@@if'));
+    if(!condition)
+        return false;
+    
+    // @if xxx to <%- !(xxx) %>
+    return (await evalTemplate(`<%- !!(${condition.substring(4)}) %>`, env)) === 'false';
 }
