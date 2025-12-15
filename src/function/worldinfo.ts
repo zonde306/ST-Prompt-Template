@@ -4,6 +4,24 @@ import { power_user } from '../../../../../power-user.js';
 import { getCharaFilename } from '../../../../../utils.js';
 import { getGroupMembers } from '../../../../../group-chats.js';
 import { settings } from '../modules/ui';
+import { evalTemplate } from './ejs';
+
+const KNOWN_DECORATORS = [
+    '@@activate',
+    '@@dont_activate',
+    '@@message_formatting',
+    '@@generate_before',
+    '@@generate_after',
+    '@@render_before',
+    '@@render_after',
+    '@@dont_preload',
+    '@@initial_variables',
+    '@@always_enabled',
+    '@@only_preload',
+    '@@iframe',
+    '@@preprocessing',
+    '@@if',
+];
 
 interface WorldInfoExtension {
     position: number;
@@ -698,22 +716,6 @@ function worldInfoSorter(a: WorldInfoEntry, b: WorldInfoEntry, top: number = DEF
         b.uid - a.uid;   
 }
 
-const KNOWN_DECORATORS = [
-    '@@activate',
-    '@@dont_activate',
-    '@@message_formatting',
-    '@@generate_before',
-    '@@generate_after',
-    '@@render_before',
-    '@@render_after',
-    '@@dont_preload',
-    '@@initial_variables',
-    '@@always_enabled',
-    '@@only_preload',
-    '@@iframe',
-    '@@preprocessing',
-];
-
 /**
  * Parse decorators from worldinfo content
  * @param content The content to parse
@@ -813,4 +815,16 @@ export function isPreprocessingEntry(entry: WorldInfoEntry) : boolean {
 
     const decorators = (entry.decorators ?? parseDecorators(entry.content)[0]).join(',');
     return decorators.includes('@@preprocessing');
+}
+
+export async function isConditionFiltedEntry(env: Record<string, unknown>, entry: WorldInfoEntry) : Promise<boolean> {
+    if(entry.disable)
+        return false;
+
+    let condition = (entry.decorators ?? parseDecorators(entry.content)[0]).find(x => x.startsWith('@@if'));
+    if(!condition)
+        return false;
+    
+    // @if xxx to <%- !(xxx) %>
+    return (await evalTemplate(`<%- !!(${condition.substring(4)}) %>`, env)) === 'false';
 }
