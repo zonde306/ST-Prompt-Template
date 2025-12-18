@@ -43,7 +43,12 @@ export async function evalTemplateHandler(content: string,
         console.error(err);
 
         // @ts-expect-error
-        toastr.error(err.message, `EJS Error`, { onclick: () => copyText(err.message).then(() => toastr.success('Copied to clipboard!')) });
+        toastr.error(err.message, `EJS Error`, {
+            onclick: () =>
+                // @ts-expect-error: 
+                copyText(`Error: ${err.message}\n\nPrompt:\n${content}\n\nSourcecode:\n${err.src}`)
+                .then(() => toastr.success('Copied to clipboard!'))
+        });
     }
 
     return null;

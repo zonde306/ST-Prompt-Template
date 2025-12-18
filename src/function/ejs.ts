@@ -20,6 +20,7 @@ import { hashString } from './hasher'
 import { getRegexedString, regex_placement } from '../../../../regex/engine.js';
 import { patchVariables, jsonPatch, parseJSON } from './json-patch';
 import { groups, selected_group } from '../../../../../group-chats.js';
+import { copyText } from '../../../../../utils.js';
 
 interface IncluderResult {
     filename: string;
@@ -188,7 +189,14 @@ export async function evalTemplate(content: string, data: Record<string, unknown
             console.error(err);
 
             // @ts-expect-error
-            toastr.error(err.message, `EJS Template Error`, {  onclick: () => navigator.clipboard.writeText(err.message).then(() => toastr.success('Copied to clipboard!') )});
+            toastr.error(err.message,
+                `EJS Template Error`, {
+                    onclick: () =>
+                        // @ts-expect-error
+                        copyText(`Error: ${err.message}\n\nPrompt:\n${content}\n\nSourcecode:\n${err.src}`)
+                        .then(() => toastr.success('Copied to clipboard!') )
+                }
+            );
         }
         throw err;
     }

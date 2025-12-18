@@ -678,13 +678,13 @@
                 fn = new ctor(opts.localsName + ', escapeFn, include, rethrow', src);
             }
             catch(e) {
+                e.src = src;
                 // istanbul ignore else
                 if (e instanceof SyntaxError) {
                     if (opts.filename) {
                         e.message += ' in ' + opts.filename;
                     }
                     e.message += ' while compiling ejs\n\n';
-                    e.src = src;
                     /*
                     e.message += 'If the above error is not helpful, you may want to try EJS-Lint:\n';
                     e.message += 'https://github.com/RyanZim/EJS-Lint';
