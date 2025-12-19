@@ -21,6 +21,7 @@ const KNOWN_DECORATORS = [
     '@@iframe',
     '@@preprocessing',
     '@@if',
+    '@@private',
 ];
 
 interface WorldInfoExtension {
@@ -813,7 +814,7 @@ export function isPreprocessingEntry(entry: WorldInfoEntry) : boolean {
     if(title.includes('[Preprocessing]'))
         return true;
 
-    const decorators = (entry.decorators ?? parseDecorators(entry.content)[0]).join(',');
+    const decorators = entry.decorators ?? parseDecorators(entry.content)[0];
     return decorators.includes('@@preprocessing');
 }
 
@@ -827,4 +828,12 @@ export async function isConditionFiltedEntry(env: Record<string, unknown>, entry
     
     // @if xxx to <%- !(xxx) %>
     return (await evalTemplate(`<%- !!(${condition.substring(4)}) %>`, env)) === 'false';
+}
+
+export function isPrivateEntry(entry: WorldInfoEntry) : boolean {
+    if(entry.disable)
+        return false;
+    
+    const decorators = entry.decorators ?? parseDecorators(entry.content)[0];
+    return decorators.includes('@@private');
 }
