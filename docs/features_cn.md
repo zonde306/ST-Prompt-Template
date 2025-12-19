@@ -710,6 +710,7 @@ Q: 变化后的好感度是多少？
 - `@@initial_variables`：相当于`[InitialVariables]`（详见[内容注入](#内容注入)）
 - `@@always_enabled`：用于`[GENERATE]`、`[RENDE]`和`[InitialVariables]`等特殊条目，强制启用该条目
 - `@@only_preload`：只在[立即加载世界书](#立即加载世界书)阶段启用该条目
+- `@@private`：在条目内容开始和结束部分插入`<% { %>`和`<% } %>`，用于避免`Identifier ... has already been declared`错误。
 
 例如，状态：
 

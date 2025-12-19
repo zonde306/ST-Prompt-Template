@@ -5,7 +5,7 @@ import { eventSource, event_types, chat, messageFormatting, GenerateOptions, upd
 import { prepareContext } from '../function/ejs';
 import { STATE, checkAndSave, clonePreviousMessage } from '../function/variables';
 import { extension_settings } from '../../../../../extensions.js';
-import { getEnabledWorldInfoEntries, deactivateActivateWorldInfo, LoreBook, getEnabledLoreBooks, getActivatedWIEntries, isSpecialEntry, getWorldInfoEntries, isPreprocessingEntry, WorldInfoEntry, isConditionFiltedEntry } from '../function/worldinfo';
+import { getEnabledWorldInfoEntries, deactivateActivateWorldInfo, LoreBook, getEnabledLoreBooks, getActivatedWIEntries, isSpecialEntry, getWorldInfoEntries, isPreprocessingEntry, WorldInfoEntry, isConditionFiltedEntry, isPrivateEntry } from '../function/worldinfo';
 import { getCharacterDefine } from '../function/characters';
 import { settings } from './ui';
 import { activateRegex, deactivateRegex, applyRegex } from '../function/regex';
@@ -79,6 +79,7 @@ async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
     });
 
     const applyDecorators = async function(type: 'characterLore' | 'globalLore' | 'personaLore' | 'chatLore') {
+        // reverse to avoid index change
         for (let i = data[type].length - 1; i >= 0; i--) {
             const entry = data[type][i];
             if (isSpecialEntry(entry)) {
@@ -93,6 +94,9 @@ async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
                 console.debug(`[Prompt Template] Preprocess ${type} of ${entry.world}/${entry.comment}/${entry.uid}`);
                 if(settings.debug_enabled)
                     console.debug(content);
+            } else if (isPrivateEntry(entry)) {
+                entry.content = `<% { %>${entry.content}<% } %>`;
+                console.debug(`[Prompt Template] Mark ${type} of ${entry.world}/${entry.comment}/${entry.uid} as private`);
             }
         }
     };

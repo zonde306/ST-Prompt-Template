@@ -515,6 +515,7 @@ Lore book entry content...
 - `@@initial_variables`: Equivalent to `[InitialVariables]` (see [Content Injection](#Content Injection) for details).
 - `@@always_enabled`: For special entries like `[GENERATE]`, `[RENDE]`, and `[InitialVariables]`, this entry is forced to be enabled.
 - `@@only_preload`: Enable this entry only during the [Immediate Lore Book Loading](#Immediate Lore Book Loading) phase.
+- `@@private`: Inserts `<% { %>` and `<% } %>` at the beginning and end of the entry content to prevent the `Identifier ... has already been declared` error.
 
 **Example (status bar):**
 

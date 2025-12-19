@@ -132,7 +132,7 @@ export async function evaluateWIEntities(
             if (options.msgId != null && result.trim()) {
                 if(data.decorators?.includes('@@message_formatting')) {
                     const message: Message = chat[options.msgId];
-                    result = messageFormatting(result, message.name, message.is_system, message.is_user, options.msgId);
+                    result = messageFormatting(result, message.name ?? '', !!message.is_system, !!message.is_user, options.msgId);
                 }
                 if(data.decorators?.includes('@@iframe')) {
                     result = renderInFrame(result, {
