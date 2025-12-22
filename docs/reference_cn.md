@@ -918,6 +918,20 @@ is_user = false
 is_system = false
 ```
 
+只有在 `@@generate_*`/`[GENERATE:*]` 时才会出现的字段
+
+```javascript
+/*
+ * 当前正在处理的世界书条目对象
+ */
+world_info: {}
+
+/*
+ * 当前已处理的上下文内容
+ */
+generateBuffer = ''
+```
+
 ---
 
 # 特殊变量

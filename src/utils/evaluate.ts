@@ -61,6 +61,8 @@ export async function evalTemplateHandler(content: string,
  * @param msgId message index
  * @param entries WorldInfo entries list
  * @param content Content for activation
+ * @param preload Whether to preload
+ * @param buffer Buffer for processing
  */
 interface EvaluateWorldEntitiesOptions {
     comment?: string;
@@ -69,6 +71,7 @@ interface EvaluateWorldEntitiesOptions {
     entries?: WorldInfoEntry[];
     content?: string | null;
     preload?: boolean;
+    buffer?: string;
 }
 
 /**
@@ -117,7 +120,10 @@ export async function evaluateWIEntities(
                     html: true,
                 }
             ),
-            _.merge(env, { world_info: data }),
+            _.merge(env, {
+                world_info: data,
+                generateBuffer: options.buffer ?? '',
+            }),
             `worldinfo ${data.world}.${data.comment}`,
             {
                 options: {
@@ -134,8 +140,9 @@ export async function evaluateWIEntities(
                     const message: Message = chat[options.msgId];
                     result = messageFormatting(result, message.name ?? '', !!message.is_system, !!message.is_user, options.msgId);
                 }
-                if(data.decorators?.includes('@@iframe')) {
-                    result = renderInFrame(result, {
+                const iframe = data.decorators?.find(x => x.startsWith('@@iframe'));
+                if(iframe) {
+                    result = renderInFrame(result, iframe.substring(9), {
                         id: `mes-${options.msgId}-${data.world}-${data.uid}`,
                         'data-worldinfo': data.world,
                         'data-comment': data.comment,

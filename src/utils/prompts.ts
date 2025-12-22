@@ -109,6 +109,7 @@ export function escapeEjsInDisabledBlocks(str : string, options : EjsOptions = {
 
 /**
  * Apply escapeEjsInDisabledBlocks for all reasoning-like blocks
+ * @see escapeEjsInDisabledBlocks
  * @param content content
  * @param opts EJS Options
  * @returns processed content

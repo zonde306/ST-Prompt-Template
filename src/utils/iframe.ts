@@ -1,6 +1,12 @@
 
-
-export function renderInFrame(html: string, attrs: Record<string, string> = {}): string {
+/**
+ * Create an iframe with the given HTML content
+ * @param html content
+ * @param title title
+ * @param attrs attributes
+ * @returns HTML string
+ */
+export function renderInFrame(html: string, title: string, attrs: Record<string, string> = {}): string {
     const iframe = document.createElement('iframe');
     iframe.style.width = '100%';
     iframe.style.height = '300px';
@@ -91,6 +97,9 @@ export function renderInFrame(html: string, attrs: Record<string, string> = {}):
     `;
     doc.head.appendChild(script);
     iframe.srcdoc = doc.documentElement.outerHTML;
+
+    if(title)
+        return `<details><summary>${title}</summary>${iframe.outerHTML}</details>`;
 
     return iframe.outerHTML;
 }
