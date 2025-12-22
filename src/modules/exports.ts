@@ -11,9 +11,10 @@ export async function init() {
     globalThis.EjsTemplate = {
         evalTemplate: async(
             code : string,
-            context : Record<string, unknown> = {},
+            context : Record<string, unknown> | null = null,
             options: Record<string, unknown> = {}) => {
             STATE.isDryRun = false;
+            context = context ?? await prepareContext();
             return await evalTemplate(code, context, { logging: false, options });
         },
         prepareContext: async(
