@@ -738,13 +738,12 @@ async function handleSwipeDeleted(messageId: number, swipeId: number) {
     const message = chat[messageId] as Message;
     // @ts-expect-error: 18048
     if(message?.variables?.length > message?.swipes?.length) {
-        // @ts-expect-error: 18048
-        message.variables = message.variables.slice(swipeId, 1);
+        message.variables?.splice(swipeId, 1);
     }
     if(message?.variables_initialized?.[swipeId])
-        message.variables_initialized = message.variables_initialized.slice(swipeId, 1);
+        message.variables_initialized = message.variables_initialized.splice(swipeId, 1);
     if(message?.is_ejs_processed?.[swipeId])
-        message.is_ejs_processed = message.is_ejs_processed.slice(swipeId, 1);
+        message.is_ejs_processed = message.is_ejs_processed.splice(swipeId, 1);
 }
 
 const MESSAGE_RENDER_EVENTS = [
