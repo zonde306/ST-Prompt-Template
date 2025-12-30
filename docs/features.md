@@ -489,43 +489,112 @@ Q: What is the new affection level?
 
 ---
 
-## Decorators
+### List of Available Decorators
 
-At the start of **lore book/world info** content, prefix lines with `@@` to add decorators. The extension recognizes these for special processing.
+- `@@activate`: Treat as a 🔵 entry.
+- `@@dont_activate`: Do not activate this entry (completely prevents activation, even with `activewi`).
+- `@@message_formatting`: Output as HTML code (only in `[RENDER]` and `@@render` modes).
+- `@@generate_before`: Equivalent to `[GENERATE:BEFORE]` (see [Content Injection](#content-injection) for details).
+- `@@generate_after`: Equivalent to `[GENERATE:AFTER]` (see [Content Injection](#content-injection) for details).
+- `@@render_before`: Equivalent to `[RENDER:BEFORE]` (see [Content Injection](#content-injection) for details).
+- `@@render_after`: Equivalent to `[RENDER:AFTER]` (see [Content Injection](#content-injection) for details).
+- `@@dont_preload`: Do not process this entry when opening the character card.
+- `@@initial_variables`: Equivalent to `[InitialVariables]` (see [Content Injection](#content-injection) for details).
+- `@@always_enabled`: Used for special entries like `[GENERATE]`, `[RENDER]`, and `[InitialVariables]` to force enable the entry.
+- `@@only_preload`: Enable this entry only during the [Immediate Lore Book Loading](#immediate-lore-book-loading) phase.
+- `@@private`: Inserts `<% { %>` and `<% } %>` at the beginning and end of the entry content to avoid the `Identifier ... has already been declared` error.
+- `@@if`: Checks a condition; if the result is `false`, excludes this entry.
+- `@@iframe`: Wraps `@@render_before` or `@@render_after` content in an `<iframe>` tag to avoid style pollution in the global scope.
+- `@@preprocessing`: This extension processes the entry before Tavern handles the lore book.
 
-Multiple decorators can be used (one per line, no blank lines between).
+**General Usage:**
 
-**Decorator example:**
-```
-@@activate
-Lore book entry content...
-```
-
-> This decorator ignores 🟢 keywords, treating the entry as 🔵 for activation
-
-### Available Decorators
-- `@@activate`: Treat as 🔵 entry
-- `@@dont_activate`: Disable activation (fully blocked, even via `activewi`)
-- `@@message_formatting`: Output as HTML (only for `[RENDER]`/`@@render` modes)
-- `@@generate_before`: Equivalent to `[GENERATE:BEFORE]`(see [Content Injection](#Content Injection) for details).
-- `@@generate_after`: Equivalent to `[GENERATE:AFTER]`(see [Content Injection](#Content Injection) for details).
-- `@@render_before`: Equivalent to `[RENDER:BEFORE]`(see [Content Injection](#Content Injection) for details).
-- `@@render_after`: Equivalent to `[RENDER:AFTER]`(see [Content Injection](#Content Injection) for details).
-- `@@dont_preload`: Don't process this entry when opening a character sheet.
-- `@@initial_variables`: Equivalent to `[InitialVariables]` (see [Content Injection](#Content Injection) for details).
-- `@@always_enabled`: For special entries like `[GENERATE]`, `[RENDE]`, and `[InitialVariables]`, this entry is forced to be enabled.
-- `@@only_preload`: Enable this entry only during the [Immediate Lore Book Loading](#Immediate Lore Book Loading) phase.
-- `@@private`: Inserts `<% { %>` and `<% } %>` at the beginning and end of the entry content to prevent the `Identifier ... has already been declared` error.
-
-**Example (status bar):**
-
-```
+```javascript
 @@render_after
 @@message_formatting
-​```
 Name: <%- variables.status_bar.character_name %>
-​```
 ```
+
+**`@@if` Example:**
+
+```javascript
+@@if variables.current_stage === 1
+Stage 1 content
+```
+
+```javascript
+@@if variables.current_stage === 2 || variables.current_stage === 3
+Stage 2 and 3 content
+```
+
+> When the condition check fails (i.e., result is `false`), this entry will not proceed to the lore book processing flow.
+>
+> The condition can be any `javascript` code, including function calls like `getvar`, and must be a single line.
+>
+> `@@if` only affects Tavern's built-in lore book processing logic and does not affect features provided by this extension. For example, it does not take effect for `@@generate` and `@@render`.
+
+**`@@iframe` Example:**
+
+```ejs
+@@render_after
+@@iframe
+<% if(!is_user && !is_system) { %>
+<html>
+<head></head>
+<body>
+<div>
+【Hakimi】<br/>
+Favorability: <%- variables.hakimi.favorability %>
+</div>
+</body>
+</html>
+<% } %>
+```
+
+> The above effect adds a status bar at the end of all message floors.
+>
+> `if(!is_user && !is_system)` means the status bar is only displayed for character messages.
+>
+> `ejs` code can still be executed during rendering, but becomes unavailable after rendering. However, Tavern's built-in `SillyTavern.getContext()` can still be used to call Tavern functions.
+
+**`@@iframe` Collapsible Version:**
+
+```ejs
+@@render_after
+@@iframe Collapsible Status Bar (Click to Show)
+<% if(!is_user && !is_system) { %>
+<html>
+<head></head>
+<body>
+<div>
+【Hakimi】<br/>
+Favorability: <%- variables.hakimi.favorability %>
+</div>
+</body>
+</html>
+<% } %>
+```
+
+> The `@@iframe` decorator can include a string as a title. If the content is not empty, it will be collapsed, and this title becomes the header of the collapsible block.
+
+**Usage of `@@message_formatting`:**
+
+```html
+@@render_after
+@@message_formatting
+​```html
+<html>
+<head></head>
+<body>
+<div>
+【Hakimi】<br/>
+Favorability: <%- variables.hakimi.favorability %>
+</div>
+</body>
+</html>
+```
+>  This hands off the status bar to other extensions for processing and rendering, such as [Tavern-Helper](https://github.com/N0VI028/JS-Slash-Runner/) or [LittleWhiteBox](https://github.com/RT15548/LittleWhiteBox), allowing the use of functions they provide.
+
 ---
 
 ## Activation Regex
