@@ -561,6 +561,13 @@ export async function compileTemplate(
     if (!options.options)
         options.options = {};
 
+    _.defaults(options.options, {
+        async: true,
+        outputFunctionName: 'print',
+        _with: true,
+        localsName: 'locals',
+    });
+
     // must be client mode
     options.options.client = true;
     options.options.escape = undefined;
