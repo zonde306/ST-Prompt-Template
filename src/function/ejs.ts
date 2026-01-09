@@ -155,14 +155,19 @@ export async function evalTemplate(content: string, data: Record<string, unknown
     }
 
     try {
-        result = await vm.runInNewContext(CODE_TEMPLATE, {
-            ejs,
-            content,
-            data,
-            escaper: opts.escaper || escape,
-            includer: opts.includer || include,
-            options: opts.options || {},
-        });
+        if(settings.compile_workers) {
+            const func = await compileTemplate(content, opts);
+            result = await func(data);
+        } else {
+            result = await vm.runInNewContext(CODE_TEMPLATE, {
+                ejs,
+                content,
+                data,
+                escaper: opts.escaper || escape,
+                includer: opts.includer || include,
+                options: opts.options || {},
+            });
+        }
     } catch (err) {
         if (opts.logging ?? true) {
             if (settings.debug_enabled) {
@@ -531,7 +536,7 @@ let taskMap = new Map<number, { resolve: (code: string) => void, reject: (error:
 export async function compileTemplate(
     content: string,
     options: EvalTemplateOptions = {}
-): Promise<(data: Record<string, unknown>) => string> {
+): Promise<(data: Record<string, unknown>) => string | Promise<string>> {
     if (worker == null) {
         worker = new Worker('/scripts/extensions/third-party/ST-Prompt-Template/dist/ejs-workers.js');
         worker.onerror = (e) => {
@@ -567,8 +572,10 @@ export async function compileTemplate(
         taskMap.set(id, {
             resolve(code: string) {
                 try {
-                    // anonymous(locals, escapeFn, include, rethrow)
-                    const func = new Function(`return ${code}`)();
+                    // (function(){ return function(locals...){...} })
+                    const factoryFn = new Function(`return ${code}`)();
+                    // unwarp function(locals...){...}
+                    const func = factoryFn();
                     resolve(function (this: unknown, data: Record<string, unknown> = {}) {
                         return func.call(this, data, options.escaper ?? escape, options.includer ?? include, rethrow);
                     });
