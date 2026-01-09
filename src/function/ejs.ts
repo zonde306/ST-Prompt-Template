@@ -27,16 +27,6 @@ interface IncluderResult {
     template: string;
 }
 
-export function include(originalPath: string, _parsedPath: string): IncluderResult {
-    console.warn(`[Prompt Template] include not implemented`);
-    return { filename: originalPath, template: '' };
-}
-
-export function escape(markup: string): string {
-    // don't escape any XML tags
-    return markup;
-}
-
 const SHARE_CONTEXT: Record<string, unknown> = {
     _,
     $,
@@ -107,7 +97,7 @@ export interface EjsOptions {
     outputFunctionName?: string;    // Set to a string (e.g., 'echo' or 'print') for a function to print output inside scriptlet tags.
     async?: boolean;    // When true, EJS will use an async function for rendering. (Depends on async/await support in the JS runtime).
     includer?: ((originalPath: string, parsedPath: string) => IncluderResult);  // Custom function to handle EJS includes, receives (originalPath, parsedPath) parameters, where originalPath is the path in include as-is and parsedPath is the previously resolved path. Should return an object { filename, template }, you may return only one of the properties, where filename is the final parsed path and template is the included content.
-} 
+}
 
 export interface EvalTemplateOptions {
     escaper?: ((markup: string) => string) | undefined;
@@ -128,13 +118,13 @@ export interface EvalTemplateOptions {
  * @returns Processing results
  */
 export async function evalTemplate(content: string, data: Record<string, unknown>,
-    opts : EvalTemplateOptions = {}) {
+    opts: EvalTemplateOptions = {}) {
     if (typeof content !== 'string') {
         console.error(`[Prompt Template] content is not a string`);
         return content;
     }
-    if(!content.includes(`${opts?.options?.openDelimiter ?? '<'}${opts?.options?.delimiter ?? '%'}`)) {
-        if(settings.debug_enabled)
+    if (!content.includes(`${opts?.options?.openDelimiter ?? '<'}${opts?.options?.delimiter ?? '%'}`)) {
+        if (settings.debug_enabled)
             console.debug(`[Prompt Template] no available ${opts?.options?.openDelimiter ?? '<'}${opts?.options?.delimiter ?? '%'} to evaluate ${content.slice(0, 25)}...`);
         return content;
     }
@@ -143,39 +133,44 @@ export async function evalTemplate(content: string, data: Record<string, unknown
 
     // avoiding accidental evaluation
     let result = '';
-    
-    if(settings.with_context_disabled || opts.options?._with === false) {
-        if(!opts.options)
+
+    if (settings.with_context_disabled || opts.options?._with === false) {
+        if (!opts.options)
             opts.options = {};
 
         // opts.options.strict = true;
         opts.options._with = false;
 
         // unpack params
-        if(!opts.options?.destructuredLocals)
+        if (!opts.options?.destructuredLocals)
             opts.options.destructuredLocals = Object.keys(data);
     }
 
-    if(opts.options?.cache) {
-        if(!opts.options.filename) {
+    if (opts.options?.cache) {
+        if (!opts.options.filename) {
             opts.options.filename = 'unk';
         }
 
         opts.options.filename += '/' + hashString(content, 0xfacefeed);
     }
-    
+
     try {
-        result = await vm.runInNewContext(CODE_TEMPLATE, {
-            ejs,
-            content,
-            data,
-            escaper: opts.escaper || escape,
-            includer: opts.includer || include,
-            options: opts.options || {},
-        });
+        if(settings.compile_workers) {
+            const func = await compileTemplate(content, opts);
+            result = await func.call(data, data);
+        } else {
+            result = await vm.runInNewContext(CODE_TEMPLATE, {
+                ejs,
+                content,
+                data,
+                escaper: opts.escaper || escape,
+                includer: opts.includer || include,
+                options: opts.options || {},
+            });
+        }
     } catch (err) {
         if (opts.logging ?? true) {
-            if(settings.debug_enabled) {
+            if (settings.debug_enabled) {
                 const contentWithLines = content.split('\n').map((line, idx) => `${idx}: ${line}`).join('\n');
                 console.debug(`[Prompt Template] when ${opts.when} has errors:\n${contentWithLines}`);
             }
@@ -191,11 +186,11 @@ export async function evalTemplate(content: string, data: Record<string, unknown
             // @ts-expect-error
             toastr.error(err.message,
                 `EJS Template Error`, {
-                    onclick: () =>
-                        // @ts-expect-error
-                        copyText(`Error: ${err.message}\n\nPrompt:\n${content}\n\nSourcecode:\n${err.src}`)
-                        .then(() => toastr.success('Copied to clipboard!') )
-                }
+                onclick: () =>
+                    // @ts-expect-error
+                    copyText(`Error: ${err.message}\n\nPrompt:\n${content}\n\nSourcecode:\n${err.src}`)
+                        .then(() => toastr.success('Copied to clipboard!'))
+            }
             );
         }
         throw err;
@@ -216,7 +211,7 @@ export async function evalTemplate(content: string, data: Record<string, unknown
 export async function prepareContext(msg_id?: number, env: Record<string, unknown> = {}): Promise<Record<string, unknown>> {
     // precache variables
     precacheVariables(msg_id);
-    
+
     let context = {
         ...SHARE_CONTEXT,
         get variables() {
@@ -238,15 +233,15 @@ export async function prepareContext(msg_id?: number, env: Record<string, unknow
             return getCharacterAvaterURL();
         },
         userAvatar: getUserAvatarURL(),
-        
+
         groups,
         groupId: selected_group,
-        
+
         // @ts-expect-error: 2538
         charLoreBook: characters[this_chid]?.data?.extensions?.world,
         userLoreBook: power_user.persona_description_lorebook,
         chatLoreBook: chat_metadata[METADATA_KEY],
-        
+
         get lastUserMessageId() {
             return chat.findLastIndex(msg => msg.is_user);
         },
@@ -281,40 +276,40 @@ export async function prepareContext(msg_id?: number, env: Record<string, unknow
         getPresetPrompt: boundedPresetPrompt.bind(context),
         define: boundedDefine.bind(context),
         setvar: setVariable.bind(context),
-        setLocalVar: (k: string, v: unknown, o : SetVarOption = {}) => setVariable.call(context, k, v, { ...o, scope: 'local' }),
-        setGlobalVar: (k: string, v: unknown, o : SetVarOption = {}) => setVariable.call(context, k, v, { ...o, scope: 'global' }),
-        setMessageVar: (k: string, v: unknown, o : SetVarOption = {}) => setVariable.call(context, k, v, { ...o, scope: 'message' }),
+        setLocalVar: (k: string, v: unknown, o: SetVarOption = {}) => setVariable.call(context, k, v, { ...o, scope: 'local' }),
+        setGlobalVar: (k: string, v: unknown, o: SetVarOption = {}) => setVariable.call(context, k, v, { ...o, scope: 'global' }),
+        setMessageVar: (k: string, v: unknown, o: SetVarOption = {}) => setVariable.call(context, k, v, { ...o, scope: 'message' }),
         getvar: getVariable.bind(context),
-        getLocalVar: (k: string, o : GetVarOption = {}) => getVariable.call(context, k, { ...o, scope: 'local' }),
-        getGlobalVar: (k: string, o : GetVarOption = {}) => getVariable.call(context, k, { ...o, scope: 'global' }),
-        getMessageVar: (k: string, o : GetVarOption = {}) => getVariable.call(context, k, { ...o, scope: 'message' }),
+        getLocalVar: (k: string, o: GetVarOption = {}) => getVariable.call(context, k, { ...o, scope: 'local' }),
+        getGlobalVar: (k: string, o: GetVarOption = {}) => getVariable.call(context, k, { ...o, scope: 'global' }),
+        getMessageVar: (k: string, o: GetVarOption = {}) => getVariable.call(context, k, { ...o, scope: 'message' }),
         incvar: increaseVariable.bind(context),
-        incLocalVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => increaseVariable.call(context, k, v, { ...o, outscope: 'local' }),
-        incGlobalVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => increaseVariable.call(context, k, v, { ...o, outscope: 'global' }),
-        incMessageVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => increaseVariable.call(context, k, v, { ...o, outscope: 'message' }),
+        incLocalVar: (k: string, v: number = 1, o: GetSetVarOption = {}) => increaseVariable.call(context, k, v, { ...o, outscope: 'local' }),
+        incGlobalVar: (k: string, v: number = 1, o: GetSetVarOption = {}) => increaseVariable.call(context, k, v, { ...o, outscope: 'global' }),
+        incMessageVar: (k: string, v: number = 1, o: GetSetVarOption = {}) => increaseVariable.call(context, k, v, { ...o, outscope: 'message' }),
         decvar: decreaseVariable.bind(context),
-        decLocalVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'local' }),
-        decGlobalVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'global' }),
-        decMessageVar: (k: string, v: number = 1, o : GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'message' }),
+        decLocalVar: (k: string, v: number = 1, o: GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'local' }),
+        decGlobalVar: (k: string, v: number = 1, o: GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'global' }),
+        decMessageVar: (k: string, v: number = 1, o: GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'message' }),
         patchVariables: patchVariables.bind(context),
         getqr: boundedQuickReply.bind(context),
         getQuickReply: boundedQuickReply.bind(context),
         evalTemplate: boundedEvalTemplate.bind(context),
         findVariables: (key?: string, mes_id: number = chat.length) => findPreviousMessageVariables(mes_id, key),
         delvar: removeVariable.bind(context),
-        delLocalVar: (k: string, o : GetSetVarOption = {}) => removeVariable.call(context, k, { ...o, scope: 'local' }),
-        delGlobalVar: (k: string, o : GetSetVarOption = {}) => removeVariable.call(context, k, { ...o, scope: 'global' }),
-        delMessageVar: (k: string, o : GetSetVarOption = {}) => removeVariable.call(context, k, { ...o, scope: 'message' }),
+        delLocalVar: (k: string, o: GetSetVarOption = {}) => removeVariable.call(context, k, { ...o, scope: 'local' }),
+        delGlobalVar: (k: string, o: GetSetVarOption = {}) => removeVariable.call(context, k, { ...o, scope: 'global' }),
+        delMessageVar: (k: string, o: GetSetVarOption = {}) => removeVariable.call(context, k, { ...o, scope: 'message' }),
         insvar: insertVariable.bind(context),
-        insertLocalVar: (k: string, v: unknown, i: number | string | undefined = undefined, o : GetSetVarOption = {}) => insertVariable.call(context, k, v, i, { ...o, scope: 'local' }),
-        insertGlobalVar: (k: string, v: unknown, i: number | string | undefined = undefined, o : GetSetVarOption = {}) => insertVariable.call(context, k, v, i, { ...o, scope: 'global' }),
-        insertMessageVar: (k: string, v: unknown, i: number | string | undefined = undefined, o : GetSetVarOption = {}) => insertVariable.call(context, k, v, i, { ...o, scope: 'message' }),
+        insertLocalVar: (k: string, v: unknown, i: number | string | undefined = undefined, o: GetSetVarOption = {}) => insertVariable.call(context, k, v, i, { ...o, scope: 'local' }),
+        insertGlobalVar: (k: string, v: unknown, i: number | string | undefined = undefined, o: GetSetVarOption = {}) => insertVariable.call(context, k, v, i, { ...o, scope: 'global' }),
+        insertMessageVar: (k: string, v: unknown, i: number | string | undefined = undefined, o: GetSetVarOption = {}) => insertVariable.call(context, k, v, i, { ...o, scope: 'message' }),
         ...boundCloneDefines(context, SharedDefines),
     });
 
     await eventSource.emit('prompt_template_prepare', context);
 
-    if(settings.debug_enabled) {
+    if (settings.debug_enabled) {
         console.debug(`[Prompt Template] context prepared:`);
         console.debug(context);
     }
@@ -326,11 +321,11 @@ async function boundedReadWorldinfo(this: Record<string, unknown>,
     worldinfoOrEntry: string,
     entryOrData: string | RegExp | number | Record<string, unknown> = {},
     data: Record<string, unknown> = {}): Promise<string> {
-    let wi : WorldInfoEntry | null = null;
-    if(_.isPlainObject(entryOrData)) {
+    let wi: WorldInfoEntry | null = null;
+    if (_.isPlainObject(entryOrData)) {
         // @ts-expect-error: 2339
         wi = await getWorldInfoEntry(this.world_info?.world || '', worldinfoOrEntry);
-        if(_.isPlainObject(entryOrData)) {
+        if (_.isPlainObject(entryOrData)) {
             // @ts-expect-error: 2322
             data = entryOrData;
         }
@@ -389,9 +384,9 @@ function boundedDefine(this: Record<string, unknown>, name: string, value: unkno
     // console.debug(`[Prompt Template] global ${name} defined: ${value}`);
     const oldValue = _.get(SharedDefines, name, undefined);
     if (merge) {
-        if((oldValue === undefined || _.isArray(oldValue)) && _.isArray(value))
+        if ((oldValue === undefined || _.isArray(oldValue)) && _.isArray(value))
             value = _.concat(oldValue ?? [], value);
-        else if((oldValue === undefined || _.isPlainObject(oldValue)) && _.isPlainObject(value))
+        else if ((oldValue === undefined || _.isPlainObject(oldValue)) && _.isPlainObject(value))
             value = _.mergeWith(oldValue ?? {}, value, (_dst: unknown, src: unknown) => _.isArray(src) ? src : undefined);
     }
 
@@ -421,7 +416,7 @@ function boundCloneDefines(self: Record<string, unknown>, defines: Record<string
 }
 
 async function boundedQuickReply(this: Record<string, unknown>, name: string, label: string,
-                                 data: Record<string, unknown> = {}
+    data: Record<string, unknown> = {}
 ) {
     const reply = getQuickReply(name, label);
     if (!reply) {
@@ -436,8 +431,8 @@ async function boundedQuickReply(this: Record<string, unknown>, name: string, la
 }
 
 async function boundedEvalTemplate(this: Record<string, unknown>, content: string,
-                                   data: Record<string, unknown> = {},
-                                   options: Record<string, unknown> = {}) {
+    data: Record<string, unknown> = {},
+    options: Record<string, unknown> = {}) {
     return substituteParams(await evalTemplate(content,
         _.merge(this, data),
         { when: `evalTemplate`, options }
@@ -457,7 +452,7 @@ export function lint(text: string, opts: Record<string, unknown> = {}) {
     // Initialize delimiter variable
     const d = opts.delimiter || '%';
     const js = arr
-        .map((str : string) => {
+        .map((str: string) => {
             switch (str) {
                 case `<${d}`:
                 case `<${d}_`:
@@ -491,7 +486,7 @@ export function lint(text: string, opts: Record<string, unknown> = {}) {
         locations: true,
     };
     let err = check(js, undefined, checkOptions);
-    if(err) {
+    if (err) {
         err.message += ` at ${text.split('\n')[err.line - 1]}`;
     }
 
@@ -515,12 +510,126 @@ function padWhitespace(text: string) {
  * @param count number of lines near the error message
  * @returns error message
  */
-export function getSyntaxErrorInfo(code : string, count : number = 4) : string {
+export function getSyntaxErrorInfo(code: string, count: number = 4): string {
     const error = lint(code);
-    if(!error) return '';
+    if (!error) return '';
 
     const lines = code.split('\n');
     const line = error.line - 1;
     count = _.clamp(count, 0, lines.length);
     return `${lines.slice(line - count, line).map(s => s.length > 50 ? s.substring(0, 50) + '...' : s).join('\n')}\n${lines[line]}\n${' '.repeat(error.column - 1)}^\n${lines.slice(line + 1, line + count + 1).map(s => s.length > 50 ? s.substring(0, 50) + '...' : s).join('\n')}\n\nat line: ${line}, column: ${error.column}`;
+}
+
+let taskId = 0;
+let worker: Worker | null = null;
+let taskMap = new Map<number, { resolve: (code: string) => void, reject: (error: Error) => void }>();
+
+/**
+ * use EJS template engine to compile template
+ * it will use web worker to compile template
+ * @see prepareContext
+ * 
+ * @param content prompt content
+ * @param opts EJS options
+ * @returns compiled function
+ */
+export async function compileTemplate(
+    content: string,
+    options: EvalTemplateOptions = {}
+): Promise<(data: Record<string, unknown>) => string | Promise<string>> {
+    if (worker == null) {
+        worker = new Worker('/scripts/extensions/third-party/ST-Prompt-Template/dist/ejs-workers.js');
+        worker.onerror = (e) => {
+            console.error(`[Prompt Template] worker error: ${e.message}`, e);
+            worker = null;
+        };
+
+        worker.onmessage = (e) => {
+            const { id, code, error } = e.data;
+            if (taskMap.has(id)) {
+                const { resolve, reject } = taskMap.get(id)!;
+                taskMap.delete(id);
+                if (error) {
+                    reject(new Error(error));
+                } else {
+                    resolve(code);
+                }
+            }
+        };
+    }
+
+    if (!options.options)
+        options.options = {};
+
+    // must be client mode
+    options.options.client = true;
+    options.options.escape = undefined;
+    options.options.includer = undefined;
+
+    return new Promise((resolve, reject) => {
+        const id = taskId++;
+
+        taskMap.set(id, {
+            resolve(code: string) {
+                try {
+                    // (function(){ return function(locals...){...} })
+                    const func = new Function(`return ${code}`)();
+                    resolve(function (this: unknown, data: Record<string, unknown> = {}) {
+                        return func.call(this, data, options.escaper ?? escape, options.includer ?? include, rethrow);
+                    });
+                } catch (err) {
+                    // @ts-expect-error: 18046
+                    reject(new Error(`Template hydration failed: ${err.message}`, { cause: err }));
+                }
+            },
+            reject,
+        });
+
+        // @ts-expect-error: 18047
+        worker.postMessage({
+            id,
+            template: content,
+            options: options.options,
+        });
+    });
+}
+
+export function include(originalPath: string, _parsedPath: string): IncluderResult {
+    console.warn(`[Prompt Template] include not implemented`);
+    return { filename: originalPath, template: '' };
+}
+
+export function escape(markup: string): string {
+    // don't escape any XML tags
+    return markup;
+}
+
+export function rethrow(
+    err: Error,
+    str: string,
+    flnm: string,
+    lineno: number,
+    esc: (markup: string) => string = escape
+) {
+    let lines = str.split('\n');
+    let start = Math.max(lineno - 3, 0);
+    let end = Math.min(lines.length, lineno + 3);
+    let filename = esc(flnm);
+    // Error context
+    let context = lines.slice(start, end).map(function (line, i) {
+        let curr = i + start + 1;
+        return (curr == lineno ? ' >> ' : '    ')
+            + curr
+            + '| '
+            + line;
+    }).join('\n');
+
+    // @ts-expect-error: Alter exception message
+    err.path = filename;
+    err.message = (filename || 'ejs') + ':'
+        + lineno + '\n'
+        + context + '\n\n'
+        + err.message;
+
+    throw err;
 }

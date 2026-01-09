@@ -1,4 +1,4 @@
-import { evalTemplate, prepareContext, getSyntaxErrorInfo, SharedDefines } from '../function/ejs';
+import { evalTemplate, prepareContext, getSyntaxErrorInfo, SharedDefines, compileTemplate } from '../function/ejs';
 import { STATE } from '../function/variables';
 import { applySettings, loadSettings, settings } from './ui';
 import { precacheVariables, checkAndSave } from '../function/variables';
@@ -40,7 +40,8 @@ export async function init() {
         jsonPatch,
         getFeatures: () => {
             return { ...settings };
-        }
+        },
+        compileTemplate,
     };
 }
 
