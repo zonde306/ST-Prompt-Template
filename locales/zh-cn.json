@@ -40,5 +40,7 @@
 	"Cache hash algorithm.": "缓存hash算法  不同算法性能会有差异",
 	"PT cache hasher": "缓存Hash函数",
 	"h32ToString": "h32",
-	"h64ToString": "h64"
+	"h64ToString": "h64",
+	"Compile the code in web workers": "使用 web workers 在后台编译",
+	"PT Compile workers": "后台编译"
 }

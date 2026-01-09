@@ -157,7 +157,7 @@ export async function evalTemplate(content: string, data: Record<string, unknown
     try {
         if(settings.compile_workers) {
             const func = await compileTemplate(content, opts);
-            result = await func(data);
+            result = await func.call(data, data);
         } else {
             result = await vm.runInNewContext(CODE_TEMPLATE, {
                 ejs,
@@ -573,9 +573,7 @@ export async function compileTemplate(
             resolve(code: string) {
                 try {
                     // (function(){ return function(locals...){...} })
-                    const factoryFn = new Function(`return ${code}`)();
-                    // unwarp function(locals...){...}
-                    const func = factoryFn();
+                    const func = new Function(`return ${code}`)();
                     resolve(function (this: unknown, data: Record<string, unknown> = {}) {
                         return func.call(this, data, options.escaper ?? escape, options.includer ?? include, rethrow);
                     });
