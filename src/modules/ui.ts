@@ -22,6 +22,7 @@ const DEFAULT_SETTINGS : Record<string, { name: string, value: boolean | string 
     '#pt_invert_enabled': { name: 'invert_enabled', value: true },
     '#pt_chat_depth': { name: 'depth_limit', value: -1 },
     '#pt_compile_workers': { name: 'compile_workers', value: false },
+    '#pt_sandbox': { name: 'sandbox', value: false },
 };
 
 interface EjsSettings extends Record<string, boolean | string | number> {
@@ -44,6 +45,7 @@ interface EjsSettings extends Record<string, boolean | string | number> {
     invert_enabled: boolean;
     depth_limit: number;
     compile_workers: boolean;
+    sandbox: boolean;
 };
 
 export const settings = {} as EjsSettings;

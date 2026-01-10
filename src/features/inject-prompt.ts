@@ -4,9 +4,10 @@ import { applyRegex } from "../function/regex";
 import { settings } from "../modules/ui";
 import { substituteParams } from "../../../../../../script.js";
 import { GenerateAfterData } from "../modules/defines";
+import { EvalTemplateOptions } from "../function/ejs";
 
 // TODO: Colddown and sticky
-export async function handleInjectPrompt(data: GenerateAfterData, env: Record<string, unknown>) {
+export async function handleInjectPrompt(data: GenerateAfterData, env: Record<string, unknown>, options: EvalTemplateOptions = {}) {
     // get All INJECT 世界书条目（只获取关闭的条目）
     const injectWorldInfoData = (await getEnabledWorldInfoEntries())
         .filter(x =>
@@ -77,10 +78,12 @@ export async function handleInjectPrompt(data: GenerateAfterData, env: Record<st
                 _.merge(env, { world_info: worldInfo }),
                 `inject ${worldInfo.world}.${worldInfo.comment}`,
                 {
+                    ...options,
                     options: {
                         filename: `inject/${worldInfo.world}/${worldInfo.uid}-${worldInfo.comment}`,
                         cache: settings.cache_enabled === 1,
-                    }
+                        ...options.options,
+                    },
                 }
             );
 

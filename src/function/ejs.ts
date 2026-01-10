@@ -1,6 +1,4 @@
 import ejs from '../3rdparty/ejs.js';
-// @ts-expect-error
-import vm from 'vm-browserify';
 import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.js';
 import { getWorldInfoEntries, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries, selectActivatedEntries, activateWorldInfo, getWorldInfoEntry, WorldInfoEntry, activateWorldInfoByKeywords, getEnabledLoreBooks } from './worldinfo';
 import { precacheVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption, findPreviousMessageVariables, removeVariable, insertVariable } from './variables';
@@ -21,6 +19,7 @@ import { getRegexedString, regex_placement } from '../../../../regex/engine.js';
 import { patchVariables, jsonPatch, parseJSON } from './json-patch';
 import { groups, selected_group } from '../../../../../group-chats.js';
 import { copyText } from '../../../../../utils.js';
+import { FunctionSandbox } from '../3rdparty/vm-browserify';
 
 interface IncluderResult {
     filename: string;
@@ -57,25 +56,6 @@ const SHARE_CONTEXT: Record<string, unknown> = {
     },
 };
 
-const CODE_TEMPLATE = `
-    ejs.render(
-        content,
-        data,
-        {
-            async: true,
-            escape: escaper,
-            includer: includer,
-            cache: false,
-            context: data,
-            client: false,
-            outputFunctionName: 'print',
-            localsName: 'locals',
-            _with: true,
-            ...options,
-        },
-    );
-`;
-
 export interface EjsOptions {
     cache?: boolean;    // Compiled functions are cached, requires `filename`
     filename?: string;  // The name of the file being rendered. Not required if you are using renderFile(). Used by cache to key caches, and for includes.
@@ -106,6 +86,7 @@ export interface EvalTemplateOptions {
     when?: string;
     options?: EjsOptions;
     disableMarkup?: string;
+    sandbox?: FunctionSandbox | null;
 }
 
 /**
@@ -129,18 +110,24 @@ export async function evalTemplate(content: string, data: Record<string, unknown
         return content;
     }
 
-    // await eventSource.emit('prompt_template_evaluation', { content, data });
-
     // avoiding accidental evaluation
     let result = '';
+    const sandbox = opts.sandbox === null ? null : (opts.sandbox ?? new FunctionSandbox());
+
+    if (!opts.options)
+        opts.options = {};
+
+    _.defaults(opts.options, {
+        async: true,
+        outputFunctionName: 'print',
+        _with: true,
+        localsName: 'locals',
+        client: true,
+    });
 
     if (settings.with_context_disabled || opts.options?._with === false) {
-        if (!opts.options)
-            opts.options = {};
-
         // opts.options.strict = true;
         opts.options._with = false;
-
         // unpack params
         if (!opts.options?.destructuredLocals)
             opts.options.destructuredLocals = Object.keys(data);
@@ -150,23 +137,34 @@ export async function evalTemplate(content: string, data: Record<string, unknown
         if (!opts.options.filename) {
             opts.options.filename = 'unk';
         }
-
         opts.options.filename += '/' + hashString(content, 0xfacefeed);
     }
 
     try {
         if(settings.compile_workers) {
-            const func = await compileTemplate(content, opts);
+            const func = await compileTemplate(content, { ...opts, sandbox });
             result = await func.call(data, data);
         } else {
-            result = await vm.runInNewContext(CODE_TEMPLATE, {
-                ejs,
-                content,
-                data,
-                escaper: opts.escaper || escape,
-                includer: opts.includer || include,
-                options: opts.options || {},
-            });
+            const func = ejs.compile(content, opts.options);
+            if(sandbox) {
+                result = await sandbox.run(
+                    func,
+                    [
+                        data,
+                        opts.escaper ?? escape,
+                        opts.includer ?? include,
+                        rethrow
+                    ],
+                    {
+                        // @ts-expect-error
+                        TavernHelper: globalThis.TavernHelper,
+                        // @ts-expect-error
+                        Mvu: globalThis.Mvu,
+                    }
+                );
+            } else {
+                return await func.call(data, data, opts.escaper ?? escape, opts.includer ?? include, rethrow);
+            }
         }
     } catch (err) {
         if (opts.logging ?? true) {
@@ -572,6 +570,7 @@ export async function compileTemplate(
     options.options.client = true;
     options.options.escape = undefined;
     options.options.includer = undefined;
+    const sandbox = options.sandbox === null ? null : (options.sandbox ?? new FunctionSandbox());
 
     return new Promise((resolve, reject) => {
         const id = taskId++;
@@ -582,7 +581,25 @@ export async function compileTemplate(
                     // (function(){ return function(locals...){...} })
                     const func = new Function(`return ${code}`)();
                     resolve(function (this: unknown, data: Record<string, unknown> = {}) {
-                        return func.call(this, data, options.escaper ?? escape, options.includer ?? include, rethrow);
+                        if(sandbox) {
+                            return sandbox.run(
+                                func,
+                                [
+                                    data,
+                                    options.escaper ?? escape,
+                                    options.includer ?? include,
+                                    rethrow
+                                ],
+                                {
+                                    // @ts-expect-error
+                                    TavernHelper: globalThis.TavernHelper,
+                                    // @ts-expect-error
+                                    Mvu: globalThis.Mvu,
+                                }
+                            );
+                        } else {
+                            return func.call(this, data, options.escaper ?? escape, options.includer ?? include, rethrow);
+                        }
                     });
                 } catch (err) {
                     // @ts-expect-error: 18046

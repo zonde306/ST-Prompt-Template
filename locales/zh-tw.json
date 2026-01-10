@@ -42,5 +42,7 @@
 	"h32ToString": "h32",
 	"h64ToString": "h64",
 	"Compile the code in web workers": "使用 web workers 在背景編譯",
-	"PT Compile workers": "背景編譯"
+	"PT Compile workers": "背景編譯",
+	"Execute code in iframe": "在iframe中執行程式碼",
+	"PT Environmental isolation": "環境隔離"
 }
