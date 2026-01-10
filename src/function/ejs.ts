@@ -112,7 +112,6 @@ export async function evalTemplate(content: string, data: Record<string, unknown
 
     // avoiding accidental evaluation
     let result = '';
-    const sandbox = opts.sandbox === null ? null : (opts.sandbox ?? new FunctionSandbox());
 
     if (!opts.options)
         opts.options = {};
@@ -142,12 +141,12 @@ export async function evalTemplate(content: string, data: Record<string, unknown
 
     try {
         if(settings.compile_workers) {
-            const func = await compileTemplate(content, { ...opts, sandbox });
+            const func = await compileTemplate(content, { ...opts, sandbox: opts.sandbox });
             result = await func.call(data, data);
         } else {
             const func = ejs.compile(content, opts.options);
-            if(sandbox) {
-                result = await sandbox.run(
+            if(opts.sandbox) {
+                result = await opts.sandbox.run(
                     func,
                     [
                         data,
@@ -570,7 +569,6 @@ export async function compileTemplate(
     options.options.client = true;
     options.options.escape = undefined;
     options.options.includer = undefined;
-    const sandbox = options.sandbox === null ? null : (options.sandbox ?? new FunctionSandbox());
 
     return new Promise((resolve, reject) => {
         const id = taskId++;
@@ -581,8 +579,8 @@ export async function compileTemplate(
                     // (function(){ return function(locals...){...} })
                     const func = new Function(`return ${code}`)();
                     resolve(function (this: unknown, data: Record<string, unknown> = {}) {
-                        if(sandbox) {
-                            return sandbox.run(
+                        if(options.sandbox) {
+                            return options.sandbox.run(
                                 func,
                                 [
                                     data,

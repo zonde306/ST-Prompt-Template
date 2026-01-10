@@ -1,89 +1,105 @@
+import { settings } from "../modules/ui";
+
 export type SandboxContext = Record<string, any>;
 
 export class FunctionSandbox {
-    private iframe: HTMLIFrameElement;
-    private win: any;
+    private iframe: HTMLIFrameElement | null = null;
+    private win: any = null;
 
     constructor() {
+        this.initIframe();
+        this.hardenEnvironment();
+    }
+
+    private initIframe() {
         this.iframe = document.createElement('iframe');
         this.iframe.style.display = 'none';
         this.iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts');
+        document.body.appendChild(this.iframe);
+        this.win = this.iframe.contentWindow;
+
+        if (!this.win) {
+            this.destroy();
+            throw new Error("Sandbox: Failed to initialize iframe window");
+        }
+
+        if(settings.debug_enabled)
+            console.log("Sandbox: Initialized iframe window");
     }
 
-    /**
-     * Executes a function (automatically handles synchronous or asynchronous execution)
-     * @param fn The function compiled by EJS
-     * @param args The list of arguments
-     * @param context The global context
-     * @returns The return value of the function (if it's an async function, it returns a Promise)
-    */
     public async run<T>(fn: (...args: any[]) => T | Promise<T>, args: any[] = [], context: SandboxContext = {}): Promise<T> {
-        this.initIframe();
+        if (!this.win) {
+            throw new Error("Sandbox: Instance has been destroyed. Please create a new BatchSandbox.");
+        }
 
         try {
-            this.hardenEnvironment();
             this.injectContext(context);
-
             const fnSource = fn.toString();
             const sandboxedFn = this.win.eval(`(${fnSource})`);
             const result = sandboxedFn.apply(this.win, args);
 
+            // 4. 处理异步结果
             if (result && typeof result.then === 'function') {
-                try {
-                    const resolved = await result;
-                    return resolved;
-                } catch (asyncError) {
-                    throw asyncError;
-                }
+                return await result;
             } else {
                 return result;
             }
         } catch (err) {
             throw err;
-        } finally {
-            this.destroyIframe();
         }
     }
 
-    private initIframe() {
-        document.body.appendChild(this.iframe);
-        this.win = this.iframe.contentWindow;
-        if (!this.win) throw new Error("Sandbox: Failed to access iframe window");
-    }
-
-    private destroyIframe() {
-        if (this.iframe.parentNode) {
+    public destroy() {
+        if (this.iframe && this.iframe.parentNode) {
             this.iframe.parentNode.removeChild(this.iframe);
         }
+        this.iframe = null;
         this.win = null;
+
+        if(settings.debug_enabled)
+            console.log("Sandbox: Destroyed iframe window");
+    }
+
+    public destroyIframe() {
+        this.destroy();
     }
 
     private injectContext(context: SandboxContext) {
+        if (!this.win) return;
         Object.keys(context).forEach((key) => {
             this.win[key] = context[key];
         });
-
-        if (!this.win.require) {
-            this.win.require = (name: string) => {
-                throw new Error(`Sandbox: require('${name}') disabled.`);
-            };
-        }
     }
 
     private hardenEnvironment() {
+        if (!this.win) return;
         const win = this.win;
+
         const protect = (name: string) => {
             try {
                 Object.defineProperty(win, name, {
-                    get: () => null,
-                    set: () => { },
-                    configurable: false,
-                    enumerable: false
+                    get: () => null, set: () => { },
+                    configurable: false, enumerable: false
                 });
             } catch (e) { }
         };
+
         protect('parent');
         protect('top');
         protect('frameElement');
+
+        win.fetch = undefined;
+        win.XMLHttpRequest = undefined;
+        win.alert = undefined;
     }
+}
+
+export function createFinalization() {
+    if(globalThis?.FinalizationRegistry) {
+        return new FinalizationRegistry((sandbox: FunctionSandbox) => {
+            if(typeof sandbox?.destroyIframe === 'function')
+                sandbox.destroyIframe();
+        });
+    }
+    return null;
 }
