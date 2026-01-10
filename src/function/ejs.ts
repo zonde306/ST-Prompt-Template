@@ -536,7 +536,7 @@ export async function compileTemplate(
     options: EvalTemplateOptions = {}
 ): Promise<(data: Record<string, unknown>) => string | Promise<string>> {
     if (worker == null) {
-        worker = new Worker('/scripts/extensions/third-party/ST-Prompt-Template/dist/ejs-workers.js');
+        worker = new Worker('/scripts/extensions/third-party/ST-Prompt-Template/dist/ejs.workers.js');
         worker.onerror = (e) => {
             console.error(`[Prompt Template] worker error: ${e.message}`, e);
             worker = null;
