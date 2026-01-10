@@ -98,8 +98,11 @@ export interface EvalTemplateOptions {
  * @param opts EJS options
  * @returns Processing results
  */
-export async function evalTemplate(content: string, data: Record<string, unknown>,
-    opts: EvalTemplateOptions = {}) {
+export async function evalTemplate(
+    content: string,
+    data: Record<string, unknown>,
+    opts: EvalTemplateOptions = {}
+) {
     if (typeof content !== 'string') {
         console.error(`[Prompt Template] content is not a string`);
         return content;
@@ -141,7 +144,7 @@ export async function evalTemplate(content: string, data: Record<string, unknown
 
     try {
         if(settings.compile_workers) {
-            const func = await compileTemplate(content, { ...opts, sandbox: opts.sandbox });
+            const func = await compileTemplate(content, { ...opts, sandbox: opts.sandbox }, data);
             result = await func.call(data, data);
         } else {
             const func = ejs.compile(content, opts.options);
@@ -159,7 +162,8 @@ export async function evalTemplate(content: string, data: Record<string, unknown
                         TavernHelper: globalThis.TavernHelper,
                         // @ts-expect-error
                         Mvu: globalThis.Mvu,
-                    }
+                    },
+                    data,
                 );
             } else {
                 return await func.call(data, data, opts.escaper ?? escape, opts.includer ?? include, rethrow);
@@ -193,7 +197,6 @@ export async function evalTemplate(content: string, data: Record<string, unknown
         throw err;
     }
 
-    // await eventSource.emit('prompt_template_evaluation_post', { result, data });
     return result;
 }
 
@@ -532,7 +535,8 @@ let taskMap = new Map<number, { resolve: (code: string) => void, reject: (error:
  */
 export async function compileTemplate(
     content: string,
-    options: EvalTemplateOptions = {}
+    options: EvalTemplateOptions = {},
+    thisData: Record<string, unknown> = {},
 ): Promise<(data: Record<string, unknown>) => string | Promise<string>> {
     if (worker == null) {
         worker = new Worker('/scripts/extensions/third-party/ST-Prompt-Template/dist/ejs.workers.js');
@@ -593,7 +597,8 @@ export async function compileTemplate(
                                     TavernHelper: globalThis.TavernHelper,
                                     // @ts-expect-error
                                     Mvu: globalThis.Mvu,
-                                }
+                                },
+                                thisData,
                             );
                         } else {
                             return func.call(this, data, options.escaper ?? escape, options.includer ?? include, rethrow);

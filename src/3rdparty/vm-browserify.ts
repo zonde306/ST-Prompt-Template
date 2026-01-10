@@ -27,7 +27,12 @@ export class FunctionSandbox {
             console.log("Sandbox: Initialized iframe window");
     }
 
-    public async run<T>(fn: (...args: any[]) => T | Promise<T>, args: any[] = [], context: SandboxContext = {}): Promise<T> {
+    public async run<T>(
+        fn: (...args: any[]) => T | Promise<T>,
+        args: any[] = [],
+        context: SandboxContext = {},
+        thisData: any = null,
+    ): Promise<T> {
         if (!this.win) {
             throw new Error("Sandbox: Instance has been destroyed. Please create a new BatchSandbox.");
         }
@@ -36,7 +41,7 @@ export class FunctionSandbox {
             this.injectContext(context);
             const fnSource = fn.toString();
             const sandboxedFn = this.win.eval(`(${fnSource})`);
-            const result = sandboxedFn.apply(this.win, args);
+            const result = sandboxedFn.apply(thisData, args);
 
             // 4. 处理异步结果
             if (result && typeof result.then === 'function') {
