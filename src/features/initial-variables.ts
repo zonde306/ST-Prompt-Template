@@ -4,8 +4,9 @@ import { settings } from "../modules/ui";
 import { applyRegex } from "../function/regex";
 import { evalTemplate } from "../function/ejs";
 import { STATE } from "../function/variables";
+import { EvalTemplateOptions } from "../function/ejs";
 
-export async function handleInitialVariables(env: Record<string, unknown>, entries?: WorldInfoEntry[]) {
+export async function handleInitialVariables(env: Record<string, unknown>, entries?: WorldInfoEntry[], options: EvalTemplateOptions = {}) {
     if (entries == null || entries.length === 0)
         entries = await getEnabledWorldInfoEntries();
 
@@ -17,7 +18,7 @@ export async function handleInitialVariables(env: Record<string, unknown>, entri
             (e.comment.startsWith('[InitialVariables]') || e.decorators.includes('@@initial_variables'))
         )
         .map(async(x) => {
-            const content = await evalTemplate(applyRegex(env, substituteParams(x.content), { worldinfo: true }), env);
+            const content = await evalTemplate(applyRegex(env, substituteParams(x.content), { worldinfo: true }), env, options);
             let data = {};
             try {
                 data = JSON.parse(content);

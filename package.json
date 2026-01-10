@@ -6,7 +6,6 @@
     "jsonrepair": "^3.13.1",
     "syntax-error": "^1.4.0",
     "tsc": "^2.0.4",
-    "vm-browserify": "^1.1.2",
     "xxhash-wasm": "^1.1.0"
   },
   "scripts": {

@@ -1,6 +1,4 @@
 import ejs from '../3rdparty/ejs.js';
-// @ts-expect-error
-import vm from 'vm-browserify';
 import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.js';
 import { getWorldInfoEntries, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries, selectActivatedEntries, activateWorldInfo, getWorldInfoEntry, WorldInfoEntry, activateWorldInfoByKeywords, getEnabledLoreBooks } from './worldinfo';
 import { precacheVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption, findPreviousMessageVariables, removeVariable, insertVariable } from './variables';
@@ -21,6 +19,7 @@ import { getRegexedString, regex_placement } from '../../../../regex/engine.js';
 import { patchVariables, jsonPatch, parseJSON } from './json-patch';
 import { groups, selected_group } from '../../../../../group-chats.js';
 import { copyText } from '../../../../../utils.js';
+import { FunctionSandbox } from '../3rdparty/vm-browserify';
 
 interface IncluderResult {
     filename: string;
@@ -57,25 +56,6 @@ const SHARE_CONTEXT: Record<string, unknown> = {
     },
 };
 
-const CODE_TEMPLATE = `
-    ejs.render(
-        content,
-        data,
-        {
-            async: true,
-            escape: escaper,
-            includer: includer,
-            cache: false,
-            context: data,
-            client: false,
-            outputFunctionName: 'print',
-            localsName: 'locals',
-            _with: true,
-            ...options,
-        },
-    );
-`;
-
 export interface EjsOptions {
     cache?: boolean;    // Compiled functions are cached, requires `filename`
     filename?: string;  // The name of the file being rendered. Not required if you are using renderFile(). Used by cache to key caches, and for includes.
@@ -106,6 +86,7 @@ export interface EvalTemplateOptions {
     when?: string;
     options?: EjsOptions;
     disableMarkup?: string;
+    sandbox?: FunctionSandbox | null;
 }
 
 /**
@@ -117,8 +98,11 @@ export interface EvalTemplateOptions {
  * @param opts EJS options
  * @returns Processing results
  */
-export async function evalTemplate(content: string, data: Record<string, unknown>,
-    opts: EvalTemplateOptions = {}) {
+export async function evalTemplate(
+    content: string,
+    data: Record<string, unknown>,
+    opts: EvalTemplateOptions = {}
+) {
     if (typeof content !== 'string') {
         console.error(`[Prompt Template] content is not a string`);
         return content;
@@ -129,18 +113,23 @@ export async function evalTemplate(content: string, data: Record<string, unknown
         return content;
     }
 
-    // await eventSource.emit('prompt_template_evaluation', { content, data });
-
     // avoiding accidental evaluation
     let result = '';
 
-    if (settings.with_context_disabled || opts.options?._with === false) {
-        if (!opts.options)
-            opts.options = {};
+    if (!opts.options)
+        opts.options = {};
 
+    _.defaults(opts.options, {
+        async: true,
+        outputFunctionName: 'print',
+        _with: true,
+        localsName: 'locals',
+        client: true,
+    });
+
+    if (settings.with_context_disabled || opts.options?._with === false) {
         // opts.options.strict = true;
         opts.options._with = false;
-
         // unpack params
         if (!opts.options?.destructuredLocals)
             opts.options.destructuredLocals = Object.keys(data);
@@ -150,23 +139,35 @@ export async function evalTemplate(content: string, data: Record<string, unknown
         if (!opts.options.filename) {
             opts.options.filename = 'unk';
         }
-
         opts.options.filename += '/' + hashString(content, 0xfacefeed);
     }
 
     try {
         if(settings.compile_workers) {
-            const func = await compileTemplate(content, opts);
+            const func = await compileTemplate(content, { ...opts, sandbox: opts.sandbox }, data);
             result = await func.call(data, data);
         } else {
-            result = await vm.runInNewContext(CODE_TEMPLATE, {
-                ejs,
-                content,
-                data,
-                escaper: opts.escaper || escape,
-                includer: opts.includer || include,
-                options: opts.options || {},
-            });
+            const func = ejs.compile(content, opts.options);
+            if(opts.sandbox) {
+                result = await opts.sandbox.run(
+                    func,
+                    [
+                        data,
+                        opts.escaper ?? escape,
+                        opts.includer ?? include,
+                        rethrow
+                    ],
+                    {
+                        // @ts-expect-error
+                        TavernHelper: globalThis.TavernHelper,
+                        // @ts-expect-error
+                        Mvu: globalThis.Mvu,
+                    },
+                    data,
+                );
+            } else {
+                return await func.call(data, data, opts.escaper ?? escape, opts.includer ?? include, rethrow);
+            }
         }
     } catch (err) {
         if (opts.logging ?? true) {
@@ -196,7 +197,6 @@ export async function evalTemplate(content: string, data: Record<string, unknown
         throw err;
     }
 
-    // await eventSource.emit('prompt_template_evaluation_post', { result, data });
     return result;
 }
 
@@ -535,10 +535,11 @@ let taskMap = new Map<number, { resolve: (code: string) => void, reject: (error:
  */
 export async function compileTemplate(
     content: string,
-    options: EvalTemplateOptions = {}
+    options: EvalTemplateOptions = {},
+    thisData: Record<string, unknown> = {},
 ): Promise<(data: Record<string, unknown>) => string | Promise<string>> {
     if (worker == null) {
-        worker = new Worker('/scripts/extensions/third-party/ST-Prompt-Template/dist/ejs-workers.js');
+        worker = new Worker('/scripts/extensions/third-party/ST-Prompt-Template/dist/ejs.workers.js');
         worker.onerror = (e) => {
             console.error(`[Prompt Template] worker error: ${e.message}`, e);
             worker = null;
@@ -582,7 +583,26 @@ export async function compileTemplate(
                     // (function(){ return function(locals...){...} })
                     const func = new Function(`return ${code}`)();
                     resolve(function (this: unknown, data: Record<string, unknown> = {}) {
-                        return func.call(this, data, options.escaper ?? escape, options.includer ?? include, rethrow);
+                        if(options.sandbox) {
+                            return options.sandbox.run(
+                                func,
+                                [
+                                    data,
+                                    options.escaper ?? escape,
+                                    options.includer ?? include,
+                                    rethrow
+                                ],
+                                {
+                                    // @ts-expect-error
+                                    TavernHelper: globalThis.TavernHelper,
+                                    // @ts-expect-error
+                                    Mvu: globalThis.Mvu,
+                                },
+                                thisData,
+                            );
+                        } else {
+                            return func.call(this, data, options.escaper ?? escape, options.includer ?? include, rethrow);
+                        }
                     });
                 } catch (err) {
                     // @ts-expect-error: 18046

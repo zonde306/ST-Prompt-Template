@@ -5,6 +5,7 @@ import { precacheVariables, checkAndSave } from '../function/variables';
 import { handlePreloadWorldInfo } from './handler';
 import { getCurrentChatId } from '../../../../../../script.js';
 import { parseJSON, jsonPatch } from '../function/json-patch';
+import { createFinalization } from '../3rdparty/vm-browserify';
 
 export async function init() {
     // @ts-expect-error
@@ -42,6 +43,7 @@ export async function init() {
             return { ...settings };
         },
         compileTemplate,
+        finalization: createFinalization(),
     };
 }
 

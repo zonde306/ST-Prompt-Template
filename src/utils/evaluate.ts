@@ -107,6 +107,7 @@ export async function evaluateWIEntities(
     );
 
     let prompt = '';
+
     for (const data of worldInfoData) {
         let result = await evalTemplateHandler(
             applyRegex(
