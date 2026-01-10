@@ -4,7 +4,8 @@ import { power_user } from '../../../../../power-user.js';
 import { getCharaFilename } from '../../../../../utils.js';
 import { getGroupMembers } from '../../../../../group-chats.js';
 import { settings } from '../modules/ui';
-import { evalTemplate } from './ejs';
+import { EvalTemplateOptions } from './ejs';
+import { evalTemplateHandler } from '../utils/evaluate';
 
 const KNOWN_DECORATORS = [
     '@@activate',
@@ -818,7 +819,7 @@ export function isPreprocessingEntry(entry: WorldInfoEntry) : boolean {
     return decorators.includes('@@preprocessing');
 }
 
-export async function isConditionFiltedEntry(env: Record<string, unknown>, entry: WorldInfoEntry) : Promise<boolean> {
+export async function isConditionFiltedEntry(env: Record<string, unknown>, entry: WorldInfoEntry, options: EvalTemplateOptions = {}) : Promise<boolean> {
     if(entry.disable)
         return false;
 
@@ -827,7 +828,19 @@ export async function isConditionFiltedEntry(env: Record<string, unknown>, entry
         return false;
     
     // @if xxx to <%- !(xxx) %>
-    return (await evalTemplate(`<%- !!(${condition.substring(4)}) %>`, env)) === 'false';
+    return (await evalTemplateHandler(
+        `<%- !!(${condition.substring(4)}) %>`,
+        env,
+        `lore book condition ${entry.world}/${entry.comment}/${entry.uid}`,
+        {
+            ...options,
+            options: {
+                filename: `worldinfo/${entry.world}/${entry.uid}-${entry.comment}/condition`,
+                cache: settings.cache_enabled === 1, // enable for all
+                ...(options.options ?? {}),
+            }
+        }
+    )) === 'false';
 }
 
 export function isPrivateEntry(entry: WorldInfoEntry) : boolean {

@@ -103,7 +103,7 @@ async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
             if (isSpecialEntry(entry)) {
                 data[type].splice(i, 1);
                 console.debug(`[Prompt Template] Remove ${type} of ${entry.world}/${entry.comment}/${entry.uid} from context when SpecialEntry`);
-            } else if (await isConditionFiltedEntry(env, entry)) {
+            } else if (await isConditionFiltedEntry(env, entry, { sandbox })) {
                 data[type].splice(i, 1);
                 console.debug(`[Prompt Template] Remove ${type} of ${entry.world}/${entry.comment}/${entry.uid} from context when ConditionFiltedEntry`);
             } else if (isPreprocessingEntry(entry)) {
