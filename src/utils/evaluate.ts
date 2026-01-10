@@ -133,7 +133,6 @@ export async function evaluateWIEntities(
                     ...(options.options ?? {}),
                 },
                 ...(options ?? {}),
-                sandbox,
             },
         );
         if (result != null) {
