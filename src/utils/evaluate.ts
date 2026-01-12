@@ -1,6 +1,6 @@
 import { EvalTemplateOptions, getSyntaxErrorInfo, evalTemplate } from '../function/ejs';
 import { settings } from '../modules/ui';
-import { selectActivatedEntries, getEnabledWorldInfoEntries, WorldInfoEntry, parseDecorators } from '../function/worldinfo';
+import { selectActivatedEntries, getEnabledWorldInfoEntries, WorldInfoEntry, parseDecorators, isConditionFiltedEntry } from '../function/worldinfo';
 import { chat, messageFormatting, substituteParams } from '../../../../../../script.js';
 import { applyRegex } from '../function/regex';
 import { copyText } from '../../../../../utils.js';
@@ -106,9 +106,12 @@ export async function evaluateWIEntities(
         { vectorized: false }
     );
 
-    let prompt = '';
+    let prompts = '';
 
     for (const data of worldInfoData) {
+        if(await isConditionFiltedEntry(env, data, options))
+            continue;
+
         let result = await evalTemplateHandler(
             applyRegex(
                 env,
@@ -153,16 +156,16 @@ export async function evaluateWIEntities(
                     });
                 }
             }
-            prompt += result;
+            prompts += result;
         }
     }
 
     if (settings.debug_enabled)
-        console.debug(`[Prompt Template] ${options.comment}/${options.decorator} worldinfo templates applied.\n`, prompt, '\n', worldInfoData);
+        console.debug(`[Prompt Template] ${options.comment}/${options.decorator} worldinfo templates applied.\n`, prompts, '\n', worldInfoData);
     else
         console.debug(`[Prompt Template] ${options.comment}/${options.decorator} worldinfo templates applied.\n`, worldInfoData);
 
-    return prompt;
+    return prompts;
 }
 
 export async function evalTemplateWI(
