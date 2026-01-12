@@ -89,6 +89,8 @@ export interface EvalTemplateOptions {
     sandbox?: FunctionSandbox | null;
 }
 
+export let SharedDefines: Record<string, unknown> = {};
+
 /**
  * use EJS template engine to process content
  * @see prepareContext
@@ -377,8 +379,6 @@ async function boundedPresetPrompt(this: Record<string, unknown>,
         { when: `${name}` },
     ));
 }
-
-export let SharedDefines: Record<string, unknown> = {};
 
 function boundedDefine(this: Record<string, unknown>, name: string, value: unknown, merge: boolean = false) {
     // console.debug(`[Prompt Template] global ${name} defined: ${value}`);

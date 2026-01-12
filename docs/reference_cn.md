@@ -721,7 +721,9 @@ System: <%- depth_prompt %>
 
 ---
 
-# 内置变量/库
+# 内置常量
+
+也就是全局常量，可以用`<% xxx %>`访问
 
 ```javascript
 /**
@@ -782,9 +784,10 @@ toastr = require("toastr")
  * generate: 生成阶段
  * preparation: 准备阶段
  * render: 渲染(楼层消息)阶段
+ * render_permanent: 渲染(楼层消息)的特殊，此阶段会永久修改消息
  * @type {(String|undefined)}
  */
-runType = 'generate' | 'preparation' | 'render'
+runType = 'generate' | 'preparation' | 'render' | 'render_permanent'
 
 /*
  * 角色卡内嵌的世界书名字
@@ -821,6 +824,7 @@ charName = 'SillyTavern System'
 
 /*
  * 聊天会话ID
+ * @note 聊天的文件名，不带 .json后缀
  * @type {String}
  */
 chatId = ''
@@ -844,25 +848,27 @@ groupId = null
 groups = []
 
 /*
- * 角色卡头像
+ * 角色卡头像 URL
  * @type {string}
  */
 charAvatar = ""
 
 /*
- * 用户头像
+ * 用户头像 URL
  * @type {string}
  */
 userAvatar = ""
 
 /*
  * 最新用户消息ID
+ * @note 也就是楼层ID
  * @type {number}
  */
 lastUserMessageId = 0
 
 /*
  * 最新角色消息ID
+ * @note 也就是楼层ID
  * @type {number}
  */
 lastCharMessageId = 0
@@ -877,43 +883,65 @@ model = 'gpt-3.5'
  * 不是生成为空字符串
  */
 generateType = '' | 'custom' | 'normal' | 'continue' | 'impersonate' | 'regenerate' | 'swipe' | 'quiet';
+
+/*
+ * 最后一条用户消息的内容
+ * 没有则为空字符串
+ * @type {string}
+ */
+lastUserMessage = '';
+
+/*
+ * 最后一条角色消息的内容
+ * 没有则为空字符串
+ * @type {string}
+ */
+lastCharMessage = '';
+
+/*
+ * 最后一条消息的 ID
+ * 没有则为 -1
+ * @type {number}
+ */
+lastMessageId = 0;
 ```
 
 只有在 `runType` 为 `render` 时才会出现的字段
 
 ```javascript
 /*
- * 消息ID(即楼层号)
+ * 消息ID (即楼层号)
+ * @type {number}
  */
 message_id = 0
 
 /*
  * 消息页码ID
+ * @type {number}
  */
 swipe_id = 0
 
 /*
- * 消息角色名
+ * 消息对应的角色名
+ * @type {string}
  */
 name = 'User'
 
 /*
  * 消息是否为最后一条
- */
-is_last = false
-
-/*
- * 消息是否为最后一条
+ * @type {boolean}
  */
 is_last = false
 
 /*
  * 消息是否为用户
+ * @type {boolean}
  */
 is_user = false
 
 /*
  * 消息是否为系统
+ * @type {boolean}
  */
 is_system = false
 ```
@@ -923,13 +951,22 @@ is_system = false
 ```javascript
 /*
  * 当前正在处理的世界书条目对象
+ * @type {WorldInfoEntry}
  */
 world_info: {}
 
 /*
- * 当前已处理的上下文内容
+ * 当前已处理的上文内容
+ * @type {string}
  */
 generateBuffer = ''
+
+/*
+ * 当前生成内容
+ * 未经过模板处理
+ * @type {({ role: string, content: string })[]}
+ */
+generateData = [{ role: '', content: '' }]
 ```
 
 ---
@@ -1017,6 +1054,47 @@ LAST_RECEIVE_CHARS = 0
 
 ```javascript
 /**
+ * @typedef {Object} IncluderResult
+ * @property {string} filename - 最终解析的路径
+ * @property {string} template - 包含的内容
+ */
+
+/**
+ * @typedef {Object} EjsOptions
+ * @property {boolean} [cache] - Compiled functions are cached, requires `filename`
+ * @property {string} [filename] - The name of the file being rendered. Not required if you are using renderFile(). Used by cache to key caches, and for includes.
+ * @property {string|string[]} [root] - Set template root(s) for includes with an absolute path (e.g, /file.ejs). Can be array to try to resolve include from multiple directories.
+ * @property {string[]} [views] - An array of paths to use when resolving includes with relative paths.
+ * @property {Record<string, unknown>} [context] - Function execution context
+ * @property {boolean} [compileDebug] - When false no debug instrumentation is compiled
+ * @property {string} [delimiter] - When true, compiles a function that can be rendered in the browser without needing to load the EJS Runtime (ejs.min.js).
+ * @property {boolean} [client] - Character to use for inner delimiter, by default '%'
+ * @property {string} [openDelimiter] - Character to use for opening delimiter, by default '<'
+ * @property {string} [closeDelimiter] - Character to use for closing delimiter, by default '>'
+ * @property {boolean} [debug] - Outputs generated function body
+ * @property {boolean} [strict] - When set to true, generated function is in strict mode
+ * @property {boolean} [_with] - Whether or not to use with() {} constructs. If false then the locals will be stored in the locals object. Set to false in strict mode.
+ * @property {string[]} [destructuredLocals] - An array of local variables that are always destructured from the locals object, available even in strict mode.
+ * @property {string} [localsName] - Name to use for the object storing local variables when not using with Defaults to locals
+ * @property {boolean} [rmWhitespace] - Remove all safe-to-remove whitespace, including leading and trailing whitespace. It also enables a safer version of -%> line slurping for all scriptlet tags (it does not strip new lines of tags in the middle of a line).
+ * @property {function(string): string} [escape] - The escaping function used with <%= construct. It is used in rendering and is .toString()ed in the generation of client functions. (By default escapes XML).
+ * @property {string} [outputFunctionName] - Set to a string (e.g., 'echo' or 'print') for a function to print output inside scriptlet tags.
+ * @property {boolean} [async] - When true, EJS will use an async function for rendering. (Depends on async/await support in the JS runtime).
+ * @property {function(string, string): IncluderResult} [includer] - Custom function to handle EJS includes, receives (originalPath, parsedPath) parameters, where originalPath is the path in include as-is and parsedPath is the previously resolved path. Should return an object { filename, template }, you may return only one of the properties, where filename is the final parsed path and template is the included content.
+ */
+
+/**
+ * @typedef {Object} EvalTemplateOptions
+ * @property {function(string): string} [escaper]
+ * @property {function(string, string): IncluderResult} [includer]
+ * @property {boolean} [logging]
+ * @property {string} [when]
+ * @property {EjsOptions} [options]
+ * @property {string} [disableMarkup]
+ * @property {FunctionSandbox|null} [sandbox]
+ */
+
+/**
  * 对文本进行模板语法处理
  * @note data 一般从 prepareContext 获取，若要修改则应直接修改原始对象
  * @see prepareContext
@@ -1025,7 +1103,7 @@ LAST_RECEIVE_CHARS = 0
  *
  * @param {string} code - 模板代码
  * @param {object} [context={}] - 执行环境(上下文)
- * @param {Object} [options={}] - ejs 参数
+ * @param {EvalTemplateOptions} [options={}] - ejs 参数
  * @returns {string} 对模板进行计算后的内容
  */
 async function evalTemplate(code, context = {}, options = {});
@@ -1069,7 +1147,8 @@ async function getSyntaxErrorInfo(code, max_lines = 4);
  * @property {string} cache_hasher - 缓存Hash函数 (h32ToString, h64ToString)
  * @property {boolean} inject_loader_enabled - 生成时注入 @INJECT 世界书条目
  * @property {boolean} invert_enabled - 旧设定兼容模式，世界书中的GENERATE/RENDER/INJECT条目禁用时视为启用
- * @property {number} depth_limit - 处理楼层深度限制 (-1=无限制)
+ * @property {boolean} compile_workers - 是否启用后台编译（用web workers编译）
+ * @property {boolean} sandbox - 是否启用沙盒执行代码（性能下降，提升安全性）
  */
 
 /**
@@ -1099,7 +1178,7 @@ async function refreshWorldInfo();
 
 /*
  * 所有通过 define 创建的全局变量/函数
- * @note 返回的是引用
+ * @note 返回的是引用，也就是可以外部修改
 */
 defines = {};
 
@@ -1143,6 +1222,16 @@ function jsonPatch(dest, change);
  * @returns {EjsSettings} - 当前设置
  */
 function getFeatures();
+
+/**
+ * 编译代码
+ *
+ * @param {string} code - 代码内容
+ * @param {EvalTemplateOptions} [options] - 编译选项
+ *
+ * @returns {((data: object) => string)} - 编译后的函数体
+ */
+async function compileTemplate(code, options = {});
 ```
 
 > 可通过 `globalThis.EjsTemplate`访问这些函数（如 `EjsTemplate.evalTemplate`）
