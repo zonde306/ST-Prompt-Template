@@ -823,7 +823,7 @@ export async function isConditionFiltedEntry(env: Record<string, unknown>, entry
     if(entry.disable)
         return false;
 
-    let condition = (entry.decorators ?? parseDecorators(entry.content)[0]).find(x => x.startsWith('@@if'));
+    let condition = (entry.decorators ?? parseDecorators(entry.content)[0]).find(x => x.startsWith('@@if '));
     if(!condition)
         return false;
     
