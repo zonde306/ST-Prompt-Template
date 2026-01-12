@@ -193,6 +193,7 @@ async function handleGenerateAfter(data: GenerateAfterData, dryRun?: boolean) {
         name: undefined,
         isDryRun: false,
         generateType: generateType,
+        generateData: chat,
     });
 
     const sandbox = settings.sandbox ? new FunctionSandbox() : null;

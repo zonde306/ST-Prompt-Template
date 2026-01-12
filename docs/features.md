@@ -2,117 +2,275 @@
 
 ## Syntax Extension
 
-Extends SillyTavern's macro syntax to support more complex syntax such as conditional statements, loops, and accessing additional information. Maintains compatibility with original SillyTavern macros, using [Embedded JavaScript templating](https://ejs.co/) for extended syntax, enabling JavaScript execution within prompts.
+Extends SillyTavern's macro syntax to support more complex syntax such as conditional judgment, loops, reading more information, etc.
 
-Works in:
-- World/Knowledge Books
-- Presets (prompts)
-- Character-related content
-- Messages
+Compatible with SillyTavern's original macros, the extended syntax is implemented based on [Embedded JavaScript templating](https://ejs.co/), enabling the use of `JavaScript` in prompts.
 
-Use `<% ... %>` blocks in prompts to execute JavaScript.  
+Executable in **World/Knowledge Books**, **Preset** **Prompts**, **Character-related Content**, and **Messages**.
+
+Simply use `<% ... %>` statement blocks in prompts.
+
 Example:
+
 ```javascript
 <% print('hello world!') %>
 ```
 
-> Full syntax documentation: [EJS Syntax Reference](https://github.com/mde/ejs/blob/main/docs/syntax.md)  
-> Available functions: [Reference](reference_cn.md)
+> Complete syntax reference: [EJS Syntax Reference](https://github.com/mde/ejs/blob/main/docs/syntax.md)
+>
+> Available function list: [Reference](reference_cn.md)
 
-Executes when:
-1. Sending prompts to LLM
-2. Rendering content in SillyTavern
+This feature executes when **sending prompts to the LLM** and **rendering into SillyTavern**.
 
 ---
 
 ## Template Processing
 
-This extension processes prompts during generation startup:
-1. SillyTavern prepares the prompt (merges presets, world/knowledge books, character definitions, messages)
-2. Extension processes all `<% ... %>` blocks
-3. Processed prompt is sent to LLM
-4. LLM output is received and rendered in SillyTavern
-5. Extension processes `<% ... %>` blocks in received content
+This extension will process the prompt constructed by **SillyTavern** at **the start of generation**, executing all `JavaScript` code within `<% ... %>` statement blocks, then replacing them with the corresponding execution results (if there is output).
 
-Example input:
+Execution order:
+
+1. SillyTavern prepares the prompt for generation (merges content such as **Presets**, **World/Knowledge Books**, **Character Definitions**, **Messages**, etc.)
+2. **This extension** processes all `<% ... %>` statement blocks in the prompt.
+3. Send the processed prompt to the **LLM**.
+4. Receive the content output by the **LLM** and render it into SillyTavern's messages.
+5. After SillyTavern has completely received the LLM's output, **this extension** begins processing the received content (i.e., processing visible `<% ... %>` statement blocks).
+
+For example, the prepared prompt is:
+
 ```javascript
-Current affection: <%- variables.affection %>/100
-```
-Processed output:
-```javascript
-Current affection: 50/100
+Current Favorability: <%- variables.favorability %>/100
 ```
 
-LLM response example:
+This extension reads the value of `variables.favorability` and replaces the statement block with the actual value:
+
 ```javascript
-<% setvar('affection', 60) -%>
-New affection: <%- variables.affection %>/100
+Current Favorability: 50/100
 ```
-Displayed result:
+
+Then, this content will be sent to the LLM and generation begins.
+
+After the LLM generation is received, if the output contains the following:
+
 ```javascript
-New affection: 60/100
+<% setvar('favorability', 60) -%>
+New Favorability: <%- variables.favorability %>/100
+```
+
+This extension will process the output result, and the final displayed result will be:
+
+```javascript
+New Favorability: 60/100
 ```
 
 ---
 
 ## Content Injection
 
-In certain scenarios, the execution order of **lore books/world info** cannot be controlled. To ensure prompts are placed at designated positions, this feature allows injecting specific prompts into the **beginning** and **end** locations.
+In some cases, the execution order of **World/Knowledge Book** cannot be controlled. To ensure prompts can be placed at specified locations, this feature allows injecting specific prompts into the **beginning** and **end** positions.
 
-Simply add prefixes to the **title (memo)** of **lore book/world info** entries to inject the entry's content into the corresponding sequence. Whether the injection takes effect when activated or deactivated depends on the settings.
+Simply add a prefix to the **Title (Memo)** of a **World/Knowledge Book** entry to inject that entry's content into the corresponding sequence. Whether it takes effect when activated or deactivated is determined by the settings.
 
-This feature is affected by **trigger strategy**, **order**, **inclusion groups**, **deterministic priority**, **trigger probability**, **group weight**, **primary keywords**, **logic**, and **optional filters**.
+This feature is influenced by **Trigger Strategy**, **Order**, **Inclusion Groups**, **Deterministic Priority**, **Trigger Probability**, **Group Weight**, **Primary Keywords**, **Logic**, and **Optional Filters**.
 
 > Sticky, cooldown, and delay are not implemented.
 
-- `[GENERATE:BEFORE]`: Inject this entry's content to the **beginning** of prompts sent to the **LLM** (🔵 only)
+- `[GENERATE:BEFORE]`: Inject this entry's content to the **beginning** of the prompt sent to the **LLM** (🔵 only)
 
-- `[GENERATE:AFTER]`: Inject this entry's content to the **end** of prompts sent to the **LLM** (🔵 and 🟢)
+- `[GENERATE:AFTER]`: Inject this entry's content to the **end** of the prompt sent to the **LLM** (🔵 and 🟢)
 
-- `[RENDER:BEFORE]`: Inject this entry's content to the **beginning** of **LLM output** received (🔵 only)
+- `[RENDER:BEFORE]`: Inject this entry's content to the **beginning** of the **received LLM output** content (🔵 only)
 
-- `[RENDER:AFTER]`: Inject this entry's content to the **end** of **LLM output** received (🔵 and 🟢)
+- `[RENDER:AFTER]`: Inject this entry's content to the **end** of the **received LLM output** content (🔵 and 🟢)
 
-	> `[RENDER:BEFORE]` and `[RENDER:AFTER]` are for rendering only and **not sent to the LLM**  
-	>
-	> They also follow [message rendering](#message-rendering) configurations
+  > `[RENDER:BEFORE]` and `[RENDER:AFTER]` are only used for rendering and are **not sent to the LLM**.
+  >
+  > Therefore, they also follow the settings for [Message Rendering](#message-rendering).
 
 - `[GENERATE:{idx}:BEFORE]`: Inject this entry to the **beginning** of the `{idx}`-th message sent to the **LLM** (🔵 only)
 
-- `[GENERATE:{idx}:AFTER]`: Inject this entry to the **end** of the `{idx}`-th message sent to the **LLM** (🔵 and 🟢)
+- `[GENERATE:{idx}:AFTER]`: Inject this entry's content to the **end** of the `{idx}`-th message sent to the **LLM** (🔵 and 🟢)
 
-	> Based on the order of `messages` sent to the LLM, **`{idx}` starts from 0**  
+  > Based on the order of `messages` sent to the LLM, **`{idx}` starts from 0**.
+  >
+  > For example, `[GENERATE:1:BEFORE]` injects the prompt into the first message (the first message is 0).
+
+- `[InitialVariables]`: Treat the entry content as a variable tree, written into the initial message variables. Only standard `JSON` is supported, and it must be an `object`.
+
+	> Only takes effect when **Immediately Load World Books** is enabled.
 	>
-	> Example: `[GENERATE:1:BEFORE]` injects the prompt into the 1st message (0-indexed)
+	> Modifications will be rewritten, overwriting previous content.
 
-- `[InitialVariables]`: Treat entry content as a variable tree written to initial message variables. Only standard `JSON` objects are supported.
+### Regular Expression Syntax Examples
 
-	> Only effective when **Immediate Lore Book Loading** is enabled  
-	>
-	> Modifications will be rewritten and overwrite previous content
+- `[GENERATE:REGEX:Hello]` - Inject content when a message contains "Hello".
+- `[GENERATE:REGEX:^User.*]` - Inject content when a message starts with "User".
+- `[GENERATE:REGEX:.*question.*]` - Inject content when a message contains "question".
+- `[GENERATE:REGEX:\\b(help|帮助)\\b]` - Inject content when a message contains the word "help" or "帮助".
+
+> Regular expression matching is case-insensitive and supports all standard regex syntax.
+
+### Regular Expression Syntax Usage Instructions
+
+1. **Syntax Format**: `[GENERATE:REGEX:pattern]`
+   - `pattern` is a standard regular expression pattern.
+   - Supports all JavaScript regular expression syntax.
+
+2. **Matching Logic**:
+   - The system will traverse all message content.
+   - When message content matches the specified regular expression, the corresponding World Book entry will be executed.
+   - The matched content will be injected before the corresponding message.
+
+3. **Available Variables**:
+   - `matched_message`: The matched message content.
+   - `matched_message_index`: The index of the matched message.
+   - `matched_message_role`: The role of the matched message.
+
+4. **Usage Example**:
+   ```
+   World Book Entry Title: [GENERATE:REGEX:Hello]
+   World Book Entry Content:
+   Greeting detected! Current message: <%- matched_message %>
+   Message index: <%- matched_message_index %>
+   ```
 
 ---
 
-## Message Injection
+## Message Rendering
 
-The `@INJECT` feature allows you to insert specific prompt messages at precise positions in the conversation. Unlike traditional world/knowledge book entries, this feature provides fine-grained control, supporting absolute position, relative position, and regex-based insertion.
+When rendering chat messages, the processing method differs somewhat from pure prompt processing.
 
-**Key Points:**
-- The world info entry must be **inactive** to take effect.
-- The entry title should be the injection command, and the content is what will actually be sent.
-- Supports EJS template rendering and regex replacement.
-- Affected by **trigger probability**, **order**, and other world info parameters.
-- Supports three insertion modes: absolute position, target message, and regex matching.
-- The final message structure sent to the LLM may differ from the internal structure.
-- Please read the "Prompt Post-Processing" section for best practices.
+- During rendering, the already-rendered content within the message floor is processed directly, i.e., using the **HTML** code within the floor. After processing, the output is directly written to the **HTML** code within the **DOM**.
 
-> Regardless of 🔵 or 🟢, world info always triggers. 🟢 effect is not implemented.
+> That is, the HTML code of `#chat > div.mes > div.mes_block > div.mes_text`.
+
+- When outputting using the `<%=` format, the content will be formatted. When using `<%-` to output, it is directly treated as `HTML` code.
+
+> Formatting includes: escaping `HTML` tags, processing **macro definitions**, processing **regular expressions**, processing **Markdown** syntax.
 >
+> Normally, the functionality of `<%=` is the same as `<%-`, but only during rendering does it exhibit different behavior.
+
+- Entries with `[RENDER:BEFORE]` and `[RENDER:AFTER]` in [Content Injection](#content-injection) also follow this setting.
+
+- During rendering, `&lt;%` will be replaced with `<%` and `%&gt;` with `%>` to support rendering and display output.
+
+> Because the Tavern automatically escapes unrecognized HTML tags, they need to be unescaped to execute smoothly.
+
+- Only modifies the displayed **HTML** code, not the original message content.
+
+> Therefore, to prevent `<% ... %>` statement blocks within message floors from being executed repeatedly when sent to the LLM, they need to be hidden using **regular expressions**.
+>
+> ```json
+> {
+>     "id": "a8ff1bc7-15f2-4122-b43b-ded692560538",
+>     "scriptName": "Message Function Call Filter",
+>     "findRegex": "/<%.*?%>/g",
+>     "replaceString": "",
+>     "trimStrings": [],
+>     "placement": [
+>         1,
+>         2
+>     ],
+>     "disabled": false,
+>     "markdownOnly": false,
+>     "promptOnly": true,
+>     "runOnEdit": true,
+>     "substituteRegex": 0,
+>     "minDepth": null,
+>     "maxDepth": null
+> }
+> ```
+>
+> You can use this **regular expression** to hide `<% ... %>` statement blocks within chat messages.
+
+- Code highlighting conflicts with this extension.
+
+> Because code highlighting modifies the actual HTML code, inserting additional HTML tags between `<`, `>`, and `%`, causing this extension to be unable to process the content correctly, thus `<% ... %>` within code blocks cannot be executed.
+
+---
+
+## Prompt Injection
+
+The `@INJECT` feature allows you to insert specific prompt messages directly into the Prompt in a format similar to **{role: 'user', content: '[Start a new Chat]'}**. Unlike traditional World Book entries, this feature provides more precise position control, supporting insertion based on absolute position, relative position, and regular expression matching.
+
+The above content injection feature only allows you to modify messages. All messages you submit to SillyTavern are determined by the prompt template. If you have Tavern Assistant installed, you can enter `window.TavernHelper.Context.getAllActivatedPrompt()` in the console to get the list of activated prompts (temporarily invalid, author's PR under review...).
+
+By default, all World Book entries are merged into one `System` message and sent, separated by newline `\n`, which means status bars will be mixed with ordinary entries.
+
+Assume there is an **Entry 1** like this:
+
+```
+<Format>
+Output format emphasis:
+rule:
+- The following must be inserted to the end of each reply, and cannot be omitted
+1.<zhengwenkaishi></zhengwenjiesu>(fill in the main text in the middle).
+2.  You must insert <UpdateVariable> tag,update the variables refer to <Analysis> rule, Ignore summary content when evaluate.
+format: |-
+
+<zhengwenkaishi>
+
+Main text content
+
+</zhengwenjiesu>
+
+<UpdateVariable>
+<Analysis>
+...
+</Analysis>
+...
+</UpdateVariable>
+</Format>
+
+```
+
+And **Entry 2**:
+
+```
+Kanon Hanane is a cute little girl.
+```
+
+And **Entry 3**:
+```
+Kanon Hanane's favorite brand is Mayla Classic.
+```
+
+The final content sent to the LLM is:
+`[{role: 'system', context: '...\n</UpdateVariable>\n</Format>\nKanon is a cute little girl.\nKanon Hanane's favorite brand is Mayla Classic'},...]`
+
+According to the LLM, even manually adding separators in the format information is still less effective than independent `system` blocks. Instructional information should be independent of knowledge information, and knowledge information (World Books) should not be fragmented.
+
+Taking `Gemini` as an example, a reasonable sending format is:
+
+```
+[  ...
+   systemInstruction: {
+    parts: [
+      { text: '...\n</UpdateVariable>\n</Format>' },
+      { text: 'Kanon is a cute little girl.\nKanon Hanane's favorite brand is Mayla Classic' }
+    ]
+  }
+]
+```
+
+SillyTavern's design does not allow character cards to directly modify prompt presets. This module provides a method for direct prompt insertion.
+
+**Important Notes**:
+- Must set the World Book entry to **inactive** to take effect.
+- Set the World Book entry name to the injection statement, and the content is what you actually need to send.
+- Supports EJS template rendering and regex replacement processing.
+- Affected by **Trigger Probability**, **Order**, and other World Book parameters.
+- Supports three insertion modes: Absolute Position, Target Message, and Regex Matching.
+- The final message structure sent to the LLM differs from the message structure processed by this module.
+- With great power comes great responsibility. Please read the `Prompt Post-Processing` section carefully.
+
+> Whether set to 🔵 or 🟢, the World Book always triggers. The 🟢 effect is not implemented.
+
 > Sticky and cooldown are not implemented.
 
 ### Basic Syntax
 
-All injection commands start with `@INJECT`, followed by parameters:
+All injection commands start with `@INJECT`, followed by parameter configuration:
 
 ```
 @INJECT [parameter1=value1, parameter2=value2, ...]
@@ -120,168 +278,186 @@ All injection commands start with `@INJECT`, followed by parameters:
 
 ### Insertion Modes
 
-#### 1. Absolute Position (pos)
+#### 1. Absolute Position Insertion (pos)
 
-Insert at a specific position in the message array.
+Insert based on the absolute position in the message array.
 
-**Syntax:** `@INJECT pos=position,role=role`
+**Syntax**: `@INJECT pos=position,role=role`
 
-- `pos`: Position (starts from 1, supports negative indices, 0 is treated as the first message)
-- `role`: user/assistant/system
+**Parameter Description**:
+- `pos`: Insertion position (starts from 1, supports negative indexing).
+- `role`: Role of the inserted message (user/assistant/system).
 
-**Examples:**
-- `@INJECT pos=1,role=system` — Insert at the first message
-- `@INJECT pos=-1,role=user` — Insert at the last message
-- `@INJECT pos=3,role=assistant` — Insert at the third message
+**Examples**:
+- `@INJECT pos=1,role=system` - Insert a system message at the first message position.
+- `@INJECT pos=-1,role=user` - Insert a user message at the last message position.
+- `@INJECT pos=3,role=assistant` - Insert an assistant message at the third message position.
 
-**Zero/Negative Index:**
-- `pos=0`: Treated as the first message
-- `pos=-1`: Last message
-- `pos=-2`: Second-to-last message
+**Zero and Negative Index Explanation**:
+- `pos=0`: Treated as the first message.
+- `pos=-1`: Last message position.
+- `pos=-2`: Second-to-last message position.
+- And so on.
 
-#### 2. Target Message (target)
+#### 2. Target Message Insertion (target)
 
-Insert relative to a specific role's message.
+Insert relative to a message of a specific role.
 
-**Syntax:** `@INJECT target=role,index=number,at=position,role=role`
+**Syntax**: `@INJECT target=role,index=number,at=position,role=role`
 
-- `target`: user/assistant/system
-- `index`: Message number (starts from 1, supports negative)
-- `at`: before/after (default: before)
-- `role`: user/assistant/system
+**Parameter Description**:
+- `target`: Target role (user/assistant/system).
+- `index`: Sequence number of the target message (starts from 1, supports negative numbers).
+- `at`: Insertion position (before/after, default is before).
+- `role`: Role of the inserted message.
 
-**Examples:**
-- `@INJECT target=user,index=1,at=before,role=system` — Before the first user message
-- `@INJECT target=assistant,index=-1,at=after,role=user` — After the last assistant message
-- `@INJECT target=user,role=system` — Before the first user message (default)
+**Examples**:
+- `@INJECT target=user,index=1,at=before,role=system` - Insert a system message before the first user message.
+- `@INJECT target=assistant,index=-1,at=after,role=user` - Insert a user message after the last assistant message.
+- `@INJECT target=user,role=system` - Insert a system message before the first user message (using default values).
 
-#### 3. Regex (regex)
+**Negative Index Explanation**:
+- `index=-1`: The last message of that role.
+- `index=-2`: The second-to-last message of that role.
 
-Insert based on regex match in message content.
+#### 3. Regular Expression Insertion (regex)
 
-**Syntax:** `@INJECT regex=pattern,at=position,role=role`
+Insert based on regular expression matching of message content.
 
-- `regex`: Pattern (supports single/double/no quotes)
-- `at`: before/after (default: before)
-- `role`: user/assistant/system
+**Syntax**: `@INJECT regex=pattern,at=position,role=role`
 
-**Examples:**
-- `@INJECT regex=hello,at=before,role=system`
-- `@INJECT regex="^user.*",at=after,role=assistant`
-- `@INJECT regex='\\b(help|帮助)\\b',role=system`
+**Parameter Description**:
+- `regex`: Regular expression pattern (supports single quotes, double quotes, or no quotes).
+- `at`: Insertion position (before/after, default is before).
+- `role`: Role of the inserted message.
+
+**Examples**:
+- `@INJECT regex=Hello,at=before,role=system` - Insert a system message before a message containing "Hello".
+- `@INJECT regex="^User.*",at=after,role=assistant` - Insert an assistant message after a message starting with "User".
+- `@INJECT regex='\\b(help|帮助)\\b',role=system` - Insert a system message before a message containing the word "help" or "帮助".
+
+**Regular Expression Syntax**:
+- Supports all JavaScript regular expression syntax.
+- The pattern can be enclosed in single or double quotes.
+- Matching is case-insensitive.
 
 ### Sorting and Priority
 
-1. **Position Priority:** Insert from back to front by position
-2. **Order Parameter:** Same position sorted by world info order (smaller first)
-3. **Type Priority:** pos > target > regex
+The execution order of injected messages is determined by the following rules:
+
+1. **Position Priority**: Execute from back to front based on insertion position.
+2. **Order Parameter**: For the same position, sort by the World Book's order parameter (smaller values are inserted first).
+3. **Type Priority**: `pos` > `target` > `regex`
 
 ### Trigger Probability
 
-- If `probability%` is set, the system randomly decides whether to trigger.
-- Entries without probability always trigger.
-- Results are logged in the console.
+Supports the World Book's trigger probability feature:
+
+- If `Probability %` is set, the system randomly decides whether to trigger the injection.
+- Entries without a probability set will trigger directly.
+- Trigger results are output with detailed logs to the console.
 
 ### Usage Examples
 
-#### Example 1: Insert system prompt at start
+#### Example 1: Insert system prompt at the beginning of the conversation.
 ```
-World info title: @INJECT pos=0,role=system
-World info content:
-You are a professional AI assistant, please answer questions in a friendly and professional manner.
+World Book Entry Title: @INJECT pos=0,role=system
+World Book Entry Content:
+You are a professional AI assistant. Please answer questions in a friendly and professional tone.
 ```
 
-#### Example 2: Insert context after user question
+#### Example 2: Insert context after a user question.
 ```
-World info title: @INJECT target=user,at=after,role=assistant
-World info content:
+World Book Entry Title: @INJECT target=user,at=after,role=assistant
+World Book Entry Content:
 Based on the user's question, I provide the following background information:
 <%- world_info.content %>
 ```
 
-#### Example 3: Insert based on keyword
+#### Example 3: Insert specific content based on keywords.
 ```
-World info title: @INJECT regex=urgent,role=system
-World info content:
-Emergency keyword detected, please provide timely and accurate assistance.
+World Book Entry Title: @INJECT regex=urgent,role=system
+World Book Entry Content:
+Emergency keyword detected. Please provide timely and accurate assistance.
 ```
 
-#### Example 4: With trigger probability
+#### Example 4: Using trigger probability.
 ```
-World info title: @INJECT target=assistant,at=before,role=system,order=5
-World info content:
-This is a randomly triggered prompt with only 30% probability.
+World Book Entry Title: @INJECT target=assistant,at=before,role=system,order=5
+World Book Entry Content:
+This is a randomly triggered prompt, appearing with only a 30% probability.
 ```
-(Enable trigger probability in world info settings, set to 30%)
+(Need to enable Trigger Probability in World Book settings, set to 30%.)
 
-### Important Notes
+### Notes
 
-1. **Position calculation** happens after template rendering and regex replacement.
-2. **Content** is processed with template rendering and regex replacement.
-3. **Data consistency** is maintained in the message array.
-4. **Debug info** is output to the browser console.
-5. **Error handling**: Invalid regex or missing target messages will log warnings.
+1. **Position Calculation**: All position calculations occur after template rendering and regex replacement.
+2. **Content Processing**: Injected content undergoes template rendering and regex replacement processing.
+3. **Data Consistency**: Insertion operations maintain the data structure consistency of the message array.
+4. **Debugging Information**: Detailed operation logs are output to the browser console.
+5. **Error Handling**: Warnings are output for invalid regex or when target messages are not found.
 
 ### Prompt Post-Processing
 
 ```
-This feature is powerful, but its effect depends on the API's prompt format. For strict APIs (Gemini, Claude), ensure your most important system instructions (e.g., character settings) are injected at the very beginning (pos=0 or lowest order). Otherwise, they may be treated as user messages and not work as expected.
+This injection feature is very powerful, but its final effect depends on the API's requirements for prompt format. For APIs with strict formats like Gemini or Claude, ensure your most important system-level instructions (such as character settings) are injected at the very beginning of the conversation (via pos=0 or the smallest order). Otherwise, they may be treated as ordinary user messages in SillyTavern's built-in formatting process, failing to achieve the expected effect.
 ```
+
+**⚠️ Please ensure system messages are at the beginning!!!**
+
+**⚠️ Please ensure system messages are at the beginning!!!**
 
 **⚠️ Please ensure system messages are at the beginning!!!**
 
 > Consecutive messages with the same role may be merged.
 
-See the API connection documentation for more details:  
+On the `API Connection Configuration` page, you can find the prompt post-processing options. It completes the conversion from SillyTavern format to the format required by the LLM API.
+| | |
+| --- | --- |
+ChatGPT | `system` messages are usually only one, placed at the very beginning of the conversation, used to define the assistant's overall behavior. Strict alternating pairs are not required, but if you insert multiple `user` messages in a row, the model will consider it continuous user input. Two consecutive `system` messages are also allowed. `system` is not strictly required to be at the very beginning, but it is strongly recommended. |
+Gemini | Independent `systemInstruction`, `user`/`model` strictly alternate, starting with `user`. All `system` messages will be forwarded to the `systemInstruction` structure. |
+Anthropic Claude | `user`/`assistant` strictly alternate, the last message should usually be `user` role. `system` messages can be anywhere, but are most effective at the beginning. |
+DeepSeek | `user`/`assistant` suggested to alternate, the last message must be `user`. |
+Other OpenAI-compatible | Usually the same, but sometimes merging `system` into `user` works better. |
+Local models (Kobold, etc.) | Only need one huge plain text block. |
+
+You can find detailed instructions for prompt post-processing at:
+
 https://docs.sillytavern.app/usage/api-connections/openai/#prompt-post-processing
-
----
-
-## Chat Rendering
-
-Differences from regular prompt processing:
-- Operates directly on HTML content in message chat (`#chat > div.mes > div.mes_block > div.mes_text`)
-- `<%=` escapes HTML, `<%-` outputs raw HTML
-- Automatically unescapes `&lt;%` to `<%` and `%&gt;` to `%>`
-- Preserves original message content (modifies HTML only)
-
-Regex example to hide `<%...%>` in messages:
-```json
-{
-    "id": "a8ff1bc7-15f2-4122-b43b-ded692560538",
-    "scriptName": "Chat Function Call Filter",
-    "findRegex": "/<%.*?%>/g",
-    "replaceString": "",
-    "placement": [1, 2],
-    "disabled": false
-}
-```
 
 ---
 
 ## Token Counting
 
-Global variables for token tracking:
-- `LAST_SEND_TOKENS`: Tokens sent to LLM
-- `LAST_SEND_CHARS`: Character count sent
-- `LAST_RECEIVE_TOKENS`: Tokens received (estimated)
-- `LAST_RECEIVE_CHARS`: Characters received
+Since this extension changes the actual **token** count, the built-in **token counter** in the Tavern will differ from the **actual token count**.
 
-> Actual token consumption may differ from Tavern's built-in counter
+Therefore, this extension sets some **global variables** at the start of each generation and after receiving the LLM's response to represent the processed **token** counts.
+
+- `LAST_SEND_TOKENS`: Number of tokens sent in the last generation.
+
+- `LAST_SEND_CHARS`: Text length sent in the last generation.
+
+	**The following are not the actual output token consumption; refer to the Tavern's built-in token counter.**
+
+- `LAST_RECEIVE_TOKENS`: Number of tokens output in the last generation.
+
+- `LAST_RECEIVE_CHARS`: Text length output in the last generation.
 
 ### Context Token Budget
-The extension may affect:
-- World/Knowledge Book context percentage
-- Token budget calculations
-- Context length estimates
 
-Use with caution when using `getwi`, `getvar`, or `getchr` as they may cause budget overflows.
+Since this extension changes the actual **token** count, it can cause **World/Knowledge Book**'s **Context Percentage**, **Token Budget Limit**, and **Context Length (in tokens)** to be incorrectly calculated.
+
+This can lead to the predicted **token** count being much larger than the actual **token** count, causing budget shortages and some **World/Knowledge Books** to be discarded.
+
+Additionally, **prompts** imported using `getwi`, `getvar`, `getchr`, etc., are not counted, which may also lead to exceeding the budget.
+
+[Context % / Budget](https://docs.sillytavern.app/usage/core-concepts/worldinfo/#context---budget)
 
 ---
 
 ## Scope Escaping
 
-The `<%` and `%>` within `<#escape-ejs>...<#/escape-ejs>` will be automatically replaced with `<%%` and `%%>`.
+Within `<#escape-ejs>...<#/escape-ejs>`, `<%` and `%>` will be automatically replaced with `<%%` and `%%>`.
 
 For example, input:
 
@@ -305,17 +481,13 @@ line 3
 
 ---
 
-## Configuration Options
+## Settings Options
 
-Descriptions of each configuration option
-
-
+Descriptions of each setting option.
 
 ### Enable Extension
 
-Master switch for the extension. Disabling it will deactivate all extension features (except commands), and `<% ... %>` statements will be sent to the **LLM** verbatim.
-
-
+Master switch for the extension. Turning it off disables all extension features except commands. `<% ... %>` statements will be sent to the LLM as-is.
 
 ### Process Generated Content
 
@@ -323,177 +495,183 @@ Process all `<% ... %>` statements during generation.
 
 Subsequent options are affected by this setting; disabling this will also disable the following options.
 
+#### Inject [GENERATE] World Book Entries During Generation
 
+During generation, traverse all **enabled** World Book entries, then filter entries with the `[GENERATE:*]` prefix for processing.
 
-#### Inject [GENERATE] Lore Book Entries During Generation
+This process sorts first, then processes in sequence.
 
-During generation, all **enabled** lore book entries are scanned, and entries with `[GENERATE:*]` prefixes are processed.
+#### Inject @INJECT World Book Entries During Generation
 
-Entries are sorted first, then processed sequentially.
-
-
-
-#### Inject @INJECT Lore Book Entries During Generation
-
-See [Prompt Injection](#prompt-injection)
-
-
+See [Prompt Injection](#prompt-injection).
 
 ### Process Message Content
 
-Process all `<% ... %>` statements within **messages**.
+Process all `<% ... %>` statements within messages.
 
 Subsequent options are affected by this setting; disabling this will also disable the following options.
 
+#### Inject [RENDER] World Book Entries During Message Rendering
 
+During rendering, traverse all **enabled** World Book entries, then filter entries with the `[RENDER:*]` prefix for processing.
 
-#### Inject [RENDER] Lore Book Entries During Message Rendering
-
-During rendering, all **enabled** lore book entries are scanned, and entries with `[RENDER:*]` prefixes are processed.
-
-Entries are sorted first, then processed sequentially.
-
-
+This process sorts first, then processes in sequence.
 
 #### Process Code Blocks
 
-Enable template processing for content within code blocks `<pre>`.
-
-
+Allow template processing for content within code blocks `<pre>`.
 
 #### Process Raw Message Content
 
-Before rendering, process the raw message content (as displayed in edit mode) with templates.
+Before rendering, perform template processing on the raw message content (as displayed when editing).
 
-After processing, write the result back to the raw message content (equivalent to direct message editing).
+After processing, write the result back to the raw message content (equivalent to editing the message directly).
 
-> This process bypasses all **regex** and **macro** preprocessing  
-> Permanently modifies message content
-
-
+> This process does not undergo any form of **regex** and **macro** preprocessing.
+>
+> Permanently modifies message content.
 
 #### Ignore Message Processing During Generation
 
-Before generation, hide all `<% ... %>` statements in messages to prevent them from being processed during generation.
+Before generation, hide all `<% ... %>` statements within messages to prevent them from being processed during the generation phase.
 
+### Auto-save Variable Updates
 
+After processing any content, if variables are modified, save them immediately (to file).
 
-### Auto-Save Variable Updates
+> Enabling this causes additional performance overhead. The Tavern itself can auto-save, so generally, there's no need to enable this.
 
-After any content processing, immediately save modified variables (to file).
+### Immediately Load World Books
 
-> Enabling this causes additional performance overhead. SillyTavern auto-saves by default, so this is generally unnecessary.
+After opening a character card/chat, immediately load all enabled World Books and process their content with templates.
 
-
-
-### Immediate Lore Book Loading
-
-Immediately load all enabled lore books after opening a character card/chat and process their content with templates.
-
-
-
-### Disable `with` Statement Blocks
+### Disable with Statement Blocks
 
 `ejs` internally uses the deprecated `with(...) { ... }` statement.
 
-Enabling this option disables `with` and uses parameter unpacking via `const variables, ...` instead.
+Enabling this option disables this statement, replacing it with parameter unpacking in the form of `const variables, ...`.
 
+### Show Detailed Info in Console
 
-
-### Show Detailed Console Info
-
-When enabled, the console outputs extensive debug information.
-
-
+When enabled, the console outputs a large amount of debugging information.
 
 ### Treat Disabled GENERATE/RENDER/INJECT Entries as Enabled
 
-- Scope:  
-	> All special entries controlled by the extension  
-	> Example: `[GENERATE]`, `[RENDER]`, `@@generate`, `@@render`, etc.
+- Scope:
 
-- When enabled:  
-	
-> Special entries are processed **only when disabled**
+	> All special entries, i.e., those controlled by the extension.
+	>
+	> For example: `[GENERATE]`, `[RENDER]`, `@@generate`, `@@render`, etc.
 
-- When disabled:  
-	
-	> Special entries are processed **only when enabled**
+- When enabled:
 
-Enabling maintains backward compatibility ("special entries require **disabling** to activate").  
-Disabling uses the new behavior ("special entries require **enabling** to activate").
+	> These special entries are only processed by the extension when they are **disabled**.
 
+- When disabled:
 
+	> These special entries are only processed by the extension when they are **enabled**.
+
+Enabling this is compatible with old settings, i.e., "special entries need to be **disabled** to take effect".
+
+Disabling this uses new settings, i.e., "special entries need to be **enabled** to take effect".
+
+### Background Compilation
+
+Move code compilation to the background (web workers).
+
+Can alleviate page lag issues.
+
+### Environment Isolation
+
+Isolate the execution environment from the global environment to avoid pollution.
+
+Enabling consumes extra performance.
 
 ### Cache (Experimental)
 
-Enabling this caches compiled prompts to avoid redundant compilation, slightly improving speed.
+Enabling this caches compiled prompts to avoid time-consuming repeated compilation, slightly improving speed.
 
-However, cached prompts may sometimes fail to update due to their immutable nature.
-
-
+However, due to caching, sometimes cached prompts may not be updated.
 
 ### Cache Size
 
-Controls the cache pool size.
-
-
+Controls the size of the cache pool.
 
 ### Cache Hash Function
 
-Minimal performance impact
+Minimal impact on performance.
 
 ---
 
 ## Prompt Injection
 
-Prompt injection implements dependency inversion by importing prompts via **tag keys** instead of direct entry references.
+The prompt injection feature is designed to implement dependency inversion, importing prompts via **tag keys** rather than via specified entries.
 
-For example, we can import **CoT** defined in lore books into the **CoT** section of a **preset**, ensuring LLMs focus on structured, compact prompts. Traditional lore book additions might scatter the LLM's attention between preset and lore book CoTs.
+For example, we can import **CoT** defined in World Books into the **CoT** section of a **preset**.
 
-**Example in lore book:**
+Because LLMs have stronger attention to formatted, compact prompts, using traditional World Books to add custom CoT may cause the LLM's attention to scatter, either ignoring the preset's CoT or ignoring the World Book's CoT.
+
+For example, we write this in the World Book:
+
 ```javascript
 <%
 injectPrompt("CoT", `
 # Affection
 Q: What is <char>'s affection level?
-Q: How will the next generation affect affection?
+Q: What changes will the next generation cause in affection?
 Q: What is the new affection level?
-# Summarize affection changes and output the new level
+# Summarize affection changes and output the new affection level in the generation.
 `)
 %>
 ```
 
-**Example in preset:**
+Then, in the preset, we write:
+
 ```javascript
-Follow these <thinking> steps:
+Think according to the following <thinking> steps.
 <thinking>
-// Read CoT defined in lore book
+// Read CoT defined by World Book here
 <%- getPromptsInjected("CoT") %>
 </thinking>
 ```
 
-**Result during generation:**
+Thus, during generation, the above content becomes:
+
 ```javascript
-Follow these <thinking> steps:
+Think according to the following <thinking> steps.
 <thinking>
 
 # Affection
 Q: What is <char>'s affection level?
-Q: How will the next generation affect affection?
+Q: What changes will the next generation cause in affection?
 Q: What is the new affection level?
-# Summarize affection changes and output the new level
+# Summarize affection changes and output the new affection level in the generation.
 
 </thinking>
 ```
 
 ---
 
-### List of Available Decorators
+## Decorators
+
+At the beginning of **World/Knowledge Book** content, decorators can be added using the `@@` prefix. The extension will recognize these decorators and perform additional processing on the entry.
+
+Multiple decorators are allowed simultaneously. Each decorator must occupy its own line. No blank lines are allowed between multiple decorators.
+
+Decorator usage example:
+
+```
+@@activate
+This is the World Book entry content...
+```
+
+> The above decorator ignores the 🟢 keyword, treating the entry as a 🔵 for activation.
+
+### Available Decorator List
 
 - `@@activate`: Treat as a 🔵 entry.
-- `@@dont_activate`: Do not activate this entry (completely prevents activation, even with `activewi`).
-- `@@message_formatting`: Output as HTML code (only in `[RENDER]` and `@@render` modes).
+- `@@dont_activate`: Do not activate this entry (completely prohibits activation, even with `activewi`).
+- `@@message_formatting`: Output as HTML code (only for `[RENDER]` and `@@render` modes).
 - `@@generate_before`: Equivalent to `[GENERATE:BEFORE]` (see [Content Injection](#content-injection) for details).
 - `@@generate_after`: Equivalent to `[GENERATE:AFTER]` (see [Content Injection](#content-injection) for details).
 - `@@render_before`: Equivalent to `[RENDER:BEFORE]` (see [Content Injection](#content-injection) for details).
@@ -501,13 +679,13 @@ Q: What is the new affection level?
 - `@@dont_preload`: Do not process this entry when opening the character card.
 - `@@initial_variables`: Equivalent to `[InitialVariables]` (see [Content Injection](#content-injection) for details).
 - `@@always_enabled`: Used for special entries like `[GENERATE]`, `[RENDER]`, and `[InitialVariables]` to force enable the entry.
-- `@@only_preload`: Enable this entry only during the [Immediate Lore Book Loading](#immediate-lore-book-loading) phase.
-- `@@private`: Inserts `<% { %>` and `<% } %>` at the beginning and end of the entry content to avoid the `Identifier ... has already been declared` error.
-- `@@if`: Checks a condition; if the result is `false`, excludes this entry.
-- `@@iframe`: Wraps `@@render_before` or `@@render_after` content in an `<iframe>` tag to avoid style pollution in the global scope.
-- `@@preprocessing`: This extension processes the entry before Tavern handles the lore book.
+- `@@only_preload`: Only enable this entry during the [Immediately Load World Books](#immediately-load-world-books) phase.
+- `@@private`: Inserts `<% { %>` and `<% } %>` at the beginning and end of the entry content to avoid `Identifier ... has already been declared` errors.
+- `@@if`: Check a condition. If the result is `false`, exclude this entry.
+- `@@iframe`: Wrap `@@render_before` or `@@render_after` content in an `<iframe>` tag to avoid style pollution in the global scope.
+- `@@preprocessing`: Processed by this extension before the Tavern handles the World Book.
 
-**General Usage:**
+General usage:
 
 ```javascript
 @@render_after
@@ -515,7 +693,7 @@ Q: What is the new affection level?
 Name: <%- variables.status_bar.character_name %>
 ```
 
-**`@@if` Example:**
+`@@if` example:
 
 ```javascript
 @@if variables.current_stage === 1
@@ -527,13 +705,13 @@ Stage 1 content
 Stage 2 and 3 content
 ```
 
-> When the condition check fails (i.e., result is `false`), this entry will not proceed to the lore book processing flow.
+> When the condition check fails (i.e., the result is `false`), this entry will not enter the World Book processing flow.
 >
-> The condition can be any `javascript` code, including function calls like `getvar`, and must be a single line.
+> The condition can be any `javascript` code, can call functions such as `getvar`, etc., and must be a single line.
 >
-> `@@if` only affects Tavern's built-in lore book processing logic and does not affect features provided by this extension. For example, it does not take effect for `@@generate` and `@@render`.
+> `@@if` only affects the Tavern's built-in World Book processing logic and does not affect features provided by this extension. For example, it does not take effect for `@@generate` and `@@render`.
 
-**`@@iframe` Example:**
+`@@iframe` example:
 
 ```ejs
 @@render_after
@@ -544,7 +722,7 @@ Stage 2 and 3 content
 <body>
 <div>
 【Hakimi】<br/>
-Favorability: <%- variables.hakimi.favorability %>
+Affection: <%- variables.hakimi.affection %>
 </div>
 </body>
 </html>
@@ -555,29 +733,29 @@ Favorability: <%- variables.hakimi.favorability %>
 >
 > `if(!is_user && !is_system)` means the status bar is only displayed for character messages.
 >
-> `ejs` code can still be executed during rendering, but becomes unavailable after rendering. However, Tavern's built-in `SillyTavern.getContext()` can still be used to call Tavern functions.
+> During rendering, `ejs` code can still be executed, but after rendering, it becomes unavailable. However, you can still use the Tavern's built-in `SillyTavern.getContext()` to call Tavern functions.
 
-**`@@iframe` Collapsible Version:**
+Collapsible version of `@@iframe`:
 
 ```ejs
 @@render_after
-@@iframe Collapsible Status Bar (Click to Show)
+@@iframe Collapsible Status Bar (click to show)
 <% if(!is_user && !is_system) { %>
 <html>
 <head></head>
 <body>
 <div>
 【Hakimi】<br/>
-Favorability: <%- variables.hakimi.favorability %>
+Affection: <%- variables.hakimi.affection %>
 </div>
 </body>
 </html>
 <% } %>
 ```
 
-> The `@@iframe` decorator can include a string as a title. If the content is not empty, it will be collapsed, and this title becomes the header of the collapsible block.
+> The `@@iframe` decorator can include a string as a title. As long as the content is not empty, it will be collapsed. This title is the header of the collapsible block.
 
-**Usage of `@@message_formatting`:**
+Usage of `@@message_formatting`:
 
 ```html
 @@render_after
@@ -588,249 +766,278 @@ Favorability: <%- variables.hakimi.favorability %>
 <body>
 <div>
 【Hakimi】<br/>
-Favorability: <%- variables.hakimi.favorability %>
+Affection: <%- variables.hakimi.affection %>
 </div>
 </body>
 </html>
+​```
 ```
->  This hands off the status bar to other extensions for processing and rendering, such as [Tavern-Helper](https://github.com/N0VI028/JS-Slash-Runner/) or [LittleWhiteBox](https://github.com/RT15548/LittleWhiteBox), allowing the use of functions they provide.
+
+> Hand over the status bar to other extensions for processing and rendering, such as [Tavern-Helper](https://github.com/N0VI028/JS-Slash-Runner/) or [LittleWhiteBox](https://github.com/RT15548/LittleWhiteBox), enabling you to call functions they provide.
 
 ---
 
 ## Activation Regex
 
-The `activateRegex` function temporarily creates a **regular expression** to process **prompt content** with additional rules.
+Through the `activateRegex` function, you can temporarily create a **regular expression** to perform additional processing on **prompt** content.
 
-It supports function-based replacements (more powerful than SillyTavern's native **regex**), but can also leverage SillyTavern's regex framework.
+Its advantage is supporting functions as replacement content, richer than the Tavern's built-in **regex** functionality.
 
-### SillyTavern Regex
-- No function support (string-only replacements)
-- No **named capture groups**
-- Active only during generation
+Of course, it can also use the Tavern's built-in **regex** framework for processing.
 
-**Example:**
+### Tavern Regex
+
+Tavern regex does not support passing functions, only strings.
+
+Also does not support **named capture groups**.
+
+Only effective during generation.
+
+Example:
+
 ```javascript
 <%
-    // Hides deep thinking content in messages
+    // Hide deep thinking content in messages.
     activateRegex(/<think>[\s\S]*?<\/think>/gi, "");
 %>
 ```
 
-> This injects a temporary **SillyTavern regex** to process content **sent to the LLM**  
-> Processing order: **SillyTavern regex** → **prompt template**
+> The above code injects a temporary **Tavern regex** to process content **sent to the LLM**.
+>
+> Processing uses **Tavern regex** first, then **prompt template** processing.
 
 ### Preprocessing Regex
-Applied **before** prompt template processing, then template computation.
 
-Active during both generation and rendering.
+Apply this regex before **prompt template** processing, then perform **template calculation**.
+
+Effective for both generation and rendering.
 
 ```javascript
 <%
-    // Replace {{getvars::...}} with variable values
+    // Replace {{getvars::...}} with variable content.
     activateRegex(/\{\{getvars::([a-zA-Z0-9_]+?)\}\}/gi, function(match, varName) {
     	return this.getvar(varName);
-	}, { generate: true });
+	}, {
+    	// Effective during generation.
+    	generate: true
+	});
 %>
 ```
 
-> Mimics **SillyTavern macro** functionality with custom macro `{{getvars}}`
+> The above code mimics the **Tavern macro** functionality, creating a custom macro `{{getvars}}`.
 
 ### Message Regex
 
-Two variants: **raw message content** and **HTML content**.
+Message regex is divided into two cases: **raw message content** and **HTML content**.
 
 #### Raw Message Content
-Permanently modifies message content directly.
 
-Executed before **prompt template** processing.
+Raw message content regex directly and permanently modifies message content.
+
+This regex also executes before **prompt template** processing.
 
 ```javascript
 <%
-    // Update message variables from <Variables> blocks
+    // Treat content within <Variables> blocks as variables, updating message variables.
     activateRegex(/<Variables>([\s\S]+?)<\/Variables>/gi, function(match, variables) {
     	const self = this;
     	variables
-            .split("\n")	// Split by line
-            .filter(x => x.includes(":")) // Validate format
-    		.map(x => x.split(":", 2))	// Split key-value
-    		.forEach(([k, v]) => self.setvar(k.trim(), v.trim()));	// Write variables
+            .split("\n")	// Split by line.
+            .filter(x => x.includes(":")) // Check format.
+    		.map(x => x.split(":", 2))	// Split key-value.
+    		.forEach(([k, v]) => self.setvar(k.trim(), v.trim()));	// Write variables.
     	
-    	// Remove variable block
+    	// Delete the variable block.
     	return "";
-	}, { message: true });
+	}, {
+    	// Effective for message floors.
+    	// Default before is true.
+    	message: true,
+	});
 %>
 ```
 
-> Reads LLM-output variable updates and writes them to the variable table
+> The above code reads variable updates output by the LLM and writes the updated values into the variable table.
 
 #### HTML Content
 
-Modifies message HTML content.
+This regex is used to modify message HTML content.
 
 ```javascript
 <%_
-	// Replace catbox image links with proxy to fix loading issues
+	// Replace catbox image hosting links with a proxy to solve image loading issues.
 	activateRegex(
         /files\.catbox\.moe/gi,
         'catbox.***.net',
-        { message: true, html: true }
+        {
+            // Effective for message floors.
+            message: true,
+            // Only effective for HTML.
+            html: true
+        }
     );
 _%>
 ```
 
-> Replaces all `files.catbox.moe` links in message HTML with `catbox.***.net`
+> The above code directly modifies all `files.catbox.moe` links in message HTML to `catbox.***.net`.
 
 ---
 
-## Activating/Loading Specified World Info Entries  
+## Activating/Loading Specified World Book Entries
 
-This section primarily explains how to activate specific World info entries via code.  
+This section mainly introduces how to activate specific World Book entries through code.
 
-### Using `getwi` to Directly Load World Info Content  
+### Using getwi to Directly Load World Book Content
 
-`getwi` is the most direct method for loading World info. It completely bypasses SillyTavern's built-in World info processing logic, directly injecting the specified World info entry into the current context (even if the current context isn't a World info entry).  
+`getwi` is the most direct way to load World Book content. It completely bypasses the Tavern's (SillyTavern) built-in World Book processing logic, directly loading the specified World Book entry into the current context (even if the current context is not a World Book entry).
 
 #### Advantages
 
-- Unconditionally activates entries by bypassing SillyTavern's World info processing logic  
-- Precisely controls prompt content placement and activation conditions  
-- Supports multiple invocations  
-- Can activate unmounted World info entries  
+- Completely bypasses the Tavern's World Book processing logic, unconditional activation.
+- Precise control over prompt content placement and activation conditions.
+- Can be called multiple times.
+- Can activate unmounted World Book entries.
 
 #### Disadvantages
 
-- Cannot utilize SillyTavern's World info logic; only retrieves raw content  
-- Repeated calls cause duplicated World info processing (executes code multiple times)  
+- Completely unable to use the Tavern's World Book logic, only retrieves content.
+- World Book content may be processed multiple times with multiple calls (code executed multiple times).
 
-#### Usage Example  
+#### Usage Example
+
 ```javascript
-Lily's attitude toward {{user}}:  
-<%  
-    // If within the same World info, the first parameter can be omitted (pass only entry name/UID)  
-    if (variables.lily.affinity > 80) {  
-        print(await getwi("lily is lover"));  
-    } else if (variables.lily.affinity > 20) {  
-        print(await getwi("lily is friend"));  
-    } else if (variables.lily.affinity > 0) {  
-        print(await getwi("lily is stranger"));  
-    } else {  
-        print(await getwi("lily is nuisance"));  
-    }  
-%>  
+Lily's attitude towards {{user}}:
+<%
+    // If within the same World Book, the first parameter can be omitted, only passing entry name/uid.
+    if(variables.lily.affinity > 80) {
+        print(await getwi("lily is lover"));
+    } else if (variables.lily.affinity > 20) {
+        print(await getwi("lily is friend"));
+    } else if (variables.lily.affinity > 0) {
+        print(await getwi("lily is stranger"));
+    } else {
+        print(await getwi("lily is nuisance"));
+    }
+%>
 ```
 
-### Using `activewi` to Trigger Native SillyTavern World Info Activation  
+### Using activewi to Trigger Tavern Native World Book Activation
 
-To leverage SillyTavern's native 🟢keyword-based World info activation, use `activewi` to add entries to the pending activation queue for SillyTavern to process.  
-Entries activated via this function follow SillyTavern's native activation logic, producing identical results to standard activation.  
-**This function treats disabled entries as enabled** (without modifying the World info itself), allowing even disabled entries to be activated.  
+If you need the Tavern's native 🟢 keyword activation for World Book entries, you can use `activewi` to add World Book entries to the pending activation list for the Tavern to process.
 
-#### Advantages  
-- Fully adheres to SillyTavern's World info processing system  
-- Can activate unmounted World info entries  
-- Optional forced activation ignoring 🟢keywords, 🔗vectorization, groups, cooldowns, delays, etc. (see reference documentation)  
+Entries activated via this function will follow the Tavern's activation logic, achieving exactly the same effect as native activation.
 
-#### Disadvantages  
-- Must be used within `[GENERATE:BEFORE]` entries (not strictly enforced, but calls outside this context only take effect in the next generation)  
+This function automatically treats **disabled entries as enabled** (without modifying the World Book itself), meaning even disabled entries can be activated.
 
-#### Usage Example  
-```javascript  
-@@generate_before  
-<%  
-    for (const event of (variables.world.events ?? [])) {  
-        await activewi(`[EVENT] ${event}`);  
-    }  
-%>  
+#### Advantages
+
+- Fully follows the Tavern's World Book processing capabilities.
+- Can activate unmounted World Book entries.
+- Optional forced activation, ignoring 🟢 keywords, 🔗 vectorization, groups, cooldown, delay, etc. (see reference documentation for details).
+
+#### Disadvantages
+
+- Needs to be used within `[GENERATE:BEFORE]` entries (not mandatory, but if not called there, it only takes effect in the next generation).
+
+#### Usage Example
+
+```javascript
+@@generate_before
+<%
+	for(const event of (variables.world.events ?? [])) {
+        await activewi(`[EVENT] ${event}`);
+    }
+%>
 ```
 
-> The `@@generate_before` decorator is functionally equivalent to `[GENERATE:BEFORE]`
+> The `@@generate_before` decorator has the same effect as `[GENERATE:BEFORE]`.
 
-### Native Recursive 🟢 Keyword Activation via Preprocessing Lorebook Entries
+### Achieving Native Recursive 🟢 Keyword Activation via Preprocessing World Book Entries
 
-To achieve native green-light recursive activation, you can perform **template processing** on Lorebook entries *before* the Lorebook is processed. This allows SillyTavern’s native 🟢 keyword activation to function as intended.
+If we want to achieve native green-light recursive activation, we can perform **template processing** on World Book entries before the Tavern processes them, handling the World Book in advance to realize the Tavern's native 🟢 keyword activation.
 
 This feature can be enabled in two ways:
 
-- Add `[Preprocessing]` to the entry title
+- Add `[Preprocessing]` to the entry title.
 
-	> Example: `[Preprocessing] Lorebook Activator`
+	> For example: `[Preprocessing] World Book Activator`.
 
-- Add the decorator `@@preprocessing` within the entry content
+- Add the decorator `@@preprocessing` within the entry.
 
 > Example:
 >
 > ```
 > @@preprocessing
-> This is the content of the lorebook entry...
+> This is the World Book entry content...
 > ```
 
 #### Advantages
 
-- Fully compatible with SillyTavern’s native 🟢 keyword recursive activation
-- Supports template processing for both **primary keywords** and **optional filters**
+- Fully compatible with the Tavern's 🟢 keyword recursive activation feature.
+- Supports template processing for **primary keywords** and **optional filters**.
 
 #### Disadvantages
 
-- Double processing issue
+- Double processing issue.
 
-> Since regex, macros, and template code are pre-processed, the extension will perform a second round of processing after the Lorebook has been handled.
+> Since it pre-processes regex, macros, and template code, the extension will perform a second round of processing after World Book processing is complete.
 
-- Unordered processing
+- Unordered processing.
 
-> Processing here does not follow SillyTavern’s standard Lorebook processing order. Entry execution order cannot be guaranteed, so users must ensure no conflicts arise.
+> Processing here does not follow the Tavern's World Book processing order at all. Entry execution order cannot be guaranteed, so you need to ensure no conflicts yourself.
 
 #### Usage Example
 
 ```javascript
 @@preprocessing
-<% if (variables.Hakimi.Affection > 50 && variables.Hakimi.AffectionEventStage === 0) { %>
-Current Event: Hakimi lets down her guard
-<% } else if (variables.Hakimi.Affection > 70 && variables.Hakimi.AffectionEventStage === 1) { %>
-Current Event: Hakimi reveals what happened to her
-<% } else if (variables.Hakimi.Affection > 90 && variables.Hakimi.AffectionEventStage === 2) { %>
-Current Event: Hakimi shares her past
+<% if (variables.Hakimi.affection > 50 && variables.Hakimi.affection_event_stage === 0) { %>
+Current event: Hakimi lowers her guard.
+<% } else if (variables.Hakimi.affection > 70 && variables.Hakimi.affection_event_stage === 1) { %>
+Current event: Hakimi tells what happened to her.
+<% } else if (variables.Hakimi.affection > 90 && variables.Hakimi.affection_event_stage === 2) { %>
+Current event: Hakimi reveals her past.
 <% } %>
 ```
 
-When sent to the LLM, the above content may appear as:
+When sent to the LLM, the above content might look like this:
 
 ```
-Current Event: Hakimi lets down her guard
+Current event: Hakimi lowers her guard.
 
-Corresponding content for the entry "Hakimi lets down her guard"...
+Content corresponding to the entry about Hakimi lowering her guard...
 ```
 
 ### Excluding Entries Using the `@@if` Decorator
 
-If you only need to use a condition to determine whether an entry should be activated and don't want to write complex code, there's a simple method.
+If you just need to use conditions to judge whether an entry should be activated and don't want to write complex code, there's a simple method.
 
-You can use the `@@if` decorator to exclude entries. If the condition is false, the entry will be disabled.
+You can use the `@@if` decorator to exclude entries. If the condition is false, the entry is disabled.
 
 ```
 @@if condition
-World/Lorebook content...
+World Book content...
 ```
 
-The condition can be any `JavaScript` code, but it must be written on a single line.
+The condition can be any `Javascript` code, but must be a single line.
 
 #### Advantages
 
-- Fully adheres to SillyTavern's built-in World/Lorebook handling.
-- Directly excludes entries, preventing accidental activation of the World/Lorebook.
-- Simple to write; no need for a lot of `<% ... %>` tags.
+- Fully follows the Tavern's built-in World Book processing.
+- Directly excludes entries, preventing accidental World Book activation.
+- Simple to write, no need for many `<% ... %>` tags.
 
 #### Disadvantages
 
-- Only one line of code is allowed.
+- Only one line of code.
 
-#### Usage Examples
+#### Usage Example
 
 ```
-@@if variables.Hakimi.favorability >= 90
+@@if variables.Hakimi.affection >= 90
 Hakimi likes {{user}} very much.
 ```
 
 ```
-@@if variables.Hakimi.favorability > 50 && variables.Hakimi.favorability < 90
+@@if variables.Hakimi.affection > 50 && variables.Hakimi.affection < 90
 Hakimi considers {{user}} a friend.
 ```
