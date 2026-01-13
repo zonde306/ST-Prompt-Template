@@ -709,14 +709,13 @@ Stage 2 and 3 content
 >
 > The condition can be any `javascript` code, can call functions such as `getvar`, etc., and must be a single line.
 >
-> `@@if` only affects the Tavern's built-in World Book processing logic and does not affect features provided by this extension. For example, it does not take effect for `@@generate` and `@@render`.
 
 `@@iframe` example:
 
 ```ejs
 @@render_after
 @@iframe
-<% if(!is_user && !is_system) { %>
+@@if !is_user && !is_system
 <html>
 <head></head>
 <body>
@@ -726,12 +725,11 @@ Affection: <%- variables.hakimi.affection %>
 </div>
 </body>
 </html>
-<% } %>
 ```
 
 > The above effect adds a status bar at the end of all message floors.
 >
-> `if(!is_user && !is_system)` means the status bar is only displayed for character messages.
+> `@@if !is_user && !is_system` means the status bar is only displayed for character messages.
 >
 > During rendering, `ejs` code can still be executed, but after rendering, it becomes unavailable. However, you can still use the Tavern's built-in `SillyTavern.getContext()` to call Tavern functions.
 
@@ -740,7 +738,7 @@ Collapsible version of `@@iframe`:
 ```ejs
 @@render_after
 @@iframe Collapsible Status Bar (click to show)
-<% if(!is_user && !is_system) { %>
+@@if !is_user && !is_system
 <html>
 <head></head>
 <body>
@@ -750,7 +748,6 @@ Affection: <%- variables.hakimi.affection %>
 </div>
 </body>
 </html>
-<% } %>
 ```
 
 > The `@@iframe` decorator can include a string as a title. As long as the content is not empty, it will be collapsed. This title is the header of the collapsible block.

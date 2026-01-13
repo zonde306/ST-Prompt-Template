@@ -759,14 +759,13 @@ Q: 变化后的好感度是多少？
 >
 > 条件可以为任意`javascript`代码，可以调用函数，例如`getvar`等，仅限单行
 >
-> `@@if`仅影响酒馆内置的世界书处理逻辑，不会影响此扩展提供的功能，例如对`@@generate`和`@@render`不会生效
 
 `@@iframe`例子：
 
 ```ejs
 @@render_after
 @@iframe
-<% if(!is_user && !is_system) { %>
+@@if !is_user && !is_system
 <html>
 <head></head>
 <body>
@@ -776,12 +775,11 @@ Q: 变化后的好感度是多少？
 </div>
 </body>
 </html>
-<% } %>
 ```
 
 > 以上效果为在所有楼层的末尾添加一个状态栏
 >
-> `if(!is_user && !is_system)`表示只在角色楼层显示状态栏
+> `@@if !is_user && !is_system`表示只在角色楼层显示状态栏（即排除用户和系统的楼层）
 >
 > 在渲染时仍然能够执行`ejs`代码，但是在渲染后无法使用，不过仍然可以用酒馆内置的`SillyTavern.getContext()`来调用酒馆函数
 
@@ -790,7 +788,7 @@ Q: 变化后的好感度是多少？
 ```ejs
 @@render_after
 @@iframe 折叠状态栏（点击显示）
-<% if(!is_user && !is_system) { %>
+@@if !is_user && !is_system
 <html>
 <head></head>
 <body>
@@ -800,7 +798,6 @@ Q: 变化后的好感度是多少？
 </div>
 </body>
 </html>
-<% } %>
 ```
 
 > `@@iframe`装饰器可以添加字符串作为标题，只要内容不为空则会将其折叠起来，这个标题就是折叠块的标题
@@ -810,6 +807,7 @@ Q: 变化后的好感度是多少？
 ```html
 @@render_after
 @@message_formatting
+@@if !is_user && !is_system
 ​```html
 <html>
 <head></head>
