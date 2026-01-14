@@ -1,6 +1,6 @@
 import { EvalTemplateOptions, getSyntaxErrorInfo, evalTemplate } from '../function/ejs';
 import { settings } from '../modules/ui';
-import { selectActivatedEntries, getEnabledWorldInfoEntries, WorldInfoEntry, parseDecorators, isConditionFiltedEntry } from '../function/worldinfo';
+import { selectActivatedEntries, getEnabledWorldInfoEntries, WorldInfoEntry, WorldInfoDecorators } from '../function/worldinfo';
 import { chat, messageFormatting, substituteParams } from '../../../../../../script.js';
 import { applyRegex } from '../function/regex';
 import { copyText } from '../../../../../utils.js';
@@ -109,7 +109,7 @@ export async function evaluateWIEntities(
     let prompts = '';
 
     for (const data of worldInfoData) {
-        if(await isConditionFiltedEntry(env, data, options))
+        if(await new WorldInfoDecorators(data).isConditionFiltedEntry(env, options))
             continue;
 
         let result = await evalTemplateHandler(
@@ -172,7 +172,7 @@ export async function evalTemplateWI(
     entry: WorldInfoEntry,
     env: Record<string, unknown>,
     options: EvalTemplateOptions = {}) : Promise<[string, string[], string[]]> {
-    const content = entry.decorators ? entry.content : parseDecorators(entry.content)[1];
+    const content = new WorldInfoDecorators(entry).cleanContent;
     const resultContent = await evalTemplateHandler(
         applyRegex(env, substituteParams(getRegexedString(content, regex_placement.WORLD_INFO)), { generate: true }),
         env,

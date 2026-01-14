@@ -551,7 +551,10 @@ export async function compileTemplate(
                 const { resolve, reject } = taskMap.get(id)!;
                 taskMap.delete(id);
                 if (error) {
-                    reject(new Error(error));
+                    const e = new Error(error);
+                    // @ts-expect-error: 2339
+                    e.src = code;
+                    reject(e);
                 } else {
                     resolve(code);
                 }

@@ -5,7 +5,7 @@ import { eventSource, event_types, chat, messageFormatting, GenerateOptions, upd
 import { prepareContext } from '../function/ejs';
 import { STATE, checkAndSave, clonePreviousMessage } from '../function/variables';
 import { extension_settings } from '../../../../../extensions.js';
-import { getEnabledWorldInfoEntries, deactivateActivateWorldInfo, LoreBook, getEnabledLoreBooks, getActivatedWIEntries, isSpecialEntry, getWorldInfoEntries, isPreprocessingEntry, WorldInfoEntry, isConditionFiltedEntry, isPrivateEntry } from '../function/worldinfo';
+import { getEnabledWorldInfoEntries, deactivateActivateWorldInfo, LoreBook, getEnabledLoreBooks, getActivatedWIEntries, WorldInfoDecorators, getWorldInfoEntries, WorldInfoEntry, activateWorldInfo } from '../function/worldinfo';
 import { getCharacterDefine } from '../function/characters';
 import { settings } from './ui';
 import { activateRegex, deactivateRegex, applyRegex } from '../function/regex';
@@ -100,13 +100,17 @@ async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
         // reverse to avoid index change
         for (let i = data[type].length - 1; i >= 0; i--) {
             const entry = data[type][i];
-            if (isSpecialEntry(entry)) {
+            const handler = new WorldInfoDecorators(entry);
+            let removal = false;
+            if (handler.isSpecialEntry()) {
                 data[type].splice(i, 1);
+                removal = true;
                 console.debug(`[Prompt Template] Remove ${type} of ${entry.world}/${entry.comment}/${entry.uid} from context when SpecialEntry`);
-            } else if (await isConditionFiltedEntry(env, entry, { sandbox })) {
+            } else if (await handler.isConditionFiltedEntry(env, { sandbox })) {
                 data[type].splice(i, 1);
+                removal = true;
                 console.debug(`[Prompt Template] Remove ${type} of ${entry.world}/${entry.comment}/${entry.uid} from context when ConditionFiltedEntry`);
-            } else if (isPreprocessingEntry(entry)) {
+            } else if (handler.isPreprocessingEntry()) {
                 try {
                     const [ content, key, keysecondary ] = await evalTemplateWI(data[type][i], env, { sandbox });
                     data[type][i] = { ...entry, content, key, keysecondary};
@@ -119,9 +123,19 @@ async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
                 } finally {
                     sandbox?.destroy();
                 }
-            } else if (isPrivateEntry(entry)) {
-                entry.content = `<% (()=>{%>${entry.content}<%})(); %>`;
+            } else if (handler.isPrivateEntry()) {
+                data[type][i] = { ...entry, content: `<% (()=>{%>${entry.content}<%})(); %>`  };
                 console.debug(`[Prompt Template] Mark ${type} of ${entry.world}/${entry.comment}/${entry.uid} as private`);
+            }
+
+            if(!removal) {
+                if(handler.isForceActivation()) {
+                    await activateWorldInfo(entry.world, entry.uid, true);
+                    console.debug(`[Prompt Template] Force activate ${type} of ${entry.world}/${entry.comment}/${entry.uid}`);
+                } else if(handler.isForceDeactivation()) {
+                    data[type][i] = { ...entry, disable: true };
+                    console.debug(`[Prompt Template] Force deactivate ${type} of ${entry.world}/${entry.comment}/${entry.uid}`);
+                }
             }
         }
     };
@@ -565,7 +579,7 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
         .filter(data =>
             !data.disable &&
             !data.decorators.includes('@@dont_preload') &&
-            !isSpecialEntry(data, true)
+            !new WorldInfoDecorators(data).isSpecialEntry(true)
         );
 
     const env = await prepareContext(-1, {
@@ -693,7 +707,7 @@ async function handleRefreshWorldInfo(world: string, _data: LoreBook) {
         .filter(data =>
             !data.disable &&
             !data.decorators.includes('@@dont_preload') &&
-            !isSpecialEntry(data, true)
+            !new WorldInfoDecorators(data).isSpecialEntry(true)
         );
     
     const env = await prepareContext(-1, {
