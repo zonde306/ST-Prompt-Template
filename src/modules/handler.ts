@@ -1,7 +1,5 @@
-// @ts-expect-error
-import vm from 'vm-browserify';
-import { Message, GenerateAfterData, WorldInfoLoaded } from './defines';
-import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock, substituteParams, this_chid, getCurrentChatId, appendMediaToMessage, addCopyToCodeBlocks } from '../../../../../../script.js';
+import { Message, GenerateAfterData, WorldInfoLoaded, Chat, ChatCompletionReady } from './defines';
+import { eventSource, event_types, chat, messageFormatting, GenerateOptions, updateMessageBlock, substituteParams, this_chid, getCurrentChatId, appendMediaToMessage, addCopyToCodeBlocks, main_api } from '../../../../../../script.js';
 import { prepareContext } from '../function/ejs';
 import { STATE, checkAndSave, clonePreviousMessage } from '../function/variables';
 import { extension_settings } from '../../../../../extensions.js';
@@ -180,15 +178,36 @@ async function handleGenerateAfter(data: GenerateAfterData, dryRun?: boolean) {
     if (settings.enabled === false)
         return;
 
-    // OAI/non-OAI have different formats
-    const chat = typeof data.prompt === 'string' ? [{ role: '', content: data.prompt }] : data.prompt;
+    if(main_api === 'openai') {
+        console.debug(`[Prompt Template] Skip generate after when main_api is openai`);
+        return;
+    }
 
+    let chat = typeof data.prompt === 'string' ? [{ role: '', content: data.prompt }] : data.prompt;
+    chat = await processGenerateAfter(chat);
+    if(typeof data.prompt === 'string') {
+        if(chat.length > 1) {
+            data.prompt = chat.map(c => c.content).join('\n\n');
+        } else {
+            data.prompt = chat[0].content as string;
+        }
+    } else {
+        data.prompt = chat;
+    }
+}
+
+async function handleCompletionReady(data: ChatCompletionReady) {
+    isDryRun = false;
+    data.messages = await processGenerateAfter(data.messages);
+}
+
+async function processGenerateAfter(chat: Chat[]): Promise<Chat[]> {
     // Only Format Prompt
     deactivateRegex({ basic: true });
     deactivateActivateWorldInfo();
 
     if (settings.generate_enabled === false)
-        return;
+        return chat;
 
     STATE.isDryRun = false;
     const start = Date.now();
@@ -310,16 +329,12 @@ async function handleGenerateAfter(data: GenerateAfterData, dryRun?: boolean) {
         
         collectPrompts += after;
 
-        if (typeof data.prompt === 'string') {
-            data.prompt = generateBefore + chat[0].content + after;
-        } else {
-            chat[0].content = generateBefore + chat[0].content;
-            chat[chat.length - 1].content += after;
-        }
+        chat[0].content = generateBefore + chat[0].content;
+        chat[chat.length - 1].content += after;
 
         if (settings.inject_loader_enabled) {
             // @INJECT xxx
-            await handleInjectPrompt(data, env, { sandbox });
+            chat = await handleInjectPrompt(chat, env, { sandbox }) ?? chat;
         }
     } catch (error) {
         console.error('[Prompt Template] Error processing prompt:', error);
@@ -341,6 +356,8 @@ async function handleGenerateAfter(data: GenerateAfterData, dryRun?: boolean) {
     deactivateRegex({ generate: true, basic: true });
     deactivatePromptInjection();
     STATE.isInPlace = false;
+
+    return chat;
 }
 
 async function handleMessageRender(message_id: string, type?: string, isDryRun?: boolean) {
@@ -906,6 +923,7 @@ export async function init() {
     eventSource.on(event_types.WORLDINFO_UPDATED, handleRefreshWorldInfo);
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleGenerateBefore);
     eventSource.on(event_types.GENERATE_AFTER_DATA, handleGenerateAfter);
+    eventSource.on(event_types.CHAT_COMPLETION_SETTINGS_READY, handleCompletionReady);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.on(e, handleMessageRender));
     eventSource.on(event_types.WORLDINFO_ENTRIES_LOADED, handleWorldInfoLoaded);
     MESSAGE_CREATED.forEach(e => eventSource.on(e, handleMessageCreated));
@@ -924,6 +942,7 @@ export async function exit() {
     eventSource.removeListener(event_types.WORLDINFO_UPDATED, handleRefreshWorldInfo);
     eventSource.removeListener(event_types.GENERATION_AFTER_COMMANDS, handleGenerateBefore);
     eventSource.removeListener(event_types.GENERATE_AFTER_DATA, handleGenerateAfter);
+    eventSource.removeListener(event_types.CHAT_COMPLETION_SETTINGS_READY, handleCompletionReady);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.removeListener(e, handleMessageRender));
     eventSource.removeListener(event_types.WORLDINFO_ENTRIES_LOADED, handleWorldInfoLoaded);
     MESSAGE_CREATED.forEach(e => eventSource.removeListener(e, handleMessageCreated));

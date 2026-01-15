@@ -3,11 +3,15 @@ import { evalTemplateHandler } from "../utils/evaluate";
 import { applyRegex } from "../function/regex";
 import { settings } from "../modules/ui";
 import { substituteParams } from "../../../../../../script.js";
-import { GenerateAfterData } from "../modules/defines";
+import { Chat } from "../modules/defines";
 import { EvalTemplateOptions } from "../function/ejs";
 
 // TODO: Colddown and sticky
-export async function handleInjectPrompt(data: GenerateAfterData, env: Record<string, unknown>, options: EvalTemplateOptions = {}) {
+export async function handleInjectPrompt(
+    chat: Chat[],
+    env: Record<string, unknown>,
+    options: EvalTemplateOptions = {}
+): Promise<Chat[]> {
     // get All INJECT 世界书条目（只获取关闭的条目）
     const injectWorldInfoData = (await getEnabledWorldInfoEntries())
         .filter(x =>
@@ -175,7 +179,7 @@ export async function handleInjectPrompt(data: GenerateAfterData, env: Record<st
         if (injectInstructions.length > 0) {
             console.log('[Prompt Template] Starting injection process...');
             // @ts-ignore
-            const promptArraylog = Array.from(data.prompt) as Array<{
+            const promptArraylog = Array.from(chat) as Array<{
                 role: string,
                 content: string,
                 original_index?: number,
@@ -184,7 +188,7 @@ export async function handleInjectPrompt(data: GenerateAfterData, env: Record<st
             console.log('[Prompt Template] data before injection:', promptArraylog);
 
             // @ts-ignore
-            const promptArray = Array.from(data.prompt) as Array<{
+            const promptArray = Array.from(chat) as Array<{
                 role: string,
                 content: string,
                 original_index?: number,
@@ -364,7 +368,9 @@ export async function handleInjectPrompt(data: GenerateAfterData, env: Record<st
             }
 
             // update original data.prompt object
-            data.prompt = promptArray;
+            return promptArray;
         }
     }
+
+    return chat;
 }

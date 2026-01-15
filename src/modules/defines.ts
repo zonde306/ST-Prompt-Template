@@ -94,7 +94,7 @@ export interface Metadata extends Record<string, unknown> {
 }
 
 // event_types.CHAT_COMPLETION_SETTINGS_READY
-export interface GenerateData {
+export interface ChatCompletionReady {
     messages: Array<Chat>;
     model: string;
     temperature?: number;
