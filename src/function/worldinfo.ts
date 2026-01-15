@@ -718,6 +718,105 @@ function worldInfoSorter(a: WorldInfoEntry, b: WorldInfoEntry, top: number = DEF
         b.uid - a.uid;   
 }
 
+export class WorldInfoDecorators {
+    decorators: string[] = [];
+    arguments: string[] = [];
+    cleanContent: string = '';
+    entry: WorldInfoEntry;
+
+    constructor(entry: WorldInfoEntry, override: boolean = false) {
+        this.entry = entry;
+        if(entry.decorators?.length) {
+            this.decorators = entry.decorators;
+            this.cleanContent = entry.content;
+        } else {
+            const [decorators, cleanContent] = parseDecorators(entry.content);
+            this.decorators = decorators;
+            this.cleanContent = cleanContent;
+
+            if(override) {
+                entry.decorators = this.decorators;
+                entry.content = this.cleanContent;
+            }
+        }
+
+        for(const i in this.decorators) {
+            if(this.decorators[i].includes(' ')) {
+                const firstSpaceIndex = this.decorators[i].indexOf(' ');
+                this.arguments[i] = this.decorators[i].substring(firstSpaceIndex + 1);
+                this.decorators[i] = this.decorators[i].substring(0, firstSpaceIndex);
+            }
+        }
+    }
+
+    isSpecialEntry(preload : boolean = false) : boolean {
+        if(this.entry.comment.includes('[GENERATE:') ||
+            this.entry.comment.includes('[RENDER:') ||
+            this.entry.comment.includes('@INJECT') ||
+            this.entry.comment.includes('[InitialVariables]'))
+            return true;
+        
+        if(this.decorators.includes('@@generate') ||
+            this.decorators.includes('@@render') ||
+            this.decorators.includes('@@initial_variables'))
+            return true;
+        
+        if(!preload && this.decorators.includes('@@only_preload'))
+            return true;
+        
+        return false;
+    }
+
+    isPreprocessingEntry() : boolean {
+        if(this.entry.disable)
+            return false;
+        
+        if(this.entry.comment.includes('[Preprocessing]'))
+            return true;
+
+        return this.decorators.includes('@@preprocessing');
+    }
+
+    async isConditionFiltedEntry(env: Record<string, unknown>, options: EvalTemplateOptions = {}) : Promise<boolean> {
+        if(this.entry.disable)
+            return false;
+
+        const condition = this.decorators.indexOf('@@if');
+        if(condition < 0)
+            return false;
+        
+        // convert @@if xxx to <%- !!(xxx) %>
+        return (await evalTemplateHandler(
+            `<%- !!(${this.arguments[condition]}) %>`,
+            env,
+            `lore book condition ${this.entry.world}/${this.entry.comment}/${this.entry.uid}`,
+            {
+                ...options,
+                options: {
+                    filename: `worldinfo/${this.entry.world}/${this.entry.uid}-${this.entry.comment}/condition`,
+                    cache: settings.cache_enabled === 1, // enable for all
+                    ...(options.options ?? {}),
+                }
+            }
+        )) === 'false';
+    }
+
+    isPrivateEntry() : boolean {
+        if(this.entry.disable)
+            return false;
+        
+        return this.decorators.includes('@@private');
+    }
+
+    isForceActivation() : boolean {
+        return !this.decorators.includes('@@dont_activate') && this.decorators.includes('@@activate');
+    }
+
+    isForceDeactivation() : boolean {
+        return this.decorators.includes('@@dont_deactivate');
+    }
+}
+
 /**
  * Parse decorators from worldinfo content
  * @param content The content to parse
@@ -785,68 +884,4 @@ export function parseDecorators(content: string): [string[], string] {
 
     const newContent = lines.slice(contentStartIndex).join('\n');
     return [decorators, newContent];
-}
-
-export function isSpecialEntry(entry: WorldInfoEntry, preload : boolean = false) : boolean {
-    const title = entry.comment;
-    if(title.includes('[GENERATE:') ||
-        title.includes('[RENDER:') ||
-        title.includes('@INJECT') ||
-        title.includes('[InitialVariables]'))
-        return true;
-    
-    const decorators = (entry.decorators ?? parseDecorators(entry.content)[0]).join(',');
-    if(decorators.includes('@@generate') ||
-        decorators.includes('@@render') ||
-        decorators.includes('@@initial_variables'))
-        return true;
-    
-    if(!preload && decorators.includes('@@only_preload'))
-        return true;
-    
-    return false;
-}
-
-export function isPreprocessingEntry(entry: WorldInfoEntry) : boolean {
-    if(entry.disable)
-        return false;
-    
-    const title = entry.comment;
-    if(title.includes('[Preprocessing]'))
-        return true;
-
-    const decorators = entry.decorators ?? parseDecorators(entry.content)[0];
-    return decorators.includes('@@preprocessing');
-}
-
-export async function isConditionFiltedEntry(env: Record<string, unknown>, entry: WorldInfoEntry, options: EvalTemplateOptions = {}) : Promise<boolean> {
-    if(entry.disable)
-        return false;
-
-    let condition = (entry.decorators ?? parseDecorators(entry.content)[0]).find(x => x.startsWith('@@if '));
-    if(!condition)
-        return false;
-    
-    // @if xxx to <%- !(xxx) %>
-    return (await evalTemplateHandler(
-        `<%- !!(${condition.substring(4)}) %>`,
-        env,
-        `lore book condition ${entry.world}/${entry.comment}/${entry.uid}`,
-        {
-            ...options,
-            options: {
-                filename: `worldinfo/${entry.world}/${entry.uid}-${entry.comment}/condition`,
-                cache: settings.cache_enabled === 1, // enable for all
-                ...(options.options ?? {}),
-            }
-        }
-    )) === 'false';
-}
-
-export function isPrivateEntry(entry: WorldInfoEntry) : boolean {
-    if(entry.disable)
-        return false;
-    
-    const decorators = entry.decorators ?? parseDecorators(entry.content)[0];
-    return decorators.includes('@@private');
 }

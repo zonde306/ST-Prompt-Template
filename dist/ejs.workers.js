@@ -23,7 +23,7 @@ self.onmessage = function(e) {
     try {
         func = ejs.compile(template, options);
     } catch (err) {
-        self.postMessage({ id, error: err.message, code: null });
+        self.postMessage({ id, error: err.message, code: e.src });
         return;
     }
     
