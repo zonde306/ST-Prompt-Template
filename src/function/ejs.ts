@@ -164,6 +164,8 @@ export async function evalTemplate(
                         TavernHelper: globalThis.TavernHelper,
                         // @ts-expect-error
                         Mvu: globalThis.Mvu,
+                        // @ts-expect-error
+                        YAML: globalThis.YAML,
                     },
                     data,
                 );
@@ -600,6 +602,8 @@ export async function compileTemplate(
                                     TavernHelper: globalThis.TavernHelper,
                                     // @ts-expect-error
                                     Mvu: globalThis.Mvu,
+                                    // @ts-expect-error
+                                    YAML: globalThis.YAML,
                                 },
                                 thisData,
                             );
