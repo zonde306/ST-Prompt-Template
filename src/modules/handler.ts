@@ -116,10 +116,8 @@ async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
                     if(settings.debug_enabled)
                         console.debug(content);
                 } catch (error) {
-                    console.error('[Prompt Template] Error in preprocess:', error);
+                    console.error(`[Prompt Template] Error in ${type} preprocess entry: `, error, entry);
                     throw error;
-                } finally {
-                    sandbox?.destroy();
                 }
             } else if (handler.isPrivateEntry()) {
                 data[type][i] = { ...entry, content: `<% (()=>{%>${entry.content}<%})(); %>`  };
@@ -138,11 +136,17 @@ async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
         }
     };
 
+    try {
     // filter special entries
-    await applyDecorators('characterLore');
-    await applyDecorators('globalLore');
-    await applyDecorators('personaLore');
-    await applyDecorators('chatLore');
+        await applyDecorators('characterLore');
+        await applyDecorators('globalLore');
+        await applyDecorators('personaLore');
+        await applyDecorators('chatLore');
+    } catch(error) {
+        throw error;
+    } finally {
+        sandbox?.destroy();
+    }
 
     const removeDuplicate = function(entry: WorldInfoEntry, type: 'characterLore' | 'globalLore' | 'personaLore' | 'chatLore'): string | null {
         const idx = data[type].findIndex(e => e.world === entry.world && e.uid == entry.uid);

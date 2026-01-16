@@ -54,19 +54,24 @@ export class FunctionSandbox {
         }
     }
 
-    public destroy() {
-        if (this.iframe && this.iframe.parentNode) {
-            this.iframe.parentNode.removeChild(this.iframe);
+    public destroy(immediately = false) {
+        function destructor(self: FunctionSandbox) {
+            self.iframe?.parentNode?.removeChild(self.iframe);
+            self.iframe = null;
+            self.win = null;
         }
-        this.iframe = null;
-        this.win = null;
+
+        if(immediately)
+            destructor(this);
+        else
+            setTimeout(() => destructor(this), 100);
 
         if(settings.debug_enabled)
             console.log("Sandbox: Destroyed iframe window");
     }
 
     public destroyIframe() {
-        this.destroy();
+        this.destroy(true);
     }
 
     private injectContext(context: SandboxContext) {
