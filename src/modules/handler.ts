@@ -137,7 +137,7 @@ async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
     };
 
     try {
-    // filter special entries
+        // filter special entries
         await applyDecorators('characterLore');
         await applyDecorators('globalLore');
         await applyDecorators('personaLore');
@@ -200,12 +200,21 @@ async function handleGenerateAfter(data: GenerateAfterData, dryRun?: boolean) {
     }
 }
 
-async function handleCompletionReady(data: ChatCompletionReady) {
+async function handleChatCompletionReady(data: ChatCompletionReady) {
     isDryRun = false;
+
+    if(settings.enabled === false)
+        return;
+    if (settings.generate_enabled === false)
+        return;
+
     data.messages = await processGenerateAfter(data.messages);
 }
 
 async function processGenerateAfter(chat: Chat[]): Promise<Chat[]> {
+    if(settings.enabled === false)
+        return chat;
+
     // Only Format Prompt
     deactivateRegex({ basic: true });
     deactivateActivateWorldInfo();
@@ -819,6 +828,9 @@ async function handleFilterInstall(_type: string, _options: GenerateOptions, dry
 }
 
 async function handleMessageCreated(message_id: number, type?: string) {
+    if(settings.enabled === false)
+        return;
+
     if(type === 'append' ||
         type === 'continue' ||
         type === 'appendFinal' ||
@@ -895,6 +907,9 @@ async function handleCustomGenerated(data: { message: string }, generationId: st
 }
 
 async function handleSwipeDeleted(messageId: number, swipeId: number) {
+    if(settings.enabled === false)
+        return;
+
     // comparing `undefined` with any other type always returns false, so there shouldn't be any errors.
     const message = chat[messageId] as Message;
     // @ts-expect-error: 18048
@@ -927,7 +942,7 @@ export async function init() {
     eventSource.on(event_types.WORLDINFO_UPDATED, handleRefreshWorldInfo);
     eventSource.on(event_types.GENERATION_AFTER_COMMANDS, handleGenerateBefore);
     eventSource.on(event_types.GENERATE_AFTER_DATA, handleGenerateAfter);
-    eventSource.on(event_types.CHAT_COMPLETION_SETTINGS_READY, handleCompletionReady);
+    eventSource.on(event_types.CHAT_COMPLETION_SETTINGS_READY, handleChatCompletionReady);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.on(e, handleMessageRender));
     eventSource.on(event_types.WORLDINFO_ENTRIES_LOADED, handleWorldInfoLoaded);
     MESSAGE_CREATED.forEach(e => eventSource.on(e, handleMessageCreated));
@@ -946,7 +961,7 @@ export async function exit() {
     eventSource.removeListener(event_types.WORLDINFO_UPDATED, handleRefreshWorldInfo);
     eventSource.removeListener(event_types.GENERATION_AFTER_COMMANDS, handleGenerateBefore);
     eventSource.removeListener(event_types.GENERATE_AFTER_DATA, handleGenerateAfter);
-    eventSource.removeListener(event_types.CHAT_COMPLETION_SETTINGS_READY, handleCompletionReady);
+    eventSource.removeListener(event_types.CHAT_COMPLETION_SETTINGS_READY, handleChatCompletionReady);
     MESSAGE_RENDER_EVENTS.forEach(e => eventSource.removeListener(e, handleMessageRender));
     eventSource.removeListener(event_types.WORLDINFO_ENTRIES_LOADED, handleWorldInfoLoaded);
     MESSAGE_CREATED.forEach(e => eventSource.removeListener(e, handleMessageCreated));
