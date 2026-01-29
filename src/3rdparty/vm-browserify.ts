@@ -100,7 +100,6 @@ export class FunctionSandbox {
 
         win.fetch = undefined;
         win.XMLHttpRequest = undefined;
-        win.alert = undefined;
     }
 }
 
