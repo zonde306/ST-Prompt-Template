@@ -292,7 +292,7 @@ async function processGenerateAfter(chat: Chat[]): Promise<Chat[]> {
             } else if (_.isArray(message.content)) {
                 for (const content of message.content) {
                     // OAI format
-                    if (content.type === 'text') {
+                    if (content.type === 'text' && content.text) {
                         // Processing
                         const prompt = await evalTemplateHandler(
                             applyRegex(env, content.text, { generate: true, role: message.role }),
@@ -342,8 +342,17 @@ async function processGenerateAfter(chat: Chat[]): Promise<Chat[]> {
         
         collectPrompts += after;
 
-        chat[0].content = generateBefore + chat[0].content;
-        chat[chat.length - 1].content += after;
+        if(_.isString(chat[0].content)) {
+            chat[0].content = generateBefore + chat[0].content;
+        } else if(Array.isArray(chat[0].content)) {
+            chat[0].content.unshift({ type: 'text', text: generateBefore });
+        }
+        if(_.isString(chat[chat.length - 1].content)) {
+            chat[chat.length - 1].content += after;
+        } else if(Array.isArray(chat[chat.length - 1].content)) {
+            // @ts-expect-error: 2339
+            chat[chat.length - 1].content.push({ type: 'text', text: after });
+        }
 
         if (settings.inject_loader_enabled) {
             // @INJECT xxx
