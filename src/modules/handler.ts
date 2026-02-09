@@ -342,16 +342,20 @@ async function processGenerateAfter(chat: Chat[]): Promise<Chat[]> {
         
         collectPrompts += after;
 
-        if(_.isString(chat[0].content)) {
-            chat[0].content = generateBefore + chat[0].content;
-        } else if(Array.isArray(chat[0].content)) {
-            chat[0].content.unshift({ type: 'text', text: generateBefore });
+        if(generateBefore.trim()) {
+            if(_.isString(chat[0].content)) {
+                chat[0].content = generateBefore + chat[0].content;
+            } else if(Array.isArray(chat[0].content)) {
+                chat[0].content.unshift({ type: 'text', text: generateBefore });
+            }
         }
-        if(_.isString(chat[chat.length - 1].content)) {
-            chat[chat.length - 1].content += after;
-        } else if(Array.isArray(chat[chat.length - 1].content)) {
-            // @ts-expect-error: 2339
-            chat[chat.length - 1].content.push({ type: 'text', text: after });
+        if(after.trim()) {
+            if(_.isString(chat[chat.length - 1].content)) {
+                chat[chat.length - 1].content += after;
+            } else if(Array.isArray(chat[chat.length - 1].content)) {
+                // @ts-expect-error: 2339
+                chat[chat.length - 1].content.push({ type: 'text', text: after });
+            }
         }
 
         if (settings.inject_loader_enabled) {
