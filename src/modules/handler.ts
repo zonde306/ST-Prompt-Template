@@ -346,7 +346,9 @@ async function processGenerateAfter(chat: Chat[]): Promise<Chat[]> {
             if(_.isString(chat[0].content)) {
                 chat[0].content = generateBefore + chat[0].content;
             } else if(Array.isArray(chat[0].content)) {
-                chat[0].content.unshift({ type: 'text', text: generateBefore });
+                const idx = chat[0].content.findIndex(c => c.type === 'text');
+                // @ts-expect-error: 2339
+                chat[0].content[idx].text = generateBefore + chat[0].content[idx].text;
             }
         }
         if(after.trim()) {
@@ -354,7 +356,9 @@ async function processGenerateAfter(chat: Chat[]): Promise<Chat[]> {
                 chat[chat.length - 1].content += after;
             } else if(Array.isArray(chat[chat.length - 1].content)) {
                 // @ts-expect-error: 2339
-                chat[chat.length - 1].content.push({ type: 'text', text: after });
+                const idx = chat[chat.length - 1].content.findLastIndex(c => c.type === 'text');
+                // @ts-expect-error: 2339
+                chat[0].content[idx].text += after;
             }
         }
 
