@@ -8,6 +8,7 @@ export interface PromptInjected {
 }
 
 let promptInjected = new Map<string, Map<string, PromptInjected>>();
+let forceOutlet = false;
 
 /**
  * Add prompts to the injection list and use getPromptsInjected to read the list
@@ -48,9 +49,15 @@ export interface PostProcess {
  * 
  * @param key List Name
  * @param postprocess Process the content
+ * @param outlet Whether to use the outlet
  * @returns prompts
  */
-export function getPromptsInjected(key: string, postprocess: PostProcess[] = []): string {
+export function getPromptsInjected(key: string, postprocess: PostProcess[] = [], outlet: boolean = forceOutlet): string {
+    if(outlet && postprocess.length <= 0)
+        return `{{outletPromptsInjected:${key}}}`;
+    if(outlet && postprocess.length)
+        console.warn(`[Prompt Template] outlet with postprocess is not supported`);
+
     const innerMap = promptInjected.get(key);
     if (!innerMap) {
         return '';
@@ -65,6 +72,22 @@ export function getPromptsInjected(key: string, postprocess: PostProcess[] = [])
         combinedPrompt = combinedPrompt.replace(pp.search, pp.replace);
 
     return combinedPrompt;
+}
+
+/**
+ * Apply the prompts injected to the context
+ * @param content content
+ * @returns processed content with injected prompts
+ */
+export function applyOutletPromptsInjected(content: string): string {
+    return content.replace(/\{\{outletPromptsInjected:(.+?)\}\}/g, (_, key) => getPromptsInjected(key));
+}
+
+/**
+ * Force the use of outlet
+ */
+export function setForceOutlet(force: boolean = true) {
+    forceOutlet = force;
 }
 
 export function deactivatePromptInjection(count: number = 1): void {

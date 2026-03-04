@@ -7,7 +7,7 @@ import { getEnabledWorldInfoEntries, deactivateActivateWorldInfo, LoreBook, getE
 import { getCharacterDefine } from '../function/characters';
 import { settings } from './ui';
 import { activateRegex, deactivateRegex, applyRegex } from '../function/regex';
-import { deactivatePromptInjection } from '../function/inject';
+import { deactivatePromptInjection, setForceOutlet, applyOutletPromptsInjected } from '../function/inject';
 import { updateTokens, removeHtmlTagsInsideBlock, escapePreContent, cleanPreContent, escapeReasoningBlocks, unescapePreContent, unescapeHtmlEntities } from '../utils/prompts';
 import { evalTemplateHandler, evaluateWIEntities, evalTemplateWI } from '../utils/evaluate';
 import { updateReasoningUI } from '../../../../../reasoning.js';
@@ -245,6 +245,9 @@ async function processGenerateAfter(chat: Chat[]): Promise<Chat[]> {
     const sandbox = settings.sandbox ? new FunctionSandbox() : null;
     let collectPrompts = generateBefore;
 
+    // Delaying the injection externally ensures that all content can be collected.
+    setForceOutlet();
+
     try {
         for (const [idx, message] of chat.entries()) {
             // [GENERATE:x:BEFORE] or @@generate_before x
@@ -372,6 +375,22 @@ async function processGenerateAfter(chat: Chat[]): Promise<Chat[]> {
     } finally {
         sandbox?.destroy();
     }
+
+    // apply external injection
+    for (const message of chat) {
+        if (typeof message.content === 'string') {
+            message.content = applyOutletPromptsInjected(message.content);
+        } else if (Array.isArray(message.content)) {
+            for (const content of message.content) {
+                if (content.type === 'text' && typeof content.text === 'string') {
+                    content.text = applyOutletPromptsInjected(content.text);
+                }
+            }
+        }
+    }
+
+    // reset force outlet
+    setForceOutlet(false);
 
     generateBefore = '';
 
