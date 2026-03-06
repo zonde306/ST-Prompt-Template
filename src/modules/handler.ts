@@ -7,7 +7,7 @@ import { getEnabledWorldInfoEntries, deactivateActivateWorldInfo, LoreBook, getE
 import { getCharacterDefine } from '../function/characters';
 import { settings } from './ui';
 import { activateRegex, deactivateRegex, applyRegex } from '../function/regex';
-import { deactivatePromptInjection } from '../function/inject';
+import { deactivatePromptInjection, setForceOutlet, applyOutletPromptsInjected } from '../function/inject';
 import { updateTokens, removeHtmlTagsInsideBlock, escapePreContent, cleanPreContent, escapeReasoningBlocks, unescapePreContent, unescapeHtmlEntities } from '../utils/prompts';
 import { evalTemplateHandler, evaluateWIEntities, evalTemplateWI } from '../utils/evaluate';
 import { updateReasoningUI } from '../../../../../reasoning.js';
@@ -245,6 +245,9 @@ async function processGenerateAfter(chat: Chat[]): Promise<Chat[]> {
     const sandbox = settings.sandbox ? new FunctionSandbox() : null;
     let collectPrompts = generateBefore;
 
+    // Delaying the injection externally ensures that all content can be collected.
+    setForceOutlet();
+
     try {
         for (const [idx, message] of chat.entries()) {
             // [GENERATE:x:BEFORE] or @@generate_before x
@@ -346,7 +349,9 @@ async function processGenerateAfter(chat: Chat[]): Promise<Chat[]> {
             if(_.isString(chat[0].content)) {
                 chat[0].content = generateBefore + chat[0].content;
             } else if(Array.isArray(chat[0].content)) {
-                chat[0].content.unshift({ type: 'text', text: generateBefore });
+                const idx = chat[0].content.findIndex(c => c.type === 'text');
+                // @ts-expect-error: 2339
+                chat[0].content[idx].text = generateBefore + chat[0].content[idx].text;
             }
         }
         if(after.trim()) {
@@ -354,7 +359,9 @@ async function processGenerateAfter(chat: Chat[]): Promise<Chat[]> {
                 chat[chat.length - 1].content += after;
             } else if(Array.isArray(chat[chat.length - 1].content)) {
                 // @ts-expect-error: 2339
-                chat[chat.length - 1].content.push({ type: 'text', text: after });
+                const idx = chat[chat.length - 1].content.findLastIndex(c => c.type === 'text');
+                // @ts-expect-error: 2339
+                chat[0].content[idx].text += after;
             }
         }
 
@@ -367,6 +374,21 @@ async function processGenerateAfter(chat: Chat[]): Promise<Chat[]> {
         throw error;
     } finally {
         sandbox?.destroy();
+        // reset force outlet
+        setForceOutlet(false);
+    }
+
+    // apply external injection
+    for (const message of chat) {
+        if (typeof message.content === 'string') {
+            message.content = applyOutletPromptsInjected(message.content);
+        } else if (Array.isArray(message.content)) {
+            for (const content of message.content) {
+                if (content.type === 'text' && typeof content.text === 'string') {
+                    content.text = applyOutletPromptsInjected(content.text);
+                }
+            }
+        }
     }
 
     generateBefore = '';
