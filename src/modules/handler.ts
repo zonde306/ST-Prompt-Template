@@ -374,6 +374,8 @@ async function processGenerateAfter(chat: Chat[]): Promise<Chat[]> {
         throw error;
     } finally {
         sandbox?.destroy();
+        // reset force outlet
+        setForceOutlet(false);
     }
 
     // apply external injection
@@ -388,9 +390,6 @@ async function processGenerateAfter(chat: Chat[]): Promise<Chat[]> {
             }
         }
     }
-
-    // reset force outlet
-    setForceOutlet(false);
 
     generateBefore = '';
 
