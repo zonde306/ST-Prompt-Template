@@ -18,8 +18,12 @@
         "noUnusedParameters": true,
         "noImplicitReturns": true,
         "noFallthroughCasesInSwitch": true,
-        "types": ["lodash", "jquery", "toastr"]
-      },
+        "types": ["lodash", "jquery", "toastr"],
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["src/*"]
+        }
+    },
     "include": [
         "src/**/*.ts",
         "src/**/*.js",
