@@ -1,4 +1,5 @@
 import { hashString } from "./hasher";
+import { world_info_max_recursion_steps } from '../../../../../world-info.js';
 
 export interface PromptInjected {
     order: number;
@@ -76,11 +77,20 @@ export function getPromptsInjected(key: string, postprocess: PostProcess[] = [],
 
 /**
  * Apply the prompts injected to the context
+ * 
  * @param content content
+ * @param recursion recursion
  * @returns processed content with injected prompts
  */
-export function applyOutletPromptsInjected(content: string): string {
-    return content.replace(/\{\{outletPromptsInjected:(.+?)\}\}/g, (_, key) => getPromptsInjected(key));
+export function applyOutletPromptsInjected(content: string, recursion: number = world_info_max_recursion_steps + 1): string {
+    let result = content;
+    for(let i = 0; i < recursion; i++) {
+        if(!result.includes('{{outletPromptsInjected:'))
+            break;
+
+        result = result.replace(/\{\{outletPromptsInjected:(.+?)\}\}/g, (_, key) => getPromptsInjected(key));
+    }
+    return result;
 }
 
 /**
