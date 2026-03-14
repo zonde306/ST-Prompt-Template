@@ -135,8 +135,10 @@ interface GetChatMessageOptions {
  * @returns Returns true if found, false otherwise
  */
 export function matchChatMessages(pattern: string | RegExp | string[] | RegExp[], options : GetChatMessageOptions = {}) {
+    const end = options.end ?? chat.length;
+    
     // @ts-expect-error
-    const messages = getChatMessages(options.start ?? -2, options.end, options.role);
+    const messages = getChatMessages(options.start ?? -2, end, options.role);
     if(!Array.isArray(pattern))
         pattern = [ pattern ] as string[] | RegExp[];
 
