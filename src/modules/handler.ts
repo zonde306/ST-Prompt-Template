@@ -71,8 +71,6 @@ async function handleGenerateBefore(type: string, _data: GenerateOptions, dryRun
     } else {
         generateBefore = '';
     }
-
-    // await applyActivateWorldInfo();
 }
 
 async function handleWorldInfoLoaded(data: WorldInfoLoaded) {

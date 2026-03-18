@@ -761,7 +761,7 @@ export function findPreviousMessageVariables(message_id?: number, key?: string) 
             (key == null || get(msg.variables?.[msg?.swipe_id ?? 0], key, null) != null)
         );
     
-    return message?.variables?.[message.swipe_id ?? 0] ?? {};
+    return message?.variables?.[message.swipe_id ?? 0] ?? STATE.initialVariables;
 }
 
 /**
