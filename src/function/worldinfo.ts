@@ -756,8 +756,10 @@ export class WorldInfoDecorators {
             this.entry.comment.includes('[InitialVariables]'))
             return true;
         
-        if(this.decorators.includes('@@generate') ||
-            this.decorators.includes('@@render') ||
+        if(this.decorators.includes('@@generate_after') ||
+            this.decorators.includes('@@generate_before') ||
+            this.decorators.includes('@@render_after') ||
+            this.decorators.includes('@@render_before') ||
             this.decorators.includes('@@initial_variables'))
             return true;
         
