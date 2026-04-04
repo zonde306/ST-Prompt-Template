@@ -1,4 +1,5 @@
 import { chat, chat_metadata, saveChatConditional } from '../../../../../../script.js';
+import { yaml } from "../../../../../../lib.js";
 import { extension_settings } from '../../../../../extensions.js';
 import { Message } from '../modules/defines';
 import { settings } from '../modules/ui';
@@ -821,4 +822,33 @@ function ensureVariable(
     }
 
     return null;
+}
+
+export function dumpYamlWithSchema(
+    this: Record<string, unknown>,
+    key: string | null = null,
+    schema: string = '',
+) {
+    if(!schema) {
+        return yaml.stringify(getVariable.call(this, key));
+    }
+
+    const tree = yaml.parseDocument(schema);
+    const vars = getVariable.call(this, key);
+    
+    function deepSet(doc: ReturnType<typeof yaml.parseDocument>, update: any) {
+        if(doc == null || update == null)
+            return;
+
+        if(_.isPlainObject(update)) {
+            for(const [key, value] of Object.entries(update)) {
+                deepSet(doc.getIn([key]), value);
+            }
+        } else {
+            doc.setIn([key], update);
+        }
+    }
+
+    deepSet(tree, vars);
+    return tree.toString();
 }

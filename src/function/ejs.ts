@@ -1,7 +1,7 @@
 import ejs from '../3rdparty/ejs.js';
 import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.js';
 import { getWorldInfoEntries, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries, selectActivatedEntries, activateWorldInfo, getWorldInfoEntry, WorldInfoEntry, activateWorldInfoByKeywords, getEnabledLoreBooks } from './worldinfo';
-import { precacheVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption, findPreviousMessageVariables, removeVariable, insertVariable } from './variables';
+import { precacheVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption, findPreviousMessageVariables, removeVariable, insertVariable, dumpYamlWithSchema } from './variables';
 import { getCharacterDefine, DEFAULT_CHAR_DEFINE, getCharacterData, getCharacterAvaterURL, getUserAvatarURL } from './characters';
 import { substituteParams, eventSource, this_chid, characters, chat_metadata, name1, name2, getCurrentChatId, chat } from '../../../../../../script.js';
 import { getPresetPromptsContent, getGeneratingModel } from './presets';
@@ -296,6 +296,7 @@ export async function prepareContext(msg_id?: number, env: Record<string, unknow
         decGlobalVar: (k: string, v: number = 1, o: GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'global' }),
         decMessageVar: (k: string, v: number = 1, o: GetSetVarOption = {}) => decreaseVariable.call(context, k, v, { ...o, outscope: 'message' }),
         patchVariables: patchVariables.bind(context),
+        applyVarYamlAnnotate: dumpYamlWithSchema.bind(context),
         getqr: boundedQuickReply.bind(context),
         getQuickReply: boundedQuickReply.bind(context),
         evalTemplate: boundedEvalTemplate.bind(context),
