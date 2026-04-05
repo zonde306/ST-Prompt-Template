@@ -340,7 +340,16 @@ async function boundedReadWorldinfo(this: Record<string, unknown>,
     }
 
     if (wi) {
-        return await evalTemplate(substituteParams(getRegexedString(wi.content, regex_placement.WORLD_INFO)),
+        let content = wi.content;
+
+        // @ts-expect-error: 2339
+        if(globalThis.CustomGeneration?.DataOverride) {
+            // @ts-expect-error: 7017
+            const override = new globalThis.CustomGeneration.DataOverride(chat, chat_metadata);
+            content = override.getOverride(wi.world, wi.uid)?.content ?? content;
+        }
+
+        return await evalTemplate(substituteParams(getRegexedString(content, regex_placement.WORLD_INFO)),
             _.merge(this, data, { world_info: wi }),
             { when: `${wi.world}.${wi.comment}` },
         );
