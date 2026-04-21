@@ -6,7 +6,8 @@
     "jsonrepair": "^3.13.1",
     "syntax-error": "^1.4.0",
     "tsc": "^2.0.4",
-    "xxhash-wasm": "^1.1.0"
+    "xxhash-wasm": "^1.1.0",
+    "zod": "^4.3.6"
   },
   "scripts": {
     "build": "webpack --mode production"

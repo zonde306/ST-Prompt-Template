@@ -3,6 +3,8 @@ import { yaml } from "../../../../../../lib.js";
 import { extension_settings } from '../../../../../extensions.js';
 import { Message } from '../modules/defines';
 import { settings } from '../modules/ui';
+import { z } from 'zod';
+import { deepMergeZod } from '../utils/zodutl';
 
 export let STATE : {
     isDryRun: boolean,
@@ -12,6 +14,7 @@ export let STATE : {
     isInPlace: boolean,
     messageId: number,
     swipeId: number,
+    schema?: z.ZodType<any>,
 } = {
     isDryRun: false,
     cacheVars: {},
@@ -199,8 +202,8 @@ export function setVariable(
         let idx = Number(index);
         idx = Number.isNaN(idx) ? index : idx;
 
-        if (flags === 'nx' && _.has(data, idx)) return undefined;
-        if (flags === 'xx' && !_.has(data, idx)) return undefined;
+        if (flags === 'nx' && has(data, idx)) return undefined;
+        if (flags === 'xx' && !has(data, idx)) return undefined;
         if (flags === 'nxs' && getVariable.call(this, key, options) !== undefined) return undefined;
         if (flags === 'xxs' && getVariable.call(this, key, options) === undefined) return undefined;
 
@@ -217,14 +220,14 @@ export function setVariable(
             }
         }
 
-        newValue === undefined ? _.unset(data, idx) : _.set(data, idx, newValue);
-        _.set(STATE.cacheVars, key, JSON.stringify(data));
+        newValue === undefined ? unset(data, idx) : set(data, idx, newValue);
+        set(STATE.cacheVars, key, JSON.stringify(data));
 
         switch (scope || 'message') {
             case 'global':
-                data = JSON.parse(_.get(extension_settings.variables.global, key, '{}') || '{}');
-                newValue === undefined ? _.unset(data, idx) : _.set(data, idx, newValue);
-                _.set(extension_settings.variables.global, key, JSON.stringify(data));
+                data = JSON.parse(get(extension_settings.variables.global, key, '{}') || '{}');
+                newValue === undefined ? unset(data, idx) : set(data, idx, newValue);
+                set(extension_settings.variables.global, key, JSON.stringify(data));
 
                 if (settings.debug_enabled)
                     console.debug(`Set global variable ${key} to ${newValue} (index ${idx})`);
@@ -233,9 +236,9 @@ export function setVariable(
                 if (!chat_metadata.variables)
                     chat_metadata.variables = {};
 
-                data = JSON.parse(_.get(chat_metadata.variables, key, '{}') || '{}');
-                newValue === undefined ? _.unset(data, idx) : _.set(data, idx, newValue);
-                _.set(chat_metadata.variables, key, JSON.stringify(data));
+                data = JSON.parse(get(chat_metadata.variables, key, '{}') || '{}');
+                newValue === undefined ? unset(data, idx) : set(data, idx, newValue);
+                set(chat_metadata.variables, key, JSON.stringify(data));
 
                 if (settings.debug_enabled)
                     console.debug(`Set local variable ${key} to ${newValue} (index ${idx})`);
@@ -245,34 +248,34 @@ export function setVariable(
                     // @ts-expect-error
                     const [message_id, swipe_id] = evalMessageFilter(withMsg, this?.message_id, this?.swipe_id, false);
                     if (message_id !== undefined && swipe_id !== undefined) {
-                        const msgVars = ensureVariable(message_id, swipe_id);
-                        data = JSON.parse(_.get(msgVars, key, '{}') || '{}');
-                        newValue === undefined ? _.unset(data, idx) : _.set(data, idx, newValue);
+                        const msgVars = ensureVariable(message_id, swipe_id) ?? {};
+                        data = JSON.parse(get(msgVars, key, '{}') || '{}');
+                        newValue === undefined ? unset(data, idx) : set(data, idx, newValue);
                         // @ts-expect-error: 2339
-                        _.set(chat[message_id].variables[swipe_id], key, JSON.stringify(data));
+                        set(chat[message_id].variables[swipe_id], key, JSON.stringify(data));
 
                         // Update cache when same origin
                         if(message_id === STATE.messageId && swipe_id === STATE.swipeId)
-                            _.set(STATE.cacheVars, key, JSON.stringify(data));
+                            set(STATE.cacheVars, key, JSON.stringify(data));
 
                         if (settings.debug_enabled)
                             console.debug(`Set message #${message_id}.${swipe_id} variable ${key} to ${newValue} (index ${idx})`);
                     }
                 } else {
-                    data = JSON.parse(_.get(STATE.cacheVars, key, '{}') || '{}');
-                    newValue === undefined ? _.unset(data, idx) : _.set(data, idx, newValue);
+                    data = JSON.parse(get(STATE.cacheVars, key, '{}') || '{}');
+                    newValue === undefined ? unset(data, idx) : set(data, idx, newValue);
                     // @ts-expect-error: 2339
-                    _.set(chat[STATE.messageId].variables[STATE.swipeId], key, JSON.stringify(data));
-                    _.set(STATE.cacheVars, key, JSON.stringify(data));
+                    set(chat[STATE.messageId].variables[STATE.swipeId], key, JSON.stringify(data));
+                    set(STATE.cacheVars, key, JSON.stringify(data));
                     
                     if (settings.debug_enabled)
                         console.debug(`Set message variable ${key} to ${newValue} (index ${idx})`);
                 }
                 break;
             case 'initial':
-                data = JSON.parse(_.get(STATE.initialVariables, key, '{}') || '{}');
-                newValue === undefined ? _.unset(data, idx) : _.set(data, idx, newValue);
-                _.set(STATE.initialVariables, key, JSON.stringify(data));
+                data = JSON.parse(get(STATE.initialVariables, key, '{}') || '{}');
+                newValue === undefined ? unset(data, idx) : set(data, idx, newValue);
+                set(STATE.initialVariables, key, JSON.stringify(data));
 
                 if (settings.debug_enabled)
                     console.debug(`Set initial variable ${key} to ${newValue} (index ${idx})`);
@@ -434,9 +437,9 @@ export function getVariable(
     switch (scope || 'cache') {
         case 'global':
             if (index != null) {
-                const data = JSON.parse(_.get(extension_settings.variables.global, key, '{}') || '{}');
+                const data = JSON.parse(get(extension_settings.variables.global, key, '{}') || '{}');
                 const idx = Number(index);
-                return _.get(data, Number.isNaN(idx) ? index : idx, defaults);
+                return get(data, Number.isNaN(idx) ? index : idx, defaults);
             }
             result = get(extension_settings.variables.global, key, defaults);
             return options.clone ? _.cloneDeep(result) : result;
@@ -444,9 +447,9 @@ export function getVariable(
             if (!chat_metadata.variables)
                 return defaults;
             if (index != null) {
-                const data = JSON.parse(_.get(chat_metadata.variables, key, '{}') || '{}');
+                const data = JSON.parse(get(chat_metadata.variables, key, '{}') || '{}');
                 const idx = Number(index);
-                return _.get(data, Number.isNaN(idx) ? index : idx, defaults);
+                return get(data, Number.isNaN(idx) ? index : idx, defaults);
             }
             result = get(chat_metadata.variables, key, defaults);
             return options.clone ? _.cloneDeep(result) : result;
@@ -459,9 +462,9 @@ export function getVariable(
                     if (!chat[message_id]?.variables?.[swipe_id]) return defaults;
                     if (index != null) {
                         // @ts-expect-error: 2339
-                        const data = JSON.parse(_.get(chat[message_id].variables[swipe_id], key, '{}') || '{}');
+                        const data = JSON.parse(get(chat[message_id].variables[swipe_id], key, '{}') || '{}');
                         const idx = Number(index);
-                        return _.get(data, Number.isNaN(idx) ? index : idx, defaults);
+                        return get(data, Number.isNaN(idx) ? index : idx, defaults);
                     }
 
                     // @ts-expect-error: 2339
@@ -471,27 +474,27 @@ export function getVariable(
                 return defaults;
             } else {
                 if (index != null) {
-                    const data = JSON.parse(_.get(STATE.cacheVars, key, '{}') || '{}');
+                    const data = JSON.parse(get(STATE.cacheVars, key, '{}') || '{}');
                     const idx = Number(index);
-                    return _.get(data, Number.isNaN(idx) ? index : idx, defaults);
+                    return get(data, Number.isNaN(idx) ? index : idx, defaults);
                 }
                 result = get(STATE.cacheVars, key, defaults);
                 return options.clone ? _.cloneDeep(result) : result;
             }
         case 'initial':
             if (index != null) {
-                const data = JSON.parse(_.get(STATE.initialVariables, key, '{}') || '{}');
+                const data = JSON.parse(get(STATE.initialVariables, key, '{}') || '{}');
                 const idx = Number(index);
-                return _.get(data, Number.isNaN(idx) ? index : idx, defaults);
+                return get(data, Number.isNaN(idx) ? index : idx, defaults);
             }
             result = get(STATE.initialVariables, key, defaults);
             return options.clone ? _.cloneDeep(result) : result;
     }
 
     if (index != null) {
-        const data = JSON.parse(_.get(STATE.cacheVars, key, '{}') || '{}');
+        const data = JSON.parse(get(STATE.cacheVars, key, '{}') || '{}');
         const idx = Number(index);
-        return _.get(data, idx, defaults);
+        return get(data, idx, defaults);
     }
 
     return get(STATE.cacheVars, key, defaults);
@@ -653,8 +656,8 @@ export function increaseVariable(
     }
 
     const { index, inscope, outscope, flags, defaults, results, withMsg, dryRun, min, max } = options;
-    if ((flags === 'nx' && !_.has(STATE.cacheVars, key)) ||
-        (flags === 'xx' && _.has(STATE.cacheVars, key)) ||
+    if ((flags === 'nx' && !has(STATE.cacheVars, key)) ||
+        (flags === 'xx' && has(STATE.cacheVars, key)) ||
         (flags === 'nxs' && getVariable.call(this, key, { index, withMsg, scope: inscope }) === undefined) ||
         (flags === 'xxs' && getVariable.call(this, key, { index, withMsg, scope: inscope }) !== undefined) ||
         (flags === 'n' || flags === undefined)) {
@@ -700,15 +703,30 @@ function get(obj: object, key: string | number | null, defaults?: any): any {
 }
 
 function set(obj: object, key: string | number | null, value: any): any {
+    const res = STATE.schema ? _.cloneDeep(obj) : obj;
     if (key == null)
-        return Object.assign(obj, value);
-    return _.set(obj, key, value);
+        Object.assign(res, value);
+    else
+        _.set(res, key, value);
+
+    if(STATE.schema) {
+        return STATE.schema.parse(res);
+    }
+
+    return res;
 }
 
 function unset(obj: any, key: string | number | null): any {
+    const res = STATE.schema ? _.cloneDeep(obj) : obj;
     if (key == null)
-        return Object.keys(obj).forEach(k => delete obj[k]);
-    return _.unset(obj, key);
+        Object.keys(obj).forEach(k => delete res[k]);
+    _.unset(res, key);
+
+    if(STATE.schema) {
+        return STATE.schema.parse(res);
+    }
+
+    return res;
 }
 
 function has(obj: any, key: string | number | null): boolean {
@@ -851,4 +869,11 @@ export function dumpYamlWithSchema(
 
     deepSet(tree, vars);
     return tree.toString();
+}
+
+export function setVariableSchema(schema: z.ZodType<any>) {
+    if(STATE.schema)
+        STATE.schema = deepMergeZod(STATE.schema, schema);
+    else
+        STATE.schema = schema;
 }

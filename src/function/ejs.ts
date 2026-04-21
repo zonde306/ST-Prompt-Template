@@ -1,7 +1,7 @@
 import ejs from '../3rdparty/ejs.js';
 import { executeSlashCommandsWithOptions } from '../../../../../slash-commands.js';
 import { getWorldInfoEntries, getWorldInfoActivatedEntries, getEnabledWorldInfoEntries, selectActivatedEntries, activateWorldInfo, getWorldInfoEntry, WorldInfoEntry, activateWorldInfoByKeywords, getEnabledLoreBooks } from './worldinfo';
-import { precacheVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption, findPreviousMessageVariables, removeVariable, insertVariable, dumpYamlWithSchema } from './variables';
+import { precacheVariables, getVariable, setVariable, increaseVariable, decreaseVariable, STATE, SetVarOption, GetVarOption, GetSetVarOption, findPreviousMessageVariables, removeVariable, insertVariable, dumpYamlWithSchema, setVariableSchema } from './variables';
 import { getCharacterDefine, DEFAULT_CHAR_DEFINE, getCharacterData, getCharacterAvaterURL, getUserAvatarURL } from './characters';
 import { substituteParams, eventSource, this_chid, characters, chat_metadata, name1, name2, getCurrentChatId, chat } from '../../../../../../script.js';
 import { getPresetPromptsContent, getGeneratingModel } from './presets';
@@ -20,6 +20,7 @@ import { patchVariables, jsonPatch, parseJSON } from './json-patch';
 import { groups, selected_group } from '../../../../../group-chats.js';
 import { copyText } from '../../../../../utils.js';
 import { FunctionSandbox } from '../3rdparty/vm-browserify';
+import { z as zod } from 'zod';
 
 interface IncluderResult {
     filename: string;
@@ -29,6 +30,7 @@ interface IncluderResult {
 const SHARE_CONTEXT: Record<string, unknown> = {
     _,
     $,
+    zod,
     toastr,
     console,
     getCharaData: getCharacterData,
@@ -54,6 +56,7 @@ const SHARE_CONTEXT: Record<string, unknown> = {
     get model() {
         return getGeneratingModel();
     },
+    setVariableSchema,
 };
 
 export interface EjsOptions {
