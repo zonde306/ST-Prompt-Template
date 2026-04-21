@@ -710,7 +710,7 @@ function set(obj: object, key: string | number | null, value: any): any {
         _.set(res, key, value);
 
     if(STATE.schema) {
-        return STATE.schema.parse(res);
+        Object.assign(obj, STATE.schema.parse(res));
     }
 
     return res;
@@ -723,7 +723,7 @@ function unset(obj: any, key: string | number | null): any {
     _.unset(res, key);
 
     if(STATE.schema) {
-        return STATE.schema.parse(res);
+        Object.assign(obj, STATE.schema.parse(res));
     }
 
     return res;

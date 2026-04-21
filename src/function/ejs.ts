@@ -20,7 +20,7 @@ import { patchVariables, jsonPatch, parseJSON } from './json-patch';
 import { groups, selected_group } from '../../../../../group-chats.js';
 import { copyText } from '../../../../../utils.js';
 import { FunctionSandbox } from '../3rdparty/vm-browserify';
-import { z as zod } from 'zod';
+import { z } from 'zod';
 
 interface IncluderResult {
     filename: string;
@@ -30,7 +30,7 @@ interface IncluderResult {
 const SHARE_CONTEXT: Record<string, unknown> = {
     _,
     $,
-    zod,
+    z,
     toastr,
     console,
     getCharaData: getCharacterData,
