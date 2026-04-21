@@ -14,8 +14,8 @@ export function deepMergeZod(schemaA: ZodTypeAny, schemaB: ZodTypeAny): ZodTypeA
     let mergedCore: any;
 
     // Get the actual runtime type name (compatible with _def.typeName for Zod v3 and _zod.type for Zod v4).
-    const typeA = unwrappedA.core._def?.typeName ?? unwrappedA.core._zod?.type;
-    const typeB = unwrappedB.core._def?.typeName ?? unwrappedB.core._zod?.type;
+    const typeA = unwrappedA.core._def?.typeName ?? unwrappedA.core.def?.type;
+    const typeB = unwrappedB.core._def?.typeName ?? unwrappedB.core.def?.type;
 
     const isObjA = typeA === 'ZodObject' || typeA === 'object';
     const isObjB = typeB === 'ZodObject' || typeB === 'object';
@@ -25,8 +25,8 @@ export function deepMergeZod(schemaA: ZodTypeAny, schemaB: ZodTypeAny): ZodTypeA
 
     if (isObjA && isObjB) {
         // Shape extraction compatible with both v3 and v4
-        const shapeA = unwrappedA.core.shape || unwrappedA.core._zod?.def?.shape;
-        const shapeB = unwrappedB.core.shape || unwrappedB.core._zod?.def?.shape;
+        const shapeA = unwrappedA.core.shape || unwrappedA.core.def?.def?.shape;
+        const shapeB = unwrappedB.core.shape || unwrappedB.core.def?.def?.shape;
         const mergedShape: Record<string, any> = { ...shapeA };
 
         for (const key in shapeB) {
@@ -39,8 +39,8 @@ export function deepMergeZod(schemaA: ZodTypeAny, schemaB: ZodTypeAny): ZodTypeA
         mergedCore = z.object(mergedShape);
     } else if (isArrA && isArrB) {
         // Element extraction compatible with both v3 and v4
-        const elementA = unwrappedA.core.element || unwrappedA.core._zod?.def?.element;
-        const elementB = unwrappedB.core.element || unwrappedB.core._zod?.def?.element;
+        const elementA = unwrappedA.core.element || unwrappedA.core.def?.def?.element;
+        const elementB = unwrappedB.core.element || unwrappedB.core.def?.def?.element;
         mergedCore = z.array(deepMergeZod(elementA, elementB));
     } else {
         mergedCore = unwrappedB.core;
@@ -48,10 +48,8 @@ export function deepMergeZod(schemaA: ZodTypeAny, schemaB: ZodTypeAny): ZodTypeA
 
     const ukA = getUnknownKeysStrategy(unwrappedA.core);
     const ukB = getUnknownKeysStrategy(unwrappedB.core);
-    const finalUnknownKeys = (ukB && ukB !== 'strip') ? ukB : (ukA || 'strip');
-    if (finalUnknownKeys === 'passthrough') {
-        mergedCore = mergedCore.passthrough(); 
-    } else if (finalUnknownKeys === 'loose') {
+    // If one party is loose and the other party is not never, then the merged schema is loose.
+    if((ukB === 'passthrough' || ukB === 'unknown' || ukA === 'unknown' || ukA === 'passthrough') && ukA !== 'never' && ukB !== 'never') {
         mergedCore = mergedCore.loose();
     }
 
@@ -72,16 +70,11 @@ export function deepMergeZod(schemaA: ZodTypeAny, schemaB: ZodTypeAny): ZodTypeA
 function unwrapZodType(schema: any) {
     let isOptional = false;
     let isNullable = false;
-    let isLoose = false;
     let current = schema;
 
     // Try unwrapping the object if it has an unwrap method.
     while (current && typeof current.unwrap === 'function') {
-        const typeName = current._def?.typeName ?? current._zod?.type;
-
-        if(typeName === 'ZodObject' || typeName === 'object') {
-            isLoose = current._def?.unknownKeys === 'passthrough' || current._zod?.unknownKeys === 'loose';
-        }
+        const typeName = current._def?.typeName ?? current.def?.type;
 
         if (typeName === 'ZodOptional' || typeName === 'optional') {
             isOptional = true;
@@ -97,6 +90,6 @@ function unwrapZodType(schema: any) {
     return { core: current, isOptional, isNullable };
 }
 
-function getUnknownKeysStrategy(schemaCore: any) {
-  return schemaCore._def?.unknownKeys ?? schemaCore._zod?.def?.unknownKeys;
+function getUnknownKeysStrategy(schemaCore: any): 'never' | 'strip' | 'passthrough' | 'unknown' {
+    return schemaCore._def?.unknownKeys ?? schemaCore._def?.catchall?.type ?? schemaCore.def?.catchall?.type ?? 'strip';
 }

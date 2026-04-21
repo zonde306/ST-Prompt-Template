@@ -878,5 +878,5 @@ export function setVariableSchema(schema: z.ZodType<object>) {
     if(STATE.schema)
         STATE.schema = deepMergeZod(STATE.schema, schema);
     else
-        STATE.schema = deepMergeZod(z.looseObject({}), schema);
+        STATE.schema = deepMergeZod(z.object({}).loose(), schema);
 }
