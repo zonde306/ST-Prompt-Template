@@ -46,6 +46,15 @@ export function deepMergeZod(schemaA: ZodTypeAny, schemaB: ZodTypeAny): ZodTypeA
         mergedCore = unwrappedB.core;
     }
 
+    const ukA = getUnknownKeysStrategy(unwrappedA.core);
+    const ukB = getUnknownKeysStrategy(unwrappedB.core);
+    const finalUnknownKeys = (ukB && ukB !== 'strip') ? ukB : (ukA || 'strip');
+    if (finalUnknownKeys === 'passthrough') {
+        mergedCore = mergedCore.passthrough(); 
+    } else if (finalUnknownKeys === 'loose') {
+        mergedCore = mergedCore.loose();
+    }
+
     // Restore the optional/nullable state of the outer layer (based on the overriding layer B).
     let finalSchema = mergedCore;
     if (unwrappedB.isNullable) finalSchema = finalSchema.nullable();
@@ -63,11 +72,16 @@ export function deepMergeZod(schemaA: ZodTypeAny, schemaB: ZodTypeAny): ZodTypeA
 function unwrapZodType(schema: any) {
     let isOptional = false;
     let isNullable = false;
+    let isLoose = false;
     let current = schema;
 
     // Try unwrapping the object if it has an unwrap method.
     while (current && typeof current.unwrap === 'function') {
         const typeName = current._def?.typeName ?? current._zod?.type;
+
+        if(typeName === 'ZodObject' || typeName === 'object') {
+            isLoose = current._def?.unknownKeys === 'passthrough' || current._zod?.unknownKeys === 'loose';
+        }
 
         if (typeName === 'ZodOptional' || typeName === 'optional') {
             isOptional = true;
@@ -81,4 +95,8 @@ function unwrapZodType(schema: any) {
     }
 
     return { core: current, isOptional, isNullable };
+}
+
+function getUnknownKeysStrategy(schemaCore: any) {
+  return schemaCore._def?.unknownKeys ?? schemaCore._zod?.def?.unknownKeys;
 }

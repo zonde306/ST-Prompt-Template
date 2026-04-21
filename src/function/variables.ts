@@ -871,9 +871,12 @@ export function dumpYamlWithSchema(
     return tree.toString();
 }
 
-export function setVariableSchema(schema: z.ZodType<any>) {
+export function setVariableSchema(schema: z.ZodType<object>) {
+    if(schema.type !== 'object')
+        throw new Error('Schema root must be an object');
+
     if(STATE.schema)
         STATE.schema = deepMergeZod(STATE.schema, schema);
     else
-        STATE.schema = schema;
+        STATE.schema = deepMergeZod(z.looseObject({}), schema);
 }
