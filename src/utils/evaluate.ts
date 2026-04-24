@@ -109,7 +109,8 @@ export async function evaluateWIEntities(
     let prompts = '';
 
     for (const data of worldInfoData) {
-        if(await new WorldInfoDecorators(data).isConditionFiltedEntry(env, options))
+        const parsed = new WorldInfoDecorators(data);
+        if(await parsed.isConditionFiltedEntry(env, options))
             continue;
 
         let result = await evalTemplateHandler(
@@ -144,9 +145,10 @@ export async function evaluateWIEntities(
                     const message: Message = chat[options.msgId];
                     result = messageFormatting(result, message.name ?? '', !!message.is_system, !!message.is_user, options.msgId);
                 }
-                const iframe = data.decorators?.find(x => x.startsWith('@@iframe'));
-                if(iframe) {
-                    result = renderInFrame(result, iframe.substring(9), {
+                const iframe = data.decorators?.findIndex(x => x.startsWith('@@iframe'));
+                if(iframe > -1) {
+                    const title = parsed.arguments[iframe];
+                    result = renderInFrame(result, title, {
                         id: `mes-${options.msgId}-${data.world}-${data.uid}`,
                         'data-worldinfo': data.world,
                         'data-comment': data.comment,
