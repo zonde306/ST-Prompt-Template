@@ -23,6 +23,7 @@ export interface Chat {
 export interface ChatData {
     chat: Chat[];
     dryRun: boolean;
+    context?: Context;
 }
 
 // Allow custom fields
@@ -130,7 +131,16 @@ export interface ChatCompletionReady {
     tools?: any[];
     tool_choice?: string;
     assistant_impersonation?: string;
+    type?: string; // from CustomGeneration
+    context?: Context; // from CustomGeneration
 }
+
+// from CustomGeneration
+type VariableData = Record<string, any>;
+export interface Context {
+    chat: ChatMessage & { variables?: VariableData[], id?: number };
+    chat_meatdata: ChatMetadata & { variables?: VariableData };
+};
 
 export interface CombinedPromptData {
     prompt: string;
@@ -139,6 +149,8 @@ export interface CombinedPromptData {
 
 export interface GenerateAfterData {
     prompt: string | Chat[];
+    type?: string; // from CustomGeneration
+    context?: Context; // from CustomGeneration
 }
 
 export interface WorldInfoLoaded {
@@ -146,6 +158,7 @@ export interface WorldInfoLoaded {
     characterLore: WorldInfoEntry[];
     chatLore: WorldInfoEntry[];
     personaLore: WorldInfoEntry[];
+    type?: string; // from CustomGeneration
 }
 
 export interface WorldInfoScan {
