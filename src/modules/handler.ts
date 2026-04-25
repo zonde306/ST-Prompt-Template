@@ -88,7 +88,7 @@ async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
         is_system: undefined,
         name: undefined,
         isDryRun: false,
-        generateType: generateType,
+        generateType: data.type ?? generateType,
     });
 
     const sandbox = settings.sandbox ? new FunctionSandbox() : null;
@@ -186,7 +186,7 @@ async function handleGenerateAfter(data: GenerateAfterData, dryRun?: boolean) {
     }
 
     let chat = typeof data.prompt === 'string' ? [{ role: '', content: data.prompt }] : data.prompt;
-    chat = await processGenerateAfter(chat);
+    chat = await processGenerateAfter(chat, data.type ?? generateType);
     if(typeof data.prompt === 'string') {
         if(chat.length > 1) {
             data.prompt = chat.map(c => c.content).join('\n\n');
@@ -206,10 +206,10 @@ async function handleChatCompletionReady(data: ChatCompletionReady) {
     if (settings.generate_enabled === false)
         return;
 
-    data.messages = await processGenerateAfter(data.messages);
+    data.messages = await processGenerateAfter(data.messages, data.type ?? generateType);
 }
 
-async function processGenerateAfter(chat: Chat[]): Promise<Chat[]> {
+async function processGenerateAfter(chat: Chat[], type: string = generateType): Promise<Chat[]> {
     if(settings.enabled === false)
         return chat;
 
@@ -236,7 +236,7 @@ async function processGenerateAfter(chat: Chat[]): Promise<Chat[]> {
         is_system: undefined,
         name: undefined,
         isDryRun: false,
-        generateType: generateType,
+        generateType: type,
         generateData: chat,
     });
 
