@@ -710,7 +710,10 @@ function set(obj: object, key: string | number | null, value: any): any {
         _.set(res, key, value);
 
     if(STATE.schema) {
-        Object.assign(obj, STATE.schema.parse(res));
+        const validated = STATE.schema.safeParse(res);
+        if(!validated.success)
+            throw new Error(`failed to validate schema: ${JSON.stringify(z.treeifyError(validated.error))}`);
+        Object.assign(obj, validated.data);
     }
 
     return res;
@@ -723,7 +726,10 @@ function unset(obj: any, key: string | number | null): any {
     _.unset(res, key);
 
     if(STATE.schema) {
-        Object.assign(obj, STATE.schema.parse(res));
+        const validated = STATE.schema.safeParse(res);
+        if(!validated.success)
+            throw new Error(`failed to validate schema: ${JSON.stringify(z.treeifyError(validated.error))}`);
+        Object.assign(obj, validated.data);
     }
 
     return res;
