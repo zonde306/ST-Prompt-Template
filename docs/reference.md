@@ -565,6 +565,14 @@ function insvar(key, value, index = undefined, options = {});
 function insertLocalVar(key, value, index = undefined, options = {});
 function insertGlobalVar(key, value, index = undefined, options = {});
 function insertMessageVar(key, value, index = undefined, options = {});
+
+/**
+ * Set a Zod schema for variable validation. Any subsequent variable modifications that fail validation will throw an error.
+ * For compatibility, the root must be loose.
+ * 
+ * @param {z.ZodType<object>|object} schema - Zod schema for the variable root.
+ */
+function setVariableSchema(schema);
 ```
 
 > `flags` types:

@@ -565,6 +565,14 @@ function insvar(key, value, index = undefined, options = {});
 function insertLocalVar(key, value, index = undefined, options = {});
 function insertGlobalVar(key, value, index = undefined, options = {});
 function insertMessageVar(key, value, index = undefined, options = {});
+
+/**
+ * 为变量设置zod格式验证，之后的所有修改变量操作如果验证失败会抛出异常
+ * 为了兼容性，root必须是 loose
+ * 
+ * @param {z.ZodType<object>|object} schema - 变量 root 的 zod 结构
+ */
+function setVariableSchema(schema);
 ```
 
 > `flags` 类型:

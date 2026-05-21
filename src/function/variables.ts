@@ -878,11 +878,15 @@ export function dumpYamlWithSchema(
 }
 
 export function setVariableSchema(schema: z.ZodType<object>) {
-    if(schema.type !== 'object')
-        throw new Error('Schema root must be an object');
+    if(schema.type !== 'object') {
+        if(_.isPlainObject(schema))
+            schema = z.looseObject(schema);
+        else
+            throw new Error('Schema root must be an object');
+    }
 
     if(STATE.schema)
         STATE.schema = deepMergeZod(STATE.schema, schema);
     else
-        STATE.schema = deepMergeZod(z.object({}).loose(), schema);
+        STATE.schema = deepMergeZod(z.looseObject({}), schema);
 }
