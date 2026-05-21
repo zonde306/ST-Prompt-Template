@@ -162,14 +162,7 @@ export async function evalTemplate(
                         opts.includer ?? include,
                         rethrow
                     ],
-                    {
-                        // @ts-expect-error
-                        TavernHelper: globalThis.TavernHelper,
-                        // @ts-expect-error
-                        Mvu: globalThis.Mvu,
-                        // @ts-expect-error
-                        YAML: globalThis.YAML,
-                    },
+                    {},
                     data,
                 );
             } else {
@@ -610,14 +603,7 @@ export async function compileTemplate(
                                     options.includer ?? include,
                                     rethrow
                                 ],
-                                {
-                                    // @ts-expect-error
-                                    TavernHelper: globalThis.TavernHelper,
-                                    // @ts-expect-error
-                                    Mvu: globalThis.Mvu,
-                                    // @ts-expect-error
-                                    YAML: globalThis.YAML,
-                                },
+                                {},
                                 thisData,
                             );
                         } else {
