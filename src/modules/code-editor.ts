@@ -135,12 +135,13 @@ function reloadWorldInfoPage(e: JQuery.ClickEvent) {
 async function showEditor(ref: string) {
     let editor: any = null;
     await callGenericPopup(
-        '<div id="editor-container" style="width: 100%; height: 100%;"></div>',
+        '<div id="editor-container" style="width: 100%; height: 100%; text-align: left;"></div>',
         POPUP_TYPE.TEXT,
         '',
         {
             wide: true,
             large: true,
+            leftAlign: true,
             okButton: 'Save',
             onOpen: () => {
                 const container = document.getElementById('editor-container') as HTMLElement;
@@ -148,6 +149,7 @@ async function showEditor(ref: string) {
                     value: $(`#${ref}`).val() as string ?? '',
                     language: 'ejs',
                     theme: 'ejsTheme',
+                    automaticLayout: true,
                 });
                 /*
                 editor.onDidChangeModelContent(() => {
@@ -158,6 +160,7 @@ async function showEditor(ref: string) {
             onClose: () => {
                 if(editor) {
                     $(`#${ref}`).val(editor.getValue());
+                    editor.dispose();
                 }
             }
         }
