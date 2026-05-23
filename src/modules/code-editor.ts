@@ -223,9 +223,9 @@ const autoComplete = [
     {
         label: 'setVariableSchema',
         kind: 1,
-        detail: 'setVariableSchema(schema: object): void',
+        detail: 'setVariableSchema(Schema: object): void',
         documentation: { value: 'Sets a Zod schema for variable validation. Any subsequent modifications failing validation will throw an error.' },
-        insertText: "setVariableSchema(${1:schema})",
+        insertText: "setVariableSchema(${1:Schema})",
         insertTextRules: 4
     },
 
@@ -795,7 +795,7 @@ function getJsSuggestions(range: any, monaco: any) {
         });
     });
 
-    suggestions.push(...autoComplete);
+    suggestions.push(...(autoComplete.map(obj => ({ ...obj, range }))));
 
     return suggestions;
 }
