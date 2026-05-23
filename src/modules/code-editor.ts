@@ -115,19 +115,21 @@ export async function exit() {
 }
 
 function reloadWorldInfoPage(e: JQuery.ClickEvent) {
-    const button = $(e.target)?.parent()?.parent()?.parent()?.find('.editor_maximize');
-    if(button?.length) {
-        const cloned = button.clone();
-        cloned.on('click', (e: JQuery.ClickEvent) => {
-            const textarea = $(e.target).attr('data-for');
-            if(textarea?.startsWith('world_entry_content_')) {
-                showEditor(textarea);
-            }
-        });
-        cloned.css('color', 'var(--SmartThemeQuoteColor)');
-        cloned.removeClass('editor_maximize');
-        button.insertAfter(cloned);
-    }
+    window.setTimeout(() => {
+        const button = $(e.target)?.parent()?.parent()?.parent()?.find('.editor_maximize');
+        if(button?.length) {
+            const cloned = button.clone();
+            cloned.on('click', (e: JQuery.ClickEvent) => {
+                const textarea = $(e.target).attr('data-for');
+                if(textarea?.startsWith('world_entry_content_')) {
+                    showEditor(textarea);
+                }
+            });
+            cloned.css('color', 'var(--SmartThemeQuoteColor)');
+            cloned.removeClass('editor_maximize');
+            button.insertAfter(cloned);
+        }
+    }, 1000);
 }
 
 async function showEditor(ref: string) {
