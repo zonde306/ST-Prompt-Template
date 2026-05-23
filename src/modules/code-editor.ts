@@ -1,6 +1,7 @@
 import loader from '@monaco-editor/loader';
 import { eventSource, event_types } from '../../../../../events.js';
 import { callGenericPopup, POPUP_TYPE } from '../../../../../popup.js';
+import { settings } from './ui';
 
 let monaco: any = null;
 
@@ -801,6 +802,9 @@ function getJsSuggestions(range: any, monaco: any) {
 }
 
 function reloadWorldInfoPage(e: JQuery.ClickEvent) {
+    if(!settings.enabled || !settings.code_editor)
+        return;
+
     window.setTimeout(() => {
         const button = $(e.target)?.parent()?.parent()?.parent()?.find('.editor_maximize');
         if (button?.length) {
