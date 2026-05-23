@@ -1,8 +1,9 @@
 {
   "name": "extension-prompt-template",
-  "version": "1.16",
+  "version": "1.17",
   "private": true,
   "dependencies": {
+    "@monaco-editor/loader": "^1.7.0",
     "jsonrepair": "^3.13.1",
     "syntax-error": "^1.4.0",
     "tsc": "^2.0.4",

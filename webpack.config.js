@@ -24,7 +24,7 @@ const serverConfig = {
                         options: {
                             sourceMaps: true,
                         },
-                    }
+                    },
                 ],
                 exclude: /node_modules/,
             },
@@ -34,7 +34,7 @@ const serverConfig = {
                 options: {
                     cacheDirectory: true,
                     presets: [
-                        ['@babel/preset-env', { "modules": false }],
+                        ['@babel/preset-env', { 'modules': false }],
                     ],
                     sourceMaps: true,
                 },
@@ -58,12 +58,12 @@ const serverConfig = {
         ],
     },
     plugins: [],
-    externals: function({ context, request }, callback) {
+    externals: function ({ context, request }, callback) {
         if (request.startsWith('../../') || request.includes('libs/')) {
-            if(context.search(/(\/|\\)src\1/) > 0)
+            if (context.search(/(\/|\\)src\1/) > 0)
                 return callback(null, request.substring(3));
             return callback(null, request);
-        } else if(request.startsWith('https://') || request.startsWith('http://')) {
+        } else if (request.startsWith('https://') || request.startsWith('http://')) {
             return callback(null, request);
         }
         callback();

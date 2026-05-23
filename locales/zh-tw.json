@@ -44,5 +44,7 @@
 	"Compile the code in web workers": "使用 web workers 在背景編譯",
 	"PT Compile workers": "背景編譯",
 	"Execute code in iframe": "在iframe中執行程式碼，更安全，效能下降",
-	"PT Environmental isolation": "環境隔離"
+	"PT Environmental isolation": "環境隔離",
+	"PT Code Editor": "程式碼編輯器",
+	"Enable code editor for World Info.": "啟用世界書程式碼編輯器"
 }
