@@ -824,8 +824,110 @@ function reloadWorldInfoPage(e: JQuery.ClickEvent) {
 
 async function showEditor(ref: string) {
     let editor: any = null;
+
+    /**
+     * 共享的输入/选择控件内联样式
+     */
+    const inputStyle = `padding:2px 6px;border-radius:4px;border:1px solid var(--SmartThemeBorderColor,#555);background:var(--SmartThemeInputColor,#1e1e1e);color:var(--SmartThemeBodyColor,#ccc);font-size:12px;`;
+    const labelStyle = `display:flex;align-items:center;gap:4px;color:var(--SmartThemeBodyColor,#ccc);`;
+    const numInputStyle = `width:50px;${inputStyle}`;
+    const selStyle = `max-width:120px;${inputStyle}`;
+
+    const toolbarHtml = `
+    <style>
+        #editor-toolbar label { white-space: nowrap; }
+        #editor-toolbar input[type="checkbox"] { margin: 0; accent-color: var(--SmartThemeQuoteColor, #888); }
+    </style>
+    <div id="editor-wrapper" style="display:flex;flex-direction:column;width:100%;height:100%;">
+        <div id="editor-toolbar" style="
+            flex-shrink:0;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;
+            padding:5px 10px;background:var(--SmartThemeBlurTintColor,#2b2b2b);
+            border-bottom:1px solid var(--SmartThemeBorderColor,#444);
+            font-size:12px;user-select:none;
+        ">
+            <!-- ===== 字体相关 ===== -->
+            <label style="${labelStyle}">字体<select id="ed-font-family" style="${selStyle}">
+                <option value="'Cascadia Code','Fira Code',Consolas,'Courier New',monospace">Cascadia Code</option>
+                <option value="'Fira Code',Consolas,'Courier New',monospace">Fira Code</option>
+                <option value="Consolas,'Courier New',monospace">Consolas</option>
+                <option value="'Courier New',monospace">Courier New</option>
+                <option value="'JetBrains Mono',Consolas,monospace">JetBrains Mono</option>
+                <option value="'Source Code Pro',Consolas,monospace">Source Code Pro</option>
+                <option value="monospace">Monospace</option>
+            </select></label>
+            <label style="${labelStyle}">字号<input id="ed-font-size" type="number" min="8" max="48" value="14" style="${numInputStyle}"></label>
+            <label style="${labelStyle}">行高<input id="ed-line-height" type="number" min="0" max="60" value="0" style="${numInputStyle}"></label>
+            <label style="${labelStyle}">字间距<input id="ed-letter-spacing" type="number" min="0" max="10" value="0" step="0.5" style="${numInputStyle}"></label>
+            <label style="${labelStyle}">字重<select id="ed-font-weight" style="${selStyle}max-width:80px;">
+                <option value="normal" selected>normal</option><option value="bold">bold</option>
+                <option value="100">100</option><option value="200">200</option><option value="300">300</option>
+                <option value="400">400</option><option value="500">500</option><option value="600">600</option>
+                <option value="700">700</option><option value="800">800</option><option value="900">900</option>
+            </select></label>
+            <label style="${labelStyle}"><input id="ed-font-ligatures" type="checkbox">连字</label>
+
+            <!-- ===== 主题与显示 ===== -->
+            <label style="${labelStyle}">主题<select id="ed-theme" style="${selStyle}">
+                <option value="ejsTheme" selected>EJS Light</option>
+                <option value="vs">VS Light</option>
+                <option value="vs-dark">VS Dark</option>
+                <option value="hc-black">High Contrast</option>
+            </select></label>
+            <label style="${labelStyle}">光标<select id="ed-cursor-style" style="${selStyle}max-width:75px;">
+                <option value="line" selected>line</option><option value="block">block</option>
+                <option value="underline">underline</option><option value="line-thin">line-thin</option>
+                <option value="block-outline">block-outline</option><option value="underline-thin">underline-thin</option>
+            </select></label>
+            <label style="${labelStyle}">闪烁<select id="ed-cursor-blinking" style="${selStyle}max-width:80px;">
+                <option value="blink" selected>blink</option><option value="smooth">smooth</option>
+                <option value="phase">phase</option><option value="expand">expand</option>
+                <option value="solid">solid</option>
+            </select></label>
+            <label style="${labelStyle}">空白<select id="ed-render-whitespace" style="${selStyle}max-width:85px;">
+                <option value="none">none</option><option value="boundary" selected>boundary</option>
+                <option value="selection">selection</option><option value="trailing">trailing</option>
+                <option value="all">all</option>
+            </select></label>
+            <label style="${labelStyle}">行高亮<select id="ed-line-highlight" style="${selStyle}max-width:75px;">
+                <option value="line" selected>line</option><option value="all">all</option>
+                <option value="none">none</option><option value="gutter">gutter</option>
+            </select></label>
+            <label style="${labelStyle}">缩进线<select id="ed-guides" style="${selStyle}max-width:100px;">
+                <option value="indentation" selected>indentation</option><option value="none">none</option>
+            </select></label>
+
+            <!-- ===== 功能开关 ===== -->
+            <label style="${labelStyle}"><input id="ed-word-wrap" type="checkbox">换行</label>
+            <label style="${labelStyle}"><input id="ed-line-numbers" type="checkbox" checked>行号</label>
+            <label style="${labelStyle}"><input id="ed-minimap" type="checkbox" checked>缩略图</label>
+            <label style="${labelStyle}"><input id="ed-bracket-pair-color" type="checkbox" checked>括号着色</label>
+            <label style="${labelStyle}"><input id="ed-folding" type="checkbox" checked>折叠</label>
+            <label style="${labelStyle}"><input id="ed-glyph-margin" type="checkbox">装订线</label>
+            <label style="${labelStyle}"><input id="ed-smooth-scrolling" type="checkbox" checked>平滑滚动</label>
+            <label style="${labelStyle}"><input id="ed-mouse-wheel-zoom" type="checkbox">滚轮缩放</label>
+            <label style="${labelStyle}"><input id="ed-scroll-beyond-last" type="checkbox" checked>超行滚动</label>
+            <label style="${labelStyle}"><input id="ed-sticky-scroll" type="checkbox" checked>黏性滚动</label>
+            <label style="${labelStyle}"><input id="ed-contextmenu" type="checkbox" checked>右键菜单</label>
+            <label style="${labelStyle}"><input id="ed-quick-suggestions" type="checkbox" checked>快速建议</label>
+            <label style="${labelStyle}"><input id="ed-semantic-highlight" type="checkbox" checked>语义高亮</label>
+
+            <!-- ===== 缩进与制表 ===== -->
+            <label style="${labelStyle}">Tab<select id="ed-insert-spaces" style="${selStyle}max-width:75px;">
+                <option value="spaces" selected>空格</option><option value="tabs">制表</option>
+            </select></label>
+            <label style="${labelStyle}">宽度<input id="ed-tab-size" type="number" min="1" max="8" value="4" style="${numInputStyle}"></label>
+            <label style="${labelStyle}"><input id="ed-detect-indent" type="checkbox" checked>检测缩进</label>
+            <label style="${labelStyle}"><input id="ed-trim-auto-whitespace" type="checkbox" checked>修剪行尾</label>
+            <label style="${labelStyle}">建议<select id="ed-word-based-suggestions" style="${selStyle}max-width:90px;">
+                <option value="currentDocument" selected>本文档</option><option value="allDocuments">所有文档</option>
+                <option value="matchingDocuments">同语言</option><option value="off">关闭</option>
+            </select></label>
+        </div>
+        <div id="editor-container" style="flex:1;width:100%;text-align:left;"></div>
+    </div>`;
+
     await callGenericPopup(
-        '<div id="editor-container" style="width: 100%; height: 100%; text-align: left;"></div>',
+        toolbarHtml,
         POPUP_TYPE.TEXT,
         '',
         {
@@ -840,12 +942,94 @@ async function showEditor(ref: string) {
                     language: 'ejs',
                     theme: 'ejsTheme',
                     automaticLayout: true,
+                    fontSize: 14,
+                    fontFamily: "'Cascadia Code','Fira Code',Consolas,'Courier New',monospace",
+                    lineHeight: 0,
+                    letterSpacing: 0,
+                    fontWeight: 'normal',
+                    fontLigatures: false,
+                    wordWrap: 'off',
+                    lineNumbers: 'on',
+                    minimap: { enabled: true },
+                    bracketPairColorization: { enabled: true },
+                    folding: true,
+                    glyphMargin: false,
+                    cursorStyle: 'line',
+                    cursorBlinking: 'blink',
+                    renderWhitespace: 'boundary',
+                    renderLineHighlight: 'line',
+                    guides: { indentation: true, bracketPairs: true },
+                    smoothScrolling: true,
+                    mouseWheelZoom: false,
+                    scrollBeyondLastLine: true,
+                    stickyScroll: { enabled: true },
+                    contextmenu: true,
+                    quickSuggestions: true,
+                    // 缩进与制表
+                    insertSpaces: true,
+                    tabSize: 4,
+                    detectIndentation: true,
+                    trimAutoWhitespace: true,
+                    wordBasedSuggestions: 'currentDocument',
+                    // semanticHighlighting (IGlobalEditorOptions)
+                    'semanticHighlighting.enabled': true,
                 });
-                /*
-                editor.onDidChangeModelContent(() => {
-                    $(`#${ref}`).val(editor.getValue());
+
+                // ---- 事件绑定辅助函数 ----
+                const $el = document.getElementById.bind(document);
+                const on = (id: string, event: string, fn: EventListener) => $el(id)?.addEventListener(event, fn);
+
+                // 字体
+                on('ed-font-family', 'change', () => editor?.updateOptions({ fontFamily: ($el('ed-font-family') as HTMLSelectElement).value }));
+                // 字号
+                on('ed-font-size', 'input', () => editor?.updateOptions({ fontSize: Math.max(8, Math.min(48, parseInt(($el('ed-font-size') as HTMLInputElement).value, 10) || 14)) }));
+                // 行高 (0 = auto)
+                on('ed-line-height', 'input', () => editor?.updateOptions({ lineHeight: Math.max(0, Math.min(60, parseInt(($el('ed-line-height') as HTMLInputElement).value, 10) || 0)) }));
+                // 字间距
+                on('ed-letter-spacing', 'input', () => editor?.updateOptions({ letterSpacing: Math.max(0, Math.min(10, parseFloat(($el('ed-letter-spacing') as HTMLInputElement).value) || 0)) }));
+                // 字重
+                on('ed-font-weight', 'change', () => editor?.updateOptions({ fontWeight: ($el('ed-font-weight') as HTMLSelectElement).value }));
+                // 连字
+                on('ed-font-ligatures', 'change', () => editor?.updateOptions({ fontLigatures: ($el('ed-font-ligatures') as HTMLInputElement).checked }));
+                // 主题
+                on('ed-theme', 'change', () => monaco.editor.setTheme(($el('ed-theme') as HTMLSelectElement).value));
+                // 光标样式
+                on('ed-cursor-style', 'change', () => editor?.updateOptions({ cursorStyle: ($el('ed-cursor-style') as HTMLSelectElement).value }));
+                // 光标闪烁
+                on('ed-cursor-blinking', 'change', () => editor?.updateOptions({ cursorBlinking: ($el('ed-cursor-blinking') as HTMLSelectElement).value }));
+                // 渲染空白
+                on('ed-render-whitespace', 'change', () => editor?.updateOptions({ renderWhitespace: ($el('ed-render-whitespace') as HTMLSelectElement).value }));
+                // 行高亮
+                on('ed-line-highlight', 'change', () => editor?.updateOptions({ renderLineHighlight: ($el('ed-line-highlight') as HTMLSelectElement).value }));
+                // 缩进参考线
+                on('ed-guides', 'change', () => {
+                    const v = ($el('ed-guides') as HTMLSelectElement).value;
+                    editor?.updateOptions({ guides: v === 'none' ? { indentation: false, bracketPairs: false } : { indentation: true, bracketPairs: true } });
                 });
-                */
+                // 复选框类
+                const bindCheck = (id: string, opt: string, map?: (v: boolean) => any) =>
+                    on(id, 'change', () => editor?.updateOptions({ [opt]: map ? map(($el(id) as HTMLInputElement).checked) : ($el(id) as HTMLInputElement).checked }));
+                bindCheck('ed-word-wrap', 'wordWrap', (v) => v ? 'on' : 'off');
+                bindCheck('ed-line-numbers', 'lineNumbers', (v) => v ? 'on' : 'off');
+                bindCheck('ed-minimap', 'minimap', (v) => ({ enabled: v }));
+                bindCheck('ed-bracket-pair-color', 'bracketPairColorization', (v) => ({ enabled: v }));
+                bindCheck('ed-folding', 'folding');
+                bindCheck('ed-glyph-margin', 'glyphMargin');
+                bindCheck('ed-smooth-scrolling', 'smoothScrolling');
+                bindCheck('ed-mouse-wheel-zoom', 'mouseWheelZoom');
+                bindCheck('ed-scroll-beyond-last', 'scrollBeyondLastLine');
+                bindCheck('ed-sticky-scroll', 'stickyScroll', (v) => ({ enabled: v }));
+                bindCheck('ed-contextmenu', 'contextmenu');
+                bindCheck('ed-quick-suggestions', 'quickSuggestions');
+                bindCheck('ed-semantic-highlight', 'semanticHighlighting.enabled');
+                bindCheck('ed-detect-indent', 'detectIndentation');
+                bindCheck('ed-trim-auto-whitespace', 'trimAutoWhitespace');
+                // Tab缩进方式
+                on('ed-insert-spaces', 'change', () => editor?.updateOptions({ insertSpaces: ($el('ed-insert-spaces') as HTMLSelectElement).value === 'spaces' }));
+                // Tab宽度
+                on('ed-tab-size', 'input', () => editor?.updateOptions({ tabSize: Math.max(1, Math.min(8, parseInt(($el('ed-tab-size') as HTMLInputElement).value, 10) || 4)) }));
+                // 建议范围
+                on('ed-word-based-suggestions', 'change', () => editor?.updateOptions({ wordBasedSuggestions: ($el('ed-word-based-suggestions') as HTMLSelectElement).value }));
             },
             onClose: () => {
                 if (editor) {
