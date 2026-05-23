@@ -7,7 +7,7 @@ let monaco : any = null;
 const autoComplete = [
     {
         label: 'variables',
-        kind: monaco.languages.CompletionItemKind.Variable,
+        kind: 4,
         insertText: 'variables',
         detail: 'The variables object',
         documentation: 'The variables object is a JavaScript object that contains the data that is passed to the template.',
