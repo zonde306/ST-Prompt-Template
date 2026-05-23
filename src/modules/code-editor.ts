@@ -2,7 +2,7 @@ import loader from '@monaco-editor/loader';
 import { eventSource, event_types } from '../../../../../events.js';
 import { callGenericPopup, POPUP_TYPE } from '../../../../../popup.js';
 
-let monaco : any = null;
+let monaco: any = null;
 
 const autoComplete = [
     {
@@ -30,76 +30,90 @@ export async function init() {
     loader.init().then(loaded => {
         monaco = loaded;
 
+        // 1. Registered Language
         monaco.languages.register({ id: 'ejs' });
+
+        // 2. Configure Monarch syntax highlighting (using nextEmbedded to embed native JS)
         monaco.languages.setMonarchTokensProvider('ejs', {
             tokenizer: {
                 root: [
-                    [/<%[=\-_]?/, { token: 'delimiter.ejs', next: '@ejsCode' }],
-                    [/[^<%]+/, 'text']
+                    // When encountering a character starting with <%, enter ejsCode state and let the built-in JavaScript engine take over the highlighting.
+                    [/<%[=\-_]?/, { token: 'delimiter.ejs', next: '@ejsCode', nextEmbedded: 'javascript' }],
+                    // HTML text or other content
+                    [/[^<]+/, 'text'],
+                    [/</, 'text']
                 ],
                 ejsCode: [
-                    [/%>/, { token: 'delimiter.ejs', next: '@pop' }],
-                    [/[a-zA-Z_$][\w$]*/, 'identifier'],
-                    [/\d+/, 'number'],
-                    [/".*?"/, 'string'],
-                    [/'[^']*'/, 'string'],
-                    [/[{}()\[\]]/, '@brackets'],
-                    [/./, 'text']
+                    // When the %> statement is encountered, exit the ejsCode state and exit the JS engine.
+                    [/%>/, { token: 'delimiter.ejs', next: '@pop', nextEmbedded: '@pop' }],
+                    // Handle any non-% characters in the middle to the embedded language (i.e., JS).
+                    [/[^%]+/, ''],
+                    // Matches a single % (if no > is specified, it is considered a JavaScript modulo operator, etc., and handled by JavaScript).
+                    [/%/, '']
                 ]
             }
         });
 
+        // 3. Configure theme
         monaco.editor.defineTheme('ejsTheme', {
-            base: 'vs',
-            inherit: true,
+            base: 'vs', // Dark mode is available with 'vs-dark'
+            inherit: true, // Must be enabled! This allows embedded JS code to automatically use Monaco's default JS colors.
             rules: [
-                { token: 'delimiter.ejs', foreground: '800000', fontStyle: 'bold' },
-                { token: 'identifier', foreground: '0000FF' },
-                { token: 'number', foreground: '098658' },
-                { token: 'string', foreground: 'A31515' }
+                // We only need to specify the color for EJS tags; the colors of variables and strings within JS are determined by the base theme itself.
+                { token: 'delimiter.ejs', foreground: '800000', fontStyle: 'bold' }
             ],
-            colors: {
-            }
+            colors: {}
         });
 
+        // 4. Basic language configuration (bracket matching)
         monaco.languages.setLanguageConfiguration('ejs', {
             brackets: [
-                ['{', '}'],
-                ['[', ']'],
-                ['(', ')'],
-                ['<%', '%>']
+                ['{', '}'], ['[', ']'], ['(', ')'], ['<%', '%>']
             ],
             autoClosingPairs: [
-                { open: '{', close: '}' },
-                { open: '[', close: ']' },
-                { open: '(', close: ')' },
-                { open: '<%', close: '%>' }
+                { open: '{', close: '}' }, { open: '[', close: ']' }, { open: '(', close: ')' }, { open: '<%', close: '%>' }
             ],
             surroundingPairs: [
-                { open: '{', close: '}' },
-                { open: '[', close: ']' },
-                { open: '(', close: ')' },
-                { open: '<%', close: '%>' }
+                { open: '{', close: '}' }, { open: '[', close: ']' }, { open: '(', close: ')' }, { open: '<%', close: '%>' }
             ]
         });
 
+        // 5. Configure auto-completion rules
         monaco.languages.registerCompletionItemProvider('ejs', {
+            // Characters that trigger completion
+            triggerCharacters: ['.', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
+
             provideCompletionItems: (model: any, position: any) => {
-                const lineTokens = monaco.editor.tokenize(model.getLineContent(position.lineNumber), 'ejs')[0];
-                let tokenAtCursor: { startIndex: number; endIndex: number; type: string } | null = null;
-                for (let i = 0; i < lineTokens.length; i++) {
-                    const token = lineTokens[i];
-                    const startIndex = token.offset;
-                    const endIndex = i + 1 < lineTokens.length ? lineTokens[i + 1].offset : model.getLineMaxColumn(position.lineNumber) - 1;
-                    if (position.column - 1 >= startIndex && position.column - 1 <= endIndex) {
-                        tokenAtCursor = { startIndex, endIndex, type: token.type };
-                        break;
-                    }
+                // Get all text before the current cursor position
+                const textUntilPosition = model.getValueInRange({
+                    startLineNumber: 1,
+                    startColumn: 1,
+                    endLineNumber: position.lineNumber,
+                    endColumn: position.column
+                });
+
+                // Find the most recent <% and %>
+                const lastOpen = textUntilPosition.lastIndexOf('<%');
+                const lastClose = textUntilPosition.lastIndexOf('%>');
+
+                // If the most recently closed statement is <% (meaning there is no %> closing statement after <%), it indicates that the current cursor is inside an EJS statement block.
+                if (lastOpen > lastClose) {
+                    const word = model.getWordUntilPosition(position);
+                    const range = {
+                        startLineNumber: position.lineNumber,
+                        endLineNumber: position.lineNumber,
+                        startColumn: word.startColumn,
+                        endColumn: word.endColumn
+                    };
+
+                    // Located within a statement block, returns JavaScript completion items.
+                    return {
+                        suggestions: getJsSuggestions(range, monaco)
+                    };
                 }
-                if (!tokenAtCursor || !tokenAtCursor.type.includes('delimiter.ejs') && !tokenAtCursor.type.includes('identifier')) {
-                    return { suggestions: [] };
-                }
-                return { suggestions: autoComplete };
+
+                // JS auto-completion is not provided when the cursor is not within an EJS block (such as within regular HTML).
+                return { suggestions: [] };
             }
         });
 
@@ -114,14 +128,55 @@ export async function init() {
 export async function exit() {
 }
 
+/**
+ * Helper functions: Provide keyword and common API completion within JS code blocks.
+ */
+function getJsSuggestions(range: any, monaco: any) {
+    // Common JavaScript Keywords
+    const keywords = [
+        'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger',
+        'default', 'delete', 'do', 'else', 'export', 'extends', 'finally',
+        'for', 'function', 'if', 'import', 'in', 'instanceof', 'let', 'new',
+        'return', 'super', 'switch', 'this', 'throw', 'try', 'typeof', 'var',
+        'void', 'while', 'with', 'yield', 'await', 'async', 'true', 'false', 'null', 'undefined'
+    ];
+
+    // Common global objects
+    const globals = ['Math', 'JSON', 'Object', 'Array', 'String', 'Number', 'Boolean', 'console', 'window', 'document'];
+
+    const suggestions: any[] = [];
+
+    keywords.forEach(kw => {
+        suggestions.push({
+            label: kw,
+            kind: monaco.languages.CompletionItemKind.Keyword,
+            insertText: kw,
+            range: range
+        });
+    });
+
+    globals.forEach(g => {
+        suggestions.push({
+            label: g,
+            kind: monaco.languages.CompletionItemKind.Class,
+            insertText: g,
+            range: range
+        });
+    });
+
+    suggestions.push(...autoComplete);
+
+    return suggestions;
+}
+
 function reloadWorldInfoPage(e: JQuery.ClickEvent) {
     window.setTimeout(() => {
         const button = $(e.target)?.parent()?.parent()?.parent()?.find('.editor_maximize');
-        if(button?.length) {
+        if (button?.length) {
             const cloned = button.clone();
             cloned.on('click', (e: JQuery.ClickEvent) => {
                 const textarea = $(e.target).attr('data-for');
-                if(textarea?.startsWith('world_entry_content_')) {
+                if (textarea?.startsWith('world_entry_content_')) {
                     showEditor(textarea);
                 }
             });
@@ -158,7 +213,7 @@ async function showEditor(ref: string) {
                 */
             },
             onClose: () => {
-                if(editor) {
+                if (editor) {
                     $(`#${ref}`).val(editor.getValue());
                     editor.dispose();
                 }
