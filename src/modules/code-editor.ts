@@ -871,88 +871,88 @@ async function showEditor(ref: string) {
                 <button class="ed-menu-btn" data-menu="ed-menu-theme">🎨 显示</button>
                 <button class="ed-menu-btn" data-menu="ed-menu-features">⚙️ 功能</button>
                 <button class="ed-menu-btn" data-menu="ed-menu-indent">↹ 缩进</button>
-            </div>
-            <!-- ===== 字体下拉 ===== -->
-            <div class="ed-dropdown" id="ed-menu-font">
-                <label style="${labelStyle}">字体<select id="ed-font-family" style="${selStyle}">
-                    <option value="'Cascadia Code','Fira Code',Consolas,'Courier New',monospace">Cascadia Code</option>
-                    <option value="'Fira Code',Consolas,'Courier New',monospace">Fira Code</option>
-                    <option value="Consolas,'Courier New',monospace">Consolas</option>
-                    <option value="'Courier New',monospace">Courier New</option>
-                    <option value="'JetBrains Mono',Consolas,monospace">JetBrains Mono</option>
-                    <option value="'Source Code Pro',Consolas,monospace">Source Code Pro</option>
-                    <option value="monospace">Monospace</option>
-                </select></label>
-                <label style="${labelStyle}">字号<input id="ed-font-size" type="number" min="8" max="48" value="14" style="${numInputStyle}"></label>
-                <label style="${labelStyle}">行高<input id="ed-line-height" type="number" min="0" max="60" value="0" style="${numInputStyle}"></label>
-                <label style="${labelStyle}">字间距<input id="ed-letter-spacing" type="number" min="0" max="10" value="0" step="0.5" style="${numInputStyle}"></label>
-                <label style="${labelStyle}">字重<select id="ed-font-weight" style="${selStyle}max-width:80px;">
-                    <option value="normal" selected>normal</option><option value="bold">bold</option>
-                    <option value="100">100</option><option value="200">200</option><option value="300">300</option>
-                    <option value="400">400</option><option value="500">500</option><option value="600">600</option>
-                    <option value="700">700</option><option value="800">800</option><option value="900">900</option>
-                </select></label>
-                <label style="${labelStyle}"><input id="ed-font-ligatures" type="checkbox">连字</label>
-            </div>
-            <!-- ===== 显示下拉 ===== -->
-            <div class="ed-dropdown" id="ed-menu-theme">
-                <label style="${labelStyle}">主题<select id="ed-theme" style="${selStyle}">
-                    <option value="ejsTheme" selected>EJS Light</option>
-                    <option value="vs">VS Light</option>
-                    <option value="vs-dark">VS Dark</option>
-                    <option value="hc-black">High Contrast</option>
-                </select></label>
-                <label style="${labelStyle}">光标<select id="ed-cursor-style" style="${selStyle}max-width:75px;">
-                    <option value="line" selected>line</option><option value="block">block</option>
-                    <option value="underline">underline</option><option value="line-thin">line-thin</option>
-                    <option value="block-outline">block-outline</option><option value="underline-thin">underline-thin</option>
-                </select></label>
-                <label style="${labelStyle}">闪烁<select id="ed-cursor-blinking" style="${selStyle}max-width:80px;">
-                    <option value="blink" selected>blink</option><option value="smooth">smooth</option>
-                    <option value="phase">phase</option><option value="expand">expand</option>
-                    <option value="solid">solid</option>
-                </select></label>
-                <label style="${labelStyle}">空白<select id="ed-render-whitespace" style="${selStyle}max-width:85px;">
-                    <option value="none">none</option><option value="boundary" selected>boundary</option>
-                    <option value="selection">selection</option><option value="trailing">trailing</option>
-                    <option value="all">all</option>
-                </select></label>
-                <label style="${labelStyle}">行高亮<select id="ed-line-highlight" style="${selStyle}max-width:75px;">
-                    <option value="line" selected>line</option><option value="all">all</option>
-                    <option value="none">none</option><option value="gutter">gutter</option>
-                </select></label>
-                <label style="${labelStyle}">缩进线<select id="ed-guides" style="${selStyle}max-width:100px;">
-                    <option value="indentation" selected>indentation</option><option value="none">none</option>
-                </select></label>
-            </div>
-            <!-- ===== 功能下拉 ===== -->
-            <div class="ed-dropdown" id="ed-menu-features">
-                <label style="${labelStyle}"><input id="ed-word-wrap" type="checkbox">换行</label>
-                <label style="${labelStyle}"><input id="ed-line-numbers" type="checkbox" checked>行号</label>
-                <label style="${labelStyle}"><input id="ed-minimap" type="checkbox" checked>缩略图</label>
-                <label style="${labelStyle}"><input id="ed-bracket-pair-color" type="checkbox" checked>括号着色</label>
-                <label style="${labelStyle}"><input id="ed-folding" type="checkbox" checked>折叠</label>
-                <label style="${labelStyle}"><input id="ed-glyph-margin" type="checkbox">装订线</label>
-                <label style="${labelStyle}"><input id="ed-smooth-scrolling" type="checkbox" checked>平滑滚动</label>
-                <label style="${labelStyle}"><input id="ed-mouse-wheel-zoom" type="checkbox">滚轮缩放</label>
-                <label style="${labelStyle}"><input id="ed-scroll-beyond-last" type="checkbox" checked>超行滚动</label>
-                <label style="${labelStyle}"><input id="ed-sticky-scroll" type="checkbox" checked>黏性滚动</label>
-                <label style="${labelStyle}"><input id="ed-contextmenu" type="checkbox" checked>右键菜单</label>
-                <label style="${labelStyle}"><input id="ed-quick-suggestions" type="checkbox" checked>快速建议</label>
-                <label style="${labelStyle}"><input id="ed-semantic-highlight" type="checkbox" checked>语义高亮</label>
-            </div>
-            <!-- ===== 缩进下拉 ===== -->
-            <div class="ed-dropdown" id="ed-menu-indent">
-                <label style="${labelStyle}">Tab<select id="ed-insert-spaces" style="${selStyle}max-width:75px;">
-                    <option value="spaces" selected>空格</option><option value="tabs">制表</option>
-                </select></label>
-                <label style="${labelStyle}">宽度<input id="ed-tab-size" type="number" min="1" max="8" value="4" style="${numInputStyle}"></label>
-                <label style="${labelStyle}"><input id="ed-detect-indent" type="checkbox" checked>检测缩进</label>
-                <label style="${labelStyle}"><input id="ed-trim-auto-whitespace" type="checkbox" checked>修剪行尾</label>
-                <label style="${labelStyle}">建议<select id="ed-word-based-suggestions" style="${selStyle}max-width:90px;">
-                    <option value="currentDocument" selected>本文档</option><option value="allDocuments">所有文档</option>
-                    <option value="matchingDocuments">同语言</option><option value="off">关闭</option>
-                </select></label>
+                <!-- ===== 字体下拉 ===== -->
+                <div class="ed-dropdown" id="ed-menu-font">
+                    <label style="${labelStyle}">字体<select id="ed-font-family" style="${selStyle}">
+                        <option value="'Cascadia Code','Fira Code',Consolas,'Courier New',monospace">Cascadia Code</option>
+                        <option value="'Fira Code',Consolas,'Courier New',monospace">Fira Code</option>
+                        <option value="Consolas,'Courier New',monospace">Consolas</option>
+                        <option value="'Courier New',monospace">Courier New</option>
+                        <option value="'JetBrains Mono',Consolas,monospace">JetBrains Mono</option>
+                        <option value="'Source Code Pro',Consolas,monospace">Source Code Pro</option>
+                        <option value="monospace">Monospace</option>
+                    </select></label>
+                    <label style="${labelStyle}">字号<input id="ed-font-size" type="number" min="8" max="48" value="14" style="${numInputStyle}"></label>
+                    <label style="${labelStyle}">行高<input id="ed-line-height" type="number" min="0" max="60" value="0" style="${numInputStyle}"></label>
+                    <label style="${labelStyle}">字间距<input id="ed-letter-spacing" type="number" min="0" max="10" value="0" step="0.5" style="${numInputStyle}"></label>
+                    <label style="${labelStyle}">字重<select id="ed-font-weight" style="${selStyle}max-width:80px;">
+                        <option value="normal" selected>normal</option><option value="bold">bold</option>
+                        <option value="100">100</option><option value="200">200</option><option value="300">300</option>
+                        <option value="400">400</option><option value="500">500</option><option value="600">600</option>
+                        <option value="700">700</option><option value="800">800</option><option value="900">900</option>
+                    </select></label>
+                    <label style="${labelStyle}"><input id="ed-font-ligatures" type="checkbox">连字</label>
+                </div>
+                <!-- ===== 显示下拉 ===== -->
+                <div class="ed-dropdown" id="ed-menu-theme">
+                    <label style="${labelStyle}">主题<select id="ed-theme" style="${selStyle}">
+                        <option value="ejsTheme" selected>EJS Light</option>
+                        <option value="vs">VS Light</option>
+                        <option value="vs-dark">VS Dark</option>
+                        <option value="hc-black">High Contrast</option>
+                    </select></label>
+                    <label style="${labelStyle}">光标<select id="ed-cursor-style" style="${selStyle}max-width:75px;">
+                        <option value="line" selected>line</option><option value="block">block</option>
+                        <option value="underline">underline</option><option value="line-thin">line-thin</option>
+                        <option value="block-outline">block-outline</option><option value="underline-thin">underline-thin</option>
+                    </select></label>
+                    <label style="${labelStyle}">闪烁<select id="ed-cursor-blinking" style="${selStyle}max-width:80px;">
+                        <option value="blink" selected>blink</option><option value="smooth">smooth</option>
+                        <option value="phase">phase</option><option value="expand">expand</option>
+                        <option value="solid">solid</option>
+                    </select></label>
+                    <label style="${labelStyle}">空白<select id="ed-render-whitespace" style="${selStyle}max-width:85px;">
+                        <option value="none">none</option><option value="boundary" selected>boundary</option>
+                        <option value="selection">selection</option><option value="trailing">trailing</option>
+                        <option value="all">all</option>
+                    </select></label>
+                    <label style="${labelStyle}">行高亮<select id="ed-line-highlight" style="${selStyle}max-width:75px;">
+                        <option value="line" selected>line</option><option value="all">all</option>
+                        <option value="none">none</option><option value="gutter">gutter</option>
+                    </select></label>
+                    <label style="${labelStyle}">缩进线<select id="ed-guides" style="${selStyle}max-width:100px;">
+                        <option value="indentation" selected>indentation</option><option value="none">none</option>
+                    </select></label>
+                </div>
+                <!-- ===== 功能下拉 ===== -->
+                <div class="ed-dropdown" id="ed-menu-features">
+                    <label style="${labelStyle}"><input id="ed-word-wrap" type="checkbox">换行</label>
+                    <label style="${labelStyle}"><input id="ed-line-numbers" type="checkbox" checked>行号</label>
+                    <label style="${labelStyle}"><input id="ed-minimap" type="checkbox" checked>缩略图</label>
+                    <label style="${labelStyle}"><input id="ed-bracket-pair-color" type="checkbox" checked>括号着色</label>
+                    <label style="${labelStyle}"><input id="ed-folding" type="checkbox" checked>折叠</label>
+                    <label style="${labelStyle}"><input id="ed-glyph-margin" type="checkbox">装订线</label>
+                    <label style="${labelStyle}"><input id="ed-smooth-scrolling" type="checkbox" checked>平滑滚动</label>
+                    <label style="${labelStyle}"><input id="ed-mouse-wheel-zoom" type="checkbox">滚轮缩放</label>
+                    <label style="${labelStyle}"><input id="ed-scroll-beyond-last" type="checkbox" checked>超行滚动</label>
+                    <label style="${labelStyle}"><input id="ed-sticky-scroll" type="checkbox" checked>黏性滚动</label>
+                    <label style="${labelStyle}"><input id="ed-contextmenu" type="checkbox" checked>右键菜单</label>
+                    <label style="${labelStyle}"><input id="ed-quick-suggestions" type="checkbox" checked>快速建议</label>
+                    <label style="${labelStyle}"><input id="ed-semantic-highlight" type="checkbox" checked>语义高亮</label>
+                </div>
+                <!-- ===== 缩进下拉 ===== -->
+                <div class="ed-dropdown" id="ed-menu-indent">
+                    <label style="${labelStyle}">Tab<select id="ed-insert-spaces" style="${selStyle}max-width:75px;">
+                        <option value="spaces" selected>空格</option><option value="tabs">制表</option>
+                    </select></label>
+                    <label style="${labelStyle}">宽度<input id="ed-tab-size" type="number" min="1" max="8" value="4" style="${numInputStyle}"></label>
+                    <label style="${labelStyle}"><input id="ed-detect-indent" type="checkbox" checked>检测缩进</label>
+                    <label style="${labelStyle}"><input id="ed-trim-auto-whitespace" type="checkbox" checked>修剪行尾</label>
+                    <label style="${labelStyle}">建议<select id="ed-word-based-suggestions" style="${selStyle}max-width:90px;">
+                        <option value="currentDocument" selected>本文档</option><option value="allDocuments">所有文档</option>
+                        <option value="matchingDocuments">同语言</option><option value="off">关闭</option>
+                    </select></label>
+                </div>
             </div>
         </div>
         <div id="editor-container" style="flex:1;width:100%;text-align:left;"></div>
