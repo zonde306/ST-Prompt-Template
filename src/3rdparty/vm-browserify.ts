@@ -4,7 +4,7 @@ export type SandboxContext = Record<string, any>;
 
 export class FunctionSandbox {
     private iframe: HTMLIFrameElement | null = null;
-    private win: any = null;
+    private win: Record<string, any> = {};
 
     constructor() {
         this.initIframe();
@@ -16,15 +16,27 @@ export class FunctionSandbox {
         this.iframe.style.display = 'none';
         this.iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts');
         document.body.appendChild(this.iframe);
-        this.win = this.iframe.contentWindow;
+        this.win = this.iframe.contentWindow ?? {};
 
         if (!this.win) {
             this.destroy();
             throw new Error("Sandbox: Failed to initialize iframe window");
         }
 
+        const cleanGlobal = this.iframe.contentWindow ?? {};
+        const currentGlobal = window as Record<string, any>;
+        const nativeKeys = new Set(Reflect.ownKeys(cleanGlobal));
+        for (const key of Reflect.ownKeys(currentGlobal)) {
+            if (!nativeKeys.has(key)) {
+                const k = typeof key === 'symbol' ? Symbol.keyFor(key) : key;
+                if (k) {
+                    this.win[k] = currentGlobal[k];
+                }
+            }
+        }
+
         if(settings.debug_enabled)
-            console.log("Sandbox: Initialized iframe window");
+            console.log("Sandbox: Initialized iframe window, ", this.win);
     }
 
     public async run<T>(
@@ -58,7 +70,7 @@ export class FunctionSandbox {
         function destructor(self: FunctionSandbox) {
             self.iframe?.parentNode?.removeChild(self.iframe);
             self.iframe = null;
-            self.win = null;
+            self.win = {};
         }
 
         if(immediately)
