@@ -822,6 +822,90 @@ function reloadWorldInfoPage(e: JQuery.ClickEvent) {
     }, 1000);
 }
 
+const STORAGE_KEY = 'st_monaco_editor_settings';
+
+const DEFAULT_EDITOR_SETTINGS = {
+    fontSize: 14,
+    fontFamily: "'Cascadia Code','Fira Code',Consolas,'Courier New',monospace",
+    lineHeight: 0,
+    letterSpacing: 0,
+    fontWeight: 'normal',
+    fontLigatures: false,
+    theme: 'ejsTheme',
+    cursorStyle: 'line',
+    cursorBlinking: 'blink',
+    renderWhitespace: 'boundary' as const,
+    renderLineHighlight: 'line',
+    guidesIndent: 'indentation' as 'indentation' | 'none',
+    wordWrap: false,
+    lineNumbers: true,
+    minimap: true,
+    bracketPairColorization: true,
+    folding: true,
+    glyphMargin: false,
+    smoothScrolling: true,
+    mouseWheelZoom: false,
+    scrollBeyondLastLine: true,
+    stickyScroll: true,
+    contextmenu: true,
+    quickSuggestions: true,
+    semanticHighlighting: true,
+    insertSpaces: true,
+    tabSize: 4,
+    detectIndentation: true,
+    trimAutoWhitespace: true,
+    wordBasedSuggestions: 'currentDocument' as string,
+};
+
+function loadEditorSettings(): typeof DEFAULT_EDITOR_SETTINGS {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return { ...DEFAULT_EDITOR_SETTINGS, ...JSON.parse(raw) };
+    } catch (_) { /* ignore */ }
+    return { ...DEFAULT_EDITOR_SETTINGS };
+}
+
+function saveEditorSettings(editor: any) {
+    const g = document.getElementById.bind(document);
+    const ck = (id: string) => !!(g(id) as HTMLInputElement)?.checked;
+    const sv = (id: string) => (g(id) as HTMLSelectElement)?.value ?? '';
+    const nv = (id: string) => parseInt((g(id) as HTMLInputElement)?.value, 10) || 0;
+    const fv = (id: string) => parseFloat((g(id) as HTMLInputElement)?.value) || 0;
+    const settings = {
+        fontSize: Math.max(8, Math.min(48, nv('ed-font-size') || 14)),
+        fontFamily: sv('ed-font-family'),
+        lineHeight: Math.max(0, Math.min(60, nv('ed-line-height'))),
+        letterSpacing: Math.max(0, Math.min(10, fv('ed-letter-spacing'))),
+        fontWeight: sv('ed-font-weight'),
+        fontLigatures: ck('ed-font-ligatures'),
+        theme: sv('ed-theme'),
+        cursorStyle: sv('ed-cursor-style'),
+        cursorBlinking: sv('ed-cursor-blinking'),
+        renderWhitespace: sv('ed-render-whitespace'),
+        renderLineHighlight: sv('ed-line-highlight'),
+        guidesIndent: sv('ed-guides'),
+        wordWrap: ck('ed-word-wrap'),
+        lineNumbers: ck('ed-line-numbers'),
+        minimap: ck('ed-minimap'),
+        bracketPairColorization: ck('ed-bracket-pair-color'),
+        folding: ck('ed-folding'),
+        glyphMargin: ck('ed-glyph-margin'),
+        smoothScrolling: ck('ed-smooth-scrolling'),
+        mouseWheelZoom: ck('ed-mouse-wheel-zoom'),
+        scrollBeyondLastLine: ck('ed-scroll-beyond-last'),
+        stickyScroll: ck('ed-sticky-scroll'),
+        contextmenu: ck('ed-contextmenu'),
+        quickSuggestions: ck('ed-quick-suggestions'),
+        semanticHighlighting: ck('ed-semantic-highlight'),
+        insertSpaces: sv('ed-insert-spaces') === 'spaces',
+        tabSize: Math.max(1, Math.min(8, nv('ed-tab-size') || 4)),
+        detectIndentation: ck('ed-detect-indent'),
+        trimAutoWhitespace: ck('ed-trim-auto-whitespace'),
+        wordBasedSuggestions: sv('ed-word-based-suggestions'),
+    };
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(settings)); } catch (_) { /* ignore */ }
+}
+
 async function showEditor(ref: string) {
     let editor: any = null;
 
@@ -968,44 +1052,78 @@ async function showEditor(ref: string) {
             leftAlign: true,
             okButton: 'Save',
             onOpen: () => {
+                const cfg = loadEditorSettings();
                 const container = document.getElementById('editor-container') as HTMLElement;
                 editor = monaco.editor.create(container, {
                     value: $(`#${ref}`).val() as string ?? '',
                     language: 'ejs',
-                    theme: 'ejsTheme',
+                    theme: cfg.theme,
                     automaticLayout: true,
-                    fontSize: 14,
-                    fontFamily: "'Cascadia Code','Fira Code',Consolas,'Courier New',monospace",
-                    lineHeight: 0,
-                    letterSpacing: 0,
-                    fontWeight: 'normal',
-                    fontLigatures: false,
-                    wordWrap: 'off',
-                    lineNumbers: 'on',
-                    minimap: { enabled: true },
-                    bracketPairColorization: { enabled: true },
-                    folding: true,
-                    glyphMargin: false,
-                    cursorStyle: 'line',
-                    cursorBlinking: 'blink',
-                    renderWhitespace: 'boundary',
-                    renderLineHighlight: 'line',
-                    guides: { indentation: true, bracketPairs: true },
-                    smoothScrolling: true,
-                    mouseWheelZoom: false,
-                    scrollBeyondLastLine: true,
-                    stickyScroll: { enabled: true },
-                    contextmenu: true,
-                    quickSuggestions: true,
-                    // 缩进与制表
-                    insertSpaces: true,
-                    tabSize: 4,
-                    detectIndentation: true,
-                    trimAutoWhitespace: true,
-                    wordBasedSuggestions: 'currentDocument',
-                    // semanticHighlighting (IGlobalEditorOptions)
-                    'semanticHighlighting.enabled': true,
+                    fontSize: cfg.fontSize,
+                    fontFamily: cfg.fontFamily,
+                    lineHeight: cfg.lineHeight,
+                    letterSpacing: cfg.letterSpacing,
+                    fontWeight: cfg.fontWeight,
+                    fontLigatures: cfg.fontLigatures,
+                    wordWrap: cfg.wordWrap ? 'on' : 'off',
+                    lineNumbers: cfg.lineNumbers ? 'on' : 'off',
+                    minimap: { enabled: cfg.minimap },
+                    bracketPairColorization: { enabled: cfg.bracketPairColorization },
+                    folding: cfg.folding,
+                    glyphMargin: cfg.glyphMargin,
+                    cursorStyle: cfg.cursorStyle,
+                    cursorBlinking: cfg.cursorBlinking,
+                    renderWhitespace: cfg.renderWhitespace,
+                    renderLineHighlight: cfg.renderLineHighlight,
+                    guides: cfg.guidesIndent === 'none' ? { indentation: false, bracketPairs: false } : { indentation: true, bracketPairs: true },
+                    smoothScrolling: cfg.smoothScrolling,
+                    mouseWheelZoom: cfg.mouseWheelZoom,
+                    scrollBeyondLastLine: cfg.scrollBeyondLastLine,
+                    stickyScroll: { enabled: cfg.stickyScroll },
+                    contextmenu: cfg.contextmenu,
+                    quickSuggestions: cfg.quickSuggestions,
+                    insertSpaces: cfg.insertSpaces,
+                    tabSize: cfg.tabSize,
+                    detectIndentation: cfg.detectIndentation,
+                    trimAutoWhitespace: cfg.trimAutoWhitespace,
+                    wordBasedSuggestions: cfg.wordBasedSuggestions,
+                    'semanticHighlighting.enabled': cfg.semanticHighlighting,
                 });
+
+                // ---- 同步 UI 控件到已保存配置 ----
+                const $el = document.getElementById.bind(document);
+                const setVal = (id: string, val: any) => { const el = $el(id); if (el) (el as HTMLInputElement | HTMLSelectElement).value = String(val); };
+                const setCk = (id: string, val: boolean) => { const el = $el(id) as HTMLInputElement; if (el) el.checked = val; };
+                setVal('ed-font-family', cfg.fontFamily);
+                setVal('ed-font-size', cfg.fontSize);
+                setVal('ed-line-height', cfg.lineHeight);
+                setVal('ed-letter-spacing', cfg.letterSpacing);
+                setVal('ed-font-weight', cfg.fontWeight);
+                setCk('ed-font-ligatures', cfg.fontLigatures);
+                setVal('ed-theme', cfg.theme);
+                setVal('ed-cursor-style', cfg.cursorStyle);
+                setVal('ed-cursor-blinking', cfg.cursorBlinking);
+                setVal('ed-render-whitespace', cfg.renderWhitespace);
+                setVal('ed-line-highlight', cfg.renderLineHighlight);
+                setVal('ed-guides', cfg.guidesIndent);
+                setCk('ed-word-wrap', cfg.wordWrap);
+                setCk('ed-line-numbers', cfg.lineNumbers);
+                setCk('ed-minimap', cfg.minimap);
+                setCk('ed-bracket-pair-color', cfg.bracketPairColorization);
+                setCk('ed-folding', cfg.folding);
+                setCk('ed-glyph-margin', cfg.glyphMargin);
+                setCk('ed-smooth-scrolling', cfg.smoothScrolling);
+                setCk('ed-mouse-wheel-zoom', cfg.mouseWheelZoom);
+                setCk('ed-scroll-beyond-last', cfg.scrollBeyondLastLine);
+                setCk('ed-sticky-scroll', cfg.stickyScroll);
+                setCk('ed-contextmenu', cfg.contextmenu);
+                setCk('ed-quick-suggestions', cfg.quickSuggestions);
+                setCk('ed-semantic-highlight', cfg.semanticHighlighting);
+                setVal('ed-insert-spaces', cfg.insertSpaces ? 'spaces' : 'tabs');
+                setVal('ed-tab-size', cfg.tabSize);
+                setCk('ed-detect-indent', cfg.detectIndentation);
+                setCk('ed-trim-auto-whitespace', cfg.trimAutoWhitespace);
+                setVal('ed-word-based-suggestions', cfg.wordBasedSuggestions);
 
                 // ---- IDE 风格菜单栏交互 ----
                 const closeAllDropdowns = () => {
@@ -1040,7 +1158,6 @@ async function showEditor(ref: string) {
                 document.getElementById('editor-container')?.addEventListener('click', () => closeAllDropdowns());
 
                 // ---- 事件绑定辅助函数 ----
-                const $el = document.getElementById.bind(document);
                 const on = (id: string, event: string, fn: EventListener) => $el(id)?.addEventListener(event, fn);
 
                 // 字体
@@ -1097,6 +1214,7 @@ async function showEditor(ref: string) {
             },
             onClose: () => {
                 if (editor) {
+                    saveEditorSettings(editor);
                     $(`#${ref}`).val(editor.getValue());
                     editor.dispose();
                 }
