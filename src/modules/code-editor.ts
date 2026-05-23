@@ -127,7 +127,7 @@ function reloadWorldInfoPage(e: JQuery.ClickEvent) {
             });
             cloned.css('color', 'var(--SmartThemeQuoteColor)');
             cloned.removeClass('editor_maximize');
-            button.insertAfter(cloned);
+            button.after(cloned);
         }
     }, 1000);
 }
