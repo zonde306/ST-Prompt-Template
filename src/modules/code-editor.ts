@@ -795,7 +795,7 @@ function getJsSuggestions(range: any, monaco: any) {
         });
     });
 
-    suggestions.push(...(autoComplete.map(obj => ({ ...obj, range }))));
+    suggestions.push(...(autoComplete.map(obj => ({ ...obj, range, insertText: obj.insertText || obj.label }))));
 
     return suggestions;
 }
