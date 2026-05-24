@@ -1,9 +1,7 @@
-import loader from '@monaco-editor/loader';
+import * as monaco from 'monaco-editor';
 import { eventSource, event_types } from '../../../../../events.js';
 import { callGenericPopup, POPUP_TYPE } from '../../../../../popup.js';
 import { settings } from './ui';
-
-let monaco: any = null;
 
 const autoComplete = [
     // ==========================================
@@ -648,113 +646,98 @@ const autoComplete = [
 ];
 
 export async function init() {
-    loader.config({
-        paths: {
-            vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.55.1/min/vs'
-        },
-        "vs/nls": {
-            availableLanguages: {
-                // '*': 'zh-CN',
-            }
+    // 1. Registered Language
+    monaco.languages.register({ id: 'ejs' });
+
+    // 2. Configure Monarch syntax highlighting (using nextEmbedded to embed native JS)
+    monaco.languages.setMonarchTokensProvider('ejs', {
+        tokenizer: {
+            root: [
+                // When encountering a character starting with <%, enter ejsCode state and let the built-in JavaScript engine take over the highlighting.
+                [/<%[=\-_]?/, { token: 'delimiter.ejs', next: '@ejsCode', nextEmbedded: 'javascript' }],
+                // HTML text or other content
+                [/[^<]+/, 'text'],
+                [/</, 'text']
+            ],
+            ejsCode: [
+                // When the %> statement is encountered, exit the ejsCode state and exit the JS engine.
+                [/%>/, { token: 'delimiter.ejs', next: '@pop', nextEmbedded: '@pop' }],
+                // Handle any non-% characters in the middle to the embedded language (i.e., JS).
+                [/[^%]+/, ''],
+                // Matches a single % (if no > is specified, it is considered a JavaScript modulo operator, etc., and handled by JavaScript).
+                [/%/, '']
+            ]
         }
     });
 
-    loader.init().then(loaded => {
-        monaco = loaded;
+    // 3. Configure theme
+    monaco.editor.defineTheme('ejsTheme', {
+        base: 'vs', // Dark mode is available with 'vs-dark'
+        inherit: true, // Must be enabled! This allows embedded JS code to automatically use Monaco's default JS colors.
+        rules: [
+            // We only need to specify the color for EJS tags; the colors of variables and strings within JS are determined by the base theme itself.
+            { token: 'delimiter.ejs', foreground: '800000', fontStyle: 'bold' }
+        ],
+        colors: {}
+    });
 
-        // 1. Registered Language
-        monaco.languages.register({ id: 'ejs' });
+    // 4. Basic language configuration (bracket matching)
+    monaco.languages.setLanguageConfiguration('ejs', {
+        brackets: [
+            ['{', '}'], ['[', ']'], ['(', ')'], ['<%', '%>']
+        ],
+        autoClosingPairs: [
+            { open: '{', close: '}' }, { open: '[', close: ']' }, { open: '(', close: ')' }, { open: '<%', close: '%>' }
+        ],
+        surroundingPairs: [
+            { open: '{', close: '}' }, { open: '[', close: ']' }, { open: '(', close: ')' }, { open: '<%', close: '%>' }
+        ]
+    });
 
-        // 2. Configure Monarch syntax highlighting (using nextEmbedded to embed native JS)
-        monaco.languages.setMonarchTokensProvider('ejs', {
-            tokenizer: {
-                root: [
-                    // When encountering a character starting with <%, enter ejsCode state and let the built-in JavaScript engine take over the highlighting.
-                    [/<%[=\-_]?/, { token: 'delimiter.ejs', next: '@ejsCode', nextEmbedded: 'javascript' }],
-                    // HTML text or other content
-                    [/[^<]+/, 'text'],
-                    [/</, 'text']
-                ],
-                ejsCode: [
-                    // When the %> statement is encountered, exit the ejsCode state and exit the JS engine.
-                    [/%>/, { token: 'delimiter.ejs', next: '@pop', nextEmbedded: '@pop' }],
-                    // Handle any non-% characters in the middle to the embedded language (i.e., JS).
-                    [/[^%]+/, ''],
-                    // Matches a single % (if no > is specified, it is considered a JavaScript modulo operator, etc., and handled by JavaScript).
-                    [/%/, '']
-                ]
-            }
-        });
+    // 5. Configure auto-completion rules
+    monaco.languages.registerCompletionItemProvider('ejs', {
+        // Characters that trigger completion
+        triggerCharacters: ['.', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
 
-        // 3. Configure theme
-        monaco.editor.defineTheme('ejsTheme', {
-            base: 'vs', // Dark mode is available with 'vs-dark'
-            inherit: true, // Must be enabled! This allows embedded JS code to automatically use Monaco's default JS colors.
-            rules: [
-                // We only need to specify the color for EJS tags; the colors of variables and strings within JS are determined by the base theme itself.
-                { token: 'delimiter.ejs', foreground: '800000', fontStyle: 'bold' }
-            ],
-            colors: {}
-        });
+        provideCompletionItems: (model: any, position: any) => {
+            // Get all text before the current cursor position
+            const textUntilPosition = model.getValueInRange({
+                startLineNumber: 1,
+                startColumn: 1,
+                endLineNumber: position.lineNumber,
+                endColumn: position.column
+            });
 
-        // 4. Basic language configuration (bracket matching)
-        monaco.languages.setLanguageConfiguration('ejs', {
-            brackets: [
-                ['{', '}'], ['[', ']'], ['(', ')'], ['<%', '%>']
-            ],
-            autoClosingPairs: [
-                { open: '{', close: '}' }, { open: '[', close: ']' }, { open: '(', close: ')' }, { open: '<%', close: '%>' }
-            ],
-            surroundingPairs: [
-                { open: '{', close: '}' }, { open: '[', close: ']' }, { open: '(', close: ')' }, { open: '<%', close: '%>' }
-            ]
-        });
+            // Find the most recent <% and %>
+            const lastOpen = textUntilPosition.lastIndexOf('<%');
+            const lastClose = textUntilPosition.lastIndexOf('%>');
 
-        // 5. Configure auto-completion rules
-        monaco.languages.registerCompletionItemProvider('ejs', {
-            // Characters that trigger completion
-            triggerCharacters: ['.', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
-
-            provideCompletionItems: (model: any, position: any) => {
-                // Get all text before the current cursor position
-                const textUntilPosition = model.getValueInRange({
-                    startLineNumber: 1,
-                    startColumn: 1,
+            // If the most recently closed statement is <% (meaning there is no %> closing statement after <%), it indicates that the current cursor is inside an EJS statement block.
+            if (lastOpen > lastClose) {
+                const word = model.getWordUntilPosition(position);
+                const range = {
+                    startLineNumber: position.lineNumber,
                     endLineNumber: position.lineNumber,
-                    endColumn: position.column
-                });
+                    startColumn: word.startColumn,
+                    endColumn: word.endColumn
+                };
 
-                // Find the most recent <% and %>
-                const lastOpen = textUntilPosition.lastIndexOf('<%');
-                const lastClose = textUntilPosition.lastIndexOf('%>');
-
-                // If the most recently closed statement is <% (meaning there is no %> closing statement after <%), it indicates that the current cursor is inside an EJS statement block.
-                if (lastOpen > lastClose) {
-                    const word = model.getWordUntilPosition(position);
-                    const range = {
-                        startLineNumber: position.lineNumber,
-                        endLineNumber: position.lineNumber,
-                        startColumn: word.startColumn,
-                        endColumn: word.endColumn
-                    };
-
-                    // Located within a statement block, returns JavaScript completion items.
-                    return {
-                        suggestions: getJsSuggestions(range, monaco)
-                    };
-                }
-
-                // JS auto-completion is not provided when the cursor is not within an EJS block (such as within regular HTML).
-                return { suggestions: [] };
+                // Located within a statement block, returns JavaScript completion items.
+                return {
+                    suggestions: getJsSuggestions(range, monaco)
+                };
             }
-        });
 
-        eventSource.on(event_types.APP_READY, () => {
-            $('#world_popup_entries_list').on('click', '.fa-circle-chevron-down', reloadWorldInfoPage);
-        });
+            // JS auto-completion is not provided when the cursor is not within an EJS block (such as within regular HTML).
+            return { suggestions: [] };
+        }
+    });
 
-        console.log(`monaco-editor loaded. `, loaded);
-    }).catch(e => console.error(`monaco-editor load failed. `, e));
+    eventSource.on(event_types.APP_READY, () => {
+        $('#world_popup_entries_list').on('click', '.fa-circle-chevron-down', reloadWorldInfoPage);
+    });
+
+    console.log(`monaco-editor loaded. `, monaco);
 }
 
 export async function exit() {
@@ -802,7 +785,7 @@ function getJsSuggestions(range: any, monaco: any) {
 }
 
 function reloadWorldInfoPage(e: JQuery.ClickEvent) {
-    if(!settings.enabled || !settings.code_editor)
+    if (!settings.enabled || !settings.code_editor)
         return;
 
     window.setTimeout(() => {
@@ -1071,10 +1054,10 @@ async function showEditor(ref: string) {
                     bracketPairColorization: { enabled: cfg.bracketPairColorization },
                     folding: cfg.folding,
                     glyphMargin: cfg.glyphMargin,
-                    cursorStyle: cfg.cursorStyle,
-                    cursorBlinking: cfg.cursorBlinking,
+                    cursorStyle: cfg.cursorStyle as any,
+                    cursorBlinking: cfg.cursorBlinking as any,
                     renderWhitespace: cfg.renderWhitespace,
-                    renderLineHighlight: cfg.renderLineHighlight,
+                    renderLineHighlight: cfg.renderLineHighlight as any,
                     guides: cfg.guidesIndent === 'none' ? { indentation: false, bracketPairs: false } : { indentation: true, bracketPairs: true },
                     smoothScrolling: cfg.smoothScrolling,
                     mouseWheelZoom: cfg.mouseWheelZoom,
@@ -1086,7 +1069,7 @@ async function showEditor(ref: string) {
                     tabSize: cfg.tabSize,
                     detectIndentation: cfg.detectIndentation,
                     trimAutoWhitespace: cfg.trimAutoWhitespace,
-                    wordBasedSuggestions: cfg.wordBasedSuggestions,
+                    wordBasedSuggestions: cfg.wordBasedSuggestions as any,
                     'semanticHighlighting.enabled': cfg.semanticHighlighting,
                 });
 
