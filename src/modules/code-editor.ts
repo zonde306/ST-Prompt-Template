@@ -1,9 +1,7 @@
-import loader from '@monaco-editor/loader';
+import * as monaco from 'monaco-editor';
 import { eventSource, event_types } from '../../../../../events.js';
 import { callGenericPopup, POPUP_TYPE } from '../../../../../popup.js';
 import { settings } from './ui';
-
-let monaco: any = null;
 
 const autoComplete = [
     // ==========================================
@@ -648,113 +646,98 @@ const autoComplete = [
 ];
 
 export async function init() {
-    loader.config({
-        paths: {
-            vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.55.1/min/vs'
-        },
-        "vs/nls": {
-            availableLanguages: {
-                // '*': 'zh-CN',
-            }
+    // 1. Registered Language
+    monaco.languages.register({ id: 'ejs' });
+
+    // 2. Configure Monarch syntax highlighting (using nextEmbedded to embed native JS)
+    monaco.languages.setMonarchTokensProvider('ejs', {
+        tokenizer: {
+            root: [
+                // When encountering a character starting with <%, enter ejsCode state and let the built-in JavaScript engine take over the highlighting.
+                [/<%[=\-_]?/, { token: 'delimiter.ejs', next: '@ejsCode', nextEmbedded: 'javascript' }],
+                // HTML text or other content
+                [/[^<]+/, 'text'],
+                [/</, 'text']
+            ],
+            ejsCode: [
+                // When the %> statement is encountered, exit the ejsCode state and exit the JS engine.
+                [/%>/, { token: 'delimiter.ejs', next: '@pop', nextEmbedded: '@pop' }],
+                // Handle any non-% characters in the middle to the embedded language (i.e., JS).
+                [/[^%]+/, ''],
+                // Matches a single % (if no > is specified, it is considered a JavaScript modulo operator, etc., and handled by JavaScript).
+                [/%/, '']
+            ]
         }
     });
 
-    loader.init().then(loaded => {
-        monaco = loaded;
+    // 3. Configure theme
+    monaco.editor.defineTheme('ejsTheme', {
+        base: 'vs', // Dark mode is available with 'vs-dark'
+        inherit: true, // Must be enabled! This allows embedded JS code to automatically use Monaco's default JS colors.
+        rules: [
+            // We only need to specify the color for EJS tags; the colors of variables and strings within JS are determined by the base theme itself.
+            { token: 'delimiter.ejs', foreground: '800000', fontStyle: 'bold' }
+        ],
+        colors: {}
+    });
 
-        // 1. Registered Language
-        monaco.languages.register({ id: 'ejs' });
+    // 4. Basic language configuration (bracket matching)
+    monaco.languages.setLanguageConfiguration('ejs', {
+        brackets: [
+            ['{', '}'], ['[', ']'], ['(', ')'], ['<%', '%>']
+        ],
+        autoClosingPairs: [
+            { open: '{', close: '}' }, { open: '[', close: ']' }, { open: '(', close: ')' }, { open: '<%', close: '%>' }
+        ],
+        surroundingPairs: [
+            { open: '{', close: '}' }, { open: '[', close: ']' }, { open: '(', close: ')' }, { open: '<%', close: '%>' }
+        ]
+    });
 
-        // 2. Configure Monarch syntax highlighting (using nextEmbedded to embed native JS)
-        monaco.languages.setMonarchTokensProvider('ejs', {
-            tokenizer: {
-                root: [
-                    // When encountering a character starting with <%, enter ejsCode state and let the built-in JavaScript engine take over the highlighting.
-                    [/<%[=\-_]?/, { token: 'delimiter.ejs', next: '@ejsCode', nextEmbedded: 'javascript' }],
-                    // HTML text or other content
-                    [/[^<]+/, 'text'],
-                    [/</, 'text']
-                ],
-                ejsCode: [
-                    // When the %> statement is encountered, exit the ejsCode state and exit the JS engine.
-                    [/%>/, { token: 'delimiter.ejs', next: '@pop', nextEmbedded: '@pop' }],
-                    // Handle any non-% characters in the middle to the embedded language (i.e., JS).
-                    [/[^%]+/, ''],
-                    // Matches a single % (if no > is specified, it is considered a JavaScript modulo operator, etc., and handled by JavaScript).
-                    [/%/, '']
-                ]
-            }
-        });
+    // 5. Configure auto-completion rules
+    monaco.languages.registerCompletionItemProvider('ejs', {
+        // Characters that trigger completion
+        triggerCharacters: ['.', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
 
-        // 3. Configure theme
-        monaco.editor.defineTheme('ejsTheme', {
-            base: 'vs', // Dark mode is available with 'vs-dark'
-            inherit: true, // Must be enabled! This allows embedded JS code to automatically use Monaco's default JS colors.
-            rules: [
-                // We only need to specify the color for EJS tags; the colors of variables and strings within JS are determined by the base theme itself.
-                { token: 'delimiter.ejs', foreground: '800000', fontStyle: 'bold' }
-            ],
-            colors: {}
-        });
+        provideCompletionItems: (model: any, position: any) => {
+            // Get all text before the current cursor position
+            const textUntilPosition = model.getValueInRange({
+                startLineNumber: 1,
+                startColumn: 1,
+                endLineNumber: position.lineNumber,
+                endColumn: position.column
+            });
 
-        // 4. Basic language configuration (bracket matching)
-        monaco.languages.setLanguageConfiguration('ejs', {
-            brackets: [
-                ['{', '}'], ['[', ']'], ['(', ')'], ['<%', '%>']
-            ],
-            autoClosingPairs: [
-                { open: '{', close: '}' }, { open: '[', close: ']' }, { open: '(', close: ')' }, { open: '<%', close: '%>' }
-            ],
-            surroundingPairs: [
-                { open: '{', close: '}' }, { open: '[', close: ']' }, { open: '(', close: ')' }, { open: '<%', close: '%>' }
-            ]
-        });
+            // Find the most recent <% and %>
+            const lastOpen = textUntilPosition.lastIndexOf('<%');
+            const lastClose = textUntilPosition.lastIndexOf('%>');
 
-        // 5. Configure auto-completion rules
-        monaco.languages.registerCompletionItemProvider('ejs', {
-            // Characters that trigger completion
-            triggerCharacters: ['.', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
-
-            provideCompletionItems: (model: any, position: any) => {
-                // Get all text before the current cursor position
-                const textUntilPosition = model.getValueInRange({
-                    startLineNumber: 1,
-                    startColumn: 1,
+            // If the most recently closed statement is <% (meaning there is no %> closing statement after <%), it indicates that the current cursor is inside an EJS statement block.
+            if (lastOpen > lastClose) {
+                const word = model.getWordUntilPosition(position);
+                const range = {
+                    startLineNumber: position.lineNumber,
                     endLineNumber: position.lineNumber,
-                    endColumn: position.column
-                });
+                    startColumn: word.startColumn,
+                    endColumn: word.endColumn
+                };
 
-                // Find the most recent <% and %>
-                const lastOpen = textUntilPosition.lastIndexOf('<%');
-                const lastClose = textUntilPosition.lastIndexOf('%>');
-
-                // If the most recently closed statement is <% (meaning there is no %> closing statement after <%), it indicates that the current cursor is inside an EJS statement block.
-                if (lastOpen > lastClose) {
-                    const word = model.getWordUntilPosition(position);
-                    const range = {
-                        startLineNumber: position.lineNumber,
-                        endLineNumber: position.lineNumber,
-                        startColumn: word.startColumn,
-                        endColumn: word.endColumn
-                    };
-
-                    // Located within a statement block, returns JavaScript completion items.
-                    return {
-                        suggestions: getJsSuggestions(range, monaco)
-                    };
-                }
-
-                // JS auto-completion is not provided when the cursor is not within an EJS block (such as within regular HTML).
-                return { suggestions: [] };
+                // Located within a statement block, returns JavaScript completion items.
+                return {
+                    suggestions: getJsSuggestions(range, monaco)
+                };
             }
-        });
 
-        eventSource.on(event_types.APP_READY, () => {
-            $('#world_popup_entries_list').on('click', '.fa-circle-chevron-down', reloadWorldInfoPage);
-        });
+            // JS auto-completion is not provided when the cursor is not within an EJS block (such as within regular HTML).
+            return { suggestions: [] };
+        }
+    });
 
-        console.log(`monaco-editor loaded. `, loaded);
-    }).catch(e => console.error(`monaco-editor load failed. `, e));
+    eventSource.on(event_types.APP_READY, () => {
+        $('#world_popup_entries_list').on('click', '.fa-circle-chevron-down', reloadWorldInfoPage);
+    });
+
+    console.log(`monaco-editor loaded. `, monaco);
 }
 
 export async function exit() {
@@ -802,7 +785,7 @@ function getJsSuggestions(range: any, monaco: any) {
 }
 
 function reloadWorldInfoPage(e: JQuery.ClickEvent) {
-    if(!settings.enabled || !settings.code_editor)
+    if (!settings.enabled || !settings.code_editor)
         return;
 
     window.setTimeout(() => {
@@ -822,10 +805,228 @@ function reloadWorldInfoPage(e: JQuery.ClickEvent) {
     }, 1000);
 }
 
+const STORAGE_KEY = 'st_monaco_editor_settings';
+
+const DEFAULT_EDITOR_SETTINGS = {
+    fontSize: 14,
+    fontFamily: "'Cascadia Code','Fira Code',Consolas,'Courier New',monospace",
+    lineHeight: 0,
+    letterSpacing: 0,
+    fontWeight: 'normal',
+    fontLigatures: false,
+    theme: 'ejsTheme',
+    cursorStyle: 'line',
+    cursorBlinking: 'blink',
+    renderWhitespace: 'boundary' as const,
+    renderLineHighlight: 'line',
+    guidesIndent: 'indentation' as 'indentation' | 'none',
+    wordWrap: false,
+    lineNumbers: true,
+    minimap: true,
+    bracketPairColorization: true,
+    folding: true,
+    glyphMargin: false,
+    smoothScrolling: true,
+    mouseWheelZoom: false,
+    scrollBeyondLastLine: true,
+    stickyScroll: true,
+    contextmenu: true,
+    quickSuggestions: true,
+    semanticHighlighting: true,
+    insertSpaces: true,
+    tabSize: 4,
+    detectIndentation: true,
+    trimAutoWhitespace: true,
+    wordBasedSuggestions: 'currentDocument' as string,
+};
+
+function loadEditorSettings(): typeof DEFAULT_EDITOR_SETTINGS {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return { ...DEFAULT_EDITOR_SETTINGS, ...JSON.parse(raw) };
+    } catch (_) { /* ignore */ }
+    return { ...DEFAULT_EDITOR_SETTINGS };
+}
+
+function saveEditorSettings(editor: any) {
+    const g = document.getElementById.bind(document);
+    const ck = (id: string) => !!(g(id) as HTMLInputElement)?.checked;
+    const sv = (id: string) => (g(id) as HTMLSelectElement)?.value ?? '';
+    const nv = (id: string) => parseInt((g(id) as HTMLInputElement)?.value, 10) || 0;
+    const fv = (id: string) => parseFloat((g(id) as HTMLInputElement)?.value) || 0;
+    const settings = {
+        fontSize: Math.max(8, Math.min(48, nv('ed-font-size') || 14)),
+        fontFamily: sv('ed-font-family'),
+        lineHeight: Math.max(0, Math.min(60, nv('ed-line-height'))),
+        letterSpacing: Math.max(0, Math.min(10, fv('ed-letter-spacing'))),
+        fontWeight: sv('ed-font-weight'),
+        fontLigatures: ck('ed-font-ligatures'),
+        theme: sv('ed-theme'),
+        cursorStyle: sv('ed-cursor-style'),
+        cursorBlinking: sv('ed-cursor-blinking'),
+        renderWhitespace: sv('ed-render-whitespace'),
+        renderLineHighlight: sv('ed-line-highlight'),
+        guidesIndent: sv('ed-guides'),
+        wordWrap: ck('ed-word-wrap'),
+        lineNumbers: ck('ed-line-numbers'),
+        minimap: ck('ed-minimap'),
+        bracketPairColorization: ck('ed-bracket-pair-color'),
+        folding: ck('ed-folding'),
+        glyphMargin: ck('ed-glyph-margin'),
+        smoothScrolling: ck('ed-smooth-scrolling'),
+        mouseWheelZoom: ck('ed-mouse-wheel-zoom'),
+        scrollBeyondLastLine: ck('ed-scroll-beyond-last'),
+        stickyScroll: ck('ed-sticky-scroll'),
+        contextmenu: ck('ed-contextmenu'),
+        quickSuggestions: ck('ed-quick-suggestions'),
+        semanticHighlighting: ck('ed-semantic-highlight'),
+        insertSpaces: sv('ed-insert-spaces') === 'spaces',
+        tabSize: Math.max(1, Math.min(8, nv('ed-tab-size') || 4)),
+        detectIndentation: ck('ed-detect-indent'),
+        trimAutoWhitespace: ck('ed-trim-auto-whitespace'),
+        wordBasedSuggestions: sv('ed-word-based-suggestions'),
+    };
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(settings)); } catch (_) { /* ignore */ }
+}
+
 async function showEditor(ref: string) {
     let editor: any = null;
+
+    /**
+     * 共享的输入/选择控件内联样式
+     */
+    const inputStyle = `padding:2px 6px;border-radius:4px;border:1px solid var(--SmartThemeBorderColor,#555);background:var(--SmartThemeInputColor,#1e1e1e);color:var(--SmartThemeBodyColor,#ccc);font-size:12px;`;
+    const labelStyle = `display:flex;align-items:center;gap:4px;color:var(--SmartThemeBodyColor,#ccc);`;
+    const numInputStyle = `width:50px;${inputStyle}`;
+    const selStyle = `max-width:120px;${inputStyle}`;
+
+    const toolbarHtml = `
+    <style>
+        #editor-toolbar label { white-space: nowrap; }
+        #editor-toolbar input[type="checkbox"] { margin: 0; accent-color: var(--SmartThemeQuoteColor, #888); }
+        /* ===== 菜单栏 ===== */
+        .ed-menubar {
+            display:flex;align-items:center;gap:0;
+            padding:0 4px;background:var(--SmartThemeBlurTintColor,#2b2b2b);
+            border-bottom:1px solid var(--SmartThemeBorderColor,#444);
+            user-select:none;position:relative;z-index:10;
+        }
+        .ed-menubar .ed-menu-btn {
+            padding:4px 10px;font-size:12px;color:var(--SmartThemeBodyColor,#ccc);
+            background:transparent;border:none;cursor:pointer;border-radius:3px;
+            white-space:nowrap;font-family:inherit;
+        }
+        .ed-menubar .ed-menu-btn:hover,
+        .ed-menubar .ed-menu-btn.active {
+            background:var(--SmartThemeBorderColor,#444);
+        }
+        /* ===== 下拉面板 ===== */
+        .ed-dropdown {
+            display:none;position:absolute;top:100%;left:0;right:0;z-index:20;
+            flex-wrap:wrap;align-items:center;gap:4px 8px;
+            padding:6px 10px;
+            background:var(--SmartThemeBlurTintColor,#2b2b2b);
+            border-bottom:1px solid var(--SmartThemeBorderColor,#444);
+            box-shadow:0 4px 8px rgba(0,0,0,.3);
+        }
+        .ed-dropdown.open { display:flex; }
+    </style>
+    <div id="editor-wrapper" style="display:flex;flex-direction:column;width:100%;height:100%;">
+        <div id="editor-toolbar" style="flex-shrink:0;">
+            <div class="ed-menubar">
+                <button class="ed-menu-btn" data-menu="ed-menu-font">🔤 字体</button>
+                <button class="ed-menu-btn" data-menu="ed-menu-theme">🎨 显示</button>
+                <button class="ed-menu-btn" data-menu="ed-menu-features">⚙️ 功能</button>
+                <button class="ed-menu-btn" data-menu="ed-menu-indent">↹ 缩进</button>
+                <!-- ===== 字体下拉 ===== -->
+                <div class="ed-dropdown" id="ed-menu-font">
+                    <label style="${labelStyle}">字体<select id="ed-font-family" style="${selStyle}">
+                        <option value="'Cascadia Code','Fira Code',Consolas,'Courier New',monospace">Cascadia Code</option>
+                        <option value="'Fira Code',Consolas,'Courier New',monospace">Fira Code</option>
+                        <option value="Consolas,'Courier New',monospace">Consolas</option>
+                        <option value="'Courier New',monospace">Courier New</option>
+                        <option value="'JetBrains Mono',Consolas,monospace">JetBrains Mono</option>
+                        <option value="'Source Code Pro',Consolas,monospace">Source Code Pro</option>
+                        <option value="monospace">Monospace</option>
+                    </select></label>
+                    <label style="${labelStyle}">字号<input id="ed-font-size" type="number" min="8" max="48" value="14" style="${numInputStyle}"></label>
+                    <label style="${labelStyle}">行高<input id="ed-line-height" type="number" min="0" max="60" value="0" style="${numInputStyle}"></label>
+                    <label style="${labelStyle}">字间距<input id="ed-letter-spacing" type="number" min="0" max="10" value="0" step="0.5" style="${numInputStyle}"></label>
+                    <label style="${labelStyle}">字重<select id="ed-font-weight" style="${selStyle}max-width:80px;">
+                        <option value="normal" selected>normal</option><option value="bold">bold</option>
+                        <option value="100">100</option><option value="200">200</option><option value="300">300</option>
+                        <option value="400">400</option><option value="500">500</option><option value="600">600</option>
+                        <option value="700">700</option><option value="800">800</option><option value="900">900</option>
+                    </select></label>
+                    <label style="${labelStyle}"><input id="ed-font-ligatures" type="checkbox">连字</label>
+                </div>
+                <!-- ===== 显示下拉 ===== -->
+                <div class="ed-dropdown" id="ed-menu-theme">
+                    <label style="${labelStyle}">主题<select id="ed-theme" style="${selStyle}">
+                        <option value="ejsTheme" selected>EJS Light</option>
+                        <option value="vs">VS Light</option>
+                        <option value="vs-dark">VS Dark</option>
+                        <option value="hc-black">High Contrast</option>
+                    </select></label>
+                    <label style="${labelStyle}">光标<select id="ed-cursor-style" style="${selStyle}max-width:75px;">
+                        <option value="line" selected>line</option><option value="block">block</option>
+                        <option value="underline">underline</option><option value="line-thin">line-thin</option>
+                        <option value="block-outline">block-outline</option><option value="underline-thin">underline-thin</option>
+                    </select></label>
+                    <label style="${labelStyle}">闪烁<select id="ed-cursor-blinking" style="${selStyle}max-width:80px;">
+                        <option value="blink" selected>blink</option><option value="smooth">smooth</option>
+                        <option value="phase">phase</option><option value="expand">expand</option>
+                        <option value="solid">solid</option>
+                    </select></label>
+                    <label style="${labelStyle}">空白<select id="ed-render-whitespace" style="${selStyle}max-width:85px;">
+                        <option value="none">none</option><option value="boundary" selected>boundary</option>
+                        <option value="selection">selection</option><option value="trailing">trailing</option>
+                        <option value="all">all</option>
+                    </select></label>
+                    <label style="${labelStyle}">行高亮<select id="ed-line-highlight" style="${selStyle}max-width:75px;">
+                        <option value="line" selected>line</option><option value="all">all</option>
+                        <option value="none">none</option><option value="gutter">gutter</option>
+                    </select></label>
+                    <label style="${labelStyle}">缩进线<select id="ed-guides" style="${selStyle}max-width:100px;">
+                        <option value="indentation" selected>indentation</option><option value="none">none</option>
+                    </select></label>
+                </div>
+                <!-- ===== 功能下拉 ===== -->
+                <div class="ed-dropdown" id="ed-menu-features">
+                    <label style="${labelStyle}"><input id="ed-word-wrap" type="checkbox">换行</label>
+                    <label style="${labelStyle}"><input id="ed-line-numbers" type="checkbox" checked>行号</label>
+                    <label style="${labelStyle}"><input id="ed-minimap" type="checkbox" checked>缩略图</label>
+                    <label style="${labelStyle}"><input id="ed-bracket-pair-color" type="checkbox" checked>括号着色</label>
+                    <label style="${labelStyle}"><input id="ed-folding" type="checkbox" checked>折叠</label>
+                    <label style="${labelStyle}"><input id="ed-glyph-margin" type="checkbox">装订线</label>
+                    <label style="${labelStyle}"><input id="ed-smooth-scrolling" type="checkbox" checked>平滑滚动</label>
+                    <label style="${labelStyle}"><input id="ed-mouse-wheel-zoom" type="checkbox">滚轮缩放</label>
+                    <label style="${labelStyle}"><input id="ed-scroll-beyond-last" type="checkbox" checked>超行滚动</label>
+                    <label style="${labelStyle}"><input id="ed-sticky-scroll" type="checkbox" checked>黏性滚动</label>
+                    <label style="${labelStyle}"><input id="ed-contextmenu" type="checkbox" checked>右键菜单</label>
+                    <label style="${labelStyle}"><input id="ed-quick-suggestions" type="checkbox" checked>快速建议</label>
+                    <label style="${labelStyle}"><input id="ed-semantic-highlight" type="checkbox" checked>语义高亮</label>
+                </div>
+                <!-- ===== 缩进下拉 ===== -->
+                <div class="ed-dropdown" id="ed-menu-indent">
+                    <label style="${labelStyle}">Tab<select id="ed-insert-spaces" style="${selStyle}max-width:75px;">
+                        <option value="spaces" selected>空格</option><option value="tabs">制表</option>
+                    </select></label>
+                    <label style="${labelStyle}">宽度<input id="ed-tab-size" type="number" min="1" max="8" value="4" style="${numInputStyle}"></label>
+                    <label style="${labelStyle}"><input id="ed-detect-indent" type="checkbox" checked>检测缩进</label>
+                    <label style="${labelStyle}"><input id="ed-trim-auto-whitespace" type="checkbox" checked>修剪行尾</label>
+                    <label style="${labelStyle}">建议<select id="ed-word-based-suggestions" style="${selStyle}max-width:90px;">
+                        <option value="currentDocument" selected>本文档</option><option value="allDocuments">所有文档</option>
+                        <option value="matchingDocuments">同语言</option><option value="off">关闭</option>
+                    </select></label>
+                </div>
+            </div>
+        </div>
+        <div id="editor-container" style="flex:1;width:100%;text-align:left;"></div>
+    </div>`;
+
     await callGenericPopup(
-        '<div id="editor-container" style="width: 100%; height: 100%; text-align: left;"></div>',
+        toolbarHtml,
         POPUP_TYPE.TEXT,
         '',
         {
@@ -834,21 +1035,169 @@ async function showEditor(ref: string) {
             leftAlign: true,
             okButton: 'Save',
             onOpen: () => {
+                const cfg = loadEditorSettings();
                 const container = document.getElementById('editor-container') as HTMLElement;
                 editor = monaco.editor.create(container, {
                     value: $(`#${ref}`).val() as string ?? '',
                     language: 'ejs',
-                    theme: 'ejsTheme',
+                    theme: cfg.theme,
                     automaticLayout: true,
+                    fontSize: cfg.fontSize,
+                    fontFamily: cfg.fontFamily,
+                    lineHeight: cfg.lineHeight,
+                    letterSpacing: cfg.letterSpacing,
+                    fontWeight: cfg.fontWeight,
+                    fontLigatures: cfg.fontLigatures,
+                    wordWrap: cfg.wordWrap ? 'on' : 'off',
+                    lineNumbers: cfg.lineNumbers ? 'on' : 'off',
+                    minimap: { enabled: cfg.minimap },
+                    bracketPairColorization: { enabled: cfg.bracketPairColorization },
+                    folding: cfg.folding,
+                    glyphMargin: cfg.glyphMargin,
+                    cursorStyle: cfg.cursorStyle as any,
+                    cursorBlinking: cfg.cursorBlinking as any,
+                    renderWhitespace: cfg.renderWhitespace,
+                    renderLineHighlight: cfg.renderLineHighlight as any,
+                    guides: cfg.guidesIndent === 'none' ? { indentation: false, bracketPairs: false } : { indentation: true, bracketPairs: true },
+                    smoothScrolling: cfg.smoothScrolling,
+                    mouseWheelZoom: cfg.mouseWheelZoom,
+                    scrollBeyondLastLine: cfg.scrollBeyondLastLine,
+                    stickyScroll: { enabled: cfg.stickyScroll },
+                    contextmenu: cfg.contextmenu,
+                    quickSuggestions: cfg.quickSuggestions,
+                    insertSpaces: cfg.insertSpaces,
+                    tabSize: cfg.tabSize,
+                    detectIndentation: cfg.detectIndentation,
+                    trimAutoWhitespace: cfg.trimAutoWhitespace,
+                    wordBasedSuggestions: cfg.wordBasedSuggestions as any,
+                    'semanticHighlighting.enabled': cfg.semanticHighlighting,
                 });
-                /*
-                editor.onDidChangeModelContent(() => {
-                    $(`#${ref}`).val(editor.getValue());
+
+                // ---- 同步 UI 控件到已保存配置 ----
+                const $el = document.getElementById.bind(document);
+                const setVal = (id: string, val: any) => { const el = $el(id); if (el) (el as HTMLInputElement | HTMLSelectElement).value = String(val); };
+                const setCk = (id: string, val: boolean) => { const el = $el(id) as HTMLInputElement; if (el) el.checked = val; };
+                setVal('ed-font-family', cfg.fontFamily);
+                setVal('ed-font-size', cfg.fontSize);
+                setVal('ed-line-height', cfg.lineHeight);
+                setVal('ed-letter-spacing', cfg.letterSpacing);
+                setVal('ed-font-weight', cfg.fontWeight);
+                setCk('ed-font-ligatures', cfg.fontLigatures);
+                setVal('ed-theme', cfg.theme);
+                setVal('ed-cursor-style', cfg.cursorStyle);
+                setVal('ed-cursor-blinking', cfg.cursorBlinking);
+                setVal('ed-render-whitespace', cfg.renderWhitespace);
+                setVal('ed-line-highlight', cfg.renderLineHighlight);
+                setVal('ed-guides', cfg.guidesIndent);
+                setCk('ed-word-wrap', cfg.wordWrap);
+                setCk('ed-line-numbers', cfg.lineNumbers);
+                setCk('ed-minimap', cfg.minimap);
+                setCk('ed-bracket-pair-color', cfg.bracketPairColorization);
+                setCk('ed-folding', cfg.folding);
+                setCk('ed-glyph-margin', cfg.glyphMargin);
+                setCk('ed-smooth-scrolling', cfg.smoothScrolling);
+                setCk('ed-mouse-wheel-zoom', cfg.mouseWheelZoom);
+                setCk('ed-scroll-beyond-last', cfg.scrollBeyondLastLine);
+                setCk('ed-sticky-scroll', cfg.stickyScroll);
+                setCk('ed-contextmenu', cfg.contextmenu);
+                setCk('ed-quick-suggestions', cfg.quickSuggestions);
+                setCk('ed-semantic-highlight', cfg.semanticHighlighting);
+                setVal('ed-insert-spaces', cfg.insertSpaces ? 'spaces' : 'tabs');
+                setVal('ed-tab-size', cfg.tabSize);
+                setCk('ed-detect-indent', cfg.detectIndentation);
+                setCk('ed-trim-auto-whitespace', cfg.trimAutoWhitespace);
+                setVal('ed-word-based-suggestions', cfg.wordBasedSuggestions);
+
+                // ---- IDE 风格菜单栏交互 ----
+                const closeAllDropdowns = () => {
+                    document.querySelectorAll('.ed-dropdown.open').forEach(d => d.classList.remove('open'));
+                    document.querySelectorAll('.ed-menu-btn.active').forEach(b => b.classList.remove('active'));
+                };
+                document.querySelectorAll('.ed-menu-btn').forEach(btn => {
+                    btn.addEventListener('click', (e: Event) => {
+                        e.stopPropagation();
+                        const menuId = (btn as HTMLElement).dataset.menu;
+                        const dropdown = document.getElementById(menuId!);
+                        if (!dropdown) return;
+                        const isOpen = dropdown.classList.contains('open');
+                        closeAllDropdowns();
+                        if (!isOpen) {
+                            dropdown.classList.add('open');
+                            btn.classList.add('active');
+                        }
+                    });
                 });
-                */
+                // 点击下拉面板内部不关闭
+                document.querySelectorAll('.ed-dropdown').forEach(dd => {
+                    dd.addEventListener('click', (e: Event) => e.stopPropagation());
+                });
+                // 点击 menubar 非按钮区域也关闭（兜底）
+                document.querySelector('.ed-menubar')?.addEventListener('click', (e: Event) => {
+                    if (!(e.target as HTMLElement).classList.contains('ed-menu-btn')) {
+                        closeAllDropdowns();
+                    }
+                });
+                // 点击编辑器区域关闭所有下拉
+                document.getElementById('editor-container')?.addEventListener('click', () => closeAllDropdowns());
+
+                // ---- 事件绑定辅助函数 ----
+                const on = (id: string, event: string, fn: EventListener) => $el(id)?.addEventListener(event, fn);
+
+                // 字体
+                on('ed-font-family', 'change', () => editor?.updateOptions({ fontFamily: ($el('ed-font-family') as HTMLSelectElement).value }));
+                // 字号
+                on('ed-font-size', 'input', () => editor?.updateOptions({ fontSize: Math.max(8, Math.min(48, parseInt(($el('ed-font-size') as HTMLInputElement).value, 10) || 14)) }));
+                // 行高 (0 = auto)
+                on('ed-line-height', 'input', () => editor?.updateOptions({ lineHeight: Math.max(0, Math.min(60, parseInt(($el('ed-line-height') as HTMLInputElement).value, 10) || 0)) }));
+                // 字间距
+                on('ed-letter-spacing', 'input', () => editor?.updateOptions({ letterSpacing: Math.max(0, Math.min(10, parseFloat(($el('ed-letter-spacing') as HTMLInputElement).value) || 0)) }));
+                // 字重
+                on('ed-font-weight', 'change', () => editor?.updateOptions({ fontWeight: ($el('ed-font-weight') as HTMLSelectElement).value }));
+                // 连字
+                on('ed-font-ligatures', 'change', () => editor?.updateOptions({ fontLigatures: ($el('ed-font-ligatures') as HTMLInputElement).checked }));
+                // 主题
+                on('ed-theme', 'change', () => monaco.editor.setTheme(($el('ed-theme') as HTMLSelectElement).value));
+                // 光标样式
+                on('ed-cursor-style', 'change', () => editor?.updateOptions({ cursorStyle: ($el('ed-cursor-style') as HTMLSelectElement).value }));
+                // 光标闪烁
+                on('ed-cursor-blinking', 'change', () => editor?.updateOptions({ cursorBlinking: ($el('ed-cursor-blinking') as HTMLSelectElement).value }));
+                // 渲染空白
+                on('ed-render-whitespace', 'change', () => editor?.updateOptions({ renderWhitespace: ($el('ed-render-whitespace') as HTMLSelectElement).value }));
+                // 行高亮
+                on('ed-line-highlight', 'change', () => editor?.updateOptions({ renderLineHighlight: ($el('ed-line-highlight') as HTMLSelectElement).value }));
+                // 缩进参考线
+                on('ed-guides', 'change', () => {
+                    const v = ($el('ed-guides') as HTMLSelectElement).value;
+                    editor?.updateOptions({ guides: v === 'none' ? { indentation: false, bracketPairs: false } : { indentation: true, bracketPairs: true } });
+                });
+                // 复选框类
+                const bindCheck = (id: string, opt: string, map?: (v: boolean) => any) =>
+                    on(id, 'change', () => editor?.updateOptions({ [opt]: map ? map(($el(id) as HTMLInputElement).checked) : ($el(id) as HTMLInputElement).checked }));
+                bindCheck('ed-word-wrap', 'wordWrap', (v) => v ? 'on' : 'off');
+                bindCheck('ed-line-numbers', 'lineNumbers', (v) => v ? 'on' : 'off');
+                bindCheck('ed-minimap', 'minimap', (v) => ({ enabled: v }));
+                bindCheck('ed-bracket-pair-color', 'bracketPairColorization', (v) => ({ enabled: v }));
+                bindCheck('ed-folding', 'folding');
+                bindCheck('ed-glyph-margin', 'glyphMargin');
+                bindCheck('ed-smooth-scrolling', 'smoothScrolling');
+                bindCheck('ed-mouse-wheel-zoom', 'mouseWheelZoom');
+                bindCheck('ed-scroll-beyond-last', 'scrollBeyondLastLine');
+                bindCheck('ed-sticky-scroll', 'stickyScroll', (v) => ({ enabled: v }));
+                bindCheck('ed-contextmenu', 'contextmenu');
+                bindCheck('ed-quick-suggestions', 'quickSuggestions');
+                bindCheck('ed-semantic-highlight', 'semanticHighlighting.enabled');
+                bindCheck('ed-detect-indent', 'detectIndentation');
+                bindCheck('ed-trim-auto-whitespace', 'trimAutoWhitespace');
+                // Tab缩进方式
+                on('ed-insert-spaces', 'change', () => editor?.updateOptions({ insertSpaces: ($el('ed-insert-spaces') as HTMLSelectElement).value === 'spaces' }));
+                // Tab宽度
+                on('ed-tab-size', 'input', () => editor?.updateOptions({ tabSize: Math.max(1, Math.min(8, parseInt(($el('ed-tab-size') as HTMLInputElement).value, 10) || 4)) }));
+                // 建议范围
+                on('ed-word-based-suggestions', 'change', () => editor?.updateOptions({ wordBasedSuggestions: ($el('ed-word-based-suggestions') as HTMLSelectElement).value }));
             },
             onClose: () => {
                 if (editor) {
+                    saveEditorSettings(editor);
                     $(`#${ref}`).val(editor.getValue());
                     editor.dispose();
                 }

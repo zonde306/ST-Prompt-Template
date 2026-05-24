@@ -1,5 +1,6 @@
 import { resolve as _resolve } from 'path';
 import TerserPlugin from 'terser-webpack-plugin';
+import MonacoWebpackPlugin from 'monaco-editor-webpack-plugin';
 
 const serverConfig = {
     devtool: 'source-map',
@@ -40,6 +41,26 @@ const serverConfig = {
                 },
                 loader: 'babel-loader',
             },
+            {
+                test: /\.css$/,
+                oneOf: [
+                    {
+                        include: /node_modules[\\/]monaco-editor/,
+                        use: ['style-loader', 'css-loader'],
+                    },
+                    {
+                        exclude: /node_modules[\\/]monaco-editor/,
+                        use: [
+                            'style-loader',
+                            {
+                                loader: 'css-loader',
+                                options: {
+                                },
+                            },
+                        ],
+                    },
+                ],
+            },
         ],
     },
     experiments: {
@@ -57,8 +78,15 @@ const serverConfig = {
             }),
         ],
     },
-    plugins: [],
+    plugins: [
+        new MonacoWebpackPlugin({
+            languages: ['javascript'],
+        }),
+    ],
     externals: function ({ context, request }, callback) {
+        if (request.includes('node_modules') || context.includes('node_modules')) {
+            return callback();
+        }
         if (request.startsWith('../../') || request.includes('libs/')) {
             if (context.search(/(\/|\\)src\1/) > 0)
                 return callback(null, request.substring(3));
