@@ -930,6 +930,17 @@ async function showEditor(ref: string) {
             box-shadow:0 4px 8px rgba(0,0,0,.3);
         }
         .ed-dropdown.open { display:flex; }
+        /* 最小化影响范围 */
+        .monaco-editor,
+        .monaco-editor *,
+        .monaco-editor textarea,
+        .monaco-editor .inputarea {
+            font-family: 'Fira Code', Consolas, monospace !important;
+            letter-spacing: 0 !important;
+            word-spacing: 0 !important;
+            font-feature-settings: normal !important;
+            font-variant-ligatures: none !important;
+        }
     </style>
     <div id="editor-wrapper" style="display:flex;flex-direction:column;width:100%;height:100%;">
         <div id="editor-toolbar" style="flex-shrink:0;">
@@ -1144,7 +1155,12 @@ async function showEditor(ref: string) {
                 const on = (id: string, event: string, fn: EventListener) => $el(id)?.addEventListener(event, fn);
 
                 // 字体
-                on('ed-font-family', 'change', () => editor?.updateOptions({ fontFamily: ($el('ed-font-family') as HTMLSelectElement).value }));
+                on('ed-font-family', 'change', () => {
+                    editor?.updateOptions({ fontFamily: ($el('ed-font-family') as HTMLSelectElement).value });
+                    monaco.editor.remeasureFonts();
+                    editor?.render();
+                });
+
                 // 字号
                 on('ed-font-size', 'input', () => editor?.updateOptions({ fontSize: Math.max(8, Math.min(48, parseInt(($el('ed-font-size') as HTMLInputElement).value, 10) || 14)) }));
                 // 行高 (0 = auto)
@@ -1194,12 +1210,24 @@ async function showEditor(ref: string) {
                 on('ed-tab-size', 'input', () => editor?.updateOptions({ tabSize: Math.max(1, Math.min(8, parseInt(($el('ed-tab-size') as HTMLInputElement).value, 10) || 4)) }));
                 // 建议范围
                 on('ed-word-based-suggestions', 'change', () => editor?.updateOptions({ wordBasedSuggestions: ($el('ed-word-based-suggestions') as HTMLSelectElement).value }));
+
+                requestAnimationFrame(() => {
+                    monaco.editor.remeasureFonts();
+                    editor.layout(); // 确保布局刷新
+                });
+
+                // 如果动画时间较长，也可以用 setTimeout 延迟 50~100ms
+                setTimeout(() => {
+                    monaco.editor.remeasureFonts();
+                    editor.layout();
+                }, 100);
             },
             onClose: () => {
                 if (editor) {
                     saveEditorSettings(editor);
                     $(`#${ref}`).val(editor.getValue());
                     editor.dispose();
+                    $(`#${ref}`).trigger('change');
                 }
             }
         }
