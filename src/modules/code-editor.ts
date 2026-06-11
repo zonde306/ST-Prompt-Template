@@ -891,10 +891,6 @@ function saveEditorSettings(editor: any) {
 
 async function showEditor(ref: string) {
     let editor: any = null;
-
-    /**
-     * 共享的输入/选择控件内联样式
-     */
     const inputStyle = `padding:2px 6px;border-radius:4px;border:1px solid var(--SmartThemeBorderColor,#555);background:var(--SmartThemeInputColor,#1e1e1e);color:var(--SmartThemeBodyColor,#ccc);font-size:12px;`;
     const labelStyle = `display:flex;align-items:center;gap:4px;color:var(--SmartThemeBodyColor,#ccc);`;
     const numInputStyle = `width:50px;${inputStyle}`;
@@ -904,7 +900,6 @@ async function showEditor(ref: string) {
     <style>
         #editor-toolbar label { white-space: nowrap; }
         #editor-toolbar input[type="checkbox"] { margin: 0; accent-color: var(--SmartThemeQuoteColor, #888); }
-        /* ===== 菜单栏 ===== */
         .ed-menubar {
             display:flex;align-items:center;gap:0;
             padding:0 4px;background:var(--SmartThemeBlurTintColor,#2b2b2b);
@@ -920,7 +915,6 @@ async function showEditor(ref: string) {
         .ed-menubar .ed-menu-btn.active {
             background:var(--SmartThemeBorderColor,#444);
         }
-        /* ===== 下拉面板 ===== */
         .ed-dropdown {
             display:none;position:absolute;top:100%;left:0;right:0;z-index:20;
             flex-wrap:wrap;align-items:center;gap:4px 8px;
@@ -930,7 +924,6 @@ async function showEditor(ref: string) {
             box-shadow:0 4px 8px rgba(0,0,0,.3);
         }
         .ed-dropdown.open { display:flex; }
-        /* 最小化影响范围 */
         .monaco-editor,
         .monaco-editor *,
         .monaco-editor textarea,
@@ -945,13 +938,12 @@ async function showEditor(ref: string) {
     <div id="editor-wrapper" style="display:flex;flex-direction:column;width:100%;height:100%;">
         <div id="editor-toolbar" style="flex-shrink:0;">
             <div class="ed-menubar">
-                <button class="ed-menu-btn" data-menu="ed-menu-font">🔤 字体</button>
-                <button class="ed-menu-btn" data-menu="ed-menu-theme">🎨 显示</button>
-                <button class="ed-menu-btn" data-menu="ed-menu-features">⚙️ 功能</button>
-                <button class="ed-menu-btn" data-menu="ed-menu-indent">↹ 缩进</button>
-                <!-- ===== 字体下拉 ===== -->
+                <button class="ed-menu-btn" data-menu="ed-menu-font" data-i18n="Fonts">🔤 Fonts</button>
+                <button class="ed-menu-btn" data-menu="ed-menu-theme" data-i18n="Display">🎨 Display</button>
+                <button class="ed-menu-btn" data-menu="ed-menu-features" data-i18n="Features">⚙️ Features</button>
+                <button class="ed-menu-btn" data-menu="ed-menu-indent" data-i18n="Indent">↹ Indent</button>
                 <div class="ed-dropdown" id="ed-menu-font">
-                    <label style="${labelStyle}">字体<select id="ed-font-family" style="${selStyle}">
+                    <label style="${labelStyle}" data-i18n="Font">Font<select id="ed-font-family" style="${selStyle}">
                         <option value="'Cascadia Code','Fira Code',Consolas,'Courier New',monospace">Cascadia Code</option>
                         <option value="'Fira Code',Consolas,'Courier New',monospace">Fira Code</option>
                         <option value="Consolas,'Courier New',monospace">Consolas</option>
@@ -960,75 +952,72 @@ async function showEditor(ref: string) {
                         <option value="'Source Code Pro',Consolas,monospace">Source Code Pro</option>
                         <option value="monospace">Monospace</option>
                     </select></label>
-                    <label style="${labelStyle}">字号<input id="ed-font-size" type="number" min="8" max="48" value="14" style="${numInputStyle}"></label>
-                    <label style="${labelStyle}">行高<input id="ed-line-height" type="number" min="0" max="60" value="0" style="${numInputStyle}"></label>
-                    <label style="${labelStyle}">字间距<input id="ed-letter-spacing" type="number" min="0" max="10" value="0" step="0.5" style="${numInputStyle}"></label>
-                    <label style="${labelStyle}">字重<select id="ed-font-weight" style="${selStyle}max-width:80px;">
+                    <label style="${labelStyle}" data-i18n="Font Size">Font Size<input id="ed-font-size" type="number" min="8" max="48" value="14" style="${numInputStyle}"></label>
+                    <label style="${labelStyle}" data-i18n="Line Height">Line Height<input id="ed-line-height" type="number" min="0" max="60" value="0" style="${numInputStyle}"></label>
+                    <label style="${labelStyle}" data-i18n="Letter Spacing">Letter Spacing<input id="ed-letter-spacing" type="number" min="0" max="10" value="0" step="0.5" style="${numInputStyle}"></label>
+                    <label style="${labelStyle}" data-i18n="Font Weight">Font Weight<select id="ed-font-weight" style="${selStyle}max-width:80px;">
                         <option value="normal" selected>normal</option><option value="bold">bold</option>
                         <option value="100">100</option><option value="200">200</option><option value="300">300</option>
                         <option value="400">400</option><option value="500">500</option><option value="600">600</option>
                         <option value="700">700</option><option value="800">800</option><option value="900">900</option>
                     </select></label>
-                    <label style="${labelStyle}"><input id="ed-font-ligatures" type="checkbox">连字</label>
+                    <label style="${labelStyle}" data-i18n="Ligatures"><input id="ed-font-ligatures" type="checkbox">Ligatures</label>
                 </div>
-                <!-- ===== 显示下拉 ===== -->
                 <div class="ed-dropdown" id="ed-menu-theme">
-                    <label style="${labelStyle}">主题<select id="ed-theme" style="${selStyle}">
+                    <label style="${labelStyle}" data-i18n="Theme">Theme<select id="ed-theme" style="${selStyle}">
                         <option value="ejsTheme" selected>EJS Light</option>
                         <option value="vs">VS Light</option>
                         <option value="vs-dark">VS Dark</option>
                         <option value="hc-black">High Contrast</option>
                     </select></label>
-                    <label style="${labelStyle}">光标<select id="ed-cursor-style" style="${selStyle}max-width:75px;">
+                    <label style="${labelStyle}" data-i18n="Cursor">Cursor<select id="ed-cursor-style" style="${selStyle}max-width:75px;">
                         <option value="line" selected>line</option><option value="block">block</option>
                         <option value="underline">underline</option><option value="line-thin">line-thin</option>
                         <option value="block-outline">block-outline</option><option value="underline-thin">underline-thin</option>
                     </select></label>
-                    <label style="${labelStyle}">闪烁<select id="ed-cursor-blinking" style="${selStyle}max-width:80px;">
+                    <label style="${labelStyle}" data-i18n="Blinking">Blinking<select id="ed-cursor-blinking" style="${selStyle}max-width:80px;">
                         <option value="blink" selected>blink</option><option value="smooth">smooth</option>
                         <option value="phase">phase</option><option value="expand">expand</option>
                         <option value="solid">solid</option>
                     </select></label>
-                    <label style="${labelStyle}">空白<select id="ed-render-whitespace" style="${selStyle}max-width:85px;">
+                    <label style="${labelStyle}" data-i18n="Whitespace">Whitespace<select id="ed-render-whitespace" style="${selStyle}max-width:85px;">
                         <option value="none">none</option><option value="boundary" selected>boundary</option>
                         <option value="selection">selection</option><option value="trailing">trailing</option>
                         <option value="all">all</option>
                     </select></label>
-                    <label style="${labelStyle}">行高亮<select id="ed-line-highlight" style="${selStyle}max-width:75px;">
+                    <label style="${labelStyle}" data-i18n="Line Highlight">Line Highlight<select id="ed-line-highlight" style="${selStyle}max-width:75px;">
                         <option value="line" selected>line</option><option value="all">all</option>
                         <option value="none">none</option><option value="gutter">gutter</option>
                     </select></label>
-                    <label style="${labelStyle}">缩进线<select id="ed-guides" style="${selStyle}max-width:100px;">
+                    <label style="${labelStyle}" data-i18n="Indent Guides">Indent Guides<select id="ed-guides" style="${selStyle}max-width:100px;">
                         <option value="indentation" selected>indentation</option><option value="none">none</option>
                     </select></label>
                 </div>
-                <!-- ===== 功能下拉 ===== -->
                 <div class="ed-dropdown" id="ed-menu-features">
-                    <label style="${labelStyle}"><input id="ed-word-wrap" type="checkbox">换行</label>
-                    <label style="${labelStyle}"><input id="ed-line-numbers" type="checkbox" checked>行号</label>
-                    <label style="${labelStyle}"><input id="ed-minimap" type="checkbox" checked>缩略图</label>
-                    <label style="${labelStyle}"><input id="ed-bracket-pair-color" type="checkbox" checked>括号着色</label>
-                    <label style="${labelStyle}"><input id="ed-folding" type="checkbox" checked>折叠</label>
-                    <label style="${labelStyle}"><input id="ed-glyph-margin" type="checkbox">装订线</label>
-                    <label style="${labelStyle}"><input id="ed-smooth-scrolling" type="checkbox" checked>平滑滚动</label>
-                    <label style="${labelStyle}"><input id="ed-mouse-wheel-zoom" type="checkbox">滚轮缩放</label>
-                    <label style="${labelStyle}"><input id="ed-scroll-beyond-last" type="checkbox" checked>超行滚动</label>
-                    <label style="${labelStyle}"><input id="ed-sticky-scroll" type="checkbox" checked>黏性滚动</label>
-                    <label style="${labelStyle}"><input id="ed-contextmenu" type="checkbox" checked>右键菜单</label>
-                    <label style="${labelStyle}"><input id="ed-quick-suggestions" type="checkbox" checked>快速建议</label>
-                    <label style="${labelStyle}"><input id="ed-semantic-highlight" type="checkbox" checked>语义高亮</label>
+                    <label style="${labelStyle}" data-i18n="Word Wrap"><input id="ed-word-wrap" type="checkbox">Word Wrap</label>
+                    <label style="${labelStyle}" data-i18n="Line Numbers"><input id="ed-line-numbers" type="checkbox" checked>Line Numbers</label>
+                    <label style="${labelStyle}" data-i18n="Minimap"><input id="ed-minimap" type="checkbox" checked>Minimap</label>
+                    <label style="${labelStyle}" data-i18n="Bracket Color"><input id="ed-bracket-pair-color" type="checkbox" checked>Bracket Color</label>
+                    <label style="${labelStyle}" data-i18n="Folding"><input id="ed-folding" type="checkbox" checked>Folding</label>
+                    <label style="${labelStyle}" data-i18n="Glyph Margin"><input id="ed-glyph-margin" type="checkbox">Glyph Margin</label>
+                    <label style="${labelStyle}" data-i18n="Smooth Scrolling"><input id="ed-smooth-scrolling" type="checkbox" checked>Smooth Scrolling</label>
+                    <label style="${labelStyle}" data-i18n="Mouse Wheel Zoom"><input id="ed-mouse-wheel-zoom" type="checkbox">Mouse Wheel Zoom</label>
+                    <label style="${labelStyle}" data-i18n="Scroll Beyond Last Line"><input id="ed-scroll-beyond-last" type="checkbox" checked>Scroll Beyond Last Line</label>
+                    <label style="${labelStyle}" data-i18n="Sticky Scroll"><input id="ed-sticky-scroll" type="checkbox" checked>Sticky Scroll</label>
+                    <label style="${labelStyle}" data-i18n="Context Menu"><input id="ed-contextmenu" type="checkbox" checked>Context Menu</label>
+                    <label style="${labelStyle}" data-i18n="Quick Suggestions"><input id="ed-quick-suggestions" type="checkbox" checked>Quick Suggestions</label>
+                    <label style="${labelStyle}" data-i18n="Semantic Highlighting"><input id="ed-semantic-highlight" type="checkbox" checked>Semantic Highlighting</label>
                 </div>
-                <!-- ===== 缩进下拉 ===== -->
                 <div class="ed-dropdown" id="ed-menu-indent">
-                    <label style="${labelStyle}">Tab<select id="ed-insert-spaces" style="${selStyle}max-width:75px;">
-                        <option value="spaces" selected>空格</option><option value="tabs">制表</option>
+                    <label style="${labelStyle}" data-i18n="Tab Mode">Tab<select id="ed-insert-spaces" style="${selStyle}max-width:75px;">
+                        <option value="spaces" selected data-i18n="Spaces">Spaces</option><option value="tabs" data-i18n="Tabs">Tabs</option>
                     </select></label>
-                    <label style="${labelStyle}">宽度<input id="ed-tab-size" type="number" min="1" max="8" value="4" style="${numInputStyle}"></label>
-                    <label style="${labelStyle}"><input id="ed-detect-indent" type="checkbox" checked>检测缩进</label>
-                    <label style="${labelStyle}"><input id="ed-trim-auto-whitespace" type="checkbox" checked>修剪行尾</label>
-                    <label style="${labelStyle}">建议<select id="ed-word-based-suggestions" style="${selStyle}max-width:90px;">
-                        <option value="currentDocument" selected>本文档</option><option value="allDocuments">所有文档</option>
-                        <option value="matchingDocuments">同语言</option><option value="off">关闭</option>
+                    <label style="${labelStyle}" data-i18n="Tab Size">Tab Size<input id="ed-tab-size" type="number" min="1" max="8" value="4" style="${numInputStyle}"></label>
+                    <label style="${labelStyle}" data-i18n="Detect Indent"><input id="ed-detect-indent" type="checkbox" checked>Detect Indent</label>
+                    <label style="${labelStyle}" data-i18n="Trim Whitespace"><input id="ed-trim-auto-whitespace" type="checkbox" checked>Trim Whitespace</label>
+                    <label style="${labelStyle}" data-i18n="Suggestions">Suggestions<select id="ed-word-based-suggestions" style="${selStyle}max-width:90px;">
+                        <option value="currentDocument" selected data-i18n="Current Document">Current Document</option><option value="allDocuments" data-i18n="All Documents">All Documents</option>
+                        <option value="matchingDocuments" data-i18n="Matching Documents">Matching Documents</option><option value="off" data-i18n="Off">Off</option>
                     </select></label>
                 </div>
             </div>
@@ -1084,7 +1073,6 @@ async function showEditor(ref: string) {
                     'semanticHighlighting.enabled': cfg.semanticHighlighting,
                 });
 
-                // ---- 同步 UI 控件到已保存配置 ----
                 const $el = document.getElementById.bind(document);
                 const setVal = (id: string, val: any) => { const el = $el(id); if (el) (el as HTMLInputElement | HTMLSelectElement).value = String(val); };
                 const setCk = (id: string, val: boolean) => { const el = $el(id) as HTMLInputElement; if (el) el.checked = val; };
@@ -1119,7 +1107,6 @@ async function showEditor(ref: string) {
                 setCk('ed-trim-auto-whitespace', cfg.trimAutoWhitespace);
                 setVal('ed-word-based-suggestions', cfg.wordBasedSuggestions);
 
-                // ---- IDE 风格菜单栏交互 ----
                 const closeAllDropdowns = () => {
                     document.querySelectorAll('.ed-dropdown.open').forEach(d => d.classList.remove('open'));
                     document.querySelectorAll('.ed-menu-btn.active').forEach(b => b.classList.remove('active'));
@@ -1138,55 +1125,35 @@ async function showEditor(ref: string) {
                         }
                     });
                 });
-                // 点击下拉面板内部不关闭
                 document.querySelectorAll('.ed-dropdown').forEach(dd => {
                     dd.addEventListener('click', (e: Event) => e.stopPropagation());
                 });
-                // 点击 menubar 非按钮区域也关闭（兜底）
                 document.querySelector('.ed-menubar')?.addEventListener('click', (e: Event) => {
                     if (!(e.target as HTMLElement).classList.contains('ed-menu-btn')) {
                         closeAllDropdowns();
                     }
                 });
-                // 点击编辑器区域关闭所有下拉
                 document.getElementById('editor-container')?.addEventListener('click', () => closeAllDropdowns());
-
-                // ---- 事件绑定辅助函数 ----
                 const on = (id: string, event: string, fn: EventListener) => $el(id)?.addEventListener(event, fn);
-
-                // 字体
                 on('ed-font-family', 'change', () => {
                     editor?.updateOptions({ fontFamily: ($el('ed-font-family') as HTMLSelectElement).value });
                     monaco.editor.remeasureFonts();
                     editor?.render();
                 });
-
-                // 字号
                 on('ed-font-size', 'input', () => editor?.updateOptions({ fontSize: Math.max(8, Math.min(48, parseInt(($el('ed-font-size') as HTMLInputElement).value, 10) || 14)) }));
-                // 行高 (0 = auto)
                 on('ed-line-height', 'input', () => editor?.updateOptions({ lineHeight: Math.max(0, Math.min(60, parseInt(($el('ed-line-height') as HTMLInputElement).value, 10) || 0)) }));
-                // 字间距
                 on('ed-letter-spacing', 'input', () => editor?.updateOptions({ letterSpacing: Math.max(0, Math.min(10, parseFloat(($el('ed-letter-spacing') as HTMLInputElement).value) || 0)) }));
-                // 字重
                 on('ed-font-weight', 'change', () => editor?.updateOptions({ fontWeight: ($el('ed-font-weight') as HTMLSelectElement).value }));
-                // 连字
                 on('ed-font-ligatures', 'change', () => editor?.updateOptions({ fontLigatures: ($el('ed-font-ligatures') as HTMLInputElement).checked }));
-                // 主题
                 on('ed-theme', 'change', () => monaco.editor.setTheme(($el('ed-theme') as HTMLSelectElement).value));
-                // 光标样式
                 on('ed-cursor-style', 'change', () => editor?.updateOptions({ cursorStyle: ($el('ed-cursor-style') as HTMLSelectElement).value }));
-                // 光标闪烁
                 on('ed-cursor-blinking', 'change', () => editor?.updateOptions({ cursorBlinking: ($el('ed-cursor-blinking') as HTMLSelectElement).value }));
-                // 渲染空白
                 on('ed-render-whitespace', 'change', () => editor?.updateOptions({ renderWhitespace: ($el('ed-render-whitespace') as HTMLSelectElement).value }));
-                // 行高亮
                 on('ed-line-highlight', 'change', () => editor?.updateOptions({ renderLineHighlight: ($el('ed-line-highlight') as HTMLSelectElement).value }));
-                // 缩进参考线
                 on('ed-guides', 'change', () => {
                     const v = ($el('ed-guides') as HTMLSelectElement).value;
                     editor?.updateOptions({ guides: v === 'none' ? { indentation: false, bracketPairs: false } : { indentation: true, bracketPairs: true } });
                 });
-                // 复选框类
                 const bindCheck = (id: string, opt: string, map?: (v: boolean) => any) =>
                     on(id, 'change', () => editor?.updateOptions({ [opt]: map ? map(($el(id) as HTMLInputElement).checked) : ($el(id) as HTMLInputElement).checked }));
                 bindCheck('ed-word-wrap', 'wordWrap', (v) => v ? 'on' : 'off');
@@ -1204,19 +1171,14 @@ async function showEditor(ref: string) {
                 bindCheck('ed-semantic-highlight', 'semanticHighlighting.enabled');
                 bindCheck('ed-detect-indent', 'detectIndentation');
                 bindCheck('ed-trim-auto-whitespace', 'trimAutoWhitespace');
-                // Tab缩进方式
                 on('ed-insert-spaces', 'change', () => editor?.updateOptions({ insertSpaces: ($el('ed-insert-spaces') as HTMLSelectElement).value === 'spaces' }));
-                // Tab宽度
                 on('ed-tab-size', 'input', () => editor?.updateOptions({ tabSize: Math.max(1, Math.min(8, parseInt(($el('ed-tab-size') as HTMLInputElement).value, 10) || 4)) }));
-                // 建议范围
                 on('ed-word-based-suggestions', 'change', () => editor?.updateOptions({ wordBasedSuggestions: ($el('ed-word-based-suggestions') as HTMLSelectElement).value }));
 
                 requestAnimationFrame(() => {
                     monaco.editor.remeasureFonts();
-                    editor.layout(); // 确保布局刷新
+                    editor.layout();
                 });
-
-                // 如果动画时间较长，也可以用 setTimeout 延迟 50~100ms
                 setTimeout(() => {
                     monaco.editor.remeasureFonts();
                     editor.layout();
