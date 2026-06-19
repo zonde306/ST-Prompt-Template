@@ -199,9 +199,12 @@ export function wrapEscapeBlocks(content: string, blocks: string[], opts: EjsOpt
  * @param matchToken function to match tokens
  * @returns array of strings
  */
-function splitNested(input: string, matchToken: (input: string, index: number) => { type: 'open' | 'close', value: string, len: number } | null) {
-    const result = [];
-    const stack = [];
+function splitNested(
+    input: string, 
+    matchToken: (input: string, index: number) => { type: 'open' | 'close', value: string, len: number } | null
+) {
+    const result: string[] = [];
+    const stack: string[] = [];
 
     let buffer = "";
     let i = 0;
@@ -217,21 +220,23 @@ function splitNested(input: string, matchToken: (input: string, index: number) =
 
         const { type, value, len } = match;
 
-        buffer += value;
-
-        if (stack.length === 0 && buffer.length > 0) {
-            result.push(buffer);
-            buffer = "";
-        }
-
         if (type === "open") {
+            if (stack.length === 0) {
+                if (buffer.length > 0) {
+                    result.push(buffer);
+                    buffer = "";
+                }
+            }
+            buffer += value;
             stack.push(value);
         } else if (type === "close") {
-            for (let j = stack.length - 1; j >= 0; j--) {
-                if (stack[j] === value) {
-                    stack.splice(j, 1);
-                    break;
-                }
+            buffer += value;
+            if (stack.length > 0) {
+                stack.pop();
+            }
+            if (stack.length === 0) {
+                result.push(buffer);
+                buffer = "";
             }
         }
 
