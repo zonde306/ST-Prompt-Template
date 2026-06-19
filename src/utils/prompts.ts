@@ -33,7 +33,7 @@ function escapeForTemplateLiteral(str: string) {
 }
 
 /**
- * Replace all <% and %> in the <pre> block with <% print(`...`) %>
+ * Replace all <% and %> in the <pre> block with <% __append(`...`) %>
  * @param text content
  * @returns processed content
  */
@@ -43,7 +43,7 @@ export function escapePreContent(html: string): string {
     for (const pre of pres) {
         const raw = pre.outerHTML;
         const escaped = escapeForTemplateLiteral(raw);
-        const wrapped = `&lt;% print(\`${escaped}\`) %&gt;`;
+        const wrapped = `&lt;% __append(\`${escaped}\`) %&gt;`;
         pre.outerHTML = wrapped;
     }
 
@@ -92,25 +92,6 @@ export function updateTokens(prompts: string, type: 'send' | 'receive') {
 }
 
 /**
- * Replace <% ... %> in HTML tags with <%% ... %%>, only for the specified HTML block
- * @param str content
- * @param options EJS Options
- * @param markup HTML block
- * @returns processed content
- */
-export function escapeEjsInDisabledBlocks(str: string, options: EjsOptions = {}, markup: string = 'escape-ejs') {
-    const openDelimiter = options.openDelimiter || '<';
-    const closeDelimiter = options.closeDelimiter || '>';
-    const delimiter = options.delimiter || '%';
-    const sepcialDelimiter = openDelimiter === '<' && closeDelimiter === '>' ? '' : '#';
-    return str.replaceAll(new RegExp(`${openDelimiter}${sepcialDelimiter}${markup}${closeDelimiter}([\\s\\S]*?)${openDelimiter}${sepcialDelimiter}/${markup}${closeDelimiter}`, 'gi'),
-        (_match) => _match
-            .replaceAll(`${openDelimiter}${delimiter}`, `${openDelimiter}${delimiter}${delimiter}`)
-            .replaceAll(`${delimiter}${closeDelimiter}`, `${delimiter}${delimiter}${closeDelimiter}`),
-    );
-}
-
-/**
  * Apply escapeEjsInDisabledBlocks for all reasoning-like blocks
  * @see escapeEjsInDisabledBlocks
  * @param content content
@@ -118,9 +99,86 @@ export function escapeEjsInDisabledBlocks(str: string, options: EjsOptions = {},
  * @returns processed content
  */
 export function escapeReasoningBlocks(content: string, opts: EvalTemplateOptions = {}): string {
-    content = escapeEjsInDisabledBlocks(content, opts.options || {}, opts.disableMarkup || 'escape-ejs');
-    content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'thinking');
-    content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'think');
-    content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'reasoning');
-    return content;
+    return wrapEscapeBlocks(content, [ opts.disableMarkup || 'escape-ejs', 'thinking', 'think', 'reasoning' ], opts.options);
+}
+
+/**
+ * Convert specific XML blocks into the format `<% ​​__append('content') %>`.
+ * @param content 
+ * @param blocks 
+ * @param opts 
+ * @returns 
+ */
+export function wrapEscapeBlocks(content: string, blocks: string[], opts: EjsOptions = {}) {
+    const od = opts.openDelimiter || '<';
+    const cd = opts.closeDelimiter || '>';
+    const d = opts.delimiter || '%';
+
+    const openTags = blocks.map(t => `${od}${t}${cd}`);
+    const closeTags = blocks.map(t => `${od}/${t}${cd}`);
+
+    type Frame = { tag: string; start: number };
+
+    const stack: Frame[] = [];
+    const ranges: { start: number; end: number }[] = [];
+
+    let i = 0;
+
+    while (i < content.length) {
+        let matched = false;
+
+        // open tag
+        for (const tag of openTags) {
+            if (content.startsWith(tag, i)) {
+                stack.push({ tag, start: i });
+                i += tag.length;
+                matched = true;
+                break;
+            }
+        }
+
+        if (matched) continue;
+
+        // close tag
+        for (const tag of closeTags) {
+            if (content.startsWith(tag, i)) {
+                if (stack.length > 0) {
+                    const frame = stack.pop()!;
+                    const closeLen = tag.length;
+                    if (stack.length === 0) {
+                        // only outermost block becomes a range
+                        ranges.push({
+                            start: frame.start,
+                            end: i + closeLen
+                        });
+                    }
+                }
+
+                i += tag.length;
+                matched = true;
+                break;
+            }
+        }
+
+        if (matched) continue;
+
+        i++;
+    }
+
+    // fallback: if unclosed, ignore
+    if (ranges.length === 0) return content;
+
+    // build result with replacements
+    let result = '';
+    let last = 0;
+
+    for (const r of ranges) {
+        const raw = content.slice(r.start, r.end);
+        result += content.slice(last, r.start);
+        result += `${od}${d} __append(\`${escapeForTemplateLiteral(raw)}\`) ${d}${cd}`;
+        last = r.end;
+    }
+
+    result += content.slice(last);
+    return result;
 }

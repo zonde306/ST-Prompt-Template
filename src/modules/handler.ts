@@ -8,7 +8,7 @@ import { getCharacterDefine } from '../function/characters';
 import { settings } from './ui';
 import { activateRegex, deactivateRegex, applyRegex } from '../function/regex';
 import { deactivatePromptInjection, setForceOutlet, applyOutletPromptsInjected } from '../function/inject';
-import { updateTokens, removeHtmlTagsInsideBlock, escapePreContent, cleanPreContent, escapeReasoningBlocks, unescapePreContent, unescapeHtmlEntities } from '../utils/prompts';
+import { updateTokens, removeHtmlTagsInsideBlock, escapePreContent, escapeReasoningBlocks, unescapeHtmlEntities } from '../utils/prompts';
 import { evalTemplateHandler, evaluateWIEntities, evalTemplateWI } from '../utils/evaluate';
 import { updateReasoningUI } from '../../../../../reasoning.js';
 import { handleInjectPrompt } from '../features/inject-prompt';
@@ -537,7 +537,7 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
         };
 
         newContent = await evalTemplateHandler(
-            escapeReasoningBlocks(unescapeHtmlEntities(removeHtmlTagsInsideBlock(applyRegex(
+            escapeReasoningBlocks(unescapeHtmlEntities(applyRegex(
                 env,
                 content,
                 {
@@ -550,7 +550,7 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
                     before: false,
                     html: true,
                 }
-            ))),
+            )),
                 opts
             ),
             env,
