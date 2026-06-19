@@ -19,10 +19,20 @@ export function removeHtmlTagsInsideBlock(html: string) {
  * @param html content
  * @returns processed content
  */
-export function unescapeHtmlEntities(html: string) {
-    return html.replace(/&lt;%([\s\S]*?)%&gt;/gi, (_match, content: string) => {
-        return `&lt;%${_.unescape(content)}%&gt;`;
-    });
+export function unescapeHtmlEntities(html: string): string {
+    return splitNested(html, (s: string, i: number) => {
+        if (s.startsWith("&lt;%", i)) {
+            return { type: "open", value: "&lt;%", len: 5 };
+        }
+        if (s.startsWith("%&gt;", i)) {
+            return { type: "close", value: "%&gt;", len: 5 };
+        }
+        return null;
+    }).map(s => {
+        if (!s.startsWith('&lt;%') || !s.endsWith('%&gt;') || s.startsWith('&lt;% __append(`'))
+            return s;
+        return `&lt;%${_.unescape(s.slice(4, -5))}%&gt;`;
+    }).join('');
 }
 
 function escapeForTemplateLiteral(str: string) {
@@ -99,7 +109,7 @@ export function updateTokens(prompts: string, type: 'send' | 'receive') {
  * @returns processed content
  */
 export function escapeReasoningBlocks(content: string, opts: EvalTemplateOptions = {}): string {
-    return wrapEscapeBlocks(content, [ opts.disableMarkup || 'escape-ejs', 'thinking', 'think', 'reasoning' ], opts.options);
+    return wrapEscapeBlocks(content, [opts.disableMarkup || 'escape-ejs', 'thinking', 'think', 'reasoning'], opts.options);
 }
 
 /**
@@ -180,5 +190,57 @@ export function wrapEscapeBlocks(content: string, blocks: string[], opts: EjsOpt
     }
 
     result += content.slice(last);
+    return result;
+}
+
+/**
+ * Split a string based on inclusive and exclusive intervals.
+ * @param input input string
+ * @param matchToken function to match tokens
+ * @returns array of strings
+ */
+function splitNested(input: string, matchToken: (input: string, index: number) => { type: 'open' | 'close', value: string, len: number } | null) {
+    const result = [];
+    const stack = [];
+
+    let buffer = "";
+    let i = 0;
+
+    while (i < input.length) {
+        const match = matchToken(input, i);
+
+        if (!match) {
+            buffer += input[i];
+            i++;
+            continue;
+        }
+
+        const { type, value, len } = match;
+
+        buffer += value;
+
+        if (stack.length === 0 && buffer.length > 0) {
+            result.push(buffer);
+            buffer = "";
+        }
+
+        if (type === "open") {
+            stack.push(value);
+        } else if (type === "close") {
+            for (let j = stack.length - 1; j >= 0; j--) {
+                if (stack[j] === value) {
+                    stack.splice(j, 1);
+                    break;
+                }
+            }
+        }
+
+        i += len;
+    }
+
+    if (buffer.length > 0) {
+        result.push(buffer);
+    }
+
     return result;
 }
