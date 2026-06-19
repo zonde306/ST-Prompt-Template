@@ -538,6 +538,7 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
         };
 
         newContent = await evalTemplateHandler(
+            // Fixed an issue where HTML escaping prevented code execution.
             unescapeHtmlEntities(
                 escapeReasoningBlocks(
                     applyRegex(

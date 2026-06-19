@@ -102,7 +102,7 @@ export function updateTokens(prompts: string, type: 'send' | 'receive') {
 }
 
 /**
- * Apply escapeEjsInDisabledBlocks for all reasoning-like blocks
+ * Prevent the execution of content within specific `reasoning` and `escape-ejs` tags.
  * @see escapeEjsInDisabledBlocks
  * @param content content
  * @param opts EJS Options
