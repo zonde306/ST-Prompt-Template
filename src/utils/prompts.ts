@@ -8,7 +8,7 @@ import { extension_settings } from '../../../../../extensions.js';
  * @returns processed content
  */
 export function removeHtmlTagsInsideBlock(html: string) {
-    return html.replace(/&lt;%((?:[^%]|%[^>])*)%&gt;/gi, (_match, content : string) => {
+    return html.replace(/&lt;%((?:[^%]|%[^>])*)%&gt;/gi, (_match, content: string) => {
         const cleanedContent = content.replace(/<[^>]+>/g, '');
         return `&lt;%${cleanedContent}%&gt;`;
     });
@@ -20,31 +20,34 @@ export function removeHtmlTagsInsideBlock(html: string) {
  * @returns processed content
  */
 export function unescapeHtmlEntities(html: string) {
-    return html.replace(/&lt;%([\s\S]*?)%&gt;/gi, (_match, content : string) => {
+    return html.replace(/&lt;%([\s\S]*?)%&gt;/gi, (_match, content: string) => {
         return `&lt;%${_.unescape(content)}%&gt;`;
     });
 }
 
-/**
- * Replace all <% and %> in the <pre> block with <%% and %%>
- * @param text content
- * @returns processed content
- */
-export function escapePreContent(html: string) {
-    return html.replace(/(<pre\b[^>]*>)([\s\S]*?)(<\/pre>)/gi, (_m, p1, p2, p3) => {
-        return p1 + p2.replace(/&lt;/g, '&lt;').replace(/&gt;/g, '#gt#') + p3;
-    })
+function escapeForTemplateLiteral(str: string) {
+    return str
+        .replace(/\\/g, '\\\\')
+        .replace(/`/g, '\\`')
+        .replace(/\$\{/g, '\\${');
 }
 
 /**
- * Revert changes made by escapePreContent
- * @param html content
+ * Replace all <% and %> in the <pre> block with <% print(`...`) %>
+ * @param text content
  * @returns processed content
  */
-export function unescapePreContent(html: string | null) : string | null {
-    return html?.replace(/(<pre\b[^>]*>)([\s\S]*?)(<\/pre>)/gi, (_m, p1, p2, p3) => {
-        return p1 + p2.replace(/#lt#/g, '&lt;').replace(/#gt#/g, '&gt;') + p3;
-    }) ?? null;
+export function escapePreContent(html: string): string {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const pres = Array.from(doc.querySelectorAll("pre"));
+    for (const pre of pres) {
+        const raw = pre.outerHTML;
+        const escaped = escapeForTemplateLiteral(raw);
+        const wrapped = `&lt;% print(\`${escaped}\`) %&gt;`;
+        pre.outerHTML = wrapped;
+    }
+
+    return doc.body.innerHTML;
 }
 
 /**
@@ -52,9 +55,9 @@ export function unescapePreContent(html: string | null) : string | null {
  * @param html content
  * @returns processed content
  */
-export function cleanPreContent(html : string) {
-    return html.replace(/<pre\b[^>]*>([\s\S]*?)<\/pre>/gi, (_preMatch, preContent : string) => {
-        const cleanedContent = preContent.replace(/&lt;%([\s\S]*?)%&gt;/g, (_blockMatch, content : string) => {
+export function cleanPreContent(html: string) {
+    return html.replace(/<pre\b[^>]*>([\s\S]*?)<\/pre>/gi, (_preMatch, preContent: string) => {
+        const cleanedContent = preContent.replace(/&lt;%([\s\S]*?)%&gt;/g, (_blockMatch, content: string) => {
             return `&lt;%${content.replace(/<[^>]+>/g, '')}%&gt;`;
         });
         return `<pre>${cleanedContent}</pre>`;
@@ -95,15 +98,15 @@ export function updateTokens(prompts: string, type: 'send' | 'receive') {
  * @param markup HTML block
  * @returns processed content
  */
-export function escapeEjsInDisabledBlocks(str : string, options : EjsOptions = {}, markup: string = 'escape-ejs') {
+export function escapeEjsInDisabledBlocks(str: string, options: EjsOptions = {}, markup: string = 'escape-ejs') {
     const openDelimiter = options.openDelimiter || '<';
     const closeDelimiter = options.closeDelimiter || '>';
     const delimiter = options.delimiter || '%';
     const sepcialDelimiter = openDelimiter === '<' && closeDelimiter === '>' ? '' : '#';
     return str.replaceAll(new RegExp(`${openDelimiter}${sepcialDelimiter}${markup}${closeDelimiter}([\\s\\S]*?)${openDelimiter}${sepcialDelimiter}/${markup}${closeDelimiter}`, 'gi'),
         (_match) => _match
-                          .replaceAll(`${openDelimiter}${delimiter}`, `${openDelimiter}${delimiter}${delimiter}`)
-                          .replaceAll(`${delimiter}${closeDelimiter}`, `${delimiter}${delimiter}${closeDelimiter}`),
+            .replaceAll(`${openDelimiter}${delimiter}`, `${openDelimiter}${delimiter}${delimiter}`)
+            .replaceAll(`${delimiter}${closeDelimiter}`, `${delimiter}${delimiter}${closeDelimiter}`),
     );
 }
 
@@ -114,7 +117,7 @@ export function escapeEjsInDisabledBlocks(str : string, options : EjsOptions = {
  * @param opts EJS Options
  * @returns processed content
  */
-export function escapeReasoningBlocks(content : string, opts : EvalTemplateOptions = {}) : string {
+export function escapeReasoningBlocks(content: string, opts: EvalTemplateOptions = {}): string {
     content = escapeEjsInDisabledBlocks(content, opts.options || {}, opts.disableMarkup || 'escape-ejs');
     content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'thinking');
     content = escapeEjsInDisabledBlocks(content, opts.options || {}, 'think');

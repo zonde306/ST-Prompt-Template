@@ -469,8 +469,8 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
 
     const worldEntries = await getEnabledWorldInfoEntries();
     const sandbox = settings.sandbox ? new FunctionSandbox() : null;
-    let newContent = null;
-    let content = null;
+    let newContent: string | null = null;
+    let content: string | null = null;
 
     try {
         // [RENDER:BEFORE] or @@render_before
@@ -521,10 +521,10 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
             }
         }
 
-        const html = container.html();
+        const rawContent = container.html() as string;
 
         // Patch the code within the `<pre>` tags by deleting or escaping it.
-        content = settings.code_blocks_enabled === false ? escapePreContent(html) : cleanPreContent(html);
+        content = settings.code_blocks_enabled === false ? escapePreContent(rawContent) : rawContent;
 
         const opts = {
             escaper,
@@ -557,11 +557,6 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
             `chat #${message_idx}.${message.swipe_id}`,
             { ...opts, sandbox }
         );
-
-        if (settings.code_blocks_enabled === false) {
-            // Undo changes to the code within the `<pre>` tags.
-            newContent = unescapePreContent(newContent);
-        }
 
         // [RENDER:AFTER] or @@render_after
         const after = settings.render_loader_enabled === false
