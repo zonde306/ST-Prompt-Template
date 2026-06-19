@@ -8,7 +8,7 @@ import { getCharacterDefine } from '../function/characters';
 import { settings } from './ui';
 import { activateRegex, deactivateRegex, applyRegex } from '../function/regex';
 import { deactivatePromptInjection, setForceOutlet, applyOutletPromptsInjected } from '../function/inject';
-import { updateTokens, removeHtmlTagsInsideBlock, escapePreContent, cleanPreContent, escapeReasoningBlocks, unescapePreContent, unescapeHtmlEntities } from '../utils/prompts';
+import { updateTokens, escapePreContent, escapeReasoningBlocks, unescapeHtmlEntities } from '../utils/prompts';
 import { evalTemplateHandler, evaluateWIEntities, evalTemplateWI } from '../utils/evaluate';
 import { updateReasoningUI } from '../../../../../reasoning.js';
 import { handleInjectPrompt } from '../features/inject-prompt';
@@ -469,8 +469,8 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
 
     const worldEntries = await getEnabledWorldInfoEntries();
     const sandbox = settings.sandbox ? new FunctionSandbox() : null;
-    let newContent = null;
-    let content = null;
+    let newContent: string | null = null;
+    let content: string | null = null;
 
     try {
         // [RENDER:BEFORE] or @@render_before
@@ -489,20 +489,22 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
             env.runType = 'render_permanent';
             // Execute and overwrite the original message, avoiding secondary execution.
             const newContent = await evalTemplateHandler(
-                escapeReasoningBlocks(applyRegex(
-                    env,
-                    message.mes,
-                    {
-                        message: true,
-                        user: message.is_user,
-                        assistant: !message.is_user && !message.is_system,
-                        system: message.is_system,
-                        depth: chat.length - message_idx - 1,
-                        before: true,
-                        after: false,
-                        html: false,
-                    }
-                )),
+                escapeReasoningBlocks(
+                    applyRegex(
+                        env,
+                        message.mes,
+                        {
+                            message: true,
+                            user: message.is_user,
+                            assistant: !message.is_user && !message.is_system,
+                            system: message.is_system,
+                            depth: chat.length - message_idx - 1,
+                            before: true,
+                            after: false,
+                            html: false,
+                        }
+                    )
+                ),
                 env,
                 `chat #${message_idx}.${message.swipe_id} raw`,
                 {
@@ -521,10 +523,9 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
             }
         }
 
-        const html = container.html();
+        const rawContent = container.html() as string;
 
-        // Patch the code within the `<pre>` tags by deleting or escaping it.
-        content = settings.code_blocks_enabled === false ? escapePreContent(html) : cleanPreContent(html);
+        content = settings.code_blocks_enabled === false ? escapePreContent(rawContent) : rawContent;
 
         const opts = {
             escaper,
@@ -537,31 +538,30 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
         };
 
         newContent = await evalTemplateHandler(
-            escapeReasoningBlocks(unescapeHtmlEntities(removeHtmlTagsInsideBlock(applyRegex(
-                env,
-                content,
-                {
-                    message: true,
-                    user: message.is_user,
-                    assistant: !message.is_user && !message.is_system,
-                    system: message.is_system,
-                    worldinfo: false,
-                    depth: chat.length - message_idx - 1,
-                    before: false,
-                    html: true,
-                }
-            ))),
-                opts
+            // Fixed an issue where HTML escaping prevented code execution.
+            unescapeHtmlEntities(
+                escapeReasoningBlocks(
+                    applyRegex(
+                        env,
+                        content,
+                        {
+                            message: true,
+                            user: message.is_user,
+                            assistant: !message.is_user && !message.is_system,
+                            system: message.is_system,
+                            worldinfo: false,
+                            depth: chat.length - message_idx - 1,
+                            before: false,
+                            html: true,
+                        }
+                    ),
+                    opts
+                )
             ),
             env,
             `chat #${message_idx}.${message.swipe_id}`,
             { ...opts, sandbox }
         );
-
-        if (settings.code_blocks_enabled === false) {
-            // Undo changes to the code within the `<pre>` tags.
-            newContent = unescapePreContent(newContent);
-        }
 
         // [RENDER:AFTER] or @@render_after
         const after = settings.render_loader_enabled === false
@@ -901,20 +901,22 @@ async function handleCustomGenerated(data: { message: string }, generationId: st
     const sandbox = settings.sandbox ? new FunctionSandbox() : null;
     try {
         newContent = await evalTemplateHandler(
-            escapeReasoningBlocks(applyRegex(
-                env,
-                data.message,
-                {
-                    message: true,
-                    user: false,
-                    assistant: true,
-                    system: false,
-                    depth: 0,
-                    before: true,
-                    after: false,
-                    html: false,
-                }
-            )),
+            escapeReasoningBlocks(
+                applyRegex(
+                    env,
+                    data.message,
+                    {
+                        message: true,
+                        user: false,
+                        assistant: true,
+                        system: false,
+                        depth: 0,
+                        before: true,
+                        after: false,
+                        html: false,
+                    }
+                )
+            ),
             env,
             `custom #${generationId}`,
             {

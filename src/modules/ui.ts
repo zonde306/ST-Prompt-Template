@@ -12,7 +12,7 @@ const DEFAULT_SETTINGS : Record<string, { name: string, value: boolean | string 
     '#pt_debug_enabled': { name: 'debug_enabled', value: false },
     '#pt_autosave_enabled': { name: 'autosave_enabled', value: false },
     '#pt_preload_worldinfo': { name: 'preload_worldinfo_enabled', value: true },
-    '#pt_code_blocks': { name: 'code_blocks_enabled', value: true },
+    '#pt_code_blocks': { name: 'code_blocks_enabled', value: false },
     '#pt_permanent_evaluation': { name: 'raw_message_evaluation_enabled', value: true },
     '#pt_filter_chat_message': { name: 'filter_message_enabled', value: true },
     '#pt_cache_enabled': { name: 'cache_enabled', value: 0 },
