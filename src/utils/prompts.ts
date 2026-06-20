@@ -31,7 +31,7 @@ export function unescapeHtmlEntities(html: string): string {
     }).map(s => {
         if (!s.startsWith('&lt;%') || !s.endsWith('%&gt;') || s.startsWith('&lt;% __append(`'))
             return s;
-        return `&lt;%${_.unescape(s.slice(4, -5))}%&gt;`;
+        return `&lt;%${_.unescape(s.slice(5, -5))}%&gt;`;
     }).join('');
 }
 
