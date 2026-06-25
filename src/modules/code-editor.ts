@@ -1189,7 +1189,7 @@ async function showEditor(ref: string) {
                     saveEditorSettings(editor);
                     $(`#${ref}`).val(editor.getValue());
                     editor.dispose();
-                    $(`#${ref}`).trigger('change');
+                    $(`#${ref}`).trigger('input');
                 }
             }
         }
