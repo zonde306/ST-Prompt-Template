@@ -29,8 +29,20 @@ export class FunctionSandbox {
         for (const key of Reflect.ownKeys(currentGlobal)) {
             if (!nativeKeys.has(key)) {
                 const k = typeof key === 'symbol' ? Symbol.keyFor(key) : key;
-                if (k) {
-                    this.win[k] = currentGlobal[k];
+                // Skip array-index keys (e.g. "0", "1", ...). When the page contains
+                // child frames, the browser exposes them as read-only *indexed*
+                // properties on `window`, and assigning to `this.win[0]` throws
+                // "Failed to set an indexed property [0] on 'Window': Indexed property
+                // setter is not supported." — which aborts the whole sandbox init.
+                if (k && !(typeof k === 'string' && /^\d+$/.test(k))) {
+                    try {
+                        this.win[k] = currentGlobal[k];
+                    } catch (e) {
+                        // Some globals are non-writable / read-only on Window; skip
+                        // them instead of failing sandbox initialization.
+                        if (settings.debug_enabled)
+                            console.warn("Sandbox: skipped non-writable global", k, e);
+                    }
                 }
             }
         }
