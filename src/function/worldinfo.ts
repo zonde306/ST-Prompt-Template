@@ -682,7 +682,8 @@ const DEPTH_MAPPING = {
 };
 
 function getWorldInfoSorter(entries: WorldInfoEntry[]) {
-    return (a: WorldInfoEntry, b: WorldInfoEntry) => worldInfoSorter(a, b, Math.max(...entries.map(x => x.position === world_info_position.atDepth ? x.depth : 0)));
+    const top = Math.max(...entries.map(x => x.position === world_info_position.atDepth ? x.depth : 0));
+    return (a: WorldInfoEntry, b: WorldInfoEntry) => worldInfoSorter(a, b, top);
 }
 
 function worldInfoSorter(a: WorldInfoEntry, b: WorldInfoEntry, top: number = DEFAULT_DEPTH) {
