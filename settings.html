@@ -17,7 +17,6 @@
 				<input type="checkbox" id="pt_enabled">
 				<!-- 是否启用扩展 -->
 				<span data-i18n="PT Enable">Enable extension</span>
-				<span class="fa-solid fa-circle-question note-link-span"></span>
 			</label>
 
 			<hr>
@@ -27,7 +26,6 @@
 				<input type="checkbox" id="pt_generate_enabled">
 				<!-- 处理生成内容 -->
 				<span data-i18n="PT Enable Generate-time evaluation">Generate processing</span>
-				<span class="fa-solid fa-circle-question note-link-span"></span>
 			</label>
 
 			<!-- 允许世界书条目的 GENERATE:BEFORE 和 GENERATE:AFTER 注入到生成提示词中 -->
@@ -58,7 +56,6 @@
 				<input type="checkbox" id="pt_render_enabled">
 				<!-- 处理楼层消息 -->
 				<span data-i18n="PT Enable Chat message evaluation">Chat message processing</span>
-				<span class="fa-solid fa-circle-question note-link-span"></span>
 			</label>
 
 			<!-- 允许世界书条目的 RENDER:BEFORE 和 RENDER:AFTER 注入到楼层消息中&#10;仅影响显示内容，不影响生成&#10;一般用来显示状态栏 -->
@@ -136,6 +133,15 @@
 				<input type="checkbox" id="pt_preload_worldinfo">
 				<!-- 立即加载世界书 -->
 				<span data-i18n="PT Enable Preload">Preload World/Lorebooks</span>
+				<span class="fa-solid fa-circle-question note-link-span"></span>
+			</label>
+
+			<!-- 提前加载世界书仅处理preload条目 -->
+			<label class="flex-container" title="Preload World/Lorebooks only process PRELOAD entries."
+				data-i18n="[title]Preload World/Lorebooks only process PRELOAD entries.">
+				<input type="checkbox" id="pt_worldinfo_preload_only">
+				<!-- 仅预加载PRELOAD条目 -->
+				<span data-i18n="PT Preload only PRELOAD">Preload only PRELOAD entries</span>
 				<span class="fa-solid fa-circle-question note-link-span"></span>
 			</label>
 

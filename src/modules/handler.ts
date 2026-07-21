@@ -743,6 +743,7 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
         for (const mes of $('div.mes[mesid]')) {
             const message_id = $(mes).attr('mesid');
             if (message_id) {
+                // Refresh the rendering of all floors.
                 await handleMessageRender(message_id, 'preload', true);
             }
         }

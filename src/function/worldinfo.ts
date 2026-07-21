@@ -19,6 +19,7 @@ const KNOWN_DECORATORS = [
     '@@initial_variables',
     '@@always_enabled',
     '@@only_preload',
+    '@@preload',
     '@@iframe',
     '@@preprocessing',
     '@@if',
@@ -750,6 +751,10 @@ export class WorldInfoDecorators {
         }
     }
 
+    /**
+     * Should this WI entry be excluded/should it only be used in specific situations?
+     * @param preload Is it in the WIs preload phase?
+     */
     isSpecialEntry(preload : boolean = false) : boolean {
         if(this.entry.comment.includes('[GENERATE:') ||
             this.entry.comment.includes('[RENDER:') ||
@@ -767,9 +772,15 @@ export class WorldInfoDecorators {
         if(!preload && this.decorators.includes('@@only_preload'))
             return true;
         
+        if(settings.preload_only && preload && !this.decorators.includes('@@only_preload') && !this.decorators.includes('@@preload'))
+            return true;
+
         return false;
     }
 
+    /**
+     * Should this WI entry be processed in advance?
+     */
     isPreprocessingEntry() : boolean {
         if(this.entry.disable)
             return false;
@@ -780,6 +791,12 @@ export class WorldInfoDecorators {
         return this.decorators.includes('@@preprocessing');
     }
 
+    /**
+     * Check if the conditions for this WI entry are met.
+     * @param env Execution Context
+     * @param options Execution Options
+     * @returns Returning false indicates that the entry should be disabled.
+     */
     async isConditionFiltedEntry(env: Record<string, unknown>, options: EvalTemplateOptions = {}) : Promise<boolean> {
         if(this.entry.disable)
             return false;
@@ -804,6 +821,9 @@ export class WorldInfoDecorators {
         )) === 'false';
     }
 
+    /**
+     * Should a private scope be created for the entry?
+     */
     isPrivateEntry() : boolean {
         if(this.entry.disable)
             return false;
@@ -811,10 +831,18 @@ export class WorldInfoDecorators {
         return this.decorators.includes('@@private');
     }
 
+    /**
+     * Should this entry be forcibly activated?
+     * @returns 
+     */
     isForceActivation() : boolean {
         return !this.decorators.includes('@@dont_activate') && this.decorators.includes('@@activate');
     }
 
+    /**
+     * Should this entry be forcibly disabled?
+     * @returns 
+     */
     isForceDeactivation() : boolean {
         return this.decorators.includes('@@dont_deactivate');
     }

@@ -24,6 +24,7 @@ const DEFAULT_SETTINGS : Record<string, { name: string, value: boolean | string 
     '#pt_compile_workers': { name: 'compile_workers', value: false },
     '#pt_sandbox': { name: 'sandbox', value: false },
     '#pt_code_editor': { name: 'code_editor', value: false },
+    '#pt_worldinfo_preload_only': { name: 'preload_only', value: true },
 };
 
 interface EjsSettings extends Record<string, boolean | string | number> {
@@ -48,6 +49,7 @@ interface EjsSettings extends Record<string, boolean | string | number> {
     compile_workers: boolean;
     sandbox: boolean;
     code_editor: boolean;
+    preload_only: boolean;
 };
 
 export const settings = {} as EjsSettings;
