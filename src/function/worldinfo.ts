@@ -108,7 +108,7 @@ export interface WorldInfoEntry {
     characterFilterNames: string[];
     characterFilterTags: string[];
     characterFilterExclude: boolean;
-    
+
     // Additional Matching Sources
     matchPersonaDescription: boolean;
     matchCharacterDescription: boolean;
@@ -124,7 +124,7 @@ export interface LoreBook {
 }
 
 export interface ActivateWorldInfoCondition {
-    constant?: boolean; 
+    constant?: boolean;
     disabled?: boolean;
     vectorized?: boolean;
 }
@@ -138,7 +138,7 @@ let activatedWorldEntries = new Map<string, WorldInfoEntry>();
  * @param force force activation entry
  * @returns WI entry
  */
-export async function activateWorldInfo(world : string | RegExp | number, uid: string | RegExp | number, force?: boolean): Promise<WorldInfoEntry | null>;
+export async function activateWorldInfo(world: string | RegExp | number, uid: string | RegExp | number, force?: boolean): Promise<WorldInfoEntry | null>;
 
 /**
  * Activate the specified WI entry
@@ -148,10 +148,10 @@ export async function activateWorldInfo(world : string | RegExp | number, uid: s
  */
 export async function activateWorldInfo(uid: string | RegExp | number, force?: boolean): Promise<WorldInfoEntry | null>;
 
-export async function activateWorldInfo(world : string | RegExp | number, uid?: string | RegExp | number | boolean, force?: boolean): Promise<WorldInfoEntry | null> {
+export async function activateWorldInfo(world: string | RegExp | number, uid?: string | RegExp | number | boolean, force?: boolean): Promise<WorldInfoEntry | null> {
     // @ts-expect-error: overload
     const entry = await getWorldInfoEntry(world, typeof uid === 'boolean' ? undefined : uid);
-    if(entry) {
+    if (entry) {
         force = typeof uid === 'boolean' ? uid : force;
         activatedWorldEntries.set(`${world}.${uid}`, {
             ...entry,
@@ -167,8 +167,8 @@ export async function activateWorldInfo(world : string | RegExp | number, uid?: 
             ignoreBudget: force || entry.ignoreBudget,
             group: force ? "" : entry.group,
         });
-        if(settings.debug_enabled) {
-            if(uid != null && typeof uid !== 'boolean')
+        if (settings.debug_enabled) {
+            if (uid != null && typeof uid !== 'boolean')
                 console.log(`[Prompt Template] Activated WI entry ${world}.${uid} (force: ${force}`);
             else
                 console.log(`[Prompt Template] Activated WI entry ${world} (force: ${force}`);
@@ -223,7 +223,7 @@ export async function getWorldInfoEntries(name?: string): Promise<WorldInfoEntry
         const clone = { ...entry };
         // modify in place
         clone.uid = Number(entry.uid);
-        const [ decorators, content ] = parseDecorators(entry.content);
+        const [decorators, content] = parseDecorators(entry.content);
         clone.decorators = decorators;
         clone.content = content;
         clone.world = lore;
@@ -259,7 +259,7 @@ export async function getWorldInfoEntry(title: string | RegExp | number): Promis
 
 export async function getWorldInfoEntry(name: string | RegExp | number, title?: string | RegExp | number): Promise<WorldInfoEntry | null> {
     let entries = [];
-    if(title != null) {
+    if (title != null) {
         entries = await getWorldInfoEntries(name as string);
     } else {
         entries = await getWorldInfoEntries();
@@ -323,40 +323,40 @@ export async function getWorldInfoActivatedEntries(name: string,
 export function selectActivatedEntries(
     entries: WorldInfoEntry[],
     keywords: string | string[],
-    condition: ActivateWorldInfoCondition = {}) : WorldInfoEntry[] {
+    condition: ActivateWorldInfoCondition = {}): WorldInfoEntry[] {
     let activated: Set<WorldInfoEntry> = new Set<WorldInfoEntry>();
     const trigger = _.castArray(keywords).join('\n\n') as string;
     for (const data of entries) {
-        if(condition.constant != null && data.constant !== condition.constant)
+        if (condition.constant != null && data.constant !== condition.constant)
             continue;
-        if(condition.disabled != null && data.disable !== condition.disabled)
+        if (condition.disabled != null && data.disable !== condition.disabled)
             continue;
-        if(condition.vectorized != null && data.vectorized !== condition.vectorized)
+        if (condition.vectorized != null && data.vectorized !== condition.vectorized)
             continue;
-        
+
         // Trigger probability
-        if(data.useProbability && data.probability < _.random(1, 100))
+        if (data.useProbability && data.probability < _.random(1, 100))
             continue;
 
         // 🔵 Constant
-        if(data.constant) {
+        if (data.constant) {
             // Constant entries are always activated
             activated.add(data);
             continue;
         }
 
-        if(data.decorators.includes('@@activate')) {
+        if (data.decorators.includes('@@activate')) {
             // activated by @@activate decorator
             activated.add(data);
             continue;
         }
 
-        if(data.decorators.includes('@@dont_activate')) {
+        if (data.decorators.includes('@@dont_activate')) {
             // suppressed by @@dont_activate decorator
             continue;
         }
 
-        if(data.decorators.includes('@@only_preload')) {
+        if (data.decorators.includes('@@only_preload')) {
             // suppressed by @@only_preload decorator
             continue;
         }
@@ -430,7 +430,7 @@ export function selectActivatedEntries(
     for (const [group, datas] of Object.entries(grouped)) {
         if (group === '') continue;
 
-        if(datas.length === 1) {
+        if (datas.length === 1) {
             matched.push(datas[0]);
             continue;
         }
@@ -459,12 +459,12 @@ export function selectActivatedEntries(
 
         // Use random with weights
         const useWeights = datas.filter(data => !data.groupOverride && !data.useGroupScoring);
-        if(useWeights.length > 0) {
+        if (useWeights.length > 0) {
             const weights = datas.map(data => data.groupWeight ?? DEFAULT_WEIGHT);
             const totalWeight = _.sum(weights);
             let rollValue = _.random(1, totalWeight);
             const winner = weights.findIndex(weight => (rollValue -= weight) <= 0);
-            if(winner >= 0)
+            if (winner >= 0)
                 matched.push(datas[winner]);
         }
     }
@@ -561,22 +561,22 @@ function getScore(haystack: string, entry: WorldInfoEntry) {
  * @returns lore books
  */
 export function getEnabledLoreBooks(
-    chara : boolean = true,
-    global : boolean = true,
-    persona : boolean = true,
-    charaExtra : boolean = true,
+    chara: boolean = true,
+    global: boolean = true,
+    persona: boolean = true,
+    charaExtra: boolean = true,
     chat: boolean = true,
-    onlyExisting : boolean = true
-) : string[] {
-    let results : string[] = [];
+    onlyExisting: boolean = true
+): string[] {
+    let results: string[] = [];
 
     if (chara) {
         // @ts-expect-error
-        const charaWorld : string = characters[this_chid]?.data?.extensions?.world;
+        const charaWorld: string = characters[this_chid]?.data?.extensions?.world;
         if (charaWorld && !selected_world_info.includes(charaWorld))
             results.push(charaWorld);
 
-        for(const member of getGroupMembers()) {
+        for (const member of getGroupMembers()) {
             const world = member?.data?.extensions?.world;
             if (world && !selected_world_info.includes(world))
                 results.push(world);
@@ -585,15 +585,15 @@ export function getEnabledLoreBooks(
 
     if (global) {
         for (const world of selected_world_info) {
-            if(world)
+            if (world)
                 results.push(world as string);
         }
     }
 
     if (persona) {
-        const chatWorld : string = chat_metadata[METADATA_KEY];
-        const personaWorld : string = power_user.persona_description_lorebook;
-        if(personaWorld && personaWorld !== chatWorld && !selected_world_info.includes(personaWorld))
+        const chatWorld: string = chat_metadata[METADATA_KEY];
+        const personaWorld: string = power_user.persona_description_lorebook;
+        if (personaWorld && personaWorld !== chatWorld && !selected_world_info.includes(personaWorld))
             results.push(personaWorld);
     }
 
@@ -604,23 +604,23 @@ export function getEnabledLoreBooks(
             const extraCharLore = world_info.charLore?.find((e) => e.name === fileName);
             if (extraCharLore && Array.isArray(extraCharLore.extraBooks)) {
                 // @ts-expect-error
-                const primaryBook : string = characters[this_chid]?.data?.extensions?.world;
-                for(const book of extraCharLore.extraBooks) {
+                const primaryBook: string = characters[this_chid]?.data?.extensions?.world;
+                for (const book of extraCharLore.extraBooks) {
                     if (book && book !== primaryBook && !selected_world_info.includes(book))
                         results.push(book);
                 }
             }
         }
 
-        for(const member of getGroupMembers()) {
+        for (const member of getGroupMembers()) {
             const chid = characters.findIndex(ch => ch.avatar === member.avatar);
             const file = getCharaFilename(chid);
             if (file) {
                 // @ts-expect-error
                 const extraCharLore = world_info.charLore?.find((e) => e.name === file);
                 if (extraCharLore && Array.isArray(extraCharLore.extraBooks)) {
-                    const primaryBook : string = member?.data?.extensions?.world;
-                    for(const book of extraCharLore.extraBooks) {
+                    const primaryBook: string = member?.data?.extensions?.world;
+                    for (const book of extraCharLore.extraBooks) {
                         if (book && book !== primaryBook && !selected_world_info.includes(book))
                             results.push(book);
                     }
@@ -630,12 +630,12 @@ export function getEnabledLoreBooks(
     }
 
     if (chat) {
-        const chatWorld : string = chat_metadata[METADATA_KEY];
+        const chatWorld: string = chat_metadata[METADATA_KEY];
         if (chatWorld && !selected_world_info.includes(chatWorld))
             results.push(chatWorld);
     }
 
-    if(onlyExisting)
+    if (onlyExisting)
         return results.filter(e => e && world_names.includes(e));
 
     return results;
@@ -652,15 +652,15 @@ export function getEnabledLoreBooks(
  * @returns WI entries
  */
 export async function getEnabledWorldInfoEntries(
-    chara : boolean = true,
-    global : boolean = true,
-    persona : boolean = true,
-    charaExtra : boolean = true,
+    chara: boolean = true,
+    global: boolean = true,
+    persona: boolean = true,
+    charaExtra: boolean = true,
     chat: boolean = true,
-    onlyExisting : boolean = true
-) : Promise<WorldInfoEntry[]> {
-    
-    let results : WorldInfoEntry[] = [];
+    onlyExisting: boolean = true
+): Promise<WorldInfoEntry[]> {
+
+    let results: WorldInfoEntry[] = [];
     const lorebooks = getEnabledLoreBooks(chara, global, persona, charaExtra, chat, onlyExisting);
     for (const book of lorebooks) {
         const worldInfo = await getWorldInfoEntries(book);
@@ -668,7 +668,7 @@ export async function getEnabledWorldInfoEntries(
             results = results.concat(worldInfo);
         }
     }
-    
+
     return results.sort(getWorldInfoSorter(results));
 }
 
@@ -692,12 +692,12 @@ function worldInfoSorter(a: WorldInfoEntry, b: WorldInfoEntry, top: number = DEF
         const offset = DEPTH_MAPPING[entry.position];
 
         // absolute depth
-        if(offset == null)
+        if (offset == null)
             return entry.depth ?? DEFAULT_DEPTH;
 
         // relative to AN
-        if(entry.position === world_info_position.ANTop || entry.position === world_info_position.ANBottom) {
-            switch(chat_metadata.note_position) {
+        if (entry.position === world_info_position.ANTop || entry.position === world_info_position.ANBottom) {
+            switch (chat_metadata.note_position) {
                 case 0:
                 case 2:
                     // After Main Prompt / Story String
@@ -717,7 +717,7 @@ function worldInfoSorter(a: WorldInfoEntry, b: WorldInfoEntry, top: number = DEF
     // Sort by depth (desc), then order (asc), then uid (desc)
     return calcDepth(b) - calcDepth(a) ||
         a.order - b.order ||
-        b.uid - a.uid;   
+        b.uid - a.uid;
 }
 
 export class WorldInfoDecorators {
@@ -728,7 +728,7 @@ export class WorldInfoDecorators {
 
     constructor(entry: WorldInfoEntry, override: boolean = false) {
         this.entry = entry;
-        if(entry.decorators?.length) {
+        if (entry.decorators?.length) {
             this.decorators = entry.decorators;
             this.cleanContent = entry.content;
         } else {
@@ -736,14 +736,15 @@ export class WorldInfoDecorators {
             this.decorators = decorators;
             this.cleanContent = cleanContent;
 
-            if(override) {
+            if (override) {
                 entry.decorators = this.decorators;
                 entry.content = this.cleanContent;
             }
         }
 
-        for(const i in this.decorators) {
-            if(this.decorators[i].includes(' ')) {
+        // Split decorators and arguments
+        for (const i in this.decorators) {
+            if (this.decorators[i].includes(' ')) {
                 const firstSpaceIndex = this.decorators[i].indexOf(' ');
                 this.arguments[i] = this.decorators[i].substring(firstSpaceIndex + 1);
                 this.decorators[i] = this.decorators[i].substring(0, firstSpaceIndex);
@@ -752,55 +753,66 @@ export class WorldInfoDecorators {
     }
 
     /**
-     * Should this WI entry be excluded/should it only be used in specific situations?
-     * @param preload Is it in the WIs preload phase?
+     * Determine whether the entry exhibits special behavior; such entries require separate handling.
      */
-    isSpecialEntry(preload : boolean = false) : boolean {
-        if(this.entry.comment.includes('[GENERATE:') ||
+    get isSpecialEntry(): boolean {
+        // Dedicated entry, mutually exclusive with other types.
+        if (this.has('@@initial_variables') ||
+            this.entry.comment.includes('[InitialVariables]') ||
+            this.entry.comment.includes('@INJECT'))
+            return true;
+
+        // Only preload is allowed, mutually exclusive with other types.
+        if (this.has('@@only_preload'))
+            return true;
+
+        if (this.entry.comment.includes('[GENERATE:') ||
             this.entry.comment.includes('[RENDER:') ||
-            this.entry.comment.includes('@INJECT') ||
-            this.entry.comment.includes('[InitialVariables]'))
-            return true;
-        
-        if(this.decorators.includes('@@generate_after') ||
-            this.decorators.includes('@@generate_before') ||
-            this.decorators.includes('@@render_after') ||
-            this.decorators.includes('@@render_before') ||
-            this.decorators.includes('@@initial_variables'))
-            return true;
-        
-        if(!preload && this.decorators.includes('@@only_preload'))
-            return true;
-        
-        if(settings.preload_only && preload && !this.decorators.includes('@@only_preload') && !this.decorators.includes('@@preload'))
+            this.has('@@generate_after') ||
+            this.has('@@generate_before') ||
+            this.has('@@render_after') ||
+            this.has('@@render_before'))
             return true;
 
         return false;
     }
 
-    canBePreload() {
+    /**
+     * Should this WI entry be preloaded?
+     */
+    get isPreloadEntry() {
+        if (this.has('@@dont_preload'))
+            return false;
+
+        // Always allowed when the @preload decorator is present.
+        if (this.has('@@only_preload') || this.has('@@preload'))
+            return true;
+
         if (settings.preload_only)
-            return this.decorators.includes('@@only_preload') || this.decorators.includes('@@preload');
-        return !this.isSpecialEntry();
+            return false;
+
+        return !this.isSpecialEntry;
     }
 
-    isEnabled() {
+    get isEnabled() {
+        if (this.has('@@always_enabled'))
+            return true;
         if (settings.invert_enabled)
-            return this.isSpecialEntry() ? !this.entry.disable : this.entry.disable;
+            return this.isSpecialEntry ? !this.entry.disable : this.entry.disable;
         return !this.entry.disable;
     }
 
     /**
      * Should this WI entry be processed in advance?
      */
-    isPreprocessingEntry() : boolean {
-        if(this.entry.disable)
+    get isPreprocessingEntry(): boolean {
+        if (this.entry.disable)
             return false;
-        
-        if(this.entry.comment.includes('[Preprocessing]'))
+
+        if (this.entry.comment.includes('[Preprocessing]'))
             return true;
 
-        return this.decorators.includes('@@preprocessing');
+        return this.has('@@preprocessing');
     }
 
     /**
@@ -809,14 +821,14 @@ export class WorldInfoDecorators {
      * @param options Execution Options
      * @returns Returning false indicates that the entry should be disabled.
      */
-    async isConditionFiltedEntry(env: Record<string, unknown>, options: EvalTemplateOptions = {}) : Promise<boolean> {
-        if(this.entry.disable)
+    async isConditionFiltedEntry(env: Record<string, unknown>, options: EvalTemplateOptions = {}): Promise<boolean> {
+        if (this.entry.disable)
             return false;
 
         const condition = this.decorators.indexOf('@@if');
-        if(condition < 0)
+        if (condition < 0)
             return false;
-        
+
         // convert @@if xxx to <%- !!(xxx) %>
         return (await evalTemplateHandler(
             `<%- !!(${this.arguments[condition]}) %>`,
@@ -836,27 +848,32 @@ export class WorldInfoDecorators {
     /**
      * Should a private scope be created for the entry?
      */
-    isPrivateEntry() : boolean {
-        if(this.entry.disable)
+    get isPrivateEntry(): boolean {
+        if (this.entry.disable)
             return false;
-        
+
         return this.decorators.includes('@@private');
     }
 
     /**
      * Should this entry be forcibly activated?
-     * @returns 
      */
-    isForceActivation() : boolean {
+    get isForceActivation(): boolean {
         return !this.decorators.includes('@@dont_activate') && this.decorators.includes('@@activate');
     }
 
     /**
      * Should this entry be forcibly disabled?
-     * @returns 
      */
-    isForceDeactivation() : boolean {
+    get isForceDeactivation(): boolean {
         return this.decorators.includes('@@dont_deactivate');
+    }
+
+    has(decorator: string | null | undefined): boolean {
+        if (!decorator)
+            return false;
+
+        return this.decorators.includes(decorator);
     }
 }
 

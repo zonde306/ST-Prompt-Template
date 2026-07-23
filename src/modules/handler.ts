@@ -96,17 +96,17 @@ async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
         // reverse to avoid index change
         for (let i = data[type].length - 1; i >= 0; i--) {
             const entry = data[type][i];
-            const handler = new WorldInfoDecorators(entry);
+            const hdl = new WorldInfoDecorators(entry);
             let removal = false;
-            if (handler.isSpecialEntry()) {
+            if (hdl.isSpecialEntry) {
                 data[type].splice(i, 1);
                 removal = true;
                 console.debug(`[Prompt Template] Remove ${type} of ${entry.world}/${entry.comment}/${entry.uid} from context when SpecialEntry`);
-            } else if (await handler.isConditionFiltedEntry(env, { sandbox })) {
+            } else if (await hdl.isConditionFiltedEntry(env, { sandbox })) {
                 data[type].splice(i, 1);
                 removal = true;
                 console.debug(`[Prompt Template] Remove ${type} of ${entry.world}/${entry.comment}/${entry.uid} from context when ConditionFiltedEntry`);
-            } else if (handler.isPreprocessingEntry()) {
+            } else if (hdl.isPreprocessingEntry) {
                 try {
                     const [ content, key, keysecondary ] = await evalTemplateWI(data[type][i], env, { sandbox });
                     data[type][i] = { ...entry, content, key, keysecondary};
@@ -117,16 +117,16 @@ async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
                     console.error(`[Prompt Template] Error in ${type} preprocess entry: `, error, entry);
                     throw error;
                 }
-            } else if (handler.isPrivateEntry()) {
+            } else if (hdl.isPrivateEntry) {
                 data[type][i] = { ...entry, content: `<% (()=>{%>${entry.content}<%})(); %>`  };
                 console.debug(`[Prompt Template] Mark ${type} of ${entry.world}/${entry.comment}/${entry.uid} as private`);
             }
 
             if(!removal) {
-                if(handler.isForceActivation()) {
+                if(hdl.isForceActivation) {
                     await activateWorldInfo(entry.world, entry.uid, true);
                     console.debug(`[Prompt Template] Force activate ${type} of ${entry.world}/${entry.comment}/${entry.uid}`);
-                } else if(handler.isForceDeactivation()) {
+                } else if(hdl.isForceDeactivation) {
                     data[type][i] = { ...entry, disable: true };
                     console.debug(`[Prompt Template] Force deactivate ${type} of ${entry.world}/${entry.comment}/${entry.uid}`);
                 }
@@ -640,11 +640,10 @@ export async function handlePreloadWorldInfo(chat_filename?: string, force: bool
     console.log(`[Prompt Template] *** PRELOADING WORLD INFO ***`);
     const worldEntries = await getEnabledWorldInfoEntries();
     const enabledWorldInfo = worldEntries
-        .filter(data =>
-            !data.disable &&
-            !data.decorators.includes('@@dont_preload') &&
-            !new WorldInfoDecorators(data).isSpecialEntry(true)
-        );
+        .filter(data => {
+            const hdl = new WorldInfoDecorators(data);
+            return hdl.isEnabled && hdl.isPreloadEntry;
+        });
 
     const env = await prepareContext(-1, {
         runType: 'preparation',
@@ -769,11 +768,10 @@ async function handleRefreshWorldInfo(world: string, _data: LoreBook) {
     console.debug(worldInfoEntries);
 
     const worldInfoData = worldInfoEntries
-        .filter(data =>
-            !data.disable &&
-            !data.decorators.includes('@@dont_preload') &&
-            !new WorldInfoDecorators(data).isSpecialEntry(true)
-        );
+        .filter(data => {
+            const hdl = new WorldInfoDecorators(data);
+            return hdl.isEnabled && hdl.isPreloadEntry;
+        });
     
     const env = await prepareContext(-1, {
         runType: 'preparation',

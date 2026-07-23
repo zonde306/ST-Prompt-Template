@@ -90,18 +90,10 @@ export async function evaluateWIEntities(
     options: EvalTemplateOptions & EvaluateWorldEntitiesOptions = {}) {
     const allEntries = options.entries ?? await getEnabledWorldInfoEntries();
     const worldInfoData = selectActivatedEntries(
-        allEntries.filter(x =>
-            (
-                x.disable === settings.invert_enabled ||
-                x.decorators?.includes('@@always_enabled')
-            ) && (
-                x.comment.startsWith(options.comment ?? x.comment + ' ') ||
-                x.decorators?.includes(options.decorator ?? ' ')
-            ) && (
-                options.preload ||
-                !x.decorators?.includes('@@only_preload')
-            )
-        ),
+        allEntries.filter(x => {
+            const hdl = new WorldInfoDecorators(x);
+            return hdl.isEnabled && (hdl.has(options.decorator) || x.comment.startsWith(options.comment ?? x.comment + ' '))
+        }),
         options.content ?? '',
         { vectorized: false }
     );
@@ -109,8 +101,8 @@ export async function evaluateWIEntities(
     let prompts = '';
 
     for (const data of worldInfoData) {
-        const parsed = new WorldInfoDecorators(data);
-        if(await parsed.isConditionFiltedEntry(env, options))
+        const hdl = new WorldInfoDecorators(data);
+        if(await hdl.isConditionFiltedEntry(env, options))
             continue;
 
         let result = await evalTemplateHandler(
@@ -147,7 +139,7 @@ export async function evaluateWIEntities(
                 }
                 const iframe = data.decorators?.findIndex(x => x.startsWith('@@iframe'));
                 if(iframe > -1) {
-                    const title = parsed.arguments[iframe];
+                    const title = hdl.arguments[iframe];
                     result = renderInFrame(result, title, {
                         id: `mes-${options.msgId}-${data.world}-${data.uid}`,
                         'data-worldinfo': data.world,
