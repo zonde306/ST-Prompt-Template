@@ -102,11 +102,11 @@ async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
                 data[type].splice(i, 1);
                 removal = true;
                 console.debug(`[Prompt Template] Remove ${type} of ${entry.world}/${entry.comment}/${entry.uid} from context when SpecialEntry`);
-            } else if (await hdl.isConditionFiltedEntry(env, { sandbox })) {
+            } else if (!entry.disable && await hdl.isConditionFiltedEntry(env, { sandbox })) {
                 data[type].splice(i, 1);
                 removal = true;
                 console.debug(`[Prompt Template] Remove ${type} of ${entry.world}/${entry.comment}/${entry.uid} from context when ConditionFiltedEntry`);
-            } else if (hdl.isPreprocessingEntry) {
+            } else if (!entry.disable && hdl.isPreprocessingEntry) {
                 try {
                     const [ content, key, keysecondary ] = await evalTemplateWI(data[type][i], env, { sandbox });
                     data[type][i] = { ...entry, content, key, keysecondary};
@@ -117,7 +117,7 @@ async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
                     console.error(`[Prompt Template] Error in ${type} preprocess entry: `, error, entry);
                     throw error;
                 }
-            } else if (hdl.isPrivateEntry) {
+            } else if (!entry.disable && hdl.isPrivateEntry) {
                 data[type][i] = { ...entry, content: `<% (()=>{%>${entry.content}<%})(); %>`  };
                 console.debug(`[Prompt Template] Mark ${type} of ${entry.world}/${entry.comment}/${entry.uid} as private`);
             }

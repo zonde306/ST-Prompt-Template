@@ -798,7 +798,7 @@ export class WorldInfoDecorators {
         if (this.has('@@always_enabled'))
             return true;
         if (settings.invert_enabled)
-            return this.isSpecialEntry ? !this.entry.disable : this.entry.disable;
+            return this.isSpecialEntry ? this.entry.disable : !this.entry.disable;
         return !this.entry.disable;
     }
 
@@ -806,9 +806,6 @@ export class WorldInfoDecorators {
      * Should this WI entry be processed in advance?
      */
     get isPreprocessingEntry(): boolean {
-        if (this.entry.disable)
-            return false;
-
         if (this.entry.comment.includes('[Preprocessing]'))
             return true;
 
@@ -822,9 +819,6 @@ export class WorldInfoDecorators {
      * @returns Returning false indicates that the entry should be disabled.
      */
     async isConditionFiltedEntry(env: Record<string, unknown>, options: EvalTemplateOptions = {}): Promise<boolean> {
-        if (this.entry.disable)
-            return false;
-
         const condition = this.decorators.indexOf('@@if');
         if (condition < 0)
             return false;
@@ -849,9 +843,6 @@ export class WorldInfoDecorators {
      * Should a private scope be created for the entry?
      */
     get isPrivateEntry(): boolean {
-        if (this.entry.disable)
-            return false;
-
         return this.decorators.includes('@@private');
     }
 
