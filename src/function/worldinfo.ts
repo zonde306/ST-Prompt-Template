@@ -729,7 +729,7 @@ export class WorldInfoDecorators {
     constructor(entry: WorldInfoEntry, override: boolean = false) {
         this.entry = entry;
         if (entry.decorators?.length) {
-            this.decorators = entry.decorators;
+            this.decorators = structuredClone(entry.decorators);
             this.cleanContent = entry.content;
         } else {
             const [decorators, cleanContent] = parseDecorators(entry.content);
