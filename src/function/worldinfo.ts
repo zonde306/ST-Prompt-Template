@@ -729,7 +729,7 @@ export class WorldInfoDecorators {
     constructor(entry: WorldInfoEntry, override: boolean = false) {
         this.entry = entry;
         if (entry.decorators?.length) {
-            this.decorators = entry.decorators;
+            this.decorators = structuredClone(entry.decorators);
             this.cleanContent = entry.content;
         } else {
             const [decorators, cleanContent] = parseDecorators(entry.content);
@@ -754,6 +754,7 @@ export class WorldInfoDecorators {
 
     /**
      * Determine whether the entry exhibits special behavior; such entries require separate handling.
+     * Therefore, we need to exclude it from standard generation.
      */
     get isSpecialEntry(): boolean {
         // Dedicated entry, mutually exclusive with other types.
@@ -797,8 +798,8 @@ export class WorldInfoDecorators {
     get isEnabled() {
         if (this.has('@@always_enabled'))
             return true;
-        if (settings.invert_enabled)
-            return this.isSpecialEntry ? !this.entry.disable : this.entry.disable;
+        if (settings.invert_enabled && this.isSpecialEntry)
+            return this.entry.disable;
         return !this.entry.disable;
     }
 
@@ -806,9 +807,6 @@ export class WorldInfoDecorators {
      * Should this WI entry be processed in advance?
      */
     get isPreprocessingEntry(): boolean {
-        if (this.entry.disable)
-            return false;
-
         if (this.entry.comment.includes('[Preprocessing]'))
             return true;
 
@@ -822,9 +820,6 @@ export class WorldInfoDecorators {
      * @returns Returning false indicates that the entry should be disabled.
      */
     async isConditionFiltedEntry(env: Record<string, unknown>, options: EvalTemplateOptions = {}): Promise<boolean> {
-        if (this.entry.disable)
-            return false;
-
         const condition = this.decorators.indexOf('@@if');
         if (condition < 0)
             return false;
@@ -849,9 +844,6 @@ export class WorldInfoDecorators {
      * Should a private scope be created for the entry?
      */
     get isPrivateEntry(): boolean {
-        if (this.entry.disable)
-            return false;
-
         return this.decorators.includes('@@private');
     }
 
