@@ -754,6 +754,7 @@ export class WorldInfoDecorators {
 
     /**
      * Determine whether the entry exhibits special behavior; such entries require separate handling.
+     * Therefore, we need to exclude it from standard generation.
      */
     get isSpecialEntry(): boolean {
         // Dedicated entry, mutually exclusive with other types.
@@ -797,8 +798,8 @@ export class WorldInfoDecorators {
     get isEnabled() {
         if (this.has('@@always_enabled'))
             return true;
-        if (settings.invert_enabled)
-            return this.isSpecialEntry ? this.entry.disable : !this.entry.disable;
+        if (settings.invert_enabled && this.isSpecialEntry)
+            return this.entry.disable;
         return !this.entry.disable;
     }
 
