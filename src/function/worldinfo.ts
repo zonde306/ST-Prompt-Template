@@ -724,6 +724,7 @@ export class WorldInfoDecorators {
     decorators: string[] = [];
     arguments: string[] = [];
     cleanContent: string = '';
+    decoratorContent: string = '';
     entry: WorldInfoEntry;
 
     constructor(entry: WorldInfoEntry, override: boolean = false) {
@@ -741,6 +742,8 @@ export class WorldInfoDecorators {
                 entry.content = this.cleanContent;
             }
         }
+
+        this.decoratorContent = this.decorators.join('\n');
 
         // Split decorators and arguments
         for (const i in this.decorators) {
