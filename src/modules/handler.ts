@@ -118,7 +118,7 @@ async function handleWorldInfoLoaded(data: WorldInfoLoaded) {
                     throw error;
                 }
             } else if (!entry.disable && hdl.isPrivateEntry) {
-                data[type][i] = { ...entry, content: `<% (()=>{%>${entry.content}<%})(); %>`  };
+                data[type][i] = { ...entry, content: `${hdl.decoratorContent}\n<% (()=>{%>${hdl.cleanContent}<%})(); %>` };
                 console.debug(`[Prompt Template] Mark ${type} of ${entry.world}/${entry.comment}/${entry.uid} as private`);
             }
 
