@@ -5,6 +5,7 @@ import { applyRegex } from "../function/regex";
 import { evalTemplate } from "../function/ejs";
 import { STATE } from "../function/variables";
 import { EvalTemplateOptions } from "../function/ejs";
+import { yaml } from '../../../../../../lib.js';
 
 export async function handleInitialVariables(env: Record<string, unknown>, entries?: WorldInfoEntry[], options: EvalTemplateOptions = {}) {
     if (entries == null || entries.length === 0)
@@ -22,11 +23,15 @@ export async function handleInitialVariables(env: Record<string, unknown>, entri
             let data = {};
             try {
                 data = JSON.parse(content);
-            } catch (e) {
-                toastr.error(`Can't parse initial variables ${x.world}/${x.comment}/${x.uid}`, 'Prompt Template');
-                console.error(`[Prompt Template] Can't parse initial variables ${x.world}/${x.comment}/${x.uid}: `, x.content);
-                console.error(e);
-                return;
+            } catch (e1) {
+                try {
+                    data = yaml.parse(content);
+                } catch (e2) {
+                    toastr.error(`Can't parse initial variables ${x.world}/${x.comment}/${x.uid}`, 'Prompt Template');
+                    console.error(`[Prompt Template] Can't parse initial variables ${x.world}/${x.comment}/${x.uid}: `, x.content);
+                    console.error(e1, e2);
+                    return;
+                }
             }
 
             if(!_.isPlainObject(data)) {
