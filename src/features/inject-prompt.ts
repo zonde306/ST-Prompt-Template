@@ -1,4 +1,4 @@
-import { getEnabledWorldInfoEntries } from "../function/worldinfo";
+import { getEnabledWorldInfoEntries, WorldInfoDecorators } from "../function/worldinfo";
 import { evalTemplateHandler } from "../utils/evaluate";
 import { applyRegex } from "../function/regex";
 import { settings } from "../modules/ui";
@@ -14,11 +14,10 @@ export async function handleInjectPrompt(
 ): Promise<Chat[]> {
     // get All INJECT 世界书条目（只获取关闭的条目）
     const injectWorldInfoData = (await getEnabledWorldInfoEntries())
-        .filter(x =>
-            x.comment.startsWith('@INJECT') &&
-            (x.disable === settings.invert_enabled || x.decorators.includes('@@always_enabled')) &&
-            !x.decorators.includes('@@only_preload')
-        );
+        .filter(x => {
+            const parsed = new WorldInfoDecorators(x);
+            x.comment.startsWith('@INJECT') && parsed.isEnabled
+        });
 
     if (injectWorldInfoData && injectWorldInfoData.length > 0) {
         console.log('[Prompt Template] Found inject entries:', injectWorldInfoData.length);

@@ -1,6 +1,5 @@
-import { getEnabledWorldInfoEntries, WorldInfoEntry } from "../function/worldinfo";
+import { getEnabledWorldInfoEntries, WorldInfoEntry, WorldInfoDecorators } from "../function/worldinfo";
 import { substituteParams } from "../../../../../../script.js";
-import { settings } from "../modules/ui";
 import { applyRegex } from "../function/regex";
 import { evalTemplate } from "../function/ejs";
 import { STATE } from "../function/variables";
@@ -14,10 +13,10 @@ export async function handleInitialVariables(env: Record<string, unknown>, entri
     Object.keys(STATE.initialVariables).forEach(k => delete STATE.initialVariables[k]);
 
     await Promise.all(entries
-        .filter(e =>
-            (e.disable === settings.invert_enabled || e.decorators.includes('@@always_enabled')) &&
-            (e.comment.startsWith('[InitialVariables]') || e.decorators.includes('@@initial_variables'))
-        )
+        .filter(e => {
+            const parsed = new WorldInfoDecorators(e);
+            return parsed.isEnabled && (parsed.has('@@initial_variables') || e.comment.startsWith('[InitialVariables]'));
+        })
         .map(async(x) => {
             const content = await evalTemplate(applyRegex(env, substituteParams(x.content), { worldinfo: true }), env, options);
             let data = {};
