@@ -273,9 +273,9 @@ export async function getWorldInfoEntry(name: string | RegExp | number, title?: 
             return data;
     }
 
-    console.warn(`[Prompt Template] entry ${title} not found in ${name}`);
+    console.warn(`[Prompt Template] entry ${title} not found in ${name ?? '?'}`);
 
-    if (name !== '' && name != null && typeof title !== 'number') {
+    if ((name === '' || name == null) && typeof title !== 'number') {
         for (const lorebook of getEnabledLoreBooks()) {
             if (lorebook === title)
                 continue;
