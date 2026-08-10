@@ -273,11 +273,11 @@ export async function getWorldInfoEntry(name: string | RegExp | number, title?: 
             return data;
     }
 
-    console.warn(`[Prompt Template] entry ${title} not found in ${name ?? '?'}`);
+    console.warn(`[Prompt Template] entry ${title} not found in ${name ?? entries?.[0]?.world ?? '?'}`);
 
     if ((name === '' || name == null) && typeof title !== 'number') {
         for (const lorebook of getEnabledLoreBooks()) {
-            if (lorebook === title)
+            if (lorebook === entries?.[0]?.world)
                 continue;
 
             for (const data of await getWorldInfoEntries(lorebook)) {
