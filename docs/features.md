@@ -95,11 +95,34 @@ This feature is influenced by **Trigger Strategy**, **Order**, **Inclusion Group
   >
   > For example, `[GENERATE:1:BEFORE]` injects the prompt into the first message (the first message is 0).
 
-- `[InitialVariables]`: Treat the entry content as a variable tree, written into the initial message variables. Only standard `JSON` is supported, and it must be an `object`.
+- `[InitialVariables]`: Treat the entry content as a variable tree, written into the initial message variables. Both `JSON` and `YAML` formats are supported, and it must be an `object`.
 
+	> The content is first parsed as `JSON`; if that fails, it is parsed as `YAML`. An error is only reported when both fail.
+	>
 	> Only takes effect when **Immediately Load World Books** is enabled.
 	>
+	> Not affected by the **Preload only PRELOAD entries** setting; it is always processed.
+	>
 	> Modifications will be rewritten, overwriting previous content.
+
+	`JSON` format:
+
+	```json
+	{
+	    "hakimi": {
+	        "affection": 0,
+	        "status": "normal"
+	    }
+	}
+	```
+
+	Equivalent `YAML` format:
+
+	```yaml
+	hakimi:
+	  affection: 0
+	  status: normal
+	```
 
 ### Regular Expression Syntax Examples
 
@@ -535,6 +558,16 @@ After processing, write the result back to the raw message content (equivalent t
 
 Before generation, hide all `<% ... %>` statements within messages to prevent them from being processed during the generation phase.
 
+#### Maximum Depth of Chat Messages
+
+Only process messages shallower than this value, to avoid lag when there are many messages.
+
+> Depth is counted backwards from the latest message, starting at `0`.
+>
+> `-1` means no limit (default).
+>
+> For example, setting it to `10` means only the latest 11 messages (depth `0`–`10`) are processed; earlier messages are left as-is.
+
 ### Auto-save Variable Updates
 
 After processing any content, if variables are modified, save them immediately (to file).
@@ -544,6 +577,18 @@ After processing any content, if variables are modified, save them immediately (
 ### Immediately Load World Books
 
 After opening a character card/chat, immediately load all enabled World Books and process their content with templates.
+
+### Preload Only PRELOAD Entries
+
+When enabled, the [Immediately Load World Books](#immediately-load-world-books) phase only processes entries carrying the `@@preload` or `@@only_preload` decorator.
+
+> **Enabled by default**, to avoid the character card getting stuck while opening when there are many World Book entries.
+>
+> When disabled, all ordinary entries are processed (i.e., entries that are not special entries such as `[GENERATE]`, `[RENDER]`, `@INJECT`).
+>
+> `[InitialVariables]` and `@@initial_variables` are unaffected by this setting and are always processed.
+>
+> See [Preload-related Decorators](#preload-related-decorators) for details.
 
 ### Disable with Statement Blocks
 
@@ -587,11 +632,33 @@ Isolate the execution environment from the global environment to avoid pollution
 
 Enabling consumes extra performance.
 
+### Code Editor
+
+Enable the `Monaco`-based code editor for **World/Knowledge Book** entries.
+
+When enabled, an extra **maximize** button appears next to the content box of a World Book entry; clicking it opens the editor.
+
+The editor provides:
+
+- `ejs` syntax highlighting (including the `JavaScript` embedded in `<% ... %>`)
+- Autocompletion for functions provided by this extension (`setvar`, `getvar`, `getwi`, etc.)
+- A menu bar to adjust **Fonts**, **Display**, **Features**, and **Indent** options
+
+> Editor settings are stored in the browser's `localStorage` and restored the next time it opens.
+>
+> Content is only written back to the World Book entry when the editor's `Save` button is clicked.
+
 ### Cache (Experimental)
 
 Enabling this caches compiled prompts to avoid time-consuming repeated compilation, slightly improving speed.
 
 However, due to caching, sometimes cached prompts may not be updated.
+
+Available values:
+
+- **Disable**: no caching (default).
+- **Enable**: caching for all prompts.
+- **Only World/Lorebooks**: caching only for **World/Knowledge Book** entries.
 
 ### Cache Size
 
@@ -676,14 +743,48 @@ This is the World Book entry content...
 - `@@generate_after`: Equivalent to `[GENERATE:AFTER]` (see [Content Injection](#content-injection) for details).
 - `@@render_before`: Equivalent to `[RENDER:BEFORE]` (see [Content Injection](#content-injection) for details).
 - `@@render_after`: Equivalent to `[RENDER:AFTER]` (see [Content Injection](#content-injection) for details).
-- `@@dont_preload`: Do not process this entry when opening the character card.
+- `@@dont_preload`: Do not process this entry when opening the character card (highest priority; overrides `@@preload` and `@@only_preload`).
+- `@@preload`: Must be executed once during the [Immediately Load World Books](#immediately-load-world-books) phase (can coexist with `@@generate_*` and `@@render_*`).
+- `@@only_preload`: Only enable this entry during the [Immediately Load World Books](#immediately-load-world-books) phase (never activated during generation or rendering).
 - `@@initial_variables`: Equivalent to `[InitialVariables]` (see [Content Injection](#content-injection) for details).
 - `@@always_enabled`: Used for special entries like `[GENERATE]`, `[RENDER]`, and `[InitialVariables]` to force enable the entry.
-- `@@only_preload`: Only enable this entry during the [Immediately Load World Books](#immediately-load-world-books) phase.
 - `@@private`: Inserts `<% { %>` and `<% } %>` at the beginning and end of the entry content to avoid `Identifier ... has already been declared` errors.
 - `@@if`: Check a condition. If the result is `false`, exclude this entry.
 - `@@iframe`: Wrap `@@render_before` or `@@render_after` content in an `<iframe>` tag to avoid style pollution in the global scope.
 - `@@preprocessing`: Processed by this extension before the Tavern handles the World Book.
+
+### Decorator Syntax Rules
+
+- Decorators must start on the **first line** of the entry content, each on its own line, with no blank lines or other content in between.
+
+- Decorators can carry arguments, split from the decorator name by the **first space**.
+
+	> For example, in `@@if variables.affection > 50`, `@@if` is the decorator name and `variables.affection > 50` is the argument.
+	>
+	> Likewise, in `@@iframe Collapsible Status Bar (click to show)`, `Collapsible Status Bar (click to show)` is the argument.
+
+- Unrecognized `@@xxx` lines are **discarded** (they neither take effect as decorators nor remain in the entry content).
+
+	> Only the names in the **Available Decorator List** above are recognized.
+	>
+	> Therefore, a misspelled decorator name causes that line to simply disappear.
+
+- Use the `@@@` prefix to escape, preventing leading content from being treated as a decorator.
+
+	> For example, when the entry content starts with `@@@activate`, `@@activate` does not take effect and the line is kept as plain text.
+
+### Preload-related Decorators
+
+Whether an entry is processed during the **Immediately Load World Books** (preload) phase is decided in this order:
+
+1. Has `@@dont_preload`: **not processed**.
+2. Has `@@preload` or `@@only_preload`: **processed**.
+3. The **Preload only PRELOAD entries** setting is enabled (default): **not processed**.
+4. Otherwise: only non-special entries are processed (i.e., ordinary entries without `[GENERATE:*]`, `[RENDER:*]`, `@INJECT`, `@@only_preload`, etc.).
+
+> Because **Preload only PRELOAD entries** is enabled by default, entries that must run when opening a character card (e.g. variable initialization, `define`) need an explicit `@@preload` or `@@only_preload`.
+>
+> `[InitialVariables]` and `@@initial_variables` are not subject to this restriction and are always processed during the preload phase.
 
 General usage:
 

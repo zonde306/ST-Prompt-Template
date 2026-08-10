@@ -264,6 +264,7 @@ export async function getWorldInfoEntry(name: string | RegExp | number, title?: 
     } else {
         entries = await getWorldInfoEntries();
         title = name;
+        name = '';
     }
 
     for (const data of entries) {
@@ -272,7 +273,22 @@ export async function getWorldInfoEntry(name: string | RegExp | number, title?: 
             return data;
     }
 
-    console.log(`[Prompt Template] entry not found: ${title} (${name})`);
+    console.warn(`[Prompt Template] entry ${title} not found in ${name ?? entries?.[0]?.world ?? '?'}`);
+
+    if ((name === '' || name == null) && typeof title !== 'number') {
+        for (const lorebook of getEnabledLoreBooks()) {
+            if (lorebook === entries?.[0]?.world)
+                continue;
+
+            for (const data of await getWorldInfoEntries(lorebook)) {
+                if (data.comment === title || data.comment.match(title)) {
+                    console.debug(`[Prompt Template] entry ${title} found in ${lorebook} when fuzzy searching`);
+                    return data;
+                }
+            }
+        }
+    }
+
     return null;
 }
 
