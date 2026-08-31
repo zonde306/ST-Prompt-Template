@@ -319,20 +319,16 @@ export async function prepareContext(msg_id?: number, env: Record<string, unknow
 }
 
 async function boundedReadWorldinfo(this: Record<string, unknown>,
-    worldinfoOrEntry: string,
+    worldinfoOrEntry: string | RegExp | number,
     entryOrData: string | RegExp | number | Record<string, unknown> = {},
     data: Record<string, unknown> = {}): Promise<string> {
     let wi: WorldInfoEntry | null = null;
     if (_.isPlainObject(entryOrData)) {
-        // @ts-expect-error: 2339
-        wi = await getWorldInfoEntry(this.world_info?.world || '', worldinfoOrEntry);
-        if (_.isPlainObject(entryOrData)) {
-            // @ts-expect-error: 2322
-            data = entryOrData;
-        }
+        wi = await getWorldInfoEntry(worldinfoOrEntry);
+        data = entryOrData as Record<string, unknown>;
     } else {
         // @ts-expect-error: 2339
-        wi = await getWorldInfoEntry(worldinfoOrEntry || this.world_info?.world || '', entryOrData);
+        wi = await getWorldInfoEntry(worldinfoOrEntry, entryOrData);
     }
 
     if (wi) {
