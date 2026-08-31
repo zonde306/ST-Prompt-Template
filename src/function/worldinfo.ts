@@ -260,9 +260,9 @@ export async function getWorldInfoEntry(title: string | RegExp | number): Promis
 export async function getWorldInfoEntry(name: string | RegExp | number, title?: string | RegExp | number): Promise<WorldInfoEntry | null> {
     // First, consider the primary lorebook.
     let entries: WorldInfoEntry[] = [];
-    if (title != null && name) {
+    if (title != null) {
         // lorebook and comment
-        entries = await getWorldInfoEntries(name as string);
+        entries = await getWorldInfoEntries(name as string || undefined);
     } else {
         // only comment
         entries = await getWorldInfoEntries();
