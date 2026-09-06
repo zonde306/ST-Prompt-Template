@@ -1,5 +1,5 @@
 import { loadWorldInfo, parseRegexFromString, world_info_case_sensitive, world_info_match_whole_words, world_info_logic, world_info_use_group_scoring, DEFAULT_WEIGHT, METADATA_KEY, selected_world_info, world_info, DEFAULT_DEPTH, world_info_position, world_names } from '../../../../../world-info.js';
-import { substituteParams, chat_metadata, this_chid, characters, eventSource, event_types } from '../../../../../../script.js';
+import { substituteParams, chat_metadata, this_chid, characters, eventSource, event_types, name1 } from '../../../../../../script.js';
 import { power_user } from '../../../../../power-user.js';
 import { getCharaFilename } from '../../../../../utils.js';
 import { getGroupMembers } from '../../../../../group-chats.js';
@@ -258,10 +258,13 @@ export async function getWorldInfoEntry(name: string, title: string | RegExp | n
 export async function getWorldInfoEntry(title: string | RegExp | number): Promise<WorldInfoEntry | null>;
 
 export async function getWorldInfoEntry(name: string | RegExp | number, title?: string | RegExp | number): Promise<WorldInfoEntry | null> {
-    let entries = [];
+    // First, consider the primary lorebook.
+    let entries: WorldInfoEntry[] = [];
     if (title != null) {
-        entries = await getWorldInfoEntries(name as string);
+        // lorebook and comment
+        entries = await getWorldInfoEntries(name as string || undefined);
     } else {
+        // only comment
         entries = await getWorldInfoEntries();
         title = name;
         name = '';
@@ -273,9 +276,11 @@ export async function getWorldInfoEntry(name: string | RegExp | number, title?: 
             return data;
     }
 
-    console.warn(`[Prompt Template] entry ${title} not found in ${name ?? entries?.[0]?.world ?? '?'}`);
+    if (entries.length)
+        console.warn(`[Prompt Template] entry ${title} not found in ${name ?? entries?.[0]?.world ?? '?'}`);
 
-    if ((name === '' || name == null) && typeof title !== 'number') {
+    // Fuzzy matching comes only after that, without considering the primary lorebook.
+    if (!name && typeof title !== 'number') {
         for (const lorebook of getEnabledLoreBooks()) {
             if (lorebook === entries?.[0]?.world)
                 continue;

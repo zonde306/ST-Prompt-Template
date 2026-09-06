@@ -1,7 +1,6 @@
-import * as monaco from 'monaco-editor';
 import { eventSource, event_types } from '../../../../../events.js';
 import { callGenericPopup, POPUP_TYPE } from '../../../../../popup.js';
-import { settings } from './ui';
+import { settings, EVENT_SETTINGS_CHANGED, getOption } from './ui';
 
 const autoComplete = [
     // ==========================================
@@ -645,7 +644,29 @@ const autoComplete = [
     }
 ];
 
+let monaco: any = null;
+
 export async function init() {
+    if (!settings.code_editor || monaco) {
+        eventSource.on(EVENT_SETTINGS_CHANGED, ({ id }: { id: string }) => {
+            const opt = getOption(id);
+            if (opt)
+                window.setTimeout(setupEditor, 1000);
+        });
+    } else {
+        await setupEditor();
+    }
+}
+
+export async function exit() {
+}
+
+async function setupEditor() {
+    if (!settings.code_editor || monaco)
+        return;
+
+    monaco = await import('monaco-editor');
+
     // 1. Registered Language
     monaco.languages.register({ id: 'ejs' });
 
@@ -734,13 +755,11 @@ export async function init() {
     });
 
     eventSource.on(event_types.APP_READY, () => {
-        $('#world_popup_entries_list').on('click', '.fa-circle-chevron-down', reloadWorldInfoPage);
+        if (settings.code_editor)
+            $('#world_popup_entries_list').on('click', '.fa-circle-chevron-down', reloadWorldInfoPage);
     });
 
     console.log(`monaco-editor loaded. `, monaco);
-}
-
-export async function exit() {
 }
 
 /**
@@ -848,7 +867,7 @@ function loadEditorSettings(): typeof DEFAULT_EDITOR_SETTINGS {
     return { ...DEFAULT_EDITOR_SETTINGS };
 }
 
-function saveEditorSettings(editor: any) {
+function saveEditorSettings(_editor: any) {
     const g = document.getElementById.bind(document);
     const ck = (id: string) => !!(g(id) as HTMLInputElement)?.checked;
     const sv = (id: string) => (g(id) as HTMLSelectElement)?.value ?? '';
@@ -890,6 +909,9 @@ function saveEditorSettings(editor: any) {
 }
 
 async function showEditor(ref: string) {
+    if (!monaco)
+        return;
+
     let editor: any = null;
     const inputStyle = `padding:2px 6px;border-radius:4px;border:1px solid var(--SmartThemeBorderColor,#555);background:var(--SmartThemeInputColor,#1e1e1e);color:var(--SmartThemeBodyColor,#ccc);font-size:12px;`;
     const labelStyle = `display:flex;align-items:center;gap:4px;color:var(--SmartThemeBodyColor,#ccc);`;

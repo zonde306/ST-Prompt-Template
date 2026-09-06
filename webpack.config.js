@@ -2,6 +2,7 @@ import { resolve as _resolve } from 'path';
 import TerserPlugin from 'terser-webpack-plugin';
 import MonacoWebpackPlugin from 'monaco-editor-webpack-plugin';
 
+
 const serverConfig = {
     devtool: 'source-map',
     target: 'browserslist',
@@ -77,6 +78,19 @@ const serverConfig = {
                 },
             }),
         ],
+        /*
+        splitChunks: {
+            cacheGroups: {
+                monacoEditor: {
+                    test: /[\\/]node_modules[\\/]monaco-editor[\\/]/,
+                    name: 'monaco-editor',
+                    chunks: 'all',
+                    priority: 20,
+                    enforce: true,
+                },
+            },
+        },
+        */
     },
     plugins: [
         new MonacoWebpackPlugin({

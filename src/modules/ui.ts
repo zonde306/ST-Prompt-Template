@@ -53,6 +53,7 @@ interface EjsSettings extends Record<string, boolean | string | number> {
 };
 
 export const settings = {} as EjsSettings;
+export const EVENT_SETTINGS_CHANGED = 'ejsSettingsChanged';
 
 export function loadSettings(reset: boolean = false) {
     // @ts-expect-error: 2339
@@ -104,7 +105,7 @@ function handleSettingSave() {
     loadSettings();
 }
 
-function getOption(id: string) : boolean | string | number {
+export function getOption(id: string) : boolean | string | number {
     const defaults = DEFAULT_SETTINGS[id];
     if(typeof defaults?.value === 'boolean')
         return $(id).prop('checked');
@@ -151,6 +152,7 @@ export async function init() {
         // @ts-expect-error: 2339
         console.debug(`[Prompt Template] setting ${setting.name} changed to ${extension_settings.EjsTemplate[setting.name]}`);
         ejs.cache._capacity = settings.cache_size;
+        eventSource.emit(EVENT_SETTINGS_CHANGED, { id, ...setting });
         saveSettingsDebounced();
     }
 
