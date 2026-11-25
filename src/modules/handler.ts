@@ -525,8 +525,6 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
 
         const rawContent = container.html() as string;
 
-        content = settings.code_blocks_enabled === false ? escapePreContent(rawContent) : rawContent;
-
         const opts = {
             escaper,
             options: {
@@ -536,6 +534,8 @@ async function handleMessageRender(message_id: string, type?: string, isDryRun?:
                 cache: settings.cache_enabled === 1, // enable for all
             },
         };
+
+        content = settings.code_blocks_enabled === false ? escapePreContent(rawContent, opts.options) : rawContent;
 
         newContent = await evalTemplateHandler(
             // Fixed an issue where HTML escaping prevented code execution.

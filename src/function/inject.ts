@@ -8,8 +8,187 @@ export interface PromptInjected {
     uid: string; // Ensure uuid is always present
 }
 
-let promptInjected = new Map<string, Map<string, PromptInjected>>();
-let forceOutlet = false;
+export interface PostProcess {
+    search: RegExp | string;
+    replace: string;
+}
+
+export type SerializedPromptInjected = Record<string, PromptInjected[]>;
+
+export class PromptInjectionSession {
+    private promptInjected = new Map<string, Map<string, PromptInjected>>();
+    private forceOutlet = false;
+    private postprocessOutlets = new Map<string, { key: string; postprocess: PostProcess[] }>();
+    private ppCounter = 0;
+
+    constructor(initialSnapshot?: SerializedPromptInjected | null) {
+        if (initialSnapshot) {
+            this.importSnapshot(initialSnapshot);
+        }
+    }
+
+    injectPrompt(
+        key: string,
+        prompt: string,
+        order: number = 100,
+        sticky: number = 0,
+        uid: string = ''
+    ): void {
+        if (!this.promptInjected.has(key)) {
+            this.promptInjected.set(key, new Map<string, PromptInjected>());
+        }
+
+        if (!uid) {
+            uid = hashString(`${key}#${prompt}`, 0xdeadbeef);
+        }
+
+        this.promptInjected.get(key)!.set(uid, { prompt, order, sticky, uid });
+    }
+
+    getPromptsInjected(key: string, postprocess: PostProcess[] = [], outlet: boolean = this.forceOutlet): string {
+        if (outlet) {
+            if (postprocess.length <= 0) {
+                return `{{outletPromptsInjected:${key}}}`;
+            }
+            const tokenId = `pp_${this.ppCounter++}`;
+            this.postprocessOutlets.set(tokenId, { key, postprocess: [...postprocess] });
+            return `{{outletPromptsInjectedPP:${tokenId}}}`;
+        }
+
+        return this.resolvePrompts(key, postprocess);
+    }
+
+    private resolvePrompts(key: string, postprocess: PostProcess[] = []): string {
+        const innerMap = this.promptInjected.get(key);
+        if (!innerMap) {
+            return '';
+        }
+
+        let combinedPrompt = Array.from(innerMap.values())
+            .sort((a, b) => a.order - b.order)
+            .map(p => p.prompt)
+            .join('\n');
+
+        for (const pp of postprocess) {
+            combinedPrompt = combinedPrompt.replace(pp.search, pp.replace);
+        }
+
+        return combinedPrompt;
+    }
+
+    applyOutlets(content: string, recursion: number = world_info_max_recursion_steps + 1): string {
+        if (!content || (!content.includes('{{outletPromptsInjected:') && !content.includes('{{outletPromptsInjectedPP:'))) {
+            return content;
+        }
+        let result = content;
+        for (let i = 0; i < recursion; i++) {
+            const hasPlain = result.includes('{{outletPromptsInjected:');
+            const hasPP = result.includes('{{outletPromptsInjectedPP:');
+            if (!hasPlain && !hasPP) {
+                break;
+            }
+            if (hasPP) {
+                result = result.replace(/\{\{outletPromptsInjectedPP:(.+?)\}\}/g, (_, tokenId) => {
+                    const entry = this.postprocessOutlets.get(tokenId);
+                    return entry ? this.resolvePrompts(entry.key, entry.postprocess) : '';
+                });
+            }
+            if (hasPlain) {
+                result = result.replace(/\{\{outletPromptsInjected:(.+?)\}\}/g, (_, key) => this.resolvePrompts(key));
+            }
+        }
+        return result;
+    }
+
+    setForceOutlet(force: boolean = true): void {
+        this.forceOutlet = force;
+    }
+
+    tickSticky(count: number = 1): void {
+        for (const key of Array.from(this.promptInjected.keys())) {
+            const innerMap = this.promptInjected.get(key);
+            if (!innerMap) {
+                continue;
+            }
+
+            const uuidsToRemove: string[] = [];
+            for (const [uuid, promptObj] of innerMap.entries()) {
+                const newSticky = promptObj.sticky - count;
+                if (newSticky >= 0) {
+                    promptObj.sticky = newSticky;
+                } else {
+                    uuidsToRemove.push(uuid);
+                }
+            }
+
+            if (uuidsToRemove.length > 0) {
+                if (uuidsToRemove.length === innerMap.size) {
+                    this.promptInjected.delete(key);
+                } else {
+                    for (const uuid of uuidsToRemove) {
+                        innerMap.delete(uuid);
+                    }
+                    if (innerMap.size === 0) {
+                        this.promptInjected.delete(key);
+                    }
+                }
+            }
+        }
+    }
+
+    hasPromptsInjected(key: string): boolean {
+        return this.promptInjected.has(key);
+    }
+
+    exportSnapshot(): SerializedPromptInjected {
+        const snapshot: SerializedPromptInjected = {};
+        for (const [key, innerMap] of this.promptInjected.entries()) {
+            const items = Array.from(innerMap.values()).map(item => ({ ...item }));
+            if (items.length > 0) {
+                snapshot[key] = items;
+            }
+        }
+        return snapshot;
+    }
+
+    importSnapshot(snapshot?: SerializedPromptInjected | null): void {
+        this.promptInjected.clear();
+        this.postprocessOutlets.clear();
+        if (!snapshot || typeof snapshot !== 'object') {
+            return;
+        }
+        for (const [key, items] of Object.entries(snapshot)) {
+            if (!Array.isArray(items) || items.length === 0) {
+                continue;
+            }
+            const innerMap = new Map<string, PromptInjected>();
+            for (const item of items) {
+                if (!item || typeof item !== 'object' || typeof item.prompt !== 'string') {
+                    continue;
+                }
+                const order = typeof item.order === 'number' && Number.isFinite(item.order) ? item.order : 100;
+                const sticky = typeof item.sticky === 'number' && Number.isFinite(item.sticky) ? item.sticky : 0;
+                const uid = typeof item.uid === 'string' && item.uid ? item.uid : hashString(`${key}#${item.prompt}`, 0xdeadbeef);
+                innerMap.set(uid, { prompt: item.prompt, order, sticky, uid });
+            }
+            if (innerMap.size > 0) {
+                this.promptInjected.set(key, innerMap);
+            }
+        }
+    }
+
+    clear(): void {
+        this.promptInjected.clear();
+        this.postprocessOutlets.clear();
+        this.forceOutlet = false;
+    }
+}
+
+const defaultSession = new PromptInjectionSession();
+
+export function createInjectionSession(initialSnapshot?: SerializedPromptInjected | null): PromptInjectionSession {
+    return new PromptInjectionSession(initialSnapshot);
+}
 
 /**
  * Add prompts to the injection list and use getPromptsInjected to read the list
@@ -28,20 +207,7 @@ export function injectPrompt(
     sticky: number = 0,
     uid: string = ''
 ): void {
-    if (!promptInjected.has(key)) {
-        promptInjected.set(key, new Map<string, PromptInjected>());
-    }
-
-    // Generate uid
-    if(!uid)
-        uid = hashString(`${key}#${prompt}`, 0xdeadbeef);
-    
-    promptInjected.get(key)!.set(uid, { prompt, order, sticky, uid: uid });
-}
-
-export interface PostProcess {
-    search: RegExp | string;
-    replace: string;
+    defaultSession.injectPrompt(key, prompt, order, sticky, uid);
 }
 
 /**
@@ -53,26 +219,8 @@ export interface PostProcess {
  * @param outlet Whether to use the outlet
  * @returns prompts
  */
-export function getPromptsInjected(key: string, postprocess: PostProcess[] = [], outlet: boolean = forceOutlet): string {
-    if(outlet && postprocess.length <= 0)
-        return `{{outletPromptsInjected:${key}}}`;
-    if(outlet && postprocess.length)
-        console.warn(`[Prompt Template] outlet with postprocess is not supported`);
-
-    const innerMap = promptInjected.get(key);
-    if (!innerMap) {
-        return '';
-    }
-
-    let combinedPrompt = Array.from(innerMap.values())
-        .sort((a, b) => a.order - b.order)
-        .map(p => p.prompt)
-        .join('\n');
-
-    for (const pp of postprocess)
-        combinedPrompt = combinedPrompt.replace(pp.search, pp.replace);
-
-    return combinedPrompt;
+export function getPromptsInjected(key: string, postprocess: PostProcess[] = [], outlet?: boolean): string {
+    return defaultSession.getPromptsInjected(key, postprocess, outlet);
 }
 
 /**
@@ -83,53 +231,18 @@ export function getPromptsInjected(key: string, postprocess: PostProcess[] = [],
  * @returns processed content with injected prompts
  */
 export function applyOutletPromptsInjected(content: string, recursion: number = world_info_max_recursion_steps + 1): string {
-    let result = content;
-    for(let i = 0; i < recursion; i++) {
-        if(!result.includes('{{outletPromptsInjected:'))
-            break;
-
-        result = result.replace(/\{\{outletPromptsInjected:(.+?)\}\}/g, (_, key) => getPromptsInjected(key));
-    }
-    return result;
+    return defaultSession.applyOutlets(content, recursion);
 }
 
 /**
  * Force the use of outlet
  */
 export function setForceOutlet(force: boolean = true) {
-    forceOutlet = force;
+    defaultSession.setForceOutlet(force);
 }
 
 export function deactivatePromptInjection(count: number = 1): void {
-    for (const key of Array.from(promptInjected.keys())) {
-        const innerMap = promptInjected.get(key);
-        if (!innerMap) {
-            continue;
-        }
-
-        const uuidsToRemove: string[] = [];
-        for (const [uuid, promptObj] of innerMap.entries()) {
-            const newSticky = promptObj.sticky - count;
-            if (newSticky >= 0) {
-                promptObj.sticky = newSticky;
-            } else {
-                uuidsToRemove.push(uuid);
-            }
-        }
-
-        if (uuidsToRemove.length > 0) {
-            if (uuidsToRemove.length === innerMap.size) {
-                promptInjected.delete(key);
-            } else {
-                for (const uuid of uuidsToRemove) {
-                    innerMap.delete(uuid);
-                }
-                if (innerMap.size === 0) {
-                    promptInjected.delete(key);
-                }
-            }
-        }
-    }
+    defaultSession.tickSticky(count);
 }
 
 /**
@@ -137,5 +250,5 @@ export function deactivatePromptInjection(count: number = 1): void {
  * @param key List Name
  */
 export function hasPromptsInjected(key: string) : boolean {
-    return promptInjected.has(key);
+    return defaultSession.hasPromptsInjected(key);
 }
