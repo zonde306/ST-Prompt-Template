@@ -1,4 +1,5 @@
 import { evalTemplate, prepareContext, getSyntaxErrorInfo, SharedDefines, compileTemplate } from '../function/ejs';
+import { createInjectionSession } from '../function/inject';
 import { STATE } from '../function/variables';
 import { applySettings, loadSettings, settings } from './ui';
 import { precacheVariables, checkAndSave } from '../function/variables';
@@ -43,6 +44,7 @@ export async function init() {
             return { ...settings };
         },
         compileTemplate,
+        createInjectionSession,
         finalization: createFinalization(),
     };
 }

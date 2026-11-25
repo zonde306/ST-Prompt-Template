@@ -212,8 +212,29 @@ export async function prepareContext(msg_id?: number, env: Record<string, unknow
     // precache variables
     precacheVariables(msg_id);
 
+    const rawSession = env.injectionSession ?? env.__injectionSession;
+    const sessionOverride = rawSession && typeof rawSession === 'object'
+        && typeof (rawSession as { injectPrompt?: unknown }).injectPrompt === 'function'
+        && typeof (rawSession as { getPromptsInjected?: unknown }).getPromptsInjected === 'function'
+        && typeof (rawSession as { hasPromptsInjected?: unknown }).hasPromptsInjected === 'function'
+        ? rawSession as {
+            injectPrompt: typeof injectPrompt;
+            getPromptsInjected: typeof getPromptsInjected;
+            hasPromptsInjected: typeof hasPromptsInjected;
+        }
+        : null;
+
+    const cleanEnv = '__injectionSession' in env || 'injectionSession' in env
+        ? Object.fromEntries(Object.entries(env).filter(([k]) => k !== '__injectionSession' && k !== 'injectionSession'))
+        : env;
+
     let context = {
         ...SHARE_CONTEXT,
+        ...(sessionOverride ? {
+            injectPrompt: sessionOverride.injectPrompt.bind(sessionOverride),
+            getPromptsInjected: sessionOverride.getPromptsInjected.bind(sessionOverride),
+            hasPromptsInjected: sessionOverride.hasPromptsInjected.bind(sessionOverride),
+        } : {}),
         get variables() {
             return STATE.cacheVars;
         },
@@ -262,7 +283,7 @@ export async function prepareContext(msg_id?: number, env: Record<string, unknow
             return chat.length - 1;
         },
 
-        ...env,
+        ...cleanEnv,
     };
 
     _.merge(context, {
