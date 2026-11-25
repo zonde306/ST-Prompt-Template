@@ -35,25 +35,55 @@ export function unescapeHtmlEntities(html: string): string {
     }).join('');
 }
 
-function escapeForTemplateLiteral(str: string) {
+function escapeJsUnicode(str: string): string {
+    let out = '';
+    for (const ch of str) {
+        const cp = ch.codePointAt(0)!;
+        if (cp <= 0xffff) {
+            out += `\\u${cp.toString(16).padStart(4, '0')}`;
+        } else {
+            out += `\\u{${cp.toString(16)}}`;
+        }
+    }
+    return out;
+}
+
+function escapeForTemplateLiteral(str: string, opts: EjsOptions = {}) {
+    const od = opts.openDelimiter || '<';
+    const cd = opts.closeDelimiter || '>';
+    const d = opts.delimiter || '%';
+    const escapedD = escapeJsUnicode(d);
+
     return str
         .replace(/\\/g, '\\\\')
         .replace(/`/g, '\\`')
-        .replace(/\$\{/g, '\\${');
+        .replace(/\$\{/g, '\\${')
+        .replace(/\r/g, '\\r')
+        .replaceAll(od + d, od + escapedD)
+        .replaceAll(d + cd, escapedD + cd);
 }
 
 /**
  * Replace all <% and %> in the <pre> block with <% __append(`...`) %>
- * @param text content
+ * @param html content
+ * @param opts EJS options
  * @returns processed content
  */
-export function escapePreContent(html: string): string {
+export function escapePreContent(
+    html: string,
+    opts: EjsOptions = { openDelimiter: '&lt;', closeDelimiter: '&gt;', delimiter: '%' }
+): string {
+    const od = opts.openDelimiter || '&lt;';
+    const cd = opts.closeDelimiter || '&gt;';
+    const d = opts.delimiter || '%';
+
     const doc = new DOMParser().parseFromString(html, "text/html");
     const pres = Array.from(doc.querySelectorAll("pre"));
     for (const pre of pres) {
+        if (!pre.isConnected) continue;
         const raw = pre.outerHTML;
-        const escaped = escapeForTemplateLiteral(raw);
-        const wrapped = `&lt;% __append(\`${escaped}\`) %&gt;`;
+        const escaped = escapeForTemplateLiteral(raw, { openDelimiter: od, closeDelimiter: cd, delimiter: d });
+        const wrapped = `${od}${d} __append(\`${escaped}\`) ${d}${cd}`;
         pre.outerHTML = wrapped;
     }
 
@@ -185,7 +215,7 @@ export function wrapEscapeBlocks(content: string, blocks: string[], opts: EjsOpt
     for (const r of ranges) {
         const raw = content.slice(r.start, r.end);
         result += content.slice(last, r.start);
-        result += `${od}${d} __append(\`${escapeForTemplateLiteral(raw)}\`) ${d}${cd}`;
+        result += `${od}${d} __append(\`${escapeForTemplateLiteral(raw, { openDelimiter: od, closeDelimiter: cd, delimiter: d })}\`) ${d}${cd}`;
         last = r.end;
     }
 
